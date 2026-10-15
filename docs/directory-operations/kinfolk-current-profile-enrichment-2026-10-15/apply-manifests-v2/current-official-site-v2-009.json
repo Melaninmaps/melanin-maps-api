@@ -1,0 +1,4350 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-009",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_6f5fcefa-afb4-4bb9-ab19-321c494ad827",
+      "expectedIdentity": {
+        "name": "Get Glam’d Beauty Bar and Boutique",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.shopgetglamd.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/getglamdd"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.shopgetglamd.com/",
+          "sourceLabel": "Official Get Glam'd &mdash; Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/getglamdd"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e55643b5-af56-48c8-8538-cbf2dc17beff",
+      "expectedIdentity": {
+        "name": "Ghot Wingz",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.ghotwingz.com/"
+      },
+      "patch": {
+        "hours": "We are closed October 16th - 21st! We will open again Thursday, October 22nd at 11am CT.",
+        "phone": "(615) 262-9200"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "http://www.ghotwingz.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are closed October 16th - 21st! We will open again Thursday, October 22nd at 11am CT."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "http://www.ghotwingz.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (615) 262-9200"
+        }
+      ]
+    },
+    {
+      "businessId": "source_38dd118b-9f47-4f62-a63f-43794e8ac3ca",
+      "expectedIdentity": {
+        "name": "Gigi’s Vegan Cafe + Wellness",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://gigisvegancafe.com/"
+      },
+      "patch": {
+        "description": "Gigi's Vegan + Wellness Cafe is based on health and wellness and focuses on the nutritional benefits of healthy foods and herbs.",
+        "hours": "Tuesday-Friday 11 A.M.-5 P.M. Saturday 11 A.M.-2 P.M. Sunday-Monday Closed"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gigisvegancafe.com/our-story",
+          "sourceLabel": "Official Our Story page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: GiGi's Vegan + Wellness Cafe is fundamentally based on health and wellness which ensures the nutritional benefits of healthy foods and herbs to increases longevity in people and our planet”"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://gigisvegancafe.com/",
+          "sourceLabel": "Official Gigi The Vegan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tuesday-Friday 11 A.M.-5 P.M. Saturday 11 A.M.-2 P.M. Sunday-Monday Closed"
+        }
+      ]
+    },
+    {
+      "businessId": "source_18e45773-42d5-4676-b007-25a3e7bc1bc4",
+      "expectedIdentity": {
+        "name": "GI Locksmith",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.gilocksmith.com/"
+      },
+      "patch": {
+        "description": "GI Locksmith provides locksmith services in Memphis, TN."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gilocksmith.com/",
+          "sourceLabel": "Official Locksmith in Memphis, TN | GI Locksmith - Licensed &amp; Local page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Locksmith in Memphis, TN | GI Locksmith - Licensed & Local"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a8586394-76b8-4b43-bca5-3e3e737d1fe4",
+      "expectedIdentity": {
+        "name": "GipGotTips",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.gipgottips.com/"
+      },
+      "patch": {
+        "description": "Carry-out restaurant offering smoked meats and catering services.",
+        "tags": [
+          "smoked meats",
+          "catering"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gipgottips.com/about-us",
+          "sourceLabel": "Official Our Story | GipGotTips page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"a thriving family owned & operated carry-out restaurant in November 2021.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.gipgottips.com/about-1",
+          "sourceLabel": "Official Bbq | Gip Got Tips | Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our catering services provide top-quality smoked meats that are sure to delight your guests.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_2fd41fda-b239-4b8c-9449-78e9a82f3cbf",
+      "expectedIdentity": {
+        "name": "Girl Be Brave",
+        "city": "Mobile",
+        "state": "AL",
+        "website": "http://girlbebrave.com/"
+      },
+      "patch": {
+        "description": "A business inspired by the founder's grandmother, offering products and messages encouraging women's bravery.",
+        "hours": "Monday to Friday, 10-5; Saturday, 11-3; Sunday, CLOSED",
+        "phone": "+1 251-304-3200",
+        "tags": [
+          "women's gifts",
+          "inspirational apparel"
+        ]
+      },
+      "fieldModes": {
+        "description": "fill",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://girlbebrave.com/pages/our-story",
+          "sourceLabel": "Official Our Story &ndash; Girl Be Brave page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: My hope for Girl Be Brave is that Frances's words reach every woman who needs a reminder of her own bravery."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://girlbebrave.com/pages/our-story",
+          "sourceLabel": "Official Our Story &ndash; Girl Be Brave page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday to Friday, 10-5 Saturday, 11-3 Sunday, CLOSED"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://girlbebrave.com/pages/contact-us",
+          "sourceLabel": "Official Contact Us &ndash; Girl Be Brave page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone & Email +1 251-304-3200 info@girlbebrave.com"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://girlbebrave.com/",
+          "sourceLabel": "Official Girl Be Brave 100 Days page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: HOME OUR STORY SHOP BY CATEGORY BLOG video blog Quotes Writings SCHOLARSHIP donation CONTACT US"
+        }
+      ]
+    },
+    {
+      "businessId": "source_524d423d-be75-4407-b477-765cc9ce8da5",
+      "expectedIdentity": {
+        "name": "Girl Scouts of San Jacinto Council",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.gssjc.org/"
+      },
+      "patch": {
+        "description": "Girl Scouts of San Jacinto Council provides Girl Scout programs, activities, camps, volunteer opportunities, and resources for girls and families.",
+        "twitter": "https://twitter.com/GirlScoutsGSSJC",
+        "youtube": "https://www.youtube.com/@GirlScoutsofSanJacintoCouncil"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gssjc.org/",
+          "sourceLabel": "Official Girl Scouts of San Jacinto page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Discover your local Girl Scout council: about Girl Scouts, what they do, what activities are available locally, and how to contact us."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.gssjc.org/",
+          "sourceLabel": "Official Girl Scouts of San Jacinto page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/GirlScoutsGSSJC"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.gssjc.org/",
+          "sourceLabel": "Official Girl Scouts of San Jacinto page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@GirlScoutsofSanJacintoCouncil"
+        }
+      ]
+    },
+    {
+      "businessId": "source_94ffcc13-471e-4671-916a-1331821189d1",
+      "expectedIdentity": {
+        "name": "Girls on the Run Greater Houston",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.gotrgreaterhouston.org/"
+      },
+      "patch": {
+        "description": "Girls on the Run has fun, evidence-based programs that inspire participants to recognize their inner strength, increase their level of physical activity, imagine their possibilities, and confidently stand up for themselves and others.",
+        "twitter": "http://www.twitter.com/gotrhouston",
+        "youtube": "https://www.youtube.com/@GirlsontheRunGreaterHouston"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gotrgreaterhouston.org/",
+          "sourceLabel": "Official Girls on the Run Greater Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Girls on the Run has fun, evidence-based programs that inspire participants to recognize their inner strength, increase their level of physical activity, imagine their possibilities, and confidently stand up for themselves and others.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.gotrgreaterhouston.org/",
+          "sourceLabel": "Official Girls on the Run Greater Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://www.twitter.com/gotrhouston"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.gotrgreaterhouston.org/",
+          "sourceLabel": "Official Girls on the Run Greater Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@GirlsontheRunGreaterHouston"
+        }
+      ]
+    },
+    {
+      "businessId": "source_90c60a9a-8c0b-464c-9f87-acfcc6059f90",
+      "expectedIdentity": {
+        "name": "Giza Printing",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.gizaprint.com/"
+      },
+      "patch": {
+        "description": "GIZA PRINTING COMPANY offers consultation, design, and printing services and lists product types such as business cards, print marketing materials, signs, banners, event displays, apparel, drinkware, and promotional items.",
+        "hours": "Customer Service is available from 10 AM to 6 PM CST Monday - Friday (excluding weekends and company holidays)",
+        "phone": "214-744-3712",
+        "tags": [
+          "consultation",
+          "design",
+          "printing",
+          "business cards",
+          "print marketing materials",
+          "signs and banners",
+          "large prints",
+          "event and trade show displays",
+          "apparel and bags",
+          "drinkware",
+          "promotional items"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gizaprint.com/",
+          "sourceLabel": "Official GIZA PRINTING COMPANY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: GIZA PRINTING COMPANY CONSULT. DESIGN. PRINT. EXPLORE PRODUCTS BUSINESS CARDS PRINT MARKETING MATERIALS SIGNS + BANNERS + LARGE PRINTS EVENT + TRADE SHOW DISPLAYS APPAREL + BAGS DRINKWARE PROMOTIONAL ITEMS & GIVEAWAYS"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.gizaprint.com/contact",
+          "sourceLabel": "Official Contact &mdash; GIZA PRINTING COMPANY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Customer Service is available from 10 AM to 6 PM CST Monday - Friday (excluding weekends and company holidays)"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.gizaprint.com/contact",
+          "sourceLabel": "Official Contact &mdash; GIZA PRINTING COMPANY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 214-744-3712"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.gizaprint.com/",
+          "sourceLabel": "Official GIZA PRINTING COMPANY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: GIZA PRINTING COMPANY CONSULT. DESIGN. PRINT. EXPLORE PRODUCTS BUSINESS CARDS PRINT MARKETING MATERIALS SIGNS + BANNERS + LARGE PRINTS EVENT + TRADE SHOW DISPLAYS APPAREL + BAGS DRINKWARE PROMOTIONAL ITEMS & GIVEAWAYS"
+        }
+      ]
+    },
+    {
+      "businessId": "source_34790860-9686-4f8a-ad6c-18abbda9683f",
+      "expectedIdentity": {
+        "name": "Glam by Keira",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://pocketsuite.io/book/glam-by-keira-llc"
+      },
+      "patch": {
+        "description": "Makeup, hair style, and body sculpting services"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://pocketsuite.io/book/glam-by-keira-llc",
+          "sourceLabel": "Official Schedule GLAM BY KEIRA LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"GLAM BY KEIRA LLC Makeup, hair style, and body sculpting services\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_995e7966-5691-4dc3-9fd4-ea46ab7fb44e",
+      "expectedIdentity": {
+        "name": "Glam Up Nashville",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.glamupnashville.com/"
+      },
+      "patch": {
+        "description": "On-demand hair and makeup services in Nashville including mobile makeup, hairstyling, spray tans, glitter bar, disco strands, Halloween & SFX, and event services.",
+        "tiktok": "http://www.tiktok.com/glamupnash",
+        "pinterest": "https://www.pinterest.com/glamupnash"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tiktok": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://glamup.us/",
+          "sourceLabel": "Official Glam Up Nashville! Your On Demand Hair and Make-Up Team page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Glam Up Nashville! Your On Demand Hair and Make-Up Team"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://glamup.us/",
+          "sourceLabel": "Official Glam Up Nashville! Your On Demand Hair and Make-Up Team page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: http://www.tiktok.com/glamupnash"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://glamup.us/",
+          "sourceLabel": "Official Glam Up Nashville! Your On Demand Hair and Make-Up Team page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/glamupnash"
+        }
+      ]
+    },
+    {
+      "businessId": "source_608031cb-1b34-4e18-adeb-0ec386e0ff3f",
+      "expectedIdentity": {
+        "name": "Global Chi Supply Solutions",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://globalchisupply.com/"
+      },
+      "patch": {
+        "description": "Global Chi Supply Solutions plans, builds and cares for homes across Middle and West Tennessee and North Alabama: remodeling, residential electrical, plumbing and mechanical work, and the repairs in between.",
+        "phone": "920-581-5003",
+        "youtube": "https://www.youtube.com/channel/UCwZv43zsi0jlGsOkwU7zEtw"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://globalchisupply.com/",
+          "sourceLabel": "Official Home - Global Chi Supply Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About Us Global Chi Supply Solutions plans, builds and cares for homes across Middle and West Tennessee and North Alabama: remodeling, residential electrical, plumbing and mechanical work, and the repairs in between."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://globalchisupply.com/",
+          "sourceLabel": "Official Home - Global Chi Supply Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 920-581-5003 · estimate@globalchisupply.com"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://globalchisupply.com/",
+          "sourceLabel": "Official Home - Global Chi Supply Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCwZv43zsi0jlGsOkwU7zEtw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_80703969-1221-4ae3-9a7f-9ee69546ff9a",
+      "expectedIdentity": {
+        "name": "Global Empire Logistics, Inc.",
+        "city": "Staten Island",
+        "state": "NY",
+        "website": "https://www.globalempirelogistics.com/"
+      },
+      "patch": {
+        "description": "A government contracting company that provides procurement, logistics, energy, and infrastructure solutions for government and public-sector agencies.",
+        "phone": "347-612-5728"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.globalempirelogistics.com/",
+          "sourceLabel": "Official Global Empire Logistics, Inc. — Mission-Critical Government Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Global Empire Logistics is your one-stop shop for the procurement of Maintenance, Repair, and Operations (MRO) supplies, energy products, and infrastructure solutions. We are a Hispanic, Minority/Women-Owned Small Business Enterprise (M/WBE) dedicated to delivering a comprehensive range of equipment and services for government and public-sector agencies."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.globalempirelogistics.com/",
+          "sourceLabel": "Official Global Empire Logistics, Inc. — Mission-Critical Government Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Request a Quote 347-612-5728"
+        }
+      ]
+    },
+    {
+      "businessId": "source_163ce3f5-ddea-46a0-930e-74296f7debd2",
+      "expectedIdentity": {
+        "name": "Glorious Cleaning",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://gloriouscleaning.com/"
+      },
+      "patch": {
+        "description": "Eco-friendly house cleaning services serving Indianapolis and nearby areas.",
+        "phone": "317-489-5800",
+        "tags": [
+          "eco-friendly house cleaning",
+          "apartment cleaning",
+          "deep cleaning",
+          "move in cleaning",
+          "move out cleaning"
+        ],
+        "twitter": "https://twitter.com/gloriousclean",
+        "pinterest": "https://www.pinterest.com/GloriousClean/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gloriouscleaning.com/",
+          "sourceLabel": "Official Eco-Friendly House Cleaning Services | Book Online Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Eco-Friendly House Cleaning Services in Indianapolis, Carmel, Fishers, Geist, Lebanon, Noblesville, Westfield, Whitestown, & Zionsville, Indiana"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://gloriouscleaning.com/",
+          "sourceLabel": "Official Eco-Friendly House Cleaning Services | Book Online Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 317-489-5800"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://gloriouscleaning.com/",
+          "sourceLabel": "Official Eco-Friendly House Cleaning Services | Book Online Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services Apartment Cleaning Deep Cleaning House Cleaning Move Out Cleaning Move In Cleaning"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://gloriouscleaning.com/",
+          "sourceLabel": "Official Eco-Friendly House Cleaning Services | Book Online Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/gloriousclean"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://gloriouscleaning.com/",
+          "sourceLabel": "Official Eco-Friendly House Cleaning Services | Book Online Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/GloriousClean/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_87bfd243-c655-4459-ab37-d6d798390164",
+      "expectedIdentity": {
+        "name": "Glorious Malone's Fine Sausage",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uQDtZU"
+      },
+      "patch": {
+        "description": "Producer and distributor of Southern-style headcheese and related specialty meat products.",
+        "hours": "Closed until Thursday, October 22, 2026 12:00 AM",
+        "phone": "(414) 264-9894",
+        "tags": [
+          "southern-style headcheese",
+          "headcheese distributor",
+          "rag bologna"
+        ],
+        "twitter": "https://twitter.com/GloriousMalones"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.malonesfinesausage.com/",
+          "sourceLabel": "Official Southern-Style Headcheese in Wisconsin | Mild &amp; Hot Souse | Glorious Malone’s Fine Sausage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Authentic Headcheese With Southern Flair Serving Communities for Over 60 Years"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.malonesfinesausage.com/",
+          "sourceLabel": "Official Southern-Style Headcheese in Wisconsin | Mild &amp; Hot Souse | Glorious Malone’s Fine Sausage page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Closed until Thursday, October 22, 2026 12:00 AM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.malonesfinesausage.com/",
+          "sourceLabel": "Official Southern-Style Headcheese in Wisconsin | Mild &amp; Hot Souse | Glorious Malone’s Fine Sausage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (414) 264-9894"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.malonesfinesausage.com/",
+          "sourceLabel": "Official Southern-Style Headcheese in Wisconsin | Mild &amp; Hot Souse | Glorious Malone’s Fine Sausage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hot Headcheese Mild Headcheese Rag Bologna"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.malonesfinesausage.com/",
+          "sourceLabel": "Official Southern-Style Headcheese in Wisconsin | Mild &amp; Hot Souse | Glorious Malone’s Fine Sausage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/GloriousMalones"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c173d360-8f51-4f8a-8718-efe6b7b15908",
+      "expectedIdentity": {
+        "name": "Glory Event Decor",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://glory-eventdecor.com/"
+      },
+      "patch": {
+        "description": "Glory Event Decor LLC is an event design and styling company that transforms spaces into visually stunning experiences and provides services for weddings, corporate functions, private parties, and community celebrations.",
+        "phone": "(614) 426-8966"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://glory-eventdecor.com/about/",
+          "sourceLabel": "Official About &#8211; Glory Event Decor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Glory Event Decor LLC is a premier event design and styling company dedicated to transforming ordinary spaces into breathtaking experiences. Specializing in weddings, corporate functions, private parties, and community celebrations, we bring creativity, elegance, and precision to every event we touch.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://glory-eventdecor.com/",
+          "sourceLabel": "Official Glory Event Decor &#8211; Wedding, Event Decor &amp; More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"CALL US NOW 614-426-8966\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_3725f8e5-69bb-4537-bc17-51753e1b3b9d",
+      "expectedIdentity": {
+        "name": "Glow Frame Initiative",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://glow-frame.org/"
+      },
+      "patch": {
+        "description": "Glow Frame Initiative"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://glow-frame.org/",
+          "sourceLabel": "Official Glow Frame Initiative page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Glow Frame Initiative"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ef4c8c15-d4a1-4382-99fd-744e4685fdba",
+      "expectedIdentity": {
+        "name": "Glowmour Beauty Medispa",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://glowmourbeauty.com/"
+      },
+      "patch": {
+        "description": "Corrective skincare, laser hair reduction, electrolysis, sugaring, and therapeutic body treatments — built for melanin-rich skin.",
+        "phone": "(813)693-2328",
+        "tags": [
+          "laser hair removal",
+          "electrolysis",
+          "corrective skincare",
+          "sugaring",
+          "therapeutic massage"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://glowmourbeauty.com/",
+          "sourceLabel": "Official Glowmour Beauty Medispa - Best Medical Spa In Tampa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Corrective skincare, laser hair reduction, electrolysis, sugaring, and therapeutic body treatments — built for melanin-rich skin."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://glowmourbeauty.com/",
+          "sourceLabel": "Official Glowmour Beauty Medispa - Best Medical Spa In Tampa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone : (813)693-2328"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://glowmourbeauty.com/",
+          "sourceLabel": "Official Glowmour Beauty Medispa - Best Medical Spa In Tampa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Core Services: Laser Hair Removal Electrolysis (permanent hair removal) Corrective Skincare Programs Sugaring & Waxing Corrective Body Brightening"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8ac18260-3167-411d-a44b-2736f4c25f49",
+      "expectedIdentity": {
+        "name": "GMNI Apparel",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uSxZOk"
+      },
+      "patch": {
+        "description": "Clothing brand or apparel business (GMNI Apparel)."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.facebook.com/GMNIApparel/",
+          "sourceLabel": "Official GMNI Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: GMNI Apparel"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f7c20c6f-2110-4c60-87c5-2881d7eb8df9",
+      "expectedIdentity": {
+        "name": "God Made",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.godmademerch.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/share?text=Denimoi%20High%20Neck%20Hooded%20%26%20Sweatpants&url=https://godmademerch.com/products/denimoi-high-neck-hooded-sweatpants",
+        "pinterest": "https://pinterest.com/pin/create/button/?url=https://godmademerch.com/products/denimoi-high-neck-hooded-sweatpants&media=//godmademerch.com/cdn/shop/files/typorama283_1024x1024.png?v=1791121496&description=Denimoi%20High%20Neck%20Hooded%20%26%20Sweatpants"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://godmademerch.com/",
+          "sourceLabel": "Official God Made Merch, LLC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/share?text=Denimoi%20High%20Neck%20Hooded%20%26%20Sweatpants&url=https://godmademerch.com/products/denimoi-high-neck-hooded-sweatpants"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://godmademerch.com/",
+          "sourceLabel": "Official God Made Merch, LLC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/pin/create/button/?url=https://godmademerch.com/products/denimoi-high-neck-hooded-sweatpants&media=//godmademerch.com/cdn/shop/files/typorama283_1024x1024.png?v=1791121496&description=Denimoi%20High%20Neck%20Hooded%20%26%20Sweatpants"
+        }
+      ]
+    },
+    {
+      "businessId": "source_02747cd3-cfba-4c7f-b9df-04fd452fb6af",
+      "expectedIdentity": {
+        "name": "GoGo Junk Removal",
+        "city": "Atlanta",
+        "state": "GA",
+        "website": "https://gogojunkremoval.com/"
+      },
+      "patch": {
+        "hours": "Monday - Friday 8am - 6pm; Saturday 8am - 5pm; Sunday Closed",
+        "phone": "(678) 888-4871",
+        "youtube": "https://www.youtube.com/@gogojunkremoval1991",
+        "twitter": "https://x.com/GoGoJunkRemoval"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.gogojunkremoval.com/services",
+          "sourceLabel": "Official Junk Removal Services in Atlanta | All Service Types | GoGo | GoGo Junk Removal page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours of Operation Monday - Friday 8am - 6pm Saturday 8am - 5pm Sunday Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.gogojunkremoval.com/",
+          "sourceLabel": "Official Same-Day Junk Removal Atlanta &amp; Decatur GA | GoGo Junk Removal page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(678) 888-4871\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.gogojunkremoval.com/",
+          "sourceLabel": "Official Same-Day Junk Removal Atlanta &amp; Decatur GA | GoGo Junk Removal page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@gogojunkremoval1991"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.gogojunkremoval.com/",
+          "sourceLabel": "Official Same-Day Junk Removal Atlanta &amp; Decatur GA | GoGo Junk Removal page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/GoGoJunkRemoval"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2c01049b-8624-439c-ba29-d0d8689a1db4",
+      "expectedIdentity": {
+        "name": "Going Inward Wellness, LLC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.goinginward.com/"
+      },
+      "patch": {
+        "description": "Going Inward Wellness provides wellness services."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.goinginward.com/",
+          "sourceLabel": "Official Going Inward Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Going Inward Wellness"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8713c5e7-5244-47ec-bced-39a969c8b243",
+      "expectedIdentity": {
+        "name": "Going Inward Wellness, LLC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.goinginward.com/"
+      },
+      "patch": {
+        "description": "Holistic mental-health and wellness services including somatic therapy, trauma therapy, and coaching.",
+        "tags": [
+          "somatic therapy",
+          "trauma therapy",
+          "coaching"
+        ]
+      },
+      "fieldModes": {
+        "description": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.goinginward.com/",
+          "sourceLabel": "Official Going Inward Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Going Inward Wellness"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.goinginward.com/",
+          "sourceLabel": "Official Going Inward Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Going Inward Wellness"
+        }
+      ]
+    },
+    {
+      "businessId": "source_01bfa8aa-25bb-4325-a16f-3d2c2ada3119",
+      "expectedIdentity": {
+        "name": "Gojo Ethiopian Cafe and Restaurant",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://gojoethopianrestaurant.com/"
+      },
+      "patch": {
+        "description": "Authentic Ethiopian restaurant offering food, drinks, catering and private party options.",
+        "hours": "Sun, Mon, Wed, Thur, Fri, Sat 11:00 AM - 9:00 PM",
+        "phone": "(615)-332-0710"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gojoethopianrestaurant.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant in Nashville TN | Gojo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Authentic Ethiopian Restaurant in Nashville TN | Gojo Catering - Cater your birthday party, holiday party, corporate events, wedding festivities and more!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://gojoethopianrestaurant.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant in Nashville TN | Gojo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Sun, Mon, Wed, Thur, Fri, Sat 11:00 AM - 9:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://gojoethopianrestaurant.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant in Nashville TN | Gojo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us at (615)-332-0710"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8f586dc0-8bb0-4b3e-86ce-ee3d927a00ef",
+      "expectedIdentity": {
+        "name": "Golde",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://golde.co/"
+      },
+      "patch": {
+        "description": "Golde makes lattes, teas and tools for home café rituals.",
+        "hours": "Customer Care team availability: Monday-Thursday, 10am-5pm EST; Fridays, 10am-1pm EST.",
+        "tags": [
+          "lattes",
+          "teas",
+          "home café tools",
+          "vegan products",
+          "organic ingredients"
+        ],
+        "twitter": "https://twitter.com/hellogolde",
+        "pinterest": "https://pinterest.com/hellogolde"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://golde.co/",
+          "sourceLabel": "Official GOLDE &ndash; Golde page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Family founded in 2017, we make lattes, teas and tools of quality for your home café ritual."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://golde.co/pages/contact-us",
+          "sourceLabel": "Official Contact Us &ndash; Golde page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our team is available Monday-Thursday, 10am-5pm EST and Fridays, 10am-1pm EST."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://golde.co/",
+          "sourceLabel": "Official GOLDE &ndash; Golde page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Family founded in 2017, we make lattes, teas and tools of quality for your home café ritual."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://golde.co/",
+          "sourceLabel": "Official GOLDE &ndash; Golde page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/hellogolde"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://golde.co/",
+          "sourceLabel": "Official GOLDE &ndash; Golde page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/hellogolde"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f33c6bc8-946c-4524-85ab-711f8abf3da4",
+      "expectedIdentity": {
+        "name": "Golden Glam Boutique",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://goldenglamboutique.shop/"
+      },
+      "patch": {
+        "description": "Golden Glam Boutique is a classy, sassy & fun boutique catering to people of all sizes and carrying unique pieces.",
+        "hours": "Monday, closed Wednesday, 5:00pm - 7:00pm Saturday, 11:00am - 5:00pm Sunday, closed",
+        "phone": "662.314.6262",
+        "tags": [
+          "boutique",
+          "sunglasses",
+          "press on nails",
+          "preorders",
+          "gift shop"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://goldenglamboutique.shop/",
+          "sourceLabel": "Official Golden Glam Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Who we are...... Golden Glam Boutique is a classy, sassy & fun boutique catering to people of all sizes (little glam divas to curvy glam divas). We carry unique pieces that will make you \"stand out in a crowd\"."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://goldenglamboutique.shop/",
+          "sourceLabel": "Official Golden Glam Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday, closed Wednesday, 5:00pm - 7:00pm Saturday, 11:00am - 5:00pm Sunday, closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://goldenglamboutique.shop/",
+          "sourceLabel": "Official Golden Glam Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 662.314.6262"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://goldenglamboutique.shop/",
+          "sourceLabel": "Official Golden Glam Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Home Catalog New arrivals Gift Shop PICKUP ONLY Sunglasses SALE Press On Nails PREORDERS"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bf38c5d2-9def-444b-a2b5-57251a0df01b",
+      "expectedIdentity": {
+        "name": "Golden Path Home Care",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uMa1E5"
+      },
+      "patch": {
+        "description": "Golden Path Home Care provides non-medical in-home personal care, supportive home care, assisted living services, and CBRF training in Wisconsin.",
+        "phone": "(414) 236-5208"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://goldenpathhomecare.com/",
+          "sourceLabel": "Official Golden Path Home Care — In-Home Personal Care &amp; Assisted Living, Wisconsin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Golden Path Home Care, we are dedicated to providing compassionate, affordable, non-medical in-home care and assisted living services to individuals and families across Wisconsin."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://goldenpathhomecare.com/faq",
+          "sourceLabel": "Official Frequently Asked Questions | Golden Path Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us at 414-236-5208 or contact our care team."
+        }
+      ]
+    },
+    {
+      "businessId": "source_e26364d8-76c7-4ff3-8eec-660da629b681",
+      "expectedIdentity": {
+        "name": "Golden Years Senior Care & Consulting",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.gyseniorcare.com/"
+      },
+      "patch": {
+        "description": "Golden Years Senior Care & Consulting provides in-home senior care with a specialization in Alzheimer’s and dementia care, and offers personalized consulting and caregiver support.",
+        "tags": [
+          "companion care",
+          "alzheimer's & dementia care",
+          "respite care",
+          "in and post-hospital care",
+          "housekeeping",
+          "personal care services",
+          "bathing assistance",
+          "medication reminders",
+          "dressing assistance",
+          "toileting assistance",
+          "exercise assistance",
+          "errands/prescription pick-up','meal preparation','grocery shopping','housecleani"
+        ],
+        "facebook": "https://www.facebook.com/share/1BqXZLaLMi/?mibextid=wwXIfr",
+        "instagram": "http://www.instagram.com/goldenyearsseniorcare"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gyseniorcare.com/",
+          "sourceLabel": "Official Golden Years Senior Care &amp; Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Golden Years combines compassionate in-home support with dementia-informed guidance to help families understand what is happening, make informed decisions, and provide care that meets their loved one's changing needs."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://gyseniorcare.com/care-services/",
+          "sourceLabel": "Official Care Services - Golden Years Senior Care &amp; Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Care Service Options Bathing Assistance Medication Reminders Dressing Assistance Toileting Assistance Exercise Assistance Errands/Prescription Pick-Up Meal Preparation Grocery Shopping Housekeeping Companionship (Even in the middle of the night)\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://gyseniorcare.com/",
+          "sourceLabel": "Official Golden Years Senior Care &amp; Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/share/1BqXZLaLMi/?mibextid=wwXIfr"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://gyseniorcare.com/",
+          "sourceLabel": "Official Golden Years Senior Care &amp; Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://www.instagram.com/goldenyearsseniorcare"
+        }
+      ]
+    },
+    {
+      "businessId": "source_61875747-18f1-4908-92fa-447289a4001a",
+      "expectedIdentity": {
+        "name": "Gomez Design Studio LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.gomezdesignstudio.com/"
+      },
+      "patch": {
+        "description": "Design studio offering services and updates; currently taking a break and inviting visitors to join the mailing list or follow on Instagram."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gomezdesignstudio.com/",
+          "sourceLabel": "Official Gomez Design Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Gomez Design Studio 0 HELLO! I am taking a break and will be back soon with some pretty big changes! In the meantime, you can join the mailing list or follow along on Instagram. Join our community"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a8a22526-bcb4-487e-bcf7-2e4163679abd",
+      "expectedIdentity": {
+        "name": "Gomez Engineering, Architecture & Survey, PLLC",
+        "city": "Staten Island",
+        "state": "NY",
+        "website": "https://www.gomezengineering.com/"
+      },
+      "patch": {
+        "description": "Gomez Engineering, Architecture & Survey is a SBE/MBE/DBE certified Professional Limited Liability Company in New York & New Jersey providing consulting in civil engineering, site design, land development, construction survey, and drafting services.",
+        "phone": "1-201-213-8162",
+        "facebook": "https://www.facebook.com/wix",
+        "twitter": "https://twitter.com/Wix"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gomezengineering.com/",
+          "sourceLabel": "Official Engineering | Gomez Engineering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: MISSION Gomez Engineering, Architecture & Survey is a SBE/MBE/DBE certified Professional Limited Liability Company in New York & New Jersey aiming to provide the highest quality of consulting to clients throughout the Tri-State Area. We specialize in Civil Engineering, Site Design, Land Development, Construction Survey, and Drafting Services."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.gomezengineering.com/contact",
+          "sourceLabel": "Official Contact | Gomez Engineering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 1-201-213-8162"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.gomezengineering.com/",
+          "sourceLabel": "Official Engineering | Gomez Engineering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/wix"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.gomezengineering.com/",
+          "sourceLabel": "Official Engineering | Gomez Engineering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/Wix"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f84e41c9-de9a-4846-95cc-003b9bcfaed1",
+      "expectedIdentity": {
+        "name": "Good Life Hair Studio",
+        "city": "Baton Rouge",
+        "state": "LA",
+        "website": "https://www.goodlifehairstudio.com/"
+      },
+      "patch": {
+        "description": "Goodlife Hair Studio provides hair salon and barber services.",
+        "hours": "Tue 8:00 am - 6:30 pm; Wed 8:00 am - 6:30 pm; Thu 8:00 am - 6:30 pm; Fri 8:00 am - 6:30 pm; Sat 6:00 am - 3:30 pm; Sun Closed; Mon Closed",
+        "phone": "TEL.225-223-0270",
+        "tags": [
+          "haircuts",
+          "razor shave",
+          "beard shape up",
+          "eyebrow arch",
+          "kids haircuts",
+          "beard shape-up"
+        ],
+        "facebook": "https://www.facebook.com/cutmasterflexx/",
+        "instagram": "https://www.instagram.com/goodlifehairstudio/"
+      },
+      "fieldModes": {
+        "description": "fill",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.goodlifehairstudio.com/",
+          "sourceLabel": "Official Home | Good Life Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: GOODLIFE HAIR STUDIO Welcome to the Good Life 6151 Mickens Rd Baton Rouge, Louisiana 70811"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.goodlifehairstudio.com/",
+          "sourceLabel": "Official Home | Good Life Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tuesday 8:00 am - 6:30 pm Wednesday 8:00 am - 6:30 pm Thursday 8:00 am - 6:30 pm Friday 8:00 am - 6:30 pm Saturday 6 :00 am - 3 :30 pm Sunday &Monday Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.goodlifehairstudio.com/",
+          "sourceLabel": "Official Home | Good Life Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: tremainewalker89@yahoo .com | TEL.225-223-0270"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.goodlifehairstudio.com/",
+          "sourceLabel": "Official Home | Good Life Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services Signature Haircuts For Kids (age 11 years & under) 30 mins Goodlife Cut (Wash, Cut, Razor Shave, and Hot Towel) 45 mins Legendary Razor Shave or Beard Shape Up 15 mins Signature Haircuts For Kids (age 12 - 17 years old) 30 mins Legendary Cut (Wash, Cut, Hot Towel, Shave, and Bigen) 60 mins Eyebrow Arch 15 mins Signature Adult Cut (w/o shave or beard) 30 mins"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.goodlifehairstudio.com/",
+          "sourceLabel": "Official Home | Good Life Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/cutmasterflexx/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.goodlifehairstudio.com/",
+          "sourceLabel": "Official Home | Good Life Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/goodlifehairstudio/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f6b720d9-40dc-41de-9270-96598402fe9b",
+      "expectedIdentity": {
+        "name": "Goods Financial Services",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://www.goodsfinancialservices.com/"
+      },
+      "patch": {
+        "hours": "Mon-Fri: 10:00 AM - 6:00 PM",
+        "phone": "(210) 966-4090"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.goodsfinancialservices.com/contact",
+          "sourceLabel": "Official Contact | DALE GOODS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Mon-Fri: 10:00 AM - 6:00 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.goodsfinancialservices.com/",
+          "sourceLabel": "Official Home | DALE GOODS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact Office: (210) 966-4090\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_01c6a124-e21e-4783-bce5-d73a46405bac",
+      "expectedIdentity": {
+        "name": "Goody2Treats",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.goody2treats.store/"
+      },
+      "patch": {
+        "hours": "MONDAY- CLOSED TUESDAY- 12:00PM-7:00PM WEDNESDAY 12:00PM-7:00PM THURSDAY 12:00PM-7:00PM FRIDAY 12:00PM-7:00PM SATURDAY 12:00PM-7:00PM SUNDAY 12:00PM-6:00PM *WE ARE CLOSED EVERY THIRD SUNDAY",
+        "phone": "(317)389-8564"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.goody2treats.store/contact-us",
+          "sourceLabel": "Official Contact Us | Goody2Treats page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: STORE HOURS MONDAY- CLOSED TUESDAY- 12:00PM-7:00PM WEDNESDAY 12:00PM-7:00PM THURSDAY 12:00PM-7:00PM FRIDAY 12:00PM-7:00PM SATURDAY 12:00PM-7:00PM SUNDAY 12:00PM-6:00PM *WE ARE CLOSED EVERY THIRD SUNDAY"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.goody2treats.store/contact-us",
+          "sourceLabel": "Official Contact Us | Goody2Treats page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (317)389-8564"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b705feb0-3e98-487f-93a5-0f0f42c94cd8",
+      "expectedIdentity": {
+        "name": "Goody Gourmets",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hmfePj"
+      },
+      "patch": {
+        "hours": "Monday - Thursday: 10:30 am - 6:00 pm; Friday: 10:30 am - 7:00 pm; Saturday: 10:30 am - 5:00 pm; Sunday: Closed",
+        "twitter": "https://twitter.com/GoodyGourmets"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://goodygourmets.com/",
+          "sourceLabel": "Official Goody Gourmets page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Location & Hours 6369 N Green Bay Ave Monday - Thursday: 10:30 am - 6:00 pm Friday: 10: 30 am - 7:00 pm Saturday: 10:30 am - 5:00 pm Sunday: Closed"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://goodygourmets.com/",
+          "sourceLabel": "Official Goody Gourmets page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/GoodyGourmets"
+        }
+      ]
+    },
+    {
+      "businessId": "source_524a2860-6e18-47ef-a978-79b776024740",
+      "expectedIdentity": {
+        "name": "Gordon Training Systems",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://www.gordonsystems.org/"
+      },
+      "patch": {
+        "tags": [
+          "public safety training",
+          "corporate training",
+          "law enforcement training",
+          "professional security training",
+          "personal protection",
+          "martial arts",
+          "combat sports coaching"
+        ]
+      },
+      "fieldModes": {
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.gordonsystems.org/",
+          "sourceLabel": "Official GORDON TRAINING SYSTEMS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CORPORATE & ORGANIZATION Corporate, and organization events, services, and training. Button LAW ENFORCEMENT & PUBLIC SAFETY Law Enforcement & Public Safety training. Button PROFESSIONAL SECURITY Professional Security services and training. Button PERSONAL PROTECTION Personal Safety and Self Defense training for individuals and groups. Button MARTIAL ARTS Traditional and Modern Disciplines to teach you how to dicipline the mind, the body, and emotional wellness. Button COMBAT SPORTS Training, coachng and coach certification for combat sports athlete and coah in Boxing, Kickboxing, and MMA."
+        }
+      ]
+    },
+    {
+      "businessId": "national-375aa0524bf4e6f12d638caa",
+      "expectedIdentity": {
+        "name": "Gorgeous Looks Salon",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://www.gorgeouslooks-salon.com/"
+      },
+      "patch": {
+        "description": "Beauty salon located in Minneapolis."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gorgeouslooks-salon.com/",
+          "sourceLabel": "Official Gorgeous Looks Salon | Beauty Salon | Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Gorgeous Looks Salon | Beauty Salon | Minneapolis"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7f3916c2-7c72-4b8b-920d-c41a6ed5d15e",
+      "expectedIdentity": {
+        "name": "Gospel Sounds Radio Network",
+        "city": "Mobile",
+        "state": "AL",
+        "website": "https://www.mygsrn.org/"
+      },
+      "patch": {
+        "description": "An online gospel radio station offering gospel music and a schedule of broadcasters.",
+        "tags": [
+          "online gospel radio",
+          "music submission"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.mygsrn.org/",
+          "sourceLabel": "Official Gospel Sounds Radio Network page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Gospel Sounds Radio Network The Best Online Gospel Radio Station!"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.mygsrn.org/",
+          "sourceLabel": "Official Gospel Sounds Radio Network page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Gospel Sounds Radio Network The Best Online Gospel Radio Station! To submit music, please email us at mygsrn@gmail.com."
+        }
+      ]
+    },
+    {
+      "businessId": "source_b4ddccf3-b1c2-4eba-bcaf-c72e8936d8e0",
+      "expectedIdentity": {
+        "name": "Grace Baptist Church",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "http://gracembchurch.org/"
+      },
+      "patch": {
+        "hours": "SUNDAY 7:30 am Faith Clinic; 9:00 am Sunday School; 10:30 am Morning Worship. WEDNESDAY 6:30 am Morning Prayer Call-In; 7:00 pm Bible Study.",
+        "phone": "(901) 527-9144 Office"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.gracembchurch.org/events",
+          "sourceLabel": "Official Events | Grace Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: SERVICES & EVENTS SUNDAY 7:30 am Faith Clinic 9:00 am Sunday School 10:30 am Morning Worship WEDNESDAY 6:30 am Morning Prayer Call-In Pray Line: 515. 604.9094 Code: 742 231 538 7:00 pm Bible Study"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.gracembchurch.org/",
+          "sourceLabel": "Official Grace Missionary Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (901) 527-9144 Office (901) 543-0715 Fax"
+        }
+      ]
+    },
+    {
+      "businessId": "source_10241283-cac1-4109-b118-ce1201873b34",
+      "expectedIdentity": {
+        "name": "Grand Slam Family Club Corporation",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://gsbanquethall.com/"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/gsbanquethalls/",
+        "facebook": "https://www.facebook.com/Hallgs/"
+      },
+      "fieldModes": {
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://gsbanquethall.com/web/",
+          "sourceLabel": "Official GS Banquet Hall - Banquet Hall, event decoration, party rental page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/gsbanquethalls/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://gsbanquethall.com/web/",
+          "sourceLabel": "Official GS Banquet Hall - Banquet Hall, event decoration, party rental page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Hallgs/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4fa14a7b-ee38-41d2-8bf8-dd3bc96fb29f",
+      "expectedIdentity": {
+        "name": "Grant Images Photography",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3yc2NLF"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/grantimages77/",
+        "instagram": "https://www.instagram.com/grantimages/",
+        "pinterest": "https://www.pinterest.com/grantimages77/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://grantimagesllc.zenfolio.com/",
+          "sourceLabel": "Official Grant Images LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/grantimages77/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://grantimagesllc.zenfolio.com/",
+          "sourceLabel": "Official Grant Images LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/grantimages/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://grantimagesllc.zenfolio.com/",
+          "sourceLabel": "Official Grant Images LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/grantimages77/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b9af85d2-98c0-45ac-8a90-09b902622cc7",
+      "expectedIdentity": {
+        "name": "Grape Escape",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3yaImz2"
+      },
+      "patch": {
+        "description": "We offer youth and adult painting classes, where participants follow step by step instructions to create their very own masterpiece!",
+        "phone": "(920) 370-2189",
+        "tags": [
+          "youth painting classes",
+          "adult painting classes",
+          "private painting classes",
+          "public painting classes",
+          "mobile painting classes"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.grapescapellc.com/",
+          "sourceLabel": "Official Grape Escape page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We come to YOU! We offer youth and adult painting classes, where participants follow step by step instructions to create their very own masterpiece!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.grapescapellc.com/",
+          "sourceLabel": "Official Grape Escape page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Milwaukee, WI (920) 370-2189 grapescapellc@yahoo.com"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.grapescapellc.com/",
+          "sourceLabel": "Official Grape Escape page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: We come to YOU! We offer youth and adult painting classes, where participants follow step by step instructions to create their very own masterpiece!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bf0d76e3-90d8-4279-8648-72e057228740",
+      "expectedIdentity": {
+        "name": "Graphic Design MMD",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.graphicdesignmmd.com/"
+      },
+      "patch": {
+        "description": "Graphic Design MMD offers unique and personalized custom design for public and private firms, as well as for non-profit organizations. The Studio develops both design and production of customized print, in the form of marketing campaigns, logos, brochures, newsletters, posters, and also matching websites."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://graphicdesignmmd.com/",
+          "sourceLabel": "Official Graphic and Web Design | New York, New York page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Graphic Design MMD offers unique and personalized custom design for public and private firms, as well as for non-profit organizations. With the client’s concept as the starting point, the Studio develops both design and production of customized print, in the form of marketing campaigns, logos, brochures, newsletters, posters, and also matching websites.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_b2ff0b35-d4d1-4369-b655-ab272e47041f",
+      "expectedIdentity": {
+        "name": "Grassroots Strategies LLC",
+        "city": "Forest Hills",
+        "state": "NY",
+        "website": "https://www.grassroots.nyc/"
+      },
+      "patch": {
+        "tags": [
+          "strategic communications",
+          "community engagement",
+          "public relations",
+          "government relations",
+          "research & strategic planning",
+          "creative & design services",
+          "branding development",
+          "copywriting & transcreation",
+          "public & media relations",
+          "direct mail service",
+          "website development",
+          "email marketing"
+        ],
+        "twitter": "https://x.com/josebayona/",
+        "facebook": "https://www.facebook.com/grassrootsnyc"
+      },
+      "fieldModes": {
+        "tags": "append",
+        "twitter": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://grassroots.nyc/our-services/",
+          "sourceLabel": "Official Our Services &#8211; Grassroots Strategies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Agency Capabilities RESEARCH & STRATEGIC PLANNING CREATIVE & DESIGN SERVICES BRANDING DEVELOPMENT COPYWRITING & TRANSCREATION (COPY ADAPTATION & TRANSLATION) PUBLIC & MEDIA RELATIONS DIRECT MAIL SERVICE WEBSITE DEVELOPMENT, SEO, & SEM EMAIL MARKETING DIGITAL & SOCIAL MEDIA MARKETING AUDIO, VISUAL & BROADCAST PRODUCTION ECM MEDIA PLANNING & BUYING PHOTOGRAPHY SERVICES PRINTING SERVICES LARGE FORMAT PRINTING TURN-KEY EVENTS & EXPERIENTIAL MARKETING"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://grassroots.nyc/",
+          "sourceLabel": "Official Grassroots Strategies &#8211; Grassroots Strategies &#8211; Political and Community Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/josebayona/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://grassroots.nyc/",
+          "sourceLabel": "Official Grassroots Strategies &#8211; Grassroots Strategies &#8211; Political and Community Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/grassrootsnyc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3b8d9899-6de4-4d1b-9024-bc912434f961",
+      "expectedIdentity": {
+        "name": "Grassrootz Bookstore & Juice Bar",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://grassrootzbookstore.com/"
+      },
+      "patch": {
+        "description": "Grassrootz Bookstore is a bookstore and community hub in downtown Phoenix.",
+        "hours": "OPEN SEVEN DAYS A WEEK 9am-5-pm",
+        "phone": "480-442-0293"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://grassrootzbookstore.com/",
+          "sourceLabel": "Official Grassrootz Bookstore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Eastlake Park's Own Black & Activist-Owned Bookstore! YOUR LOCAL DOWNTOWN PHOENIX COMMUNITY HUB!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://grassrootzbookstore.com/",
+          "sourceLabel": "Official Grassrootz Bookstore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: OPEN SEVEN DAYS A WEEK 9am-5-pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://grassrootzbookstore.com/",
+          "sourceLabel": "Official Grassrootz Bookstore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Grassrootz Bookstore 480-442-0293 1145 E Washington St #200 Phoenix, AZ 85034"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e950f6d5-d47c-4625-a1f7-548e3421ee8c",
+      "expectedIdentity": {
+        "name": "Grateful Girls",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uMal5L"
+      },
+      "patch": {
+        "description": "Grateful Girls is a non-profit organization that inspires, motivates, and encourages girls, teens, and women and serves those that have escaped the sex-trafficking industry.",
+        "phone": "(414) 240-2804",
+        "twitter": "https://twitter.com/GratefulGirls1"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gratefulgirls.org/",
+          "sourceLabel": "Official Serving Survivors Of Sex Trafficking | Grateful Girls, Inc. | Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Grateful Girls is a non-profit organization that is geared to inspire, motivate and encourage girls, teens and women of all ages and serve those that have escaped the sex-trafficking industry."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.gratefulgirls.org/",
+          "sourceLabel": "Official Serving Survivors Of Sex Trafficking | Grateful Girls, Inc. | Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (414) 240-2804"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.gratefulgirls.org/",
+          "sourceLabel": "Official Serving Survivors Of Sex Trafficking | Grateful Girls, Inc. | Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/GratefulGirls1"
+        }
+      ]
+    },
+    {
+      "businessId": "source_56282cdc-da8a-4fd5-b144-9a3fac5b9c31",
+      "expectedIdentity": {
+        "name": "GR Design Architecture PLLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://grdesignlab.com/"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/grdesignlab/"
+      },
+      "fieldModes": {
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://grdesignlab.com/",
+          "sourceLabel": "Official GR Design Lab page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/grdesignlab/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_652c4223-3cc5-4746-874f-9ebbb4223272",
+      "expectedIdentity": {
+        "name": "Greater Mt. Moriah Missionary Baptist Church",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://greatermtmoriah.com/"
+      },
+      "patch": {
+        "hours": "Mon 09:00 am – 03:00 pm; Tue Closed; Wed 09:00 am – 03:00 pm; Thu Closed; Fri 09:00 am – 12:00 pm; Sat Closed; Sun Closed; CLOSED MAJOR HOLIDAYS",
+        "phone": "901-775-3737",
+        "tags": [
+          "children's church",
+          "praise dance",
+          "health ministry",
+          "worship services"
+        ]
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://greatermtmoriah.com/",
+          "sourceLabel": "Official Greater Mt Moriah Baptist Church - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office Hours Mon 09:00 am – 03:00 pm Tue Closed Wed 09:00 am – 03:00 pm Thu Closed Fri 09:00 am – 12:00 pm Sat Closed Sun Closed CLOSED MAJOR HOLIDAYS"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://greatermtmoriah.com/",
+          "sourceLabel": "Official Greater Mt Moriah Baptist Church - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Church Telephone/Voice Message: 901.775.3737"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://greatermtmoriah.com/",
+          "sourceLabel": "Official Greater Mt Moriah Baptist Church - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Greater Mt. Moriah seeks to grow individuals in their faith through various ministries. Youth enjoy participating in Children's Church and Praise Dance ministries. The Health Ministry is designed to strengthen the body as well as the spirit."
+        }
+      ]
+    },
+    {
+      "businessId": "source_735d5724-4324-49b6-9d11-c92a249d1ad0",
+      "expectedIdentity": {
+        "name": "Greater Payne Chapel African Methodist Episcopal",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.greaterpaynechapel-amec.org/contact"
+      },
+      "patch": {
+        "description": "Greater Payne Chapel African Methodist Episcopal Church is a church serving the Memphis, Tennessee community.",
+        "phone": "901-725-7611",
+        "tags": [
+          "church",
+          "religious services"
+        ],
+        "twitter": "http://www.twitter.com/wix"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.greaterpaynechapel-amec.org/about",
+          "sourceLabel": "Official about | Greater Payne chapel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Greater Payne Chapel African Methodist Episcopal Church Memphis, Tennessee 38107"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.greaterpaynechapel-amec.org/contact",
+          "sourceLabel": "Official contact | Greater Payne chapel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tel: 901-725-7611"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.greaterpaynechapel-amec.org/about",
+          "sourceLabel": "Official about | Greater Payne chapel page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Greater Payne Chapel African Methodist Episcopal Church"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.greaterpaynechapel-amec.org/contact",
+          "sourceLabel": "Official contact | Greater Payne chapel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://www.twitter.com/wix"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c3ea883c-2f58-45cc-9b26-8f5bc14ddfa1",
+      "expectedIdentity": {
+        "name": "GREAT KITCHEN SUPPORT CORP",
+        "city": "BRONX",
+        "state": "NY",
+        "website": "https://www.greatkitchensupport.com/"
+      },
+      "patch": {
+        "hours": "(718) 980-8699 info@greatkitchensupport.com Hours",
+        "phone": "646-891-6670",
+        "youtube": "https://www.youtube.com/channel/UCFSRo0xFH44ANnukqTblB0w"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.greatkitchensupport.com/",
+          "sourceLabel": "Official GREAT KITCHEN SUPPORT page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: (718) 980-8699 info@greatkitchensupport.com Hours"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.greatkitchensupport.com/",
+          "sourceLabel": "Official GREAT KITCHEN SUPPORT page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 646-891-6670"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.greatkitchensupport.com/",
+          "sourceLabel": "Official GREAT KITCHEN SUPPORT page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCFSRo0xFH44ANnukqTblB0w"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c4282af0-cf56-4170-b02e-8cce008f8479",
+      "expectedIdentity": {
+        "name": "Green District Salads",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://gdsalads.com/"
+      },
+      "patch": {
+        "description": "Green District offers salads, wraps, grain bowls, Toasty’s, and catering.",
+        "phone": "812.712.4351",
+        "tags": [
+          "salads",
+          "wraps",
+          "grain bowls",
+          "catering"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gdsalads.com/",
+          "sourceLabel": "Official Green District - Salads, Grain Bowls, Wraps, &amp; Toasty&#039;s - Catering too! - Green District page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Explore Our Menu Salads, Wraps, Grain Bowls, and Toasty’s\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://gdsalads.com/locations/",
+          "sourceLabel": "Official Locations - Green District page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"phone 812.712.4351\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://gdsalads.com/",
+          "sourceLabel": "Official Green District - Salads, Grain Bowls, Wraps, &amp; Toasty&#039;s - Catering too! - Green District page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Explore Our Menu Salads, Wraps, Grain Bowls, and Toasty’s\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_af7708b0-0115-4196-a78b-fa9516bde4b7",
+      "expectedIdentity": {
+        "name": "Greener County Construction Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.greenercounty.com/"
+      },
+      "patch": {
+        "description": "Welcome to Greener County Construction Inc",
+        "hours": "Mon 09:00 am – 05:00 pm; Tue 09:00 am – 05:00 pm; Wed 09:00 am – 05:00 pm; Thu 09:00 am – 05:00 pm; Fri 09:00 am – 05:00 pm; Sat Closed; Sun Closed",
+        "phone": "(212) 470-2446",
+        "tags": [
+          "int/ext renovations"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://greenercounty.com/",
+          "sourceLabel": "Official Int/Ext Renovations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Greener County Construction Inc"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://greenercounty.com/contact",
+          "sourceLabel": "Official Construction Contact | Greener County Construction Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 09:00 am – 05:00 pm Tue 09:00 am – 05:00 pm Wed 09:00 am – 05:00 pm Thu 09:00 am – 05:00 pm Fri 09:00 am – 05:00 pm Sat Closed Sun Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://greenercounty.com/",
+          "sourceLabel": "Official Int/Ext Renovations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (212) 470-2446"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://greenercounty.com/",
+          "sourceLabel": "Official Int/Ext Renovations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Int/Ext Renovations"
+        }
+      ]
+    },
+    {
+      "businessId": "national-ca1766355da1ffef7437c230",
+      "expectedIdentity": {
+        "name": "Green Garden Bakery",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://www.greengardenbakery.org/"
+      },
+      "patch": {
+        "description": "Green Garden Bakery grows vegetables in a community garden, bakes them into vegetable-based desserts for every diet (vegan, gluten free, sugar free), and markets them using sustainable practices.",
+        "twitter": "https://twitter.com/GGBakeryMpls"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.greengardenbakery.org/about-us.html",
+          "sourceLabel": "Official About Us - Green Garden Bakery - Sustainable Products Created in Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Green Garden Bakery grows vegetables in our community garden, bakes them into healthy vegetable-based desserts for every diet (vegan, gluten free, sugar free), and markets them using sustainable practices.\","
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.greengardenbakery.org/",
+          "sourceLabel": "Official Green Garden Bakery - Sustainable Products Created in Minneapolis - Green Garden Bakery page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/GGBakeryMpls"
+        }
+      ]
+    },
+    {
+      "businessId": "source_509ba0bd-cf91-438c-9442-1e213f16e030",
+      "expectedIdentity": {
+        "name": "Green Garden Bakery",
+        "city": "Minneapolis",
+        "state": "Minnesota",
+        "website": "http://www.greengardenbakery.org/"
+      },
+      "patch": {
+        "description": "Green Garden Bakery grows vegetables in a community garden, bakes them into vegetable-based desserts for every diet (vegan, gluten free, sugar free), and markets them using sustainable practices.",
+        "twitter": "https://twitter.com/GGBakeryMpls"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.greengardenbakery.org/about-us.html",
+          "sourceLabel": "Official About Us - Green Garden Bakery - Sustainable Products Created in Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Green Garden Bakery grows vegetables in our community garden, bakes them into healthy vegetable-based desserts for every diet (vegan, gluten free, sugar free), and markets them using sustainable practices.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.greengardenbakery.org/",
+          "sourceLabel": "Official Green Garden Bakery - Sustainable Products Created in Minneapolis - Green Garden Bakery page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/GGBakeryMpls"
+        }
+      ]
+    },
+    {
+      "businessId": "source_da29ae80-4621-4020-8716-f0444d956801",
+      "expectedIdentity": {
+        "name": "Green Light Expediting, LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://greenlightexpediting.com/"
+      },
+      "patch": {
+        "description": "Construction consulting and permit expediting; helps projects obtain necessary approvals and secures approvals from city agencies including Department of Transportation, Landmarks Preservation Commission, Fire Department, and Department of Environmental Protection.",
+        "phone": "718-392-1969",
+        "tags": [
+          "permit expediting",
+          "construction consulting",
+          "dob filings",
+          "demolition approval",
+          "certificate of occupancy",
+          "letter of completion",
+          "place of assembly approval",
+          "equipment use permit",
+          "after hour variance",
+          "fdny rooftop access variance",
+          "post approval amendments"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://greenlightexpediting.com/about",
+          "sourceLabel": "Official About &mdash; Green Light Expediting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: With decades of combined experience in construction consulting and permit expediting, we help projects get the greenlight to move forward."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://greenlightexpediting.com/about",
+          "sourceLabel": "Official About &mdash; Green Light Expediting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: p: 718-392-1969"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://greenlightexpediting.com/services",
+          "sourceLabel": "Official Services &mdash; Green Light Expediting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NEW BUILDING MAJOR ALTERATIONS (Alt. 1), OTHER ALTERATIONS (Alt. 2), MINOR ALTERATIONS (Alt. 3) DEMOLITION APPROVAL CERTIFICATE OF OCCUPANCY LETTER OF COMPLETION PLACE OF ASSEMBLY APPROVAL AND PERMIT EQUIPMENT USE PERMIT AFTER HOUR VARIANCE FDNY ROOFTOP ACCESS VARIANCE POST APPROVAL AMENDMENTS In addition to DOB filings, Green Light can secure approvals from other city agencies including: Department of Transportation Landmarks Preservation Commission Fire Department Department of Environmental Protection"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1c06b8e5-e699-48c0-ad41-330b98126fec",
+      "expectedIdentity": {
+        "name": "Green Network New York LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.greennetworkny.com/"
+      },
+      "patch": {
+        "description": "Collecting and recycling used cooking oil and grease trap services for restaurants in New York and nearby areas."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.greennetworkny.com/about-us",
+          "sourceLabel": "Official About Us - Green Network New York, LLC | Recycling Your Cooking Oil for a Greener Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Collecting and Recycling Used Oil, NY Green Network New York has more than ten years of experience. We manage your used cooking oil and grease trap so you can focus on serving your customers. Through our services, we are able to help save the planet and assist restaurant owners in the city of New York and nearby areas.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_751550b8-5033-4074-9b0b-4db2a1c654a7",
+      "expectedIdentity": {
+        "name": "Green Quality Air",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://www.greenqualityair.com/"
+      },
+      "patch": {
+        "description": "Green Quality Air provides air duct and dryer vent cleaning services in Texas."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://greenqualityair.com/",
+          "sourceLabel": "Official Air Duct &amp; Dryer Vent Cleaning in Texas | Green Quality Air page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Air Duct & Dryer Vent Cleaning in Texas | Green Quality Air"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5ef38a2d-449a-4005-bb8d-ce3fc3b30d59",
+      "expectedIdentity": {
+        "name": "Greens and Things",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3eLAJHn"
+      },
+      "patch": {
+        "description": "Soul food restaurant in Milwaukee, WI."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.facebook.com/greensandthings52/",
+          "sourceLabel": "Official Greens and Things Soul Food | Milwaukee WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Greens and Things Soul Food | Milwaukee WI"
+        }
+      ]
+    },
+    {
+      "businessId": "source_472314fe-1409-473b-9f55-3d4a723f65c4",
+      "expectedIdentity": {
+        "name": "Green Shareen Design",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.greenshareendesign.com/"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/thesaltlightdesign",
+        "youtube": "http://youtube.com/greenshareendesign"
+      },
+      "fieldModes": {
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.thesaltandlightdesign.com/",
+          "sourceLabel": "Official Salt &amp; Light Design Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/thesaltlightdesign"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.thesaltandlightdesign.com/",
+          "sourceLabel": "Official Salt &amp; Light Design Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: http://youtube.com/greenshareendesign"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bc93cb9f-9bd3-4c11-9176-1a7e488b5c8c",
+      "expectedIdentity": {
+        "name": "Green Soul",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "http://greensoulliving.com/gift-cards/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/greensoulliving"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "http://greensoulliving.com/gift-cards/",
+          "sourceLabel": "Official GIFT CARDS &#8211; Green Soul page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/greensoulliving"
+        }
+      ]
+    },
+    {
+      "businessId": "source_20a5f52e-80bf-4835-bb89-23bce0a5ac3f",
+      "expectedIdentity": {
+        "name": "Greenwood Rising Black Wall St. History Center",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://www.greenwoodrising.org/"
+      },
+      "patch": {
+        "description": "Greenwood Rising is a museum and history center that tells the story of Tulsa’s Historic Greenwood District and the Tulsa Race Massacre.",
+        "hours": "Sunday | 10am - 7pm Monday | Closed Tuesday | 10am - 7pm Wednesday | 10am - 7pm Thursday | 10am - 7pm Friday | 10am - 7pm Saturday | 10am - 7pm",
+        "phone": "(539) 867-3173",
+        "instagram": "https://www.instagram.com/greenwood_rising/",
+        "facebook": "https://www.facebook.com/greenwoodrising",
+        "tiktok": "https://www.tiktok.com/@greenwood.rising",
+        "youtube": "https://www.youtube.com/@GreenwoodRising"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.greenwoodrising.org/about",
+          "sourceLabel": "Official Greenwood Rising | About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Greenwood Rising , a nonprofit qualified under Section 501(c)(3) of the Internal Revenue Code, is a museum—an award-winning, world-class history center—that tells the story of Tulsa’s Historic Greenwood District in a holistic, experiential way.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.greenwoodrising.org/",
+          "sourceLabel": "Official Greenwood Rising page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon Closed Tue 10am - 7pm Wed 10am - 7pm Thu 10am - 7pm Fri 10am - 7pm Sat 10am - 7pm Sun 10am - 7pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.greenwoodrising.org/",
+          "sourceLabel": "Official Greenwood Rising page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(539) 867-3173\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.greenwoodrising.org/",
+          "sourceLabel": "Official Greenwood Rising page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/greenwood_rising/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.greenwoodrising.org/",
+          "sourceLabel": "Official Greenwood Rising page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/greenwoodrising"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.greenwoodrising.org/",
+          "sourceLabel": "Official Greenwood Rising page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@greenwood.rising"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.greenwoodrising.org/",
+          "sourceLabel": "Official Greenwood Rising page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@GreenwoodRising"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d8462fb0-67a8-41d9-8dbe-c1bb94329515",
+      "expectedIdentity": {
+        "name": "Grubaholics",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://grubaholicsphilly.com/"
+      },
+      "patch": {
+        "description": "Philly Born caribbean food × Crafted with Love × where all grub addicts are welcome!",
+        "phone": "(267)900-4782",
+        "tags": [
+          "jerk chicken cheesesteak",
+          "curry chicken cheesesteak",
+          "pulled jerk chicken",
+          "wings",
+          "oxtail",
+          "curry goat",
+          "jerk salmon",
+          "shrimp",
+          "braised oxtail",
+          "mac n' cheese",
+          "tacos",
+          "nachos"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.grubaholicsphilly.com/",
+          "sourceLabel": "Official Grubaholics page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: WELCOME GRUB ADDICTS! Philly Born caribbean food × Crafted with Love × where all grub addicts are welcome!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.grubaholicsphilly.com/",
+          "sourceLabel": "Official Grubaholics page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CALL US: (267)900-4782"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.grubaholicsphilly.com/",
+          "sourceLabel": "Official Grubaholics page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: MAIN DISH Jerk Chicken Cheesesteak Our signature sandwich made with fresh chicken breasts, marinated in our jerk herbs and spices chopped and served with pepper jack cheese and our signature jerk sauce on an Italian roll Original Philly Cheesesteak Thinly sliced beef topped with onions, peppers and cheese. Curry Chicken Cheesesteak Fresh chicken breasts, marinated in our curry herbs and spices, chopped and served with pepper jack cheese on an Italian roll. Pulled Jerk Chicken Sliders Our signature pulled jerk chicken cooked with scallions, cilantro and onions and sauced with our signature jerk"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2661ce26-e175-4b1a-894a-96617e9cfc43",
+      "expectedIdentity": {
+        "name": "GSS Security Services, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.gss-security.com/"
+      },
+      "patch": {
+        "description": "GSS Security Services, Inc. provides a variety of professionally managed security programs and services for individuals, companies, facilities, organizations and governmental offices.",
+        "tags": [
+          "special events",
+          "executive protection",
+          "hospitality",
+          "k9 bomb detection",
+          "emergency action plans",
+          "retail loss prevention",
+          "surveillance",
+          "solar powered mobile surveillance",
+          "remote surveillance trailer",
+          "wall mounted unit"
+        ],
+        "facebook": "https://www.facebook.com/pages/GSS-Security-Services-Inc/387789124651120",
+        "twitter": "https://twitter.com/gsssecurity"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gss-security.com/",
+          "sourceLabel": "Official GSS &#8211; Security Service Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We offer a variety of professionally, skillfully and discreetly managed programs and services for individuals, companies, facilities, organizations and governmental offices.\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://gss-security.com/services/",
+          "sourceLabel": "Official Services &#8211; GSS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"SPECIAL EVENTS\",\"EXECUTIVE PROTECTION\",\"HOSPITALITY\",\"K9 BOMB DETECTION\",\"EMERGENCY ACTION PLANS\",\"RETAIL LOSS PREVENTION\",\"Surveillance\",\"GSS Solar Cameras\",\"GSS Remote Surveillance Trailer\",\"GSS Wall Mounted Unit\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://gss-security.com/",
+          "sourceLabel": "Official GSS &#8211; Security Service Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/pages/GSS-Security-Services-Inc/387789124651120"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://gss-security.com/",
+          "sourceLabel": "Official GSS &#8211; Security Service Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/gsssecurity"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1a6fc142-444e-486b-af58-8d827862f339",
+      "expectedIdentity": {
+        "name": "GUAMAN ENTERPRISES CORP",
+        "city": "Woodside",
+        "state": "NY",
+        "website": "https://guamangroup.com/"
+      },
+      "patch": {
+        "phone": "(718) 637-3356"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://guamanfragoso.com/contact/",
+          "sourceLabel": "Official Contact &#8211; Guaman Fragoso Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(718) 637-3356\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7f54f188-9de3-466d-bc4c-d23dc54b9167",
+      "expectedIdentity": {
+        "name": "Guardian Compliance Service",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://drugtestinghattiesburg.com/"
+      },
+      "patch": {
+        "hours": "Monday Open 24 Hours Tuesday Open 24 Hours Wednesday Open 24 Hours Thursday Open 24 Hours Friday Open 24 Hours Saturday Open 24 Hours Sunday Open 24 Hours",
+        "phone": "(504) 395-8709"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://drugtestinghattiesburg.com/",
+          "sourceLabel": "Official Guardian Compliance Service - Drug Testing Company - Hattiesburg, MS 39402 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday Open 24 Hours Tuesday Open 24 Hours Wednesday Open 24 Hours Thursday Open 24 Hours Friday Open 24 Hours Saturday Open 24 Hours Sunday Open 24 Hours"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://drugtestinghattiesburg.com/",
+          "sourceLabel": "Official Guardian Compliance Service - Drug Testing Company - Hattiesburg, MS 39402 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (504) 395-8709"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4ae931ec-e0c1-4085-96f4-377242e6a72b",
+      "expectedIdentity": {
+        "name": "Guest House",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hm7gWl"
+      },
+      "patch": {
+        "description": "Guest House of Milwaukee provides shelter, housing, education, and services to Milwaukee's homeless who seek to transform their lives with dignity and purpose.",
+        "phone": "414-345-3240"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.guesthouseofmilwaukee.org/",
+          "sourceLabel": "Official Guest House of Milwaukee | More Than Shelter | Not-for-Profit Organization page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Guest House of Milwaukee provides shelter, housing, education, and services to Milwaukee's homeless who seek to transform their lives with dignity and purpose.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.guesthouseofmilwaukee.org/",
+          "sourceLabel": "Official Guest House of Milwaukee | More Than Shelter | Not-for-Profit Organization page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"414-345-3240\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_86f44114-d46d-4891-81db-97d069e434ae",
+      "expectedIdentity": {
+        "name": "Gumbo Marie Culture Queen",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://gumbomarie.com/"
+      },
+      "patch": {
+        "description": "Curating Louisiana's Creole Heritage through engaging talks, tours, events, food and art.",
+        "facebook": "https://www.facebook.com/UnheardVoicesOfLouisiana/",
+        "twitter": "https://www.x.com/https://twitter.com/dihonore?lang=en",
+        "youtube": "https://www.youtube.com/watch?time_continue=107&v=zqM7BWE2foM"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gumbomarie.com/",
+          "sourceLabel": "Official Gumbo Marie - Culture New Orleans, Tours Native Products Culture page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Curating Louisiana's Creole Heritage through engaging talks, tours, events, food and art"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://gumbomarie.com/",
+          "sourceLabel": "Official Gumbo Marie - Culture New Orleans, Tours Native Products Culture page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/UnheardVoicesOfLouisiana/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://gumbomarie.com/",
+          "sourceLabel": "Official Gumbo Marie - Culture New Orleans, Tours Native Products Culture page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.x.com/https://twitter.com/dihonore?lang=en"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://gumbomarie.com/",
+          "sourceLabel": "Official Gumbo Marie - Culture New Orleans, Tours Native Products Culture page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?time_continue=107&v=zqM7BWE2foM"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3e172316-7d96-4be4-9f98-381a47f25cd1",
+      "expectedIdentity": {
+        "name": "GuRu Designs",
+        "city": "Mobile",
+        "state": "AL",
+        "website": "http://www.gurud3signs.com/"
+      },
+      "patch": {
+        "description": "GuRu Designs offers bespoke made-to-measure, ready-to-wear, tailoring and alterations for men, women, and children; the brand also presents wellness and healing services."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://gurud3signs.com/",
+          "sourceLabel": "Official GuRu Designs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Today, I specialize in: Bespoke Made-to-measure Ready-to-wear Tailoring + Alterations for men, women, and children of all sizes. But my brand is more than fashion— it’s wellness, creativity, alignment, and soul work. Guru Designs merges style + healing so every person feels empowered from the inside out."
+        }
+      ]
+    },
+    {
+      "businessId": "source_b44c5389-a807-4bb1-a933-b5bffc9573ff",
+      "expectedIdentity": {
+        "name": "Guzman & Company",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.guzman.com/"
+      },
+      "patch": {
+        "description": "Guzman & Company is a boutique investment bank and institutional brokerage firm that provides capital market solutions to targeted corporate, governmental and institutional clients across the globe.",
+        "phone": "305-374-3600",
+        "twitter": "https://twitter.com/guzmanandco"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.guzman.com/",
+          "sourceLabel": "Official Guzman &amp; Company &#8211; Guzman &amp; Company is a boutique investment bank and institutional brokerage firm that provides capital market solutions to targeted corporate, governmental page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Guzman & Company is a boutique investment bank and institutional brokerage firm that provides capital market solutions to targeted corporate, governmental and institutional clients across the globe.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.guzman.com/",
+          "sourceLabel": "Official Guzman &amp; Company &#8211; Guzman &amp; Company is a boutique investment bank and institutional brokerage firm that provides capital market solutions to targeted corporate, governmental page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Questions about our services? Call our experienced support team at 305-374-3600."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.guzman.com/",
+          "sourceLabel": "Official Guzman &amp; Company &#8211; Guzman &amp; Company is a boutique investment bank and institutional brokerage firm that provides capital market solutions to targeted corporate, governmental page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/guzmanandco"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5113ed83-4a73-48a0-bfef-40171de3cd89",
+      "expectedIdentity": {
+        "name": "Gypsy Beauty Supply",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "http://www.gypsybeautysupply.com/"
+      },
+      "patch": {
+        "description": "Mobile + online beauty supply store that carries a wide variety of cosmetic products, ranging from hair care to nail supply."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gypsybeautysupply.com/",
+          "sourceLabel": "Official Gypsy Beauty Supply page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Gypsy Beauty Supply Mobile + online beauty supply store that carries a wide variety of cosmetic products, ranging from hair care to nail supply.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_28aaa45f-24be-46b5-92ee-ecd968b840a5",
+      "expectedIdentity": {
+        "name": "GZFotoGrafias LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.gzfotografias.com/"
+      },
+      "patch": {
+        "description": "Founder Gloria Zapata creates original paintings, murals, digital art, photography, wearable art, and interactive public art experiences, and leads workshops and community-based projects.",
+        "tags": [
+          "signature silhouette portraits",
+          "custom silhouette portraits",
+          "custom digital portraits",
+          "canvas artwork",
+          "youth and community art workshops",
+          "silhouette portrait sessions",
+          "spray-paint art sessions",
+          "digital art experiences",
+          "community murals",
+          "public art projects",
+          "collaborative mural projects",
+          "wearable art"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.gzfotografias.com/",
+          "sourceLabel": "Official gzfotografias.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"As the founder of GZFotografias LLC , my mission is to create meaningful art that celebrates culture, identity, and community through original paintings, murals, digital art, photography, wearable art, and interactive public art experiences .\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.gzfotografias.com/services-contact",
+          "sourceLabel": "Official Services &amp; Contact &mdash; gzfotografias.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Custom Portraits Signature silhouette portraits Custom digital portraits Canvas artwork Personalized artwork and commissions Digital Art Original digital portraits and illustrations Digital artwork for creative projects Artwork developed for canvas, murals, wood panels, and wearable art Workshops / Teaching Artist Services Youth and community art workshops Silhouette portrait sessions Spray-paint art sessions Digital art experiences Hands-on creative activities Murals & Public Art Community murals Public art projects Collaborative mural projects Community-centered art installations Creative —"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c87f2dc3-7f8e-4aa2-bd44-ddaa86ce18f4",
+      "expectedIdentity": {
+        "name": "H3 Mobile Entertainment",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://h3mobileentertainment.com/"
+      },
+      "patch": {
+        "phone": "(901) 308-4238",
+        "tags": [
+          "mobile video game bus",
+          "tactical laser tag",
+          "foam parties",
+          "interactive photo booth"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://h3mobileentertainment.com/",
+          "sourceLabel": "Official Kids Birthday Party Places Memphis: H3 Mobile Entertainment page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Book Now (901) 308-4238"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://h3mobileentertainment.com/faq/",
+          "sourceLabel": "Official FAQ - H3 Mobile Entertainment page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Gaming Bus: State-of-the-art bus equipped with the latest consoles and games for an immersive gaming experience. Laser Tag: Interactive laser tag battles with realistic equipment and various game modes. Foam Parties: Bubbly fun for all ages with safe and eco-friendly foam machines. Photo Booth: Capture hilarious memories with our interactive photo booth and fun props.\","
+        }
+      ]
+    },
+    {
+      "businessId": "national-a5499bef3fc283583a21d8c8",
+      "expectedIdentity": {
+        "name": "Habhab Trucking School",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://www.habhabtrucking.com/"
+      },
+      "patch": {
+        "description": "State certified program providing instruction and hands-on training to prepare students for a Commercial Driver License (CDL) and employment in the trucking industry.",
+        "phone": "615-578-0636",
+        "tags": [
+          "cdl training",
+          "truck driver training",
+          "commercial driver license preparation"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.habhabtrucking.com/",
+          "sourceLabel": "Official HABHAB TRUCKING SCHOOL 615-578-0636 - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Whether you are looking for a new career, changing careers or need to refresh your previous CDL experience, you will receive the education, necessary tools and skills needed to become a professional truck driver with HABHAB TRUCKING SCHOOL.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.habhabtrucking.com/contact.html",
+          "sourceLabel": "Official Contact - HABHAB TRUCKING SCHOOL 615-578-0636 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"TELEPHONE NUMBER 615-578-0636\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.habhabtrucking.com/",
+          "sourceLabel": "Official HABHAB TRUCKING SCHOOL 615-578-0636 - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At our State Certified program, the emphasis is on you and your training. We will provide you with all the necessary tools and skills for a successful future in the trucking industry.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_a00112c2-2317-4ff6-87e3-f1dad6b9bacf",
+      "expectedIdentity": {
+        "name": "Hanan Health",
+        "city": "Eagan",
+        "state": "MN",
+        "website": "http://www.hananhealthllc.com/"
+      },
+      "patch": {
+        "description": "Board-certified psychiatric provider offering compassionate, individualized mental health care for teens and adults, with virtual and in-person visits.",
+        "hours": "9am - 6pm (Monday - Thursday); Friday 9am - 12pm; Special Hours by Appointment only",
+        "instagram": "https://www.instagram.com/hanan.healthllc/",
+        "facebook": "https://www.facebook.com/people/Hanan-Health-LLC/100091851346975/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://hananhealthllc.com/",
+          "sourceLabel": "Official Hanan Health LLC &#8211; Compassionate Psychiatric Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hanan Health aims to help maneuver mental health issues using compassion and kindness as an approach to help assess, diagnose and find individualized treatment plans for you and your loved ones."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://hananhealthllc.com/contact/",
+          "sourceLabel": "Official Contact &#8211; Hanan Health LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Available 9am - 6pm (Monday - Thursday) Friday 9am - 12pm Special Hours by Appointment only"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://hananhealthllc.com/",
+          "sourceLabel": "Official Hanan Health LLC &#8211; Compassionate Psychiatric Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/hanan.healthllc/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://hananhealthllc.com/",
+          "sourceLabel": "Official Hanan Health LLC &#8211; Compassionate Psychiatric Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/people/Hanan-Health-LLC/100091851346975/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_85bb417b-3935-40d0-8522-d8181ed1d386",
+      "expectedIdentity": {
+        "name": "Handcrafted Jewelry By Teri C",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.teriacox.com/"
+      },
+      "patch": {
+        "pinterest": "https://pinterest.com/teriacoxdesigns/",
+        "youtube": "https://www.youtube.com/channel/UCXdnyHJGZhMzkBmUn8b7SjA"
+      },
+      "fieldModes": {
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://teriacox.com/",
+          "sourceLabel": "Official Handcrafted &amp; Sustainable Jewelry | Handcrafted Jewelry By Teri C page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/teriacoxdesigns/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://teriacox.com/",
+          "sourceLabel": "Official Handcrafted &amp; Sustainable Jewelry | Handcrafted Jewelry By Teri C page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCXdnyHJGZhMzkBmUn8b7SjA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_239017c1-13ec-4f36-a4bf-e47e95f6c657",
+      "expectedIdentity": {
+        "name": "Handy Andy TV Mounting",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.ihandyandy.com/houston-tv-mounting-greenwayplz"
+      },
+      "patch": {
+        "description": "Professional TV mounting and related handyman services including bracket supply, wire concealment, and installations on various wall types.",
+        "phone": "(281) 638-8419"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ihandyandy.com/houston-tv-mounting-greenwayplz",
+          "sourceLabel": "Official West Houston TV Mounting | River Oaks, Memorial, Bellaire page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I can supply the bracket, hide your wires, and help you pick the perfect height. I mount on any wall ( drywall , brick , stone , metal studs ) and test everything before I leave."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ihandyandy.com/houston-tv-mounting-greenwayplz",
+          "sourceLabel": "Official West Houston TV Mounting | River Oaks, Memorial, Bellaire page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Book Now (281) 638-8419"
+        }
+      ]
+    },
+    {
+      "businessId": "source_020bf7ee-3523-482e-a304-0733aa3b9bf2",
+      "expectedIdentity": {
+        "name": "Happy Day Bodytouch Spa",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://book.heygoldie.com/Happy-Day-Bodytouch-Spa-a9cc33c265a0"
+      },
+      "patch": {
+        "description": "Happy Day Bodytouch Spa brings relaxation, comfort, and wellness together in a peaceful, welcoming environment.",
+        "hours": "Sunday 12:00 AM - 11:30 PM; Monday 12:00 AM - 11:30 PM; Tuesday 12:00 AM - 11:30 PM; Wednesday 12:00 AM - 11:30 PM; Thursday 12:00 AM - 11:30 PM; Friday 12:00 AM - 11:30 PM; Saturday 12:00 AM - 11:30 PM",
+        "tags": [
+          "deep tissue massage",
+          "relaxing bodywork",
+          "reflexology",
+          "spa session",
+          "swedish massage",
+          "cupping",
+          "hot stone massage",
+          "prenatal massage",
+          "couples massage",
+          "full-body massage",
+          "90 min massage",
+          "30 min massage','1-hour massage"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://book.heygoldie.com/Happy-Day-Bodytouch-Spa-a9cc33c265a0",
+          "sourceLabel": "Official Book Happy Day Bodytouch Spa | Massage therapist in Tulsa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Happy Day Bodytouch Spa brings relaxation, comfort, and wellness together in a peaceful, welcoming environment."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://book.heygoldie.com/Happy-Day-Bodytouch-Spa-a9cc33c265a0",
+          "sourceLabel": "Official Book Happy Day Bodytouch Spa | Massage therapist in Tulsa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Sunday 12:00 AM - 11:30 PM Monday 12:00 AM - 11:30 PM Tuesday 12:00 AM - 11:30 PM Wednesday 12:00 AM - 11:30 PM Thursday 12:00 AM - 11:30 PM Friday 12:00 AM - 11:30 PM Saturday 12:00 AM - 11:30 PM"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://book.heygoldie.com/Happy-Day-Bodytouch-Spa-a9cc33c265a0",
+          "sourceLabel": "Official Book Happy Day Bodytouch Spa | Massage therapist in Tulsa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Options include deep tissue, relaxing bodywork, reflexology, or a soothing spa session so you leave feeling refreshed and renewed."
+        }
+      ]
+    },
+    {
+      "businessId": "source_2435a6f3-d05c-4dc1-bcfd-69689ab578cb",
+      "expectedIdentity": {
+        "name": "Happy Scents",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://www.happyscentsco.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/happyscentsnc",
+        "pinterest": "https://www.pinterest.com/happyscentsco/",
+        "tiktok": "https://www.tiktok.com/@happyscents"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "pinterest": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.happyscentsco.com/",
+          "sourceLabel": "Official Happy Scents | Soy Candles &amp; Fragrances Crafted for Happiness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/happyscentsnc"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.happyscentsco.com/",
+          "sourceLabel": "Official Happy Scents | Soy Candles &amp; Fragrances Crafted for Happiness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/happyscentsco/"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.happyscentsco.com/",
+          "sourceLabel": "Official Happy Scents | Soy Candles &amp; Fragrances Crafted for Happiness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@happyscents"
+        }
+      ]
+    },
+    {
+      "businessId": "source_668e82e8-34f8-4f0b-bad4-8aca451f2ef7",
+      "expectedIdentity": {
+        "name": "Harcourt Fabrics",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.harcourtfabrics.com/"
+      },
+      "patch": {
+        "pinterest": "https://www.pinterest.com/harcourtfabricsusa/",
+        "youtube": "https://www.youtube.com/@harcourtfabricsusa5812"
+      },
+      "fieldModes": {
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://harcourtfabricsusa.com/",
+          "sourceLabel": "Official African Fabric Store in USA | Authentic Traditional Prints &ndash; Harcourt Fabrics USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/harcourtfabricsusa/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://harcourtfabricsusa.com/",
+          "sourceLabel": "Official African Fabric Store in USA | Authentic Traditional Prints &ndash; Harcourt Fabrics USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@harcourtfabricsusa5812"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1512b22a-a746-43fb-a1a0-e5eaaacbfbed",
+      "expectedIdentity": {
+        "name": "Hardwired Technologies Inc.",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.hardwiredtec.com/"
+      },
+      "patch": {
+        "hours": "Mon–Fri · 8:00am–6:00pm",
+        "phone": "646-222-9690",
+        "facebook": "https://www.facebook.com/hardwiredtechnologies",
+        "instagram": "https://www.instagram.com/hardwired_tec/"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://hardwiredtec.com/",
+          "sourceLabel": "Official IT Services &amp; Technology Solutions in NYC, NJ &amp; CT | Hardwired Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon&ndash;Fri &middot; 8:00am&ndash;6:00pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://hardwiredtec.com/",
+          "sourceLabel": "Official IT Services &amp; Technology Solutions in NYC, NJ &amp; CT | Hardwired Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call us 646-222-9690\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://hardwiredtec.com/",
+          "sourceLabel": "Official IT Services &amp; Technology Solutions in NYC, NJ &amp; CT | Hardwired Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/hardwiredtechnologies"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://hardwiredtec.com/",
+          "sourceLabel": "Official IT Services &amp; Technology Solutions in NYC, NJ &amp; CT | Hardwired Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/hardwired_tec/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dd3f9e6d-94d5-4e38-a802-ddf5cfaa5aa9",
+      "expectedIdentity": {
+        "name": "Harlem Film NY LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://harlemfilmny.com/"
+      },
+      "patch": {
+        "description": "Harlem Film NY offers programs and classes to cultivate aspiring young filmmakers through hands-on workshops, mentorship, and training in directing, screenwriting, camera, and editing.",
+        "phone": "(929) 561-3482",
+        "tags": [
+          "directing",
+          "screenwriting",
+          "editing",
+          "camera crew",
+          "broadcast production",
+          "ell services"
+        ],
+        "facebook": "https://www.facebook.com/harlemfilmschool/",
+        "instagram": "https://www.instagram.com/harlemfilmschool/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.harlemfilmny.com/",
+          "sourceLabel": "Official Film | Harlemfilmschool.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: OUR PROGRAM We are dedicated to cultivating aspiring young filmmakers, arming them with the knowledge, skills, and artistic vision essential for crafting impactful stories within the visual realm of film."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.harlemfilmny.com/",
+          "sourceLabel": "Official Film | Harlemfilmschool.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: PHONE (929) 561-3482"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.harlemfilmny.com/programservices",
+          "sourceLabel": "Official Program Services | Harlem Film NY _1 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Directing Screenwriting Editing Camera Crew Make-up Film Project Pivot ELL Services"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.harlemfilmny.com/",
+          "sourceLabel": "Official Film | Harlemfilmschool.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/harlemfilmschool/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.harlemfilmny.com/",
+          "sourceLabel": "Official Film | Harlemfilmschool.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/harlemfilmschool/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7d5f1f07-9a7f-463e-b507-4bf5227e8a30",
+      "expectedIdentity": {
+        "name": "Harmony Church of Bartlett",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://harmonychurchofbartlett.com/"
+      },
+      "patch": {
+        "description": "Harmony Church of Bartlett is a loving and welcoming non-denominational Christian community in Bartlett, TN.",
+        "phone": "901-249-7400",
+        "youtube": "https://www.youtube.com/@jtrussll/streams"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://harmonychurchofbartlett.com/",
+          "sourceLabel": "Official Harmony Church of Bartlett | A Loving Christian Community - Berlin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Harmony Church of Bartlett is a loving and welcoming non-denominational Christian community in Bartlett, TN.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://harmonychurchofbartlett.com/",
+          "sourceLabel": "Official Harmony Church of Bartlett | A Loving Christian Community - Berlin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"You can contact us by calling 901-249-7400\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://harmonychurchofbartlett.com/",
+          "sourceLabel": "Official Harmony Church of Bartlett | A Loving Christian Community - Berlin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@jtrussll/streams"
+        }
+      ]
+    },
+    {
+      "businessId": "source_81d76879-4b74-416a-ad6f-01817fe68155",
+      "expectedIdentity": {
+        "name": "Harmony Public Schools",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.harmonytx.org/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/harmonyedu",
+        "youtube": "https://www.youtube.com/c/harmonyschools"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.harmonytx.org/",
+          "sourceLabel": "Official Harmony Public Schools | Inspiring Futures Every Day page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/harmonyedu"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.harmonytx.org/",
+          "sourceLabel": "Official Harmony Public Schools | Inspiring Futures Every Day page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/c/harmonyschools"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d7c05f7f-8977-4e66-81b2-45d090d99c23",
+      "expectedIdentity": {
+        "name": "Harp Vision",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://harp-vision.com/"
+      },
+      "patch": {
+        "description": "HARP Vision offers luxury vegan self-care products and is rooted in Baltimore, focusing on holistic care, economic empowerment, and community wellness.",
+        "phone": "+1 (667) 504-3351",
+        "instagram": "https://www.instagram.com/harpvision40/?hl=en"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://harp-vision.com/about",
+          "sourceLabel": "Official ABOUT page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Rooted in Baltimore, HARP Vision is more than a product line — it’s a movement toward holistic care, economic empowerment, and impact-driven entrepreneurship."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://harp-vision.com/contact-1",
+          "sourceLabel": "Official CONTACT page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Info info@harp-vision.com +1 (667) 504-3351"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://harp-vision.com/",
+          "sourceLabel": "Official HOME page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/harpvision40/?hl=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f5e20a67-82c4-4c89-87ad-29f604fbed8f",
+      "expectedIdentity": {
+        "name": "Harris County Department of Education",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.hcde-texas.org/"
+      },
+      "patch": {
+        "description": "Harris County Department of Education provides educational programs and support services including Head Start, adult education, special schools, records management, and educator support programs.",
+        "tags": [
+          "\"records management\""
+        ],
+        "youtube": "https://www.youtube.com/hcdetv",
+        "twitter": "http://www.x.com/hcdetx"
+      },
+      "fieldModes": {
+        "description": "fill",
+        "tags": "append",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.hcde-texas.org/",
+          "sourceLabel": "Official Home - Harris County Department of Education page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Early Head Start and Head Start programs are accepting applications for the 2026–20"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.hcde-texas.org/support-services/document-storage-and-imaging-solutions-for-government-and-education/document-storage-and-imaging-solutions-for-government-and-education-clone",
+          "sourceLabel": "Official Records Management Services for Texas Schools &amp; Government page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Records Management\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.hcde-texas.org/",
+          "sourceLabel": "Official Home - Harris County Department of Education page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/hcdetv"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.hcde-texas.org/",
+          "sourceLabel": "Official Home - Harris County Department of Education page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://www.x.com/hcdetx"
+        }
+      ]
+    },
+    {
+      "businessId": "source_33dfbc04-009f-4de8-a819-e36fec92d9e8",
+      "expectedIdentity": {
+        "name": "Harrison Reid Safety & Consultant Inc",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.hrsafetyconsultants.com/"
+      },
+      "patch": {
+        "description": "Harrison Reid Safety Consultants, Inc, is an MWBE certified consulting firm specializing in all l aspects of Construction Safety and Health."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.hrsafetyconsultants.com/",
+          "sourceLabel": "Official Home | Harrison Reid Safety &amp; Consultants, Inc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Harrison Reid Safety Consultants, Inc, is an MWBE certified consulting firm specializing in all l aspects of Construction Safety and Health.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_96c884cd-561c-4c48-8e14-96e933b94646",
+      "expectedIdentity": {
+        "name": "Harveys Detail Connection",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://www.harveysdetail.com/"
+      },
+      "patch": {
+        "phone": "(918) 606-9838",
+        "facebook": "https://www.facebook.com/harveysdetailconnection/",
+        "instagram": "https://www.instagram.com/harveysdetailconnection/"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.harveysdetail.com/",
+          "sourceLabel": "Official Mobile Car Detailing in Tulsa, OK | Harvey&#x27;s Detail Connection page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(918) 606-9838\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.harveysdetail.com/",
+          "sourceLabel": "Official Mobile Car Detailing in Tulsa, OK | Harvey&#x27;s Detail Connection page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/harveysdetailconnection/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.harveysdetail.com/",
+          "sourceLabel": "Official Mobile Car Detailing in Tulsa, OK | Harvey&#x27;s Detail Connection page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/harveysdetailconnection/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5b7bbd35-2a6e-4324-a8bd-93c6f12b9a64",
+      "expectedIdentity": {
+        "name": "Hatch + Nest",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.hatchandnest.com/"
+      },
+      "patch": {
+        "description": "Based in Columbus and serving Central Ohio, Hatch + Nest connects clients with maternal health professionals including certified doulas, lactation consultants, and overnight newborn care specialists.",
+        "hours": "Mon-Thu: 9:00-4:00; Fri-Sat: 9:00-3:00; Sun: Close",
+        "phone": "614 815 2490"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://hatchandnest.com/",
+          "sourceLabel": "Official Hatch + Nest Columbus Ohio Doula and Postpartum Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Based in Columbus and serving Central Ohio, our platform connects you with a trusted team of maternal health professionals—including certified doulas, lactation consultants, and overnight newborn care specialists."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://hatchandnest.com/contact-archive/",
+          "sourceLabel": "Official Contact ARCHIVE - Hatch + Nest Columbus Ohio Doulas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Work hours Mon-Thu: 9:00-4:00 Fri-Sat: 9:00-3:00 Sun: Close"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://hatchandnest.com/contact-archive/",
+          "sourceLabel": "Official Contact ARCHIVE - Hatch + Nest Columbus Ohio Doulas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 614 815 2490 614 815 2490"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1dcf6d9a-31c6-4b53-9a41-e8dfdc2548e9",
+      "expectedIdentity": {
+        "name": "Haute Wellness and Medispa",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://hautewellnessandmedispa.com/"
+      },
+      "patch": {
+        "description": "Haute Wellness & MediSpa is an independently owned practice and medical spa in San Antonio, Texas that focuses on preventive care through all stages of life.",
+        "phone": "+1-210-900-5495",
+        "facebook": "https://www.facebook.com/profile.php?id=100091545730333&mibextid=LQQJ4d",
+        "twitter": "https://www.twitter.com/",
+        "instagram": "https://www.instagram.com/hautewellnessandmedispa/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.hautewellnessandmedispa.com/",
+          "sourceLabel": "Official Wellness &amp; Medical Spa Services in San Antonio, Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Haute Wellness & MediSpa is an independently owned practice and medical spa in San Antonio, Texas that focuses on preventive care through all stages of life.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.hautewellnessandmedispa.com/",
+          "sourceLabel": "Official Wellness &amp; Medical Spa Services in San Antonio, Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"+1-210-900-5495\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.hautewellnessandmedispa.com/",
+          "sourceLabel": "Official Wellness &amp; Medical Spa Services in San Antonio, Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/profile.php?id=100091545730333&mibextid=LQQJ4d"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.hautewellnessandmedispa.com/",
+          "sourceLabel": "Official Wellness &amp; Medical Spa Services in San Antonio, Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.hautewellnessandmedispa.com/",
+          "sourceLabel": "Official Wellness &amp; Medical Spa Services in San Antonio, Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/hautewellnessandmedispa/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8e0226bc-dc62-42f9-b63b-1c146100c86a",
+      "expectedIdentity": {
+        "name": "Hawkins Laakso Wealth Management",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.hawkinslaaksogroup.com/"
+      },
+      "patch": {
+        "description": "We collaborate with accomplished entrepreneurs and executives to establish a family office experience tailored to realize their financial aspirations by assisting them in overseeing, expanding, and safeguarding their wealth.",
+        "phone": "(713) 402-6475",
+        "tags": [
+          "wealth management",
+          "tax-efficient investment solutions",
+          "estate planning strategies",
+          "retirement planning",
+          "risk management",
+          "private equity introductions",
+          "business planning services",
+          "insurance analysis",
+          "education planning",
+          "social security & medicare"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.hawkinslaaksogroup.com/",
+          "sourceLabel": "Official Home | Hawkins Laakso page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We collaborate with accomplished entrepreneurs and executives to establish a family office experience tailored to realize their financial aspirations by assisting them in overseeing, expanding, and safeguarding their wealth."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.hawkinslaaksogroup.com/",
+          "sourceLabel": "Official Home | Hawkins Laakso page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office: (713) 402-6475"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.hawkinslaaksogroup.com/",
+          "sourceLabel": "Official Home | Hawkins Laakso page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our services include wealth management, risk management, tax-efficient investment solutions, retirement planning, estate planning strategies, and business planning."
+        }
+      ]
+    },
+    {
+      "businessId": "source_69d75160-5cc5-4ae6-9054-7a66f4f7e407",
+      "expectedIdentity": {
+        "name": "Hawkins Sweet Bakery",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://www.hawkinsempire.com/"
+      },
+      "patch": {
+        "description": "Hawkins Empire is a family‑built organization founded in Jackson, Mississippi that operates multiple divisions including Hawkins Empire Security Department and Paradise Hot Sandwich House."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.hawkinsempire.com/about-us/",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Founded in Jackson, Mississippi, Hawkins Empire began as a vision to unify excellence across multiple industries — from security to hospitality to creative ventures."
+        }
+      ]
+    },
+    {
+      "businessId": "national-ef983a02cdb3c7a10b4d7cbe",
+      "expectedIdentity": {
+        "name": "Hayat Beauty Salon",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://hayatbeautysalon.com/"
+      },
+      "patch": {
+        "description": "Hayat Beauty Salon offers haircuts, styling, color, extensions, texture and smoothing treatments, and conditioning/strengthening treatments.",
+        "hours": "Tuesday - Saturday 8am to 5pm",
+        "phone": "(612) 659-8103"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.hayatbeautysalon.com/",
+          "sourceLabel": "Official Hayat Beauty Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Located in Minneapolis, we offer thoughtful and personalized services including haircuts, styling, and color for hair of all kinds."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.hayatbeautysalon.com/",
+          "sourceLabel": "Official Hayat Beauty Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hayat Beauty Salon Hours Tuesday - Saturday 8am to 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.hayatbeautysalon.com/about",
+          "sourceLabel": "Official About &mdash; Hayat Beauty Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (612) 659-8103"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7de2e98b-76bf-4feb-8b28-65e9fe3696ad",
+      "expectedIdentity": {
+        "name": "Haydan Consultants, Inc",
+        "city": "Rosedale",
+        "state": "NY",
+        "website": "https://www.haydanconsultantsinc.com/"
+      },
+      "patch": {
+        "description": "Haydan Consultants, Inc. offers program management, construction management & inspection, project controls, compliance, and staff augmentation services to public and private clients."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://haydanconsultantsinc.com/",
+          "sourceLabel": "Official Haydan Consultants Inc &#8211; Haydan Consultants Inc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Haydan Consultants, Inc. offers a suite of hands-on professional services to the construction industry, leveraging the deep collective experience of its team members."
+        }
+      ]
+    },
+    {
+      "businessId": "source_0641edd4-672e-496e-b9bc-d6c9c4e0131d",
+      "expectedIdentity": {
+        "name": "HBH Professional",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://hbhpro.com/"
+      },
+      "patch": {
+        "description": "HBH Professional is foundational hair care created to cleanse, condition, moisturize, strengthen and protect textured hair before styling begins.",
+        "facebook": "https://www.facebook.com/hbhprofessional"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://hbhpro.com/pages/about-hbh-professional",
+          "sourceLabel": "Official About HBH Professional | Textured Hair Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"HBH Professional is foundational hair care created to cleanse, condition, moisturize, strengthen and protect textured hair before styling begins.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://hbhpro.com/",
+          "sourceLabel": "Official HBH Professional | Foundational Care for Healthy, Textured Hair page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/hbhprofessional"
+        }
+      ]
+    },
+    {
+      "businessId": "source_07a96948-c59e-46cf-85b8-994b15052382",
+      "expectedIdentity": {
+        "name": "H.C. National Tire Corp",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.nationaldiscounttires.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/NationalDiscountTires",
+        "instagram": "https://instagram.com/ndtwheels"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.nationaldiscounttires.com/",
+          "sourceLabel": "Official Tires &amp; Auto Repair in Bronx, NY | National Discount Tires and Wheels page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/NationalDiscountTires"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.nationaldiscounttires.com/",
+          "sourceLabel": "Official Tires &amp; Auto Repair in Bronx, NY | National Discount Tires and Wheels page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/ndtwheels"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6eb3568b-1768-4295-9fff-7fd9b9dbb5d4",
+      "expectedIdentity": {
+        "name": "H Councill Trenholm State Technical College",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://www.trenholmstate.edu/"
+      },
+      "patch": {
+        "description": "H. Councill Trenholm State Community College is a comprehensive two-year community college that offers associate transfer degrees, associate degrees, and certificates, and provides adult learning, business and industry training, and workforce development.",
+        "phone": "Phone: 1-866-753-4544",
+        "youtube": "https://www.youtube.com/watch?v=6DP1bouCU8g&",
+        "facebook": "https://www.facebook.com/Trenholm-State-Community-College-1396265270589318/",
+        "instagram": "https://www.instagram.com/trenholmstatecommunitycollege/",
+        "twitter": "https://twitter.com/trenholm_state"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.trenholmstate.edu/about-tscc/our-story/our-history-mission-vision/",
+          "sourceLabel": "Official History, Mission &amp; Vision - Trenholm State Community College page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"H. Councill Trenholm State Community College (Trenholm State) is a comprehensive two-year community college in Montgomery, Alabama. The College offers associate transfer degrees, associate degrees, and certificates that lead directly to the workforce. Additionally, the College provides adult learning opportunities, civic, social, cultural, and personal development; business and industry training; and support for economic development in the central Alabama region.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.trenholmstate.edu/about-tscc/our-story/our-history-mission-vision/",
+          "sourceLabel": "Official History, Mission &amp; Vision - Trenholm State Community College page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact: Phone: 1-866-753-4544\",\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.trenholmstate.edu/",
+          "sourceLabel": "Official Trenholm State Community College | Soar to New Heights | Become a Titan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=6DP1bouCU8g&"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.trenholmstate.edu/",
+          "sourceLabel": "Official Trenholm State Community College | Soar to New Heights | Become a Titan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Trenholm-State-Community-College-1396265270589318/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.trenholmstate.edu/",
+          "sourceLabel": "Official Trenholm State Community College | Soar to New Heights | Become a Titan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/trenholmstatecommunitycollege/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.trenholmstate.edu/",
+          "sourceLabel": "Official Trenholm State Community College | Soar to New Heights | Become a Titan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/trenholm_state"
+        }
+      ]
+    },
+    {
+      "businessId": "source_58cf4cf7-4220-45fe-9679-df7146150ad8",
+      "expectedIdentity": {
+        "name": "HeadLinerz",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://headlinerzshop.com/"
+      },
+      "patch": {
+        "description": "HeadLinerz is a new contemporary styled Barber and Beauty shop located in the heart of the Jefferson Street redevelopment district.",
+        "hours": "Mon - Sat 8:00 am - 6:00 pm; Sunday Closed",
+        "phone": "+1 615 7396037",
+        "tags": [
+          "barber",
+          "beauty shop",
+          "barbershop",
+          "hair salon"
+        ],
+        "twitter": "https://twitter.com/headlinerzshop"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://headlinerzshop.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"HeadLinerz is a new contemporary styled Barber and Beauty shop, built from the ground up and located in the heart of the Jefferson Street redevelopment district.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://headlinerzshop.com/contact",
+          "sourceLabel": "Official Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Hours Mon - Sat 8:00 am - 6:00 pm Sunday Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://headlinerzshop.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"+1 615 7396037\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://headlinerzshop.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"HeadLinerz is a new contemporary styled Barber and Beauty shop\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://headlinerzshop.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/headlinerzshop"
+        }
+      ]
+    },
+    {
+      "businessId": "source_79684b8a-6b0e-481f-b51c-9154b87f878c",
+      "expectedIdentity": {
+        "name": "Healing Without Limits Counseling and Consulting, LLC",
+        "city": "Westerville",
+        "state": "OH",
+        "website": "https://www.healingwithoutlimitscc.com/"
+      },
+      "patch": {
+        "description": "Healing Without Limits Counseling and Consulting (HWLCC) aids in healing communities by transforming workplaces to improve mental health in the workforce, strengthening the mental health system, and reshaping society's perspective on mental health.",
+        "hours": "Open today 09:00 am – 05:00 pm"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://healingwithoutlimitscc.com/our-story-1",
+          "sourceLabel": "Official Our Story page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Healing Without Limits Counseling and Consulting (HWLCC)™ aids in healing communities by transforming workplaces to improve mental health in the workforce, strengthening the mental health system , and reshaping society's perspective on mental health.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://healingwithoutlimitscc.com/",
+          "sourceLabel": "Official Healing Without Limits Counseling and Consulting, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Open today 09:00 am – 05:00 pm\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_91febee9-5248-4e37-89cb-eced4c427dfa",
+      "expectedIdentity": {
+        "name": "Health Brigade",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.healthbrigade.org/"
+      },
+      "patch": {
+        "phone": "(804) 358-6343",
+        "instagram": "https://www.instagram.com/healthbrigade_rva/"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.healthbrigade.org/",
+          "sourceLabel": "Official Health Brigade | Exceptional health services for those in need page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (804) 358-6343"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.healthbrigade.org/",
+          "sourceLabel": "Official Health Brigade | Exceptional health services for those in need page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/healthbrigade_rva/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_060586ec-88ce-4968-9a18-874524c6a533",
+      "expectedIdentity": {
+        "name": "Health Connections",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3eXSiUn"
+      },
+      "patch": {
+        "hours": "M-F 10am - 4pm; Sat *Call to Inquire",
+        "phone": "414-999-1099",
+        "youtube": "https://www.youtube.com/channel/UCy4I_HM6qj5LVhVlktzUAxw"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.healthconnectmke.org/",
+          "sourceLabel": "Official Health Connections - Glendale, WI Health Care Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOURS M-F 10am - 4pm Sat *Call to Inquire"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.healthconnectmke.org/",
+          "sourceLabel": "Official Health Connections - Glendale, WI Health Care Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: TELEPHONE 414-999-1099"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.healthconnectmke.org/",
+          "sourceLabel": "Official Health Connections - Glendale, WI Health Care Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCy4I_HM6qj5LVhVlktzUAxw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a0d10691-5a17-4e7a-b6e7-4413974b3efb",
+      "expectedIdentity": {
+        "name": "Healthy Con Plantas LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.healthyconplantas.com/"
+      },
+      "patch": {
+        "description": "Healthy con Plantas provides plant-based culinary education and health programs for communities, schools, clinics and organizations.",
+        "instagram": "https://www.instagram.com/healthyconplantas/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://healthyconplantas.com/",
+          "sourceLabel": "Official Healthy con Plantas | Educación alimentaria basada en plantas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: En Healthy con Plantas acompañamos a personas, comunidades y organizaciones a mejorar su salud a través de la educación culinaria, programas grupales y acompañamiento comunitario, con un enfoque culturalmente relevante y accesible, basado en evidencia, en la nutrición basada en plantas y en los pilares de la medicina de estilo de vida."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://healthyconplantas.com/",
+          "sourceLabel": "Official Healthy con Plantas | Educación alimentaria basada en plantas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/healthyconplantas/"
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "93bf670230dfdc0a01d9aa91a907785bbfdb67e50502063e6df3d79e93dff7da"
+}

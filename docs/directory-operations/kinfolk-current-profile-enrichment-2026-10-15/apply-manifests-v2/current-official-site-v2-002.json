@@ -1,0 +1,4548 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-002",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_e94475a7-3c35-4a57-a5f1-a8f1747e24aa",
+      "expectedIdentity": {
+        "name": "Alfalfa Studio LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "http://alfalfastudio.com/"
+      },
+      "patch": {
+        "description": "Alfalfa Studio is a branding and graphic design firm that creates identity systems, campaigns, and communications for civic, cultural, and commercial clients.",
+        "phone": "+1 212 629 9550"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.alfalfastudio.com/",
+          "sourceLabel": "Official Alfalfa Studio is a Branding and Graphic Design Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Since 2004, Alfalfa Studio has created identity systems, campaigns, and communications for civic, cultural, and commercial clients.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.alfalfastudio.com/about",
+          "sourceLabel": "Official About &mdash; Alfalfa Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"+1 212 629 9550\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7c0677c5-4ac0-48a1-a02a-5d448bfeed9d",
+      "expectedIdentity": {
+        "name": "Alice's Garden",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tN3Azi"
+      },
+      "patch": {
+        "description": "Alice’s Garden provides models of regenerative farming, community cultural development, and economic agricultural enterprises for the global landscape.",
+        "hours": "Mon Tue Wed Thu Fri Sat Sun",
+        "phone": "(414) 687-0122",
+        "tags": [
+          "regenerative farming",
+          "community cultural development",
+          "urban farm",
+          "herbal classes"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.alicesgardenmke.com/",
+          "sourceLabel": "Official ALICE&#39;S GARDEN URBAN FARM page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Alice’s Garden provides models of regenerative farming, community cultural development, and economic agricultural enterprises for the global landscape."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.alicesgardenmke.com/",
+          "sourceLabel": "Official ALICE&#39;S GARDEN URBAN FARM page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Hours Mon Tue Wed Thu Fri Sat Sun"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.alicesgardenmke.com/",
+          "sourceLabel": "Official ALICE&#39;S GARDEN URBAN FARM page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (414) 687-0122"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.alicesgardenmke.com/",
+          "sourceLabel": "Official ALICE&#39;S GARDEN URBAN FARM page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Alice’s Garden provides models of regenerative farming, community cultural development, and economic agricultural enterprises for the global landscape. We are transforming Earth, Families, and Community, one tomato, yoga session, herbal class at a time!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_34066459-2380-4752-9bf0-6a11c597b6e1",
+      "expectedIdentity": {
+        "name": "Alignment Business Solutions",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "http://alignmentbusinesssolution.com/"
+      },
+      "patch": {
+        "phone": "913-390-3742"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.alignmentbusinesssolution.com/contact6fe069f2",
+          "sourceLabel": "Official Bookkeeping Services | Alignment Business Services | KC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 913-390-3742"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a7f1e884-ac00-4ccb-9573-fe9b7892e327",
+      "expectedIdentity": {
+        "name": "Aliso Home Care Services",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://alisohomecare.com/"
+      },
+      "patch": {
+        "description": "ALISO Home Care Services LLC provides compassionate, reliable non-medical home care designed to help clients remain safe, comfortable, and independent at home."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://alisohomecare.com/",
+          "sourceLabel": "Official ALISO Home Care Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"ALISO Home Care Services LLC provides compassionate, reliable non-medical home care designed to help clients remain safe, comfortable, and independent at home.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_87a6ca29-643b-4d8b-89d3-dec5ebd65550",
+      "expectedIdentity": {
+        "name": "Alkebu-Lan Images",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://alkebulanimages.com/"
+      },
+      "patch": {
+        "description": "Since 1986, Alkebu-Lan Images promotes positivity in Black culture and offers books, apparel, wellness, and African art.",
+        "phone": "615-321-4111",
+        "twitter": "https://twitter.com/alkebulanimages"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://alkebulanimages.com/",
+          "sourceLabel": "Official Alkebu-Lan Images, Nashville's only Black-owned bookstore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Since 1986, Alkebu-Lan Images has gathered the accoutrements of the Black esthetic under one roof on Jefferson Street: books, apparel, wellness, and art that promote positive Black lifestyles."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://alkebulanimages.com/",
+          "sourceLabel": "Official Alkebu-Lan Images, Nashville's only Black-owned bookstore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 615-321-4111"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://alkebulanimages.com/",
+          "sourceLabel": "Official Alkebu-Lan Images, Nashville's only Black-owned bookstore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/alkebulanimages"
+        }
+      ]
+    },
+    {
+      "businessId": "source_95de75d2-1dce-4723-b496-0ce93d79171e",
+      "expectedIdentity": {
+        "name": "All About Locs Salon",
+        "city": "Atlanta",
+        "state": "GA",
+        "website": "https://allaboutlocsllc.com/"
+      },
+      "patch": {
+        "description": "All About Locs Salon"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.allaboutlocsllc.com/",
+          "sourceLabel": "Official All About Locs Salon | Locs | 1745 Defoor Place Northwest, Atlanta, GA 30318, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: All About Locs Salon | Locs | 1745 Defoor Place Northwest, Atlanta, GA 30318, USA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5071721f-1493-49fc-b42b-f3355e67e4fe",
+      "expectedIdentity": {
+        "name": "All Age Home Healthcare",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "http://allagehh.org/"
+      },
+      "patch": {
+        "description": "All Age Home Healthcare provides in-home care services for seniors, including mobility assistance, medication reminders, errands and transportation, light housekeeping, wellness check-ins, and dementia & Alzheimer's care.",
+        "phone": "(763) 537-1202",
+        "facebook": "https://www.facebook.com/all-age-home-healthcare/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.allagehh.org/",
+          "sourceLabel": "Official All Age Home Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: All Age Home Healthcare Providing compassionate, professional in-home care services for seniors, ensuring dignity and independence every step of the way."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.allagehh.org/",
+          "sourceLabel": "Official All Age Home Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone (763) 537-1202"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.allagehh.org/",
+          "sourceLabel": "Official All Age Home Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/all-age-home-healthcare/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_796ab1c8-ad4a-4ddd-b217-2cb9facdb964",
+      "expectedIdentity": {
+        "name": "All Bout Dat Tours",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://allboutdat.com/"
+      },
+      "patch": {
+        "description": "Black Heritage & Jazz Tour of New Orleans, Cultural tours.",
+        "tags": [
+          "black heritage tours",
+          "jazz tours",
+          "cultural tours"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.allboutdat.com/",
+          "sourceLabel": "Official Black Heritage &amp; Jazz Tour of New Orleans, Cultural tours. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Black Heritage & Jazz Tour of New Orleans, Cultural tours."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.allboutdat.com/",
+          "sourceLabel": "Official Black Heritage &amp; Jazz Tour of New Orleans, Cultural tours. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Black Heritage & Jazz Tour of New Orleans, Cultural tours."
+        }
+      ]
+    },
+    {
+      "businessId": "source_f77a34ac-ed1b-4040-975f-754b842c2b2a",
+      "expectedIdentity": {
+        "name": "All Business Solutions",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.allbusinesssolutions.net/"
+      },
+      "patch": {
+        "description": "Provides merchant services (payment processing) and related business solutions.",
+        "tags": [
+          "merchant services",
+          "payment processing",
+          "business solutions"
+        ]
+      },
+      "fieldModes": {
+        "description": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://allbusinesssolutions.net/",
+          "sourceLabel": "Official All Business Solutions | Trusted Merchant Service Provider page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: All Business Solutions | Trusted Merchant Service Provider"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://allbusinesssolutions.net/",
+          "sourceLabel": "Official All Business Solutions | Trusted Merchant Service Provider page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: All Business Solutions | Trusted Merchant Service Provider"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4e4a15f3-e04a-4d32-af01-586be7234a78",
+      "expectedIdentity": {
+        "name": "Allen, Allen, Allen & Allen",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "http://www.allenandallen.com/"
+      },
+      "patch": {
+        "description": "A personal injury law firm that handles personal injury cases in Virginia and nationwide.",
+        "phone": "1-866-388-1307",
+        "twitter": "https://x.com/@allenandallen",
+        "youtube": "https://www.youtube.com/user/allenandallenlaw",
+        "instagram": "https://www.instagram.com/allenandallenlaw/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.allenandallen.com/locations/",
+          "sourceLabel": "Official Allen, Allen, Allen &amp; Allen Office Locations | Allen and Allen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The Allen Law Firm handles personal injury cases in Virginia and nationwide.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.allenandallen.com/",
+          "sourceLabel": "Official Virginia Personal Injury Attorneys | Allen &amp; Allen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call us at 1-866-388-1307\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.allenandallen.com/",
+          "sourceLabel": "Official Virginia Personal Injury Attorneys | Allen &amp; Allen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/@allenandallen"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.allenandallen.com/",
+          "sourceLabel": "Official Virginia Personal Injury Attorneys | Allen &amp; Allen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/allenandallenlaw"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.allenandallen.com/",
+          "sourceLabel": "Official Virginia Personal Injury Attorneys | Allen &amp; Allen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/allenandallenlaw/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ea56d829-9c02-480b-9d30-6d0b8a5d0d2d",
+      "expectedIdentity": {
+        "name": "All In One Services International Inc.",
+        "city": "Astoria",
+        "state": "NY",
+        "website": "http://www.allinoneservices.com/"
+      },
+      "patch": {
+        "description": "All In One Services is an employment/household and domestic staffing agency that helps people find childcare and domestic workers such as nannies, housekeepers, baby nurses, nurses aides, companions, and chauffeurs.",
+        "phone": "(718) 267-5090",
+        "tags": [
+          "housekeepers",
+          "nannies",
+          "baby nurses",
+          "nurses aides",
+          "companions",
+          "chauffeurs",
+          "domestic staffing",
+          "childcare"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://allinoneservices.com/",
+          "sourceLabel": "Official All In One Services &#8211; job specialists page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: All in One Services is committed to helping you find the best childcare and/or domestic help to suit your unique needs, budget and schedule."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "http://allinoneservices.com/",
+          "sourceLabel": "Official All In One Services &#8211; job specialists page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: contact (718) 267-5090 (718) 267-5091 fax: (718) 267-2644"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "http://allinoneservices.com/services/",
+          "sourceLabel": "Official Services &#8211; All In One Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Housekeepers Nannies Baby Nurses Chauffeurs Nurses Aides Companions"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d12ddb43-817f-4a02-9ba2-af07503e64f0",
+      "expectedIdentity": {
+        "name": "All Starz Appliance Repair",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://allstarzappliancerepair.com/"
+      },
+      "patch": {
+        "phone": "205-820-0444",
+        "tags": [
+          "washer and dryer repair",
+          "dishwasher repair",
+          "microwave repair",
+          "garbage disposal repair",
+          "oven and stove repair",
+          "cooktop repair",
+          "appliance maintenance and diagnostics",
+          "general appliance repair services"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://allstarzappliancerepair.com/",
+          "sourceLabel": "Official Appliance Repair | Washer and Dryer Repair | Dishwasher Repair | All-Starz Appliance Repair LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call 205-820-0444 today\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://allstarzappliancerepair.com/",
+          "sourceLabel": "Official Appliance Repair | Washer and Dryer Repair | Dishwasher Repair | All-Starz Appliance Repair LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Services Offered Washer and Dryer Repair Dishwasher Repair Microwave Repair Garbage Disposal Repair Oven and Stove Repair Cooktop Repair Appliance Maintenance and Diagnostics General Appliance Repair Services\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_ce9aa6e3-e0bc-497e-a1d6-53d1e364b76e",
+      "expectedIdentity": {
+        "name": "All The Way Live",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.alllivefood.com/"
+      },
+      "patch": {
+        "description": "All The Way Live is a raw food vegan café offering fresh, organic and alkaline meals.",
+        "phone": "(215)-821-7298",
+        "tags": [
+          "raw vegan",
+          "organic",
+          "alkaline meals",
+          "plant-based food"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://allthewaylivecafe.com/",
+          "sourceLabel": "Official All The Way Live Cafe | Raw &amp; Vegan Foods page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: All The way live Organic Alkaline Meals – Fresh, Flavorful & Nourishing"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://allthewaylivecafe.com/",
+          "sourceLabel": "Official All The Way Live Cafe | Raw &amp; Vegan Foods page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: All The Way Live Cafe 6108 Germantown Ave, Philadelphia, Pennsylvania 19144 (215)-821-7298"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://allthewaylivecafe.com/",
+          "sourceLabel": "Official All The Way Live Cafe | Raw &amp; Vegan Foods page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: All The way live Organic Alkaline Meals – Fresh, Flavorful & Nourishing"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a38a00ef-dc33-4c90-afae-03521643e3eb",
+      "expectedIdentity": {
+        "name": "Alltrus",
+        "city": "Seattle",
+        "state": "WA",
+        "website": "https://alltrus.com/"
+      },
+      "patch": {
+        "description": "Alltrus Commercial Clean is a full-service professional cleaning company specializing in commercial and business spaces, providing comprehensive janitorial services tailored to the individual needs of our customers."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://alltrus.com/about-us-1",
+          "sourceLabel": "Official About us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Alltrus Commercial Clean is a full-service professional cleaning company specializing in commercial and business spaces, providing comprehensive janitorial services tailored to the individual needs of our customers.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_d6f774bb-0ed2-44fc-8899-22c5cd5d298d",
+      "expectedIdentity": {
+        "name": "Al's Bail Bond Nationwide Services",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://alsbailbonds.com/"
+      },
+      "patch": {
+        "hours": "Al's Bail Bond Nationwide Services is on call for 24-hour service, seven days a week, 365 days a year.",
+        "phone": "(601) 353-4990"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://alsbailbonds.com/",
+          "sourceLabel": "Official Bail Bonds in Mississippi | 24/7 Fast &amp; Affordable Bondsman page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Al's Bail Bond Nationwide Services is on call for 24-hour service, seven days a week, 365 days a year."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://alsbailbonds.com/",
+          "sourceLabel": "Official Bail Bonds in Mississippi | 24/7 Fast &amp; Affordable Bondsman page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: PH: (601) 353-4990"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b9fb7129-35b6-463a-971d-e389e05142d3",
+      "expectedIdentity": {
+        "name": "Al's Finger Licking Good Bar-B-Que",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://www.alsybor.com/"
+      },
+      "patch": {
+        "description": "BBQ and soul food restaurant; menu and location information indicate BBQ and soul food are offered.",
+        "hours": "Mon - Tues: Closed Wed - Thurs: 11:30am - 5:30pm Fri - Sat: 11:30am - 7:00pm Sun: 12:00pm - 5:00pm",
+        "tags": [
+          "bbq",
+          "soul food",
+          "catering"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.alsybor.com/",
+          "sourceLabel": "Official Al's Finger Licking Good Bar-B-Que page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: BIG NEWS!!! Al's BBQ moved to Al's Soul Food 2302 E 7th Ave!!! BBQ and SOUL FOOD in ONE LOCATION!!!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.alsybor.com/location.html",
+          "sourceLabel": "Official Location page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon - Tues: Closed Wed - Thurs: 11:30am - 5:30pm Fri - Sat: 11:30am - 7:00pm Sun: 12:00pm - 5:00pm"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.alsybor.com/",
+          "sourceLabel": "Official Al's Finger Licking Good Bar-B-Que page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: BBQ and SOUL FOOD in ONE LOCATION!!!"
+        }
+      ]
+    },
+    {
+      "businessId": "cohort-7352eaf34179a00103ec0980",
+      "expectedIdentity": {
+        "name": "Altria",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.altria.com/"
+      },
+      "patch": {
+        "twitter": "http://www.twitter.com/altrianews",
+        "youtube": "http://www.youtube.com/user/Altria"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.altria.com/",
+          "sourceLabel": "Official Altria Group | Moving Beyond Smoking page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://www.twitter.com/altrianews"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.altria.com/",
+          "sourceLabel": "Official Altria Group | Moving Beyond Smoking page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: http://www.youtube.com/user/Altria"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4a487e9b-3ec4-4c2a-8ea0-522bbede67e0",
+      "expectedIdentity": {
+        "name": "Always Best Care Senior Services",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.abcphillybristol.com/"
+      },
+      "patch": {
+        "description": "Always Best Care of Philadelphia provides non-medical in-home care, senior living referral services, skilled home health, and special care services.",
+        "phone": "267-909-9248",
+        "facebook": "https://www.facebook.com/abcPhiladelphiaPA/",
+        "twitter": "https://twitter.com/ABC_Philly",
+        "instagram": "https://www.instagram.com/abc_philly/",
+        "youtube": "https://www.youtube.com/watch?v=XzQftW0PAIQ"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://alwaysbestcare.com/philly/",
+          "sourceLabel": "Official In-Home Senior Care In Langhorne, PA | Always Best Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We help people with specific needs maintain a safe, independent, and dignified lifestyle with in-home care, senior community referral services and special care services\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://alwaysbestcare.com/philly/",
+          "sourceLabel": "Official In-Home Senior Care In Langhorne, PA | Always Best Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Us: 267-909-9248\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://alwaysbestcare.com/philly/",
+          "sourceLabel": "Official In-Home Senior Care In Langhorne, PA | Always Best Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/abcPhiladelphiaPA/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://alwaysbestcare.com/philly/",
+          "sourceLabel": "Official In-Home Senior Care In Langhorne, PA | Always Best Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ABC_Philly"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://alwaysbestcare.com/philly/",
+          "sourceLabel": "Official In-Home Senior Care In Langhorne, PA | Always Best Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/abc_philly/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://alwaysbestcare.com/philly/",
+          "sourceLabel": "Official In-Home Senior Care In Langhorne, PA | Always Best Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=XzQftW0PAIQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_98e1eb04-d242-4a34-8807-fd9bc3d68228",
+      "expectedIdentity": {
+        "name": "Always Home",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://www.brhealthcareinc.com/"
+      },
+      "patch": {
+        "description": "Always Home provides in-home services designed to offer individuals with physical disabilities the ability to live independently in the privacy of their own homes.",
+        "hours": "Monday - Friday: 8 am - 4:30 pm",
+        "phone": "844-626-9526",
+        "tags": [
+          "in-home care",
+          "personal care services",
+          "housekeeping",
+          "certified nursing assistants",
+          "personal care attendants"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.brhealthcareinc.com/about-us",
+          "sourceLabel": "Official About Us | Always Home LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Always Home provides in-home services designed to offer individuals with physical disabilities the ability to live independently in the privacy of their own homes.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.brhealthcareinc.com/",
+          "sourceLabel": "Official Home Care | Always Home LLC | Jackson, MS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Office hours Monday - Friday: 8 am - 4:30 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.brhealthcareinc.com/",
+          "sourceLabel": "Official Home Care | Always Home LLC | Jackson, MS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"CALL US AT: 844-626-9526\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.brhealthcareinc.com/services-and-products",
+          "sourceLabel": "Official Services &amp; Products | mysite page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"OUR SERVICES & PRODUCTS Always Home, LLC is dedicated to servicing and taking care the needs of those who require attentive, accommodating, and comforting care services in their own private home.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_6e87080d-73eb-4ab4-a17c-37f0073745d6",
+      "expectedIdentity": {
+        "name": "Alyssa A Hogan Enterprise",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://alyssaahogan.co/"
+      },
+      "patch": {
+        "description": "Alyssa A. Hogan Enterprise designs and delivers workforce development, leadership training, digital literacy and AI readiness, project and program management, management consulting, and executive coaching for government agencies, prime contractors, corporations, workforce organizations, educational institutions, and nonprofits.",
+        "hours": "Monday to Friday 9:00 am to 5:00 pm Eastern",
+        "phone": "407-924-2670",
+        "tags": [
+          "workforce development",
+          "leadership training",
+          "digital literacy",
+          "cybersecurity awareness",
+          "ai readiness",
+          "project and program management",
+          "management consulting",
+          "executive coaching",
+          "entrepreneurship technical assistance"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://alyssaahogan.co/",
+          "sourceLabel": "Official Workforce Development and Leadership Training | Alyssa A. Hogan Enterprise LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Alyssa A. Hogan Enterprise designs and delivers workforce development, leadership training, digital literacy and AI readiness, project and program management, management consulting, and executive coaching for government agencies, prime contractors, corporations, workforce organizations, educational institutions, and nonprofits.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://alyssaahogan.co/services/",
+          "sourceLabel": "Official Services | Alyssa A. Hogan Enterprise LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Monday to Friday 9:00 am to 5:00 pm Eastern\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://alyssaahogan.co/services/",
+          "sourceLabel": "Official Services | Alyssa A. Hogan Enterprise LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact 407-924-2670 info@alyssaahogan.co\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://alyssaahogan.co/",
+          "sourceLabel": "Official Workforce Development and Leadership Training | Alyssa A. Hogan Enterprise LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Services Workforce Development Leadership and Professional Development Digital Literacy, Cybersecurity and AI Readiness Project and Program Management Management Consulting and Organizational Development Executive Coaching Entrepreneurship and Small Business Technical Assistance\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_93c9f373-8f3c-47e5-a764-04ba522f8dcb",
+      "expectedIdentity": {
+        "name": "Amari's",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "http://amarisrestaurant.com/"
+      },
+      "patch": {
+        "phone": "(215) 921-9552",
+        "facebook": "https://www.facebook.com/amarisrestaurant/"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://amarisrestaurant.com/",
+          "sourceLabel": "Official Amari&#039;s Restaurant &#8211; (215) 921-9552 &#8212; Located at 5037 Baltimore Ave, Philadelphia, PA 19143 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Amari's Restaurant – (215) 921-9552 -- Located at 5037 Baltimore Ave, Philadelphia, PA 19143"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://amarisrestaurant.com/",
+          "sourceLabel": "Official Amari&#039;s Restaurant &#8211; (215) 921-9552 &#8212; Located at 5037 Baltimore Ave, Philadelphia, PA 19143 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/amarisrestaurant/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_46f632aa-2807-49f1-b64e-1e45aa806bbb",
+      "expectedIdentity": {
+        "name": "Amazing Place",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.amazingplacehouston.org/"
+      },
+      "patch": {
+        "description": "Provides programs and services for people with dementia and Alzheimer’s, caregiver education and support, and brain health presentations and training.",
+        "hours": "Amazing Place is open Monday - Friday from 7:30 a.m. until 6:00 p.m.",
+        "youtube": "https://www.youtube.com/@amazingplacehouston"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.amazingplacehouston.org/",
+          "sourceLabel": "Official Premier Dementia &amp; Alzheimer&#039;s Care | Amazing Place Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Amazing Place we help our neighbors live to their full potential with hope and purpose in the face of a dementia diagnosis, caregiver challenges and breakthroughs in memory preservation."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.amazingplacehouston.org/contact/",
+          "sourceLabel": "Official Contact - Amazing Place page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Amazing Place is open Monday - Friday from 7:30 a.m. until 6:00 p.m."
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.amazingplacehouston.org/",
+          "sourceLabel": "Official Premier Dementia &amp; Alzheimer&#039;s Care | Amazing Place Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@amazingplacehouston"
+        }
+      ]
+    },
+    {
+      "businessId": "source_046d3a7e-0718-41d7-86b3-0a76bd36d67f",
+      "expectedIdentity": {
+        "name": "Ambassador Services, LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.ambassadorusa.com/"
+      },
+      "patch": {
+        "description": "Ambassador Services offers comprehensive facility maintenance and landscaping services for commercial, educational, and industrial spaces.",
+        "phone": "(281) 727-0117"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ambassadorusa.com/",
+          "sourceLabel": "Official Commercial Janitorial &amp; Landscaping Services Houston &amp; Dallas | Ambassador Services, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We offer comprehensive facility maintenance and landscaping services for commercial, educational, and industrial spaces in Greater Texas and surrounding states.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ambassadorusa.com/",
+          "sourceLabel": "Official Commercial Janitorial &amp; Landscaping Services Houston &amp; Dallas | Ambassador Services, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact us today at Houston: (281) 727-0117\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_1ae3304b-2405-43f3-ae76-56e953addc02",
+      "expectedIdentity": {
+        "name": "Amber Boyd Attorney at Law",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.amberboydlaw.com/"
+      },
+      "patch": {
+        "description": "Amber Boyd Law provides legal services focused on workplace discrimination, retaliation, severance agreements, sexual harassment, wages and hour issues, and probate in Indiana.",
+        "phone": "(317) 960-5070",
+        "tags": [
+          "workplace discrimination",
+          "retaliation",
+          "severance agreements",
+          "sexual harassment",
+          "wages and hour issues",
+          "probate",
+          "employment law"
+        ],
+        "facebook": "https://www.facebook.com/akblaw/",
+        "youtube": "https://www.youtube.com/@amberk.boydattorneyatlaw3138"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://amberboydlaw.com/about/",
+          "sourceLabel": "Official About Amber Boyd Law: Indianapolis Employment Attorney page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Amber Boyd Law, founded in 2013 in Indianapolis, is committed to providing exceptional legal representation with a focus on workplace discrimination, retaliation, severance agreements, sexual harassment, wages and hour issues, and probate."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://amberboydlaw.com/",
+          "sourceLabel": "Official Indiana Employment Lawyers | Amber Boyd Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact us (317) 960-5070"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://amberboydlaw.com/about/",
+          "sourceLabel": "Official About Amber Boyd Law: Indianapolis Employment Attorney page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Workplace Discrimination Retaliation Severance Agreements Sexual Harassment Wages And Hours Issues Probate"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://amberboydlaw.com/",
+          "sourceLabel": "Official Indiana Employment Lawyers | Amber Boyd Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/akblaw/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://amberboydlaw.com/",
+          "sourceLabel": "Official Indiana Employment Lawyers | Amber Boyd Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@amberk.boydattorneyatlaw3138"
+        }
+      ]
+    },
+    {
+      "businessId": "source_61a04fa4-1fa1-46a8-b2bc-a3c3be4c65aa",
+      "expectedIdentity": {
+        "name": "AMC Engineering PLLC",
+        "city": "Astoria",
+        "state": "NY",
+        "website": "https://www.amc-engineering.com/"
+      },
+      "patch": {
+        "phone": "(718) 545-0474"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://amc-engineering.com/",
+          "sourceLabel": "Official AMC Engineering, PLLC — Environmental Engineering, New York, NY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(718) 545-0474\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_bb99060d-fb1b-4e2c-aa8e-ac46657e4200",
+      "expectedIdentity": {
+        "name": "A.M. Diverse Cooking",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "https://amdiversecooking.com/"
+      },
+      "patch": {
+        "description": "A.M. Diverse Cooking is a private chef and upscale catering company specializing in curated menus, personalized dining concepts, and elevated hospitality for vacations, rentals, destination events, weddings, and gatherings.",
+        "hours": "Calling Hours Open today 11:00 am – 07:00 pm",
+        "phone": "(912) 436-4280",
+        "tags": [
+          "private chef dinners",
+          "event catering",
+          "interactive experiences",
+          "wedding dinners & receptions",
+          "bachelor & bachelorette dinners",
+          "family gatherings & celebrations",
+          "multi-course private dinners"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://amdiversecooking.com/about",
+          "sourceLabel": "Official About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"A.M. Diverse Cooking is a private chef and upscale catering company founded by Chef Alexander Mack and built on the belief that great food is the soul of unforgettable experiences. The company specializes in curated menus, personalized dining concepts, and elevated hospitality for vacations, Airbnb stays, destination events, weddings, gatherings, and milestone celebrations.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://amdiversecooking.com/quote%2Fbooking",
+          "sourceLabel": "Official Quote/Booking page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Calling Hours Open today 11:00 am – 07:00 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://amdiversecooking.com/menus",
+          "sourceLabel": "Official Menus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Contact: (912) 436-4280\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://amdiversecooking.com/",
+          "sourceLabel": "Official A.M. Diverse Cooking - Personal Chef Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"What We Do Private Chef Dinners Interactive Experiences Private Chef Dinners Custom-curated menus for bachelorette/bachelor parties, vacations, birthdays, anniversaries, and intimate home dining.\""
+        }
+      ]
+    },
+    {
+      "businessId": "national-2e177b04d62957dfa172d19b",
+      "expectedIdentity": {
+        "name": "American Baptist College",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://abcnash.edu/"
+      },
+      "patch": {
+        "description": "American Baptist College is a Historically Black College with a liberal arts emphasis that educates, graduates, and prepares diverse students for Christian leadership, service, and social justice.",
+        "hours": "\"Campus visits are scheduled to last 1-1.5 hours.\",",
+        "phone": "615-687-6927",
+        "tags": [
+          "historically black college",
+          "liberal arts education",
+          "christian leadership",
+          "campus tours"
+        ],
+        "twitter": "https://twitter.com/i/flow/login?redirect_after_login=%2Fabcedu1924",
+        "youtube": "https://www.youtube.com/c/AmericanBaptistCollege1924"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://abcnash.edu/",
+          "sourceLabel": "Official Home - American Baptist College - Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The mission of American Baptist College, a Historically Black College with a liberal arts emphasis, is to educate, graduate, and prepare diverse students for Christian leadership, service, and social justice in the world.\","
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://abcnash.edu/schedule-a-visit/",
+          "sourceLabel": "Official Schedule A Visit - American Baptist College page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Campus visits are scheduled to last 1-1.5 hours.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://abcnash.edu/",
+          "sourceLabel": "Official Home - American Baptist College - Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"To contact ABC Security after normal business hours, call 615-687-6927 .\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://abcnash.edu/",
+          "sourceLabel": "Official Home - American Baptist College - Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The mission of American Baptist College, a Historically Black College with a liberal arts emphasis, is to educate, graduate, and prepare diverse students for Christian leadership, service, and social justice in the world.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://abcnash.edu/",
+          "sourceLabel": "Official Home - American Baptist College - Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/i/flow/login?redirect_after_login=%2Fabcedu1924"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://abcnash.edu/",
+          "sourceLabel": "Official Home - American Baptist College - Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/c/AmericanBaptistCollege1924"
+        }
+      ]
+    },
+    {
+      "businessId": "source_97c87507-d659-41e9-8feb-c138b9cdcb56",
+      "expectedIdentity": {
+        "name": "American Cancer Society",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.cancer.org/"
+      },
+      "patch": {
+        "description": "The American Cancer Society provides information, programs, and services related to cancer, including patient programs, research, and ways to give.",
+        "phone": "800.227.2345",
+        "tags": [
+          "patient programs",
+          "free rides to treatment",
+          "free lodging during treatment",
+          "smoking cessation support",
+          "breast cancer support",
+          "24/7 helpline"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.cancer.org/",
+          "sourceLabel": "Official End Cancer As We Know It | American Cancer Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Programs & Services Patient Programs Road To Recovery - Free Rides to Treatment Free Lodging During Treatment ACS CARES™ Free Smoking Cessation Support Connect with Survivors Breast Cancer Support Survivor Stories"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.cancer.org/",
+          "sourceLabel": "Official End Cancer As We Know It | American Cancer Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us 800.227.2345"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.cancer.org/support-programs-and-services/road-to-recovery.html",
+          "sourceLabel": "Official Road To Recovery | American Cancer Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Patient Programs Road To Recovery - Free Rides to Treatment Free Lodging During Treatment ACS CARES™ Free Smoking Cessation Support Connect with Survivors Breast Cancer Support Survivor Stories 24/7 Cancer Helpline Call us 1-800-227-2345 Resource Search"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e6504598-715e-4643-8f00-37562259a754",
+      "expectedIdentity": {
+        "name": "American Commercial Equipment Repair Corp.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "http://www.acerepair.net/"
+      },
+      "patch": {
+        "description": "American Commercial Equipment Repair provides food service equipment and HVAC solutions."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://acerepair.com/",
+          "sourceLabel": "Official American Commercial Equipment Repair | Food Service Equipment & HVAC Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: American Commercial Equipment Repair | Food Service Equipment & HVAC Solutions"
+        }
+      ]
+    },
+    {
+      "businessId": "source_adc937a6-493a-4aeb-bd54-88906d559364",
+      "expectedIdentity": {
+        "name": "American Women's Heritage Society & Museum Underground Railroad Museum at Belmont Belmont Mansion Historic House",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://belmontmansion.org/"
+      },
+      "patch": {
+        "hours": "Museum Hours Tuesday-Thursday 11AM -4PM Last tour begins at 3pm",
+        "instagram": "https://www.instagram.com/belmont_mansion_urm"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.belmontmansion.org/contact-us",
+          "sourceLabel": "Official General 1 &mdash; Underground Railroad at Belmont Mansion page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Museum Hours Tuesday-Thursday 11AM -4PM Last tour begins at 3pm\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.belmontmansion.org/",
+          "sourceLabel": "Official Underground Railroad at Belmont Mansion page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/belmont_mansion_urm"
+        }
+      ]
+    },
+    {
+      "businessId": "source_eb329dd9-2a88-4bb7-b38f-c7213be3b2ca",
+      "expectedIdentity": {
+        "name": "America's Black Holocaust Museum",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uO2vZA"
+      },
+      "patch": {
+        "description": "America's Black Holocaust Museum is a historical and memorial museum that builds public awareness of the harmful legacies of slavery and Jim Crow and promotes racial repair, reconciliation, and healing.",
+        "phone": "(414) 209-3640",
+        "tags": [
+          "history museum",
+          "memorial museum",
+          "guided tours",
+          "virtual museum",
+          "space rental"
+        ],
+        "facebook": "https://www.facebook.com/pages/Americas-Black-Holocaust-Museum/264755283560445",
+        "instagram": "https://www.instagram.com/abhmuseum/",
+        "youtube": "https://www.youtube.com/user/BlackHolocaustMuseum"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.abhmuseum.org/about/",
+          "sourceLabel": "Official About - America&#039;s Black Holocaust Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: ABHM builds public awareness of the harmful legacies of slavery and Jim Crow in America and promotes racial repair, reconciliation, and healing."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.abhmuseum.org/visit/",
+          "sourceLabel": "Official Visit - America&#039;s Black Holocaust Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (414) 209-3640"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.abhmuseum.org/",
+          "sourceLabel": "Official Welcome to ABHM! - America&#039;s Black Holocaust Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: ABHM is a one-of-a-kind historical and memorial museum about the Black Holocaust in America ."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.abhmuseum.org/",
+          "sourceLabel": "Official Welcome to ABHM! - America&#039;s Black Holocaust Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/pages/Americas-Black-Holocaust-Museum/264755283560445"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.abhmuseum.org/",
+          "sourceLabel": "Official Welcome to ABHM! - America&#039;s Black Holocaust Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/abhmuseum/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.abhmuseum.org/",
+          "sourceLabel": "Official Welcome to ABHM! - America&#039;s Black Holocaust Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/BlackHolocaustMuseum"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e7e9b80a-4f09-4ae4-9802-65731356fe77",
+      "expectedIdentity": {
+        "name": "Amigos de las Americas",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://amigosinternational.org/"
+      },
+      "patch": {
+        "description": "AMIGOS is a nonprofit that prepares young people to lead through service, cultural immersion, and meaningful connection with community initiatives across Latin America."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://amigosinternational.org/about-us/",
+          "sourceLabel": "Official About Us | Amigos page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"AMIGOS is a nonprofit that prepares young people to lead through service, cultural immersion, and meaningful connection with community initiatives across Latin America.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_c8cdb518-295e-4d28-ba9b-90a1222f4b89",
+      "expectedIdentity": {
+        "name": "Amigo's Restaurant & Pizza",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "http://www.amigosrestaurant.co/"
+      },
+      "patch": {
+        "phone": "+1 (267) 686 8216",
+        "tiktok": "https://www.tiktok.com/@amigosrestaurantp"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://amigosrestaurant.co/",
+          "sourceLabel": "Official Amigo&#039;s Restaurant &amp; Pizza &#8211; The Authentic Colombian Flavor! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us +1 (267) 686 8216 6700 Rising Sun Ave, Philadelphia, PA 19111"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://amigosrestaurant.co/",
+          "sourceLabel": "Official Amigo&#039;s Restaurant &amp; Pizza &#8211; The Authentic Colombian Flavor! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@amigosrestaurantp"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f559c3a9-0209-41da-afbe-c7354eed9d1d",
+      "expectedIdentity": {
+        "name": "Amistad Research Center",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://amistadresearchcenter.org/"
+      },
+      "patch": {
+        "description": "The Amistad Research Center is an independent, community-based archives focusing on Black history, the African Diaspora, and the Modern Civil Rights Movement.",
+        "phone": "(504) 862-3222",
+        "youtube": "https://www.youtube.com/@amistadresearchcenter"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://amistadresearchcenter.org/",
+          "sourceLabel": "Official Amistad Research Center | Independent Black History Archive page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Amistad is an independent, community-based archives focusing on Black history, the African Diaspora, and the Modern Civil Rights Movement."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://amistadresearchcenter.org/",
+          "sourceLabel": "Official Amistad Research Center | Independent Black History Archive page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (504) 862-3222"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://amistadresearchcenter.org/",
+          "sourceLabel": "Official Amistad Research Center | Independent Black History Archive page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@amistadresearchcenter"
+        }
+      ]
+    },
+    {
+      "businessId": "source_20cdf186-5e42-4c84-827c-905a84bcb380",
+      "expectedIdentity": {
+        "name": "AMPM EXCHANGE",
+        "city": "Cincinnati",
+        "state": "OH",
+        "website": "https://www.ampm.exchange/"
+      },
+      "patch": {
+        "description": "Boutique-style retailer offering a range of fashion and accessories.",
+        "hours": "Tue 12pm-7pm; Wed 12pm-7pm; Thu 12pm-7pm; Fri 12pm-7pm; Sat 11am-7pm; Sun 12pm-6pm",
+        "phone": "5134855991",
+        "tags": [
+          "fashion accessories",
+          "everyday essentials",
+          "accessories"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ampm.exchange/",
+          "sourceLabel": "Official am|PM EXCHANGE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: To never limit our customer, by bringing a wide range of unique, versatile styles all together under one roof to meet your everyday fashion needs."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ampm.exchange/",
+          "sourceLabel": "Official am|PM EXCHANGE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Tue 12pm-7pm Wed 12pm-7pm Thu 12pm-7pm Fri 12pm-7pm Sat 11am-7pm Sun 12pm-6pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ampm.exchange/",
+          "sourceLabel": "Official am|PM EXCHANGE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 5134855991"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.ampm.exchange/",
+          "sourceLabel": "Official am|PM EXCHANGE page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: EVERYDAY ESSENTAILS Accessories amPM Beauty"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3a67dc8b-d10a-4c17-871d-d68050f071b9",
+      "expectedIdentity": {
+        "name": "Amy’s Pastelillos",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://amyspastelillos.com/"
+      },
+      "patch": {
+        "description": "Puerto Rican-style pastelillos. Mom-inspired comfort food.",
+        "hours": "Wednesday • 11am - 3pm Thursday • 11am - 3pm Friday • 11am - 7:30pm Saturday • 11am- 3pm",
+        "tags": [
+          "pastelillos",
+          "takeout",
+          "catering",
+          "wholesale",
+          "pollito bowls",
+          "plantains",
+          "rotating daily specials"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.amyspastelillos.com/",
+          "sourceLabel": "Official Amy&#39;s Pastelillos page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Puerto Rican-style pastelillos. Mom-inspired comfort food."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.amyspastelillos.com/",
+          "sourceLabel": "Official Amy&#39;s Pastelillos page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Wednesday • 11am - 3pm Thursday • 11am - 3pm Friday • 11am - 7:30pm Saturday • 11am- 3pm"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.amyspastelillos.com/about",
+          "sourceLabel": "Official About &mdash; Amy&#39;s Pastelillos page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Today, the menu goes beyond pastelillos, with offerings like pollito bowls, plantains, and rotating daily specials.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7bfb11d7-5ac0-4525-b62f-d1b8802d6507",
+      "expectedIdentity": {
+        "name": "Ana Guzman EHS Consulting",
+        "city": "Jamaica",
+        "state": "NY",
+        "website": "https://www.agehsconsulting.com/"
+      },
+      "patch": {
+        "phone": "786-812-5078"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.agehsconsulting.com/",
+          "sourceLabel": "Official Ana Guzman EHS Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Ana Guzman EHS Consulting 786-812-5078 ana@agehsconsulting.com"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a225e66a-e07f-46eb-8862-2593e45b615c",
+      "expectedIdentity": {
+        "name": "Anchor’d Inc",
+        "city": "Boston",
+        "state": "MA",
+        "website": "https://www.anchordinc.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/anchordinc"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.anchordinc.com/",
+          "sourceLabel": "Official Breathe Deeply | Heal Fully | Live Anchor&#39;d &ndash; Anchor&#39;d Inc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/anchordinc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a20699e7-1f02-496e-a41e-5c6ea00c237f",
+      "expectedIdentity": {
+        "name": "Anderson Law Firm PLLC",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://andersonlawfl.com/"
+      },
+      "patch": {
+        "description": "Founded in 2013, Anderson Law Firm PLLC is an Orlando, Florida based business law and intellectual property law firm that helps entrepreneurs and organizations with brand protection, enforcement, data privacy, and artificial intelligence governance.",
+        "phone": "(407) 801-8000",
+        "youtube": "https://www.youtube.com/@andersonlawfirm"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://andersonlawfl.com/",
+          "sourceLabel": "Official Florida Business & Intellectual Property Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Founded in 2013, Anderson Law Firm PLLC is an Orlando, Florida based business law and intellectual property law firm committed to helping entrepreneurs and organizations navigate the complexities of brand protection and enforcement, data privacy, and artificial intelligence governance."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://andersonlawfl.com/",
+          "sourceLabel": "Official Florida Business & Intellectual Property Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (407) 801-8000"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://andersonlawfl.com/",
+          "sourceLabel": "Official Florida Business & Intellectual Property Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@andersonlawfirm"
+        }
+      ]
+    },
+    {
+      "businessId": "source_41d324b6-3698-4ef0-b9aa-4ba10dacde04",
+      "expectedIdentity": {
+        "name": "A New Day Pediatric Psychology",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://anewdaysa.com/"
+      },
+      "patch": {
+        "description": "A New Day Pediatric Psychology specializes in child psychology, parent coaching, and psychological testing.",
+        "hours": "Mon 9am-5 pm; Tue 9 am-5 pm; Wed 9 am-5 pm; Thu 9 am-5 pm; Fri 9am-12pm",
+        "phone": "2108164149",
+        "tags": [
+          "child psychology",
+          "parent coaching",
+          "psychological testing"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.anewdaysa.com/",
+          "sourceLabel": "Official A New Day Pediatric Psychology page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"A New Day Pediatric Psychology specializes in child psychology, parent coaching, and psychological testing.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.anewdaysa.com/",
+          "sourceLabel": "Official A New Day Pediatric Psychology page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon 9am-5 pm Tue 9 am-5 pm Wed 9 am-5 pm Thu 9 am-5 pm Fri 9am-12pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.anewdaysa.com/",
+          "sourceLabel": "Official A New Day Pediatric Psychology page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"2108164149\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.anewdaysa.com/",
+          "sourceLabel": "Official A New Day Pediatric Psychology page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"A New Day Pediatric Psychology specializes in child psychology, parent coaching, and psychological testing.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9c8eebaf-e5aa-42b8-85a7-c28a4a123958",
+      "expectedIdentity": {
+        "name": "Angelea’s Soul Food Kitchen",
+        "city": "Brooklyn Park",
+        "state": "MN",
+        "website": "https://www.angeleassoulfoodkitchen.com/"
+      },
+      "patch": {
+        "description": "To serve soulful, comforting food rooted in African American culinary traditions, prepared with passion, hospitality, and love.",
+        "hours": "Monday // Closed Tuesday // Closed Wednesday – Saturday // 12pm - 7pm Sunday // 12pm - 5pm",
+        "phone": "(763) 432 - 5642",
+        "instagram": "https://www.instagram.com/angeleassoulfood/",
+        "facebook": "https://www.facebook.com/angeleassoulfoodkitchen"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.angeleassoulfoodkitchen.com/",
+          "sourceLabel": "Official Angelea&#39;s Soul Food Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our Mission To serve soulful, comforting food rooted in African American culinary traditions, prepared with passion, hospitality, and love…..\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.angeleassoulfoodkitchen.com/",
+          "sourceLabel": "Official Angelea&#39;s Soul Food Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Monday // Closed Tuesday // Closed Wednesday – Saturday // 12pm - 7pm Sunday // 12pm - 5pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.angeleassoulfoodkitchen.com/",
+          "sourceLabel": "Official Angelea&#39;s Soul Food Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone (763) 432 - 5642\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.angeleassoulfoodkitchen.com/",
+          "sourceLabel": "Official Angelea&#39;s Soul Food Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/angeleassoulfood/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.angeleassoulfoodkitchen.com/",
+          "sourceLabel": "Official Angelea&#39;s Soul Food Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/angeleassoulfoodkitchen"
+        }
+      ]
+    },
+    {
+      "businessId": "source_37dea706-7b5a-4271-91c9-0c627dbb5006",
+      "expectedIdentity": {
+        "name": "Angels Around the Clock Homecare",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.angelsaroundtheclock.com/"
+      },
+      "patch": {
+        "description": "A.A.T.C. is dedicated to offering quality homecare to the elderly and disabled, providing services such as companionship, safety supervision, meal preparations, and medication reminders to help clients remain in their own homes.",
+        "phone": "(901) 388-0600"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://angelsaroundtheclock.com/about-us/",
+          "sourceLabel": "Official About Us &#8211; Angels Around the Clock Homecare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A.A.T.C. is dedicated to offering quality homecare to the elderly and disabled. Our services allow you or your loved ones to improve the quality of life while remaining in the comfort of their own home. We believe in bringing a piece of mind to our clients by providing a high level of care, companionship, safety, supervision, meal preparations, medication reminders and much more."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://angelsaroundtheclock.com/",
+          "sourceLabel": "Official Angels Around the Clock Homecare &#8211; Because Everybody Needs and Angel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Give us a call at (901) 388-0600."
+        }
+      ]
+    },
+    {
+      "businessId": "source_b8e1276b-51b1-454e-9c10-9d6379386ebc",
+      "expectedIdentity": {
+        "name": "Angie’s Seafood",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://angiesseafood.com/"
+      },
+      "patch": {
+        "description": "Right in the heart of Baltimore’s historic Fells Point, Angie’s Seafood serves classic seafood favorites, steaks, and pasta dishes.",
+        "hours": "Sun - Wed 12PM- 10PM; Thurs 12PM- 11PM; Fri - Sat 12PM- 12AM",
+        "phone": "(410) 342-0917",
+        "tags": [
+          "seafood",
+          "catering"
+        ],
+        "tiktok": "https://www.tiktok.com/@angies_seafood?refer=creator_embed"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://angiesseafood.com/",
+          "sourceLabel": "Official Angie&#039;s Seafood &#8211; Angie’s Seafood brings a traditional, down-home seafood experience to the heart of Baltimore’s Fells Point page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Right in the heart of Baltimore’s historic Fells Point—a neighborhood known for its charming cobblestone streets and stunning waterfront views—Angie’s Seafood serves up a homegrown twist on classic seafood favorites."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://angiesseafood.com/contact/",
+          "sourceLabel": "Official Contact &#8211; Angie&#039;s Seafood page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Working Hours Sun - Wed 12PM- 10PM Thurs 12PM- 11PM Fri - Sat 12PM- 12AM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://angiesseafood.com/contact/",
+          "sourceLabel": "Official Contact &#8211; Angie&#039;s Seafood page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone (410) 342-0917"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://angiesseafood.com/catering-menu/",
+          "sourceLabel": "Official Catering Menu &#8211; Angie&#039;s Seafood page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Looking to treat your co-workers, friends, or family? Angie’s has you covered!"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://angiesseafood.com/",
+          "sourceLabel": "Official Angie&#039;s Seafood &#8211; Angie’s Seafood brings a traditional, down-home seafood experience to the heart of Baltimore’s Fells Point page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@angies_seafood?refer=creator_embed"
+        }
+      ]
+    },
+    {
+      "businessId": "source_46492536-1afe-4261-b1ce-8f939e7bbfe5",
+      "expectedIdentity": {
+        "name": "Anika Pathways",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://www.anikapathways.com/"
+      },
+      "patch": {
+        "description": "Anika Pathways partners with nonprofit leaders and organizations to strengthen leadership capacity, organizational sustainability, and workplace culture.",
+        "phone": "(704) 729-4385"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.anikapathways.com/",
+          "sourceLabel": "Official Anika Pathwys page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Anika Pathways partners with nonprofit leaders and organizations to strengthen leadership capacity, organizational sustainability, and workplace culture.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.anikapathways.com/courtney",
+          "sourceLabel": "Official Founder &amp; Principal Consultant &mdash; Anika Pathwys page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(704) 729-4385\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_6b186709-a303-49ff-9b35-c18b6f98ce4d",
+      "expectedIdentity": {
+        "name": "Anita Easterwood",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.anitaeasterwood.com/"
+      },
+      "patch": {
+        "description": "Anita is a nationally recognized visual artist based in Kansas City who specializes in traditional drawing, digital art, and oil painting; her work celebrates Blackness through Black culture, fashion, history, and sisterhood.",
+        "tags": [
+          "traditional drawing",
+          "digital art",
+          "oil painting",
+          "portraits",
+          "black culture",
+          "fashion",
+          "history",
+          "sisterhood"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.anitaeasterwood.com/pages/about-artist",
+          "sourceLabel": "Official About Artist &ndash; Anita’s Art page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Anita is a nationally recognized visual artist based in Kansas City. She received her BA in Art from Kansas State University and MA in African American Studies from the University of Kansas. Her portraits are known for their ability to evoke emotion and her unique hatching technique. She specializes in traditional drawing, digital art and oil painting. Her work celebrates Blackness through: Black culture, fashion, history, and sisterhood."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.anitaeasterwood.com/pages/about-artist",
+          "sourceLabel": "Official About Artist &ndash; Anita’s Art page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: She specializes in traditional drawing, digital art and oil painting. Her work celebrates Blackness through: Black culture, fashion, history, and sisterhood."
+        }
+      ]
+    },
+    {
+      "businessId": "source_9ba99efa-20bb-4a13-b5a3-278f5f66b647",
+      "expectedIdentity": {
+        "name": "Anointed Handz Barbershop",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://anointedhandzbarbershop.biz/"
+      },
+      "patch": {
+        "description": "Welcome to Anointed Handz Barbershop",
+        "tags": [
+          "barbershop"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.anointedhandzbarbershop.biz/",
+          "sourceLabel": "Official Anointed Handz Barbershop | barbershop | 604 Gallatin Avenue #215, Nashville, TN, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Anointed Handz Barbershop"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.anointedhandzbarbershop.biz/",
+          "sourceLabel": "Official Anointed Handz Barbershop | barbershop | 604 Gallatin Avenue #215, Nashville, TN, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Anointed Handz Barbershop | barbershop | 604 Gallatin Avenue #215, Nashville, TN, USA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9e10fc02-0e3f-4c9e-8bdd-91bf7b87c449",
+      "expectedIdentity": {
+        "name": "Another Hairaholic",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "http://www.ahsalon.org/"
+      },
+      "patch": {
+        "description": "Another Hairaholic is a hair salon that provides services for various hair types and textures and offers services such as silk presses, wash and blow-dry, and styling.",
+        "phone": "(913)961-6047"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ahsalon.org/",
+          "sourceLabel": "Official Another Hairaholic | Hair Salon in Overland Park, KS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Another Hairaholic, we believe beauty is deeper than style — it’s confidence, care, and identity. While hair is our craft, people are our purpose ."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ahsalon.org/about",
+          "sourceLabel": "Official Hair Salon in Overland Park, KS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (913)961-6047"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bae4c97a-c50a-4c39-a58e-7b9f90681d6e",
+      "expectedIdentity": {
+        "name": "Another Pair Of Shoes, Llc",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://www.apofshoes.com/"
+      },
+      "patch": {
+        "description": "An online shoe boutique offering a curated collection of women's footwear and fashion-forward styles.",
+        "hours": "Monday - Friday, 9:00 AM - 3:00 PM (EST).",
+        "twitter": "https://twitter.com/apofshoes",
+        "tiktok": "https://tiktok.com/@apofshoes"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "twitter": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://apofshoes.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; Another Pair of Shoes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Started in 2014, Another Pair of Shoes, LLC, also known as, AP of Shoes, is an online shoe boutique that caters to all women."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://apofshoes.com/policies/terms-of-service",
+          "sourceLabel": "Official Terms of service &ndash; Another Pair of Shoes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours : Monday - Friday, 9:00 AM - 3:00 PM (EST)"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://apofshoes.com/",
+          "sourceLabel": "Official Another Pair of Shoes &ndash; Another Pair of Shoes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/apofshoes"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://apofshoes.com/",
+          "sourceLabel": "Official Another Pair of Shoes &ndash; Another Pair of Shoes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://tiktok.com/@apofshoes"
+        }
+      ]
+    },
+    {
+      "businessId": "source_83429627-f6dd-469e-9ef6-91a7031a9824",
+      "expectedIdentity": {
+        "name": "A-One Staffing",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "http://www.aonestaffing.com/"
+      },
+      "patch": {
+        "description": "A-One Staffing, LLC provides temporary, temp-to-hire and direct-hire employees in fields such as logistics, clerical, administrative, skilled trades, industrial positions, and information technology.",
+        "hours": "Mon - Fri: 7:00 am - 4:00 pm; Sat - Sun: Closed",
+        "phone": "(901) 367-5757"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.aonestaffing.com/",
+          "sourceLabel": "Official A-ONE STAFFING - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Headquartered in Memphis, Tennessee, A-One Staffing, LLC is a company that specializes in providing our clients with temporary, temp-to-hire and direct-hire employees in various fields such as Logistics, Clerical, Administrative, Skilled Trades and Industrial positions."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.aonestaffing.com/",
+          "sourceLabel": "Official A-ONE STAFFING - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office : 901-367-5757 | Mon - Fri: 7:00 am - 4:00 pm| Sat - Sun: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.aonestaffing.com/contact.html",
+          "sourceLabel": "Official Contact - A-ONE STAFFING page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone : (901)-367-5757"
+        }
+      ]
+    },
+    {
+      "businessId": "source_017cd8aa-fa7b-418a-85a7-1398999675a5",
+      "expectedIdentity": {
+        "name": "AOX Creatives",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.aoxcreatives.com/"
+      },
+      "patch": {
+        "description": "We combine technical marketing expertise with creative execution to help businesses grow online.",
+        "tags": [
+          "facebook & instagram ads"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.aoxcreatives.com/",
+          "sourceLabel": "Official AO × Creatives - Marketing Engineers × Marketing Creatives = Better Marketing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We combine technical marketing expertise with creative execution to help businesses grow online."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.aoxcreatives.com/",
+          "sourceLabel": "Official AO × Creatives - Marketing Engineers × Marketing Creatives = Better Marketing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Facebook & Instagram Ads"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ff5c0ebb-e319-43e1-ad8d-bc63455dfbcf",
+      "expectedIdentity": {
+        "name": "Apex Car and Limousine Service Inc.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.apexlimo.com/"
+      },
+      "patch": {
+        "description": "Apex Limousines provides luxury transportation and shuttle services in New York City and beyond for corporate events, airport transfers, group outings, and special occasions.",
+        "phone": "1-718-522-1313",
+        "facebook": "https://www.facebook.com/profile.php?id=61571975760451",
+        "twitter": "https://www.twitter.com/",
+        "instagram": "https://instagram.com/apexlimonyc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.apexlimo.com/",
+          "sourceLabel": "Official Apex Limo | Premier Transportation Services - From Sedans to Coach Buses page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to APEX LIMOUSINES Travel in style with Apex Limousines, your trusted provider for premium transportation and shuttle services in New York City and beyond."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.apexlimo.com/",
+          "sourceLabel": "Official Apex Limo | Premier Transportation Services - From Sedans to Coach Buses page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone Number 1-718-522-1313"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.apexlimo.com/",
+          "sourceLabel": "Official Apex Limo | Premier Transportation Services - From Sedans to Coach Buses page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/profile.php?id=61571975760451"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.apexlimo.com/",
+          "sourceLabel": "Official Apex Limo | Premier Transportation Services - From Sedans to Coach Buses page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.apexlimo.com/",
+          "sourceLabel": "Official Apex Limo | Premier Transportation Services - From Sedans to Coach Buses page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/apexlimonyc"
+        }
+      ]
+    },
+    {
+      "businessId": "cohort-6b841eb54a011d2a12124f23",
+      "expectedIdentity": {
+        "name": "ARAZ Systems, LLC.",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://arazsystems.com/"
+      },
+      "patch": {
+        "description": "ARAZ Systems provides IT solutions including data center equipment disposal, secure data management, IT infrastructure, and U.S.-manufactured computers for government and private-sector clients.",
+        "phone": "(804)884-ARAZ ext:200",
+        "tags": [
+          "data center equipment disposal",
+          "secure data management",
+          "it infrastructure",
+          "u.s.-manufactured computers",
+          "secure data destruction",
+          "sustainable it recycling"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://arazsystems.com/",
+          "sourceLabel": "Official Efficient Data Center Equipment Disposal Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our mission is to provide cutting-edge IT solutions tailored to the needs of federal, state, and local government agencies, as well as private sector businesses."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://arazsystems.com/",
+          "sourceLabel": "Official Efficient Data Center Equipment Disposal Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact (804)884-ARAZ. ext:200"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://arazsystems.com/",
+          "sourceLabel": "Official Efficient Data Center Equipment Disposal Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: We buy and sell IT hardware worldwide, recover value from retired infrastructure, and offer optional charitable donation."
+        }
+      ]
+    },
+    {
+      "businessId": "source_5c1cf56b-76a1-4bfa-a6de-02ebb289c201",
+      "expectedIdentity": {
+        "name": "Arcadis",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.arcadis.com/en-us"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/arcadisglobal"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.arcadis.com/en-us",
+          "sourceLabel": "Official Arcadis. Improving quality of life - United States | Arcadis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/arcadisglobal"
+        }
+      ]
+    },
+    {
+      "businessId": "source_40085e40-8d60-4835-941a-7729a1a8a3c7",
+      "expectedIdentity": {
+        "name": "Archer Nail Bar",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://archernailbartulsa.com/"
+      },
+      "patch": {
+        "description": "Archer Nail Bar offers nail, eyelash, facial, waxing and head spa services.",
+        "hours": "Mon - Sat: 9:30am - 7pm; Sun: 12pm - 5pm",
+        "phone": "918-888-3388",
+        "tags": [
+          "gel manicure",
+          "pedicure",
+          "nail extensions",
+          "powder nails",
+          "acrylic nails",
+          "eyelash extensions",
+          "lash & brow services",
+          "facials",
+          "waxing",
+          "head spa"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://archernailbartulsa.com/",
+          "sourceLabel": "Official Nail Salon 74103 | Archer Nail Bar of Tulsa, OK 74103 | Gel Manicure, Pedicure, Nail Extensions &amp; Powder, Acrylic, Eyelash, Lash & Brow, Facial, Waxing, Head Spa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Nail Salon 74103 | Archer Nail Bar of Tulsa, OK 74103 | Gel Manicure, Pedicure, Nail Extensions & Powder, Acrylic, Eyelash, Lash & Brow, Facial, Waxing, Head Spa"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://archernailbartulsa.com/",
+          "sourceLabel": "Official Nail Salon 74103 | Archer Nail Bar of Tulsa, OK 74103 | Gel Manicure, Pedicure, Nail Extensions &amp; Powder, Acrylic, Eyelash, Lash & Brow, Facial, Waxing, Head Spa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Mon - Sat: 9:30am - 7pm Sun: 12pm - 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://archernailbartulsa.com/",
+          "sourceLabel": "Official Nail Salon 74103 | Archer Nail Bar of Tulsa, OK 74103 | Gel Manicure, Pedicure, Nail Extensions &amp; Powder, Acrylic, Eyelash, Lash & Brow, Facial, Waxing, Head Spa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 110 N Boston Ave Tulsa, OK 74103 918-888-3388"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://archernailbartulsa.com/",
+          "sourceLabel": "Official Nail Salon 74103 | Archer Nail Bar of Tulsa, OK 74103 | Gel Manicure, Pedicure, Nail Extensions &amp; Powder, Acrylic, Eyelash, Lash & Brow, Facial, Waxing, Head Spa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Nail Salon 74103 | Archer Nail Bar of Tulsa, OK 74103 | Gel Manicure, Pedicure, Nail Extensions & Powder, Acrylic, Eyelash, Lash & Brow, Facial, Waxing, Head Spa"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f98b95d0-012a-47d3-87e5-3e27eb0ece87",
+      "expectedIdentity": {
+        "name": "Archie Law PLLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.archielawpllc.com/"
+      },
+      "patch": {
+        "description": "Archie Law PLLC is a Houston-based Texas law firm offering legal counsel in areas including civil and commercial litigation, non-profit governance, asset preservation and protection, estate planning and administration, consumer rights, and creditor's rights.",
+        "hours": "Mon - Fri: 9:00 AM - 5:30 PM; Sat - Sun: Closed",
+        "phone": "+1 (832) 962-7937",
+        "tags": [
+          "general civil litigation",
+          "commercial litigation",
+          "non-profit governance",
+          "asset preservation and protection",
+          "estate planning",
+          "estate administration",
+          "consumer rights",
+          "creditor's rights",
+          "contract law"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://archielawpllc.com/about/",
+          "sourceLabel": "Official Estate Planning in Texas - Archie Law PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Archie Law PLLC is a Houston-based Texas law firm specializing in general civil litigation, commercial litigation, non-profit governance, asset preservation and protection, estate planning, estate administration, consumer rights, and creditor's rights.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://archielawpllc.com/",
+          "sourceLabel": "Official Legal Services in Texas - Archie Law PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Mon - Fri: 9:00 AM - 5:30 PM Sat - Sun: Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://archielawpllc.com/",
+          "sourceLabel": "Official Legal Services in Texas - Archie Law PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"+1 (832) 962-7937\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://archielawpllc.com/about/",
+          "sourceLabel": "Official Estate Planning in Texas - Archie Law PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"specializing in general civil litigation, commercial litigation, non-profit governance, asset preservation and protection, estate planning, estate administration, consumer rights, and creditor's rights. We also support clients with contract law concerns such as drafting, interpretation, negotiations, and litigation.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_5b843223-07c3-4027-96fc-ec59061cb051",
+      "expectedIdentity": {
+        "name": "Architectural Flooring Resource Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.afrny.com/"
+      },
+      "patch": {
+        "description": "Architectural Flooring Resource, Inc. provides flooring materials and installation services and works with architects and designers to specify performance-based products.",
+        "pinterest": "https://www.pinterest.com/AFRny/",
+        "instagram": "https://www.instagram.com/afr_ny",
+        "tiktok": "https://www.tiktok.com/@afr_ny"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "pinterest": "fill",
+        "instagram": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://afrny.com/pages/about",
+          "sourceLabel": "Official About &ndash; AFR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Architectural Flooring Resource, Inc. is a long standing certified MWBE organization that has been an industry leading provider of quality flooring materials and skilled installation services for over thirty years.\""
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://afrny.com/",
+          "sourceLabel": "Official Architectural Flooring Resources &ndash; AFR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/AFRny/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://afrny.com/",
+          "sourceLabel": "Official Architectural Flooring Resources &ndash; AFR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/afr_ny"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://afrny.com/",
+          "sourceLabel": "Official Architectural Flooring Resources &ndash; AFR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@afr_ny"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b1ccee67-74cf-4dcf-a46f-b4a8d01f077f",
+      "expectedIdentity": {
+        "name": "Archwood Exchange",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://archwoodexchange.com/"
+      },
+      "patch": {
+        "description": "Archwood Exchange appears to operate a website offering programs and events, including educational programming, a retail incubator (ACRES), and marketplaces."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://archwoodexchange.com/",
+          "sourceLabel": "Official Archwood &ndash; Archwood Exchange page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: About Us Our Why Donate Educational Programming Educational Programming Billion Dollar Brand Initiative ACRES Retail Incubator Youth Education Events Events Upcoming Events Buy Black Marketplace Coffee & Connect Archwood First Fridays Black Friday Block Party Buy Black Arizona: Online Business Directory"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e4411d09-9da7-427f-9f5b-b3a5c93f8b7a",
+      "expectedIdentity": {
+        "name": "Arete Public Affairs",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://aretepa.com/"
+      },
+      "patch": {
+        "description": "Arete Public Affairs is a comprehensive consulting firm with over three decades of experience specializing in federal, state, and local government relations, public affairs, and strategic business development.",
+        "phone": "800.913.0894",
+        "twitter": "https://twitter.com/AretePA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.aretepa.com/",
+          "sourceLabel": "Official Arete Public Affairs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Arete Public Affairs is a comprehensive consulting firm with over three decades of experience specializing in federal, state, and local government relations, public affairs, and strategic business development."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.aretepa.com/contact.html",
+          "sourceLabel": "Official contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Please complete the form on this page or call 800.913.0894"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.aretepa.com/",
+          "sourceLabel": "Official Arete Public Affairs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/AretePA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_efeb2c6e-e6ac-41bc-a69a-809d44767566",
+      "expectedIdentity": {
+        "name": "Argenis Apolinario Photography",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.argenisphoto.com/"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/argenisphoto/"
+      },
+      "fieldModes": {
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.argenisphoto.com/",
+          "sourceLabel": "Official Argenis Apolinario Photography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/argenisphoto/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_66a45b83-2fc0-4fc1-8059-9b1ec8a17e17",
+      "expectedIdentity": {
+        "name": "Ariel Investments",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://www.arielinvestments.com/"
+      },
+      "patch": {
+        "twitter": "https://x.com/arielinvests"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.arielinvestments.com/",
+          "sourceLabel": "Official Home - Ariel Investments page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/arielinvests"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a7e21864-8f9d-4101-bc81-c37ec7ed4fb7",
+      "expectedIdentity": {
+        "name": "Arizona Move For Less Moving and Storage",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "http://movesforlessaz.com/"
+      },
+      "patch": {
+        "phone": "602-488-3683"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://movesforlessaz.com/",
+          "sourceLabel": "Official AZ Movers For Less - Cheap &amp; Affordable Movers in Arizona 602-488-3683 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"602-488-3683 or 602-923-6683\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9f63f505-274d-4dd2-aaee-0f0ef9d07647",
+      "expectedIdentity": {
+        "name": "Arizon Wellness",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.arizonwellness.com/"
+      },
+      "patch": {
+        "description": "Arizon Wellness provides compassionate and comprehensive mental health care, offering diagnostic evaluations, medication management, and personalized therapy to support mental, emotional, and behavioral health.",
+        "hours": "Mon – Fri: 9:00 AM – 5:00 PM; Sat-Sun: Closed",
+        "phone": "(614) 655-4524"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://arizonwellness.com/",
+          "sourceLabel": "Official Arizon Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Arizon Wellness, we provide compassionate and comprehensive mental health care designed to help you regain emotional balance and live a healthier, more fulfilling life.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://arizonwellness.com/",
+          "sourceLabel": "Official Arizon Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Mon – Fri: 9:00 AM – 5:00 PM Sat-Sun: Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://arizonwellness.com/",
+          "sourceLabel": "Official Arizon Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Now – (614) 655-4524\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_a0e098d7-c5ec-4698-a6bb-feb451d0c8dd",
+      "expectedIdentity": {
+        "name": "Arnett Mechanical",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.arnettmechanical.com/"
+      },
+      "patch": {
+        "description": "Arnett Mechanical is a family-owned and operated HVAC company based in Rosharon, Texas that provides heating and cooling services for residential and commercial properties.",
+        "phone": "(713) 300-1478",
+        "tags": [
+          "air conditioning repair",
+          "air conditioning replacement",
+          "air conditioning installation",
+          "heating",
+          "commercial hvac",
+          "residential ac service & maintenance",
+          "commercial services"
+        ],
+        "twitter": "https://twitter.com/ArnettMech"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.arnettmechanical.com/about-us-hvac-rosharon-tx",
+          "sourceLabel": "Official About Arnett Mechanical | Rosharon, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Arnett Mechanical is a family-owned and operated HVAC company based in Rosharon, Texas. We're dedicated to providing our neighbors with reliable, efficient, and affordable heating and cooling solutions."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.arnettmechanical.com/",
+          "sourceLabel": "Official Why Choose Arnett Mechanical for Your HVAC Needs? | Rosharon, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CALL US TODAY: (713) 300-1478"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.arnettmechanical.com/air-conditioning-services-rosharon-tx",
+          "sourceLabel": "Official Expert Air Conditioning Service &amp; Maintenance in Sienna, Rosharon, Pearland &amp; Missouri City | Arnett Mechanical page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our SERVICES Air Conditioning Repair Air Conditioning Replacement Air Conditioning Installation Heating Commercial HVAC"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.arnettmechanical.com/",
+          "sourceLabel": "Official Why Choose Arnett Mechanical for Your HVAC Needs? | Rosharon, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ArnettMech"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ffcaa671-80f4-4dc8-99eb-023f1b4d700f",
+      "expectedIdentity": {
+        "name": "Artem Vivendi",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://houseofvivendi.com/"
+      },
+      "patch": {
+        "description": "Art, books and objects for holistic healing."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.houseofvivendi.com/",
+          "sourceLabel": "Official Artem Vivendi | Art, Books &amp; Objects for Holistic Healing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Artem Vivendi | Art, Books & Objects for Holistic Healing"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a25367fc-24be-4bd8-9128-2522851e183b",
+      "expectedIdentity": {
+        "name": "Artifact Studio, LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://artifactnyc.squarespace.com/"
+      },
+      "patch": {
+        "description": "Design studio offering art direction, graphic design, websites, emails, print, photography, packshots, and retouching services.",
+        "tags": [
+          "art direction",
+          "graphic design",
+          "websites",
+          "emails",
+          "print",
+          "photography",
+          "packshots",
+          "retouching",
+          "social",
+          "videos & animations"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://artifactnyc.squarespace.com/",
+          "sourceLabel": "Official artifact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Art Direction & Graphic Design Websites Emails Print Photography & Retouching Packshots Retouching Social for Garnier Social Videos & Animations Clinique Jo Malone Crème de La Mer"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://artifactnyc.squarespace.com/",
+          "sourceLabel": "Official artifact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Art Direction & Graphic Design Websites Emails Print Photography & Retouching Packshots Retouching Social for Garnier Social Videos & Animations Clinique Jo Malone Crème de La Mer"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2dcaca45-410e-4713-958e-882fc4daab61",
+      "expectedIdentity": {
+        "name": "Artisan Sheet Metal Corp.",
+        "city": "Astoria",
+        "state": "NY",
+        "website": "https://www.artisansm.com/"
+      },
+      "patch": {
+        "description": "Artisan Sheet Metal Corp. is a sheet metal fabrication company that has been serving the tri-state area for the last 10 years. The shop offers HVAC duct work, fabrication in trash chutes, UL certified doors, and compactors.",
+        "hours": "Open today 07:00 am – 03:30 pm; Monday - Friday 7:00am - 3:30pm; Saturday - Sunday CLOSED",
+        "phone": "(718) 726-4500",
+        "tags": [
+          "hvac duct work",
+          "trash chutes",
+          "ul certified doors",
+          "compactors"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://artisansm.com/",
+          "sourceLabel": "Official ARTISAN SHEET METAL CORP. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Artisan Sheet Metal Corp. is a sheet metal fabrication company that has been serving the tri-state area for the last 10 years. While this shop offers high quality HVAC duct work, there are also fabrication in trash chutes, UL certified doors, and compactors."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://artisansm.com/contact",
+          "sourceLabel": "Official Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours of Operation Open today 07:00 am – 03:30 pm Monday - Friday 7:00am - 3:30pm Saturday - Sunday CLOSED"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://artisansm.com/contact",
+          "sourceLabel": "Official Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office: (718) 726-4500"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://artisansm.com/",
+          "sourceLabel": "Official ARTISAN SHEET METAL CORP. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: While this shop offers high quality HVAC duct work, there are also fabrication in trash chutes, UL certified doors, and compactors."
+        }
+      ]
+    },
+    {
+      "businessId": "source_0ffb6de8-2b8b-4eaf-9f21-9b56bba4c464",
+      "expectedIdentity": {
+        "name": "Arts of the Heart LLC",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3AOrYY9"
+      },
+      "patch": {
+        "description": "Fully mobile and virtual paint party entertainment business where guests paint on canvas using acrylic paints; provides supplies for in-person and virtual paint parties at homes, churches, workplaces, schools, and many public venues.",
+        "tags": [
+          "paint parties",
+          "mobile paint parties",
+          "virtual paint parties",
+          "diy paint kits",
+          "birthday party entertainment",
+          "sip and paint",
+          "corporate events",
+          "team building",
+          "church event",
+          "school event",
+          "fundraiser"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://artsoftheheartllc.com/",
+          "sourceLabel": "Official Paint Parties - Arts of the Heart LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Fully 𝐦𝐨𝐛𝐢𝐥𝐞 and 𝗩𝗜𝗥𝗧𝗨𝗔𝗟 𝗣𝗔𝗜𝗡𝗧 𝗣𝗔𝗥𝗧𝗬 entertainment business where you get to paint on 𝐜𝐚𝐧𝐯𝐚𝐬 using acrylic paints along with your friends and family! BRINGING THE STUDIO AND ALL THE FUN TO YOU! Everything is provided to host your own paint party at your home, church, workplace, school, and many public venues."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://artsoftheheartllc.com/",
+          "sourceLabel": "Official Paint Parties - Arts of the Heart LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 𝗜𝐍 - 𝐏𝐄𝐑𝐒𝐎𝐍 𝐏𝐚𝐢𝐧𝐭 𝐏𝐚𝐫𝐭𝐲 💻 𝗩𝗜𝗥𝗧𝗨𝐀𝐋 𝗣𝗔𝗜𝗡𝗧 𝗣𝗔𝗥𝗧𝗬 🎂 Birthday Party 🥳 Kids & Family Party 🍷 Sip & Paint/Paint & Sip 💍 Bridal Shower/ Bachelorette Party 👶 Baby Shower/Gender Reveal 💑Date Night/ Girls Night Out 🧔🏽‍♂️ Men Outings 🏀🏈⚾️🏉 Sport Gatherings 🏢 Corporate Events ⛪ Church/Ministry Event 🚌 School Event/Fundraiser 🥇Team Building 🎄Holiday Celebration"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e75a45fc-56fa-458c-9931-62ff53a79d59",
+      "expectedIdentity": {
+        "name": "A Scent of Sunshine",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://scentofsunshine.com/"
+      },
+      "patch": {
+        "description": "A homemade soy candle and fragrance business that provides fragrances to set the ambiance for occasions such as celebrating an event, entertaining, or relaxing."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://scentofsunshine.com/",
+          "sourceLabel": "Official A Scent of Sunshine - Fragrance, Candles, Candle Store page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A homemade soy candle and fragrance business"
+        }
+      ]
+    },
+    {
+      "businessId": "source_09c458ed-fc5a-4780-8eaa-28dd0667c420",
+      "expectedIdentity": {
+        "name": "Ashe Cultural Arts Center",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://ashenola.org/"
+      },
+      "patch": {
+        "description": "Ashé Cultural Arts Center (site lists programs and events indicating it is a cultural arts center).",
+        "hours": "Tuesday – Saturday: 10 AM – 5:30 PM; Sunday & Monday: Closed",
+        "tags": [
+          "cultural arts center",
+          "events",
+          "exhibitions"
+        ],
+        "facebook": "https://www.facebook.com/ashe.cac/",
+        "twitter": "http://twitter.com/ashe_cac",
+        "youtube": "https://www.youtube.com/user/AsheCulturalArt",
+        "instagram": "http://instagram.com/ashe_cac"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill",
+        "youtube": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Ashé Cultural Arts Center"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ashenola.org/contact",
+          "sourceLabel": "Official Contact &mdash; Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOURS: Tuesday – Saturday: 10 AM – 5:30 PM Sunday & Monday: Closed"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: PROGRAMS I Deserve It! Kuumba Academy Alliance for Cultural Equity Side by Side Building Community Power Sistahs Making A Change Volunteer Productions 2026 Ashé Rooftop Festival & Gala Swimming Upstream: The Katrina Monologues Exhibitions Maafa Maafa Door of Return pilgrimage & Underground Railroad tour"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/ashe.cac/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://twitter.com/ashe_cac"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/AsheCulturalArt"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/ashe_cac"
+        }
+      ]
+    },
+    {
+      "businessId": "source_33ad93a1-e552-4711-bd65-a063ec93f5cc",
+      "expectedIdentity": {
+        "name": "Ashe Powerhouse Theater",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://www.ashenola.org/"
+      },
+      "patch": {
+        "twitter": "http://twitter.com/ashe_cac",
+        "youtube": "https://www.youtube.com/user/AsheCulturalArt"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://twitter.com/ashe_cac"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.ashenola.org/",
+          "sourceLabel": "Official Ashé Cultural Arts Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/AsheCulturalArt"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4a7222e7-5352-4d24-ba19-0043cd1275f4",
+      "expectedIdentity": {
+        "name": "Ashford Tea Company",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "http://www.ashfordtea.co/"
+      },
+      "patch": {
+        "description": "The Ashford Tea Company is a premium tea purveyor, taste room, studio, shop, lounge and distributor located in Savannah, Georgia.",
+        "twitter": "https://twitter.com/ashfordteaco",
+        "youtube": "https://www.youtube.com/channel/UCug7PUV2xDjh3TbYBzm54JA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ashfordtea.co/",
+          "sourceLabel": "Official Tea Shop Savannah GA | Order Tea Online | Ashford Tea Company High Quality Tea and Tisanes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The Ashford Tea Company, is a premium tea purveyor, taste room, studio, shop, lounge and distributor located in Savannah, Georgia.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://ashfordtea.co/",
+          "sourceLabel": "Official Tea Shop Savannah GA | Order Tea Online | Ashford Tea Company High Quality Tea and Tisanes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ashfordteaco"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://ashfordtea.co/",
+          "sourceLabel": "Official Tea Shop Savannah GA | Order Tea Online | Ashford Tea Company High Quality Tea and Tisanes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCug7PUV2xDjh3TbYBzm54JA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fed7bbeb-31f7-4bc1-aa27-236c60aa9f4f",
+      "expectedIdentity": {
+        "name": "Ashley Stewart",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.ashleystewart.com/"
+      },
+      "patch": {
+        "description": "Ashley Stewart is a retailer of plus size clothing offering apparel in sizes 10–36."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ashleystewart.com/",
+          "sourceLabel": "Official Plus Size Clothing, Sizes 10-36 | Ashley Stewart page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Plus Size Clothing, Sizes 10-36 | Ashley Stewart"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3da7aa0b-7906-4585-9372-864793b17f36",
+      "expectedIdentity": {
+        "name": "Ask SAMIE-Adaptable Equipment (Accessibility)",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.asksamie.com/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/channel/UCVGTt4_uFmbc4koAd_Dg9Mw"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.asksamie.com/",
+          "sourceLabel": "Official AskSAMIE | OT-Approved Equipment &amp; Answers for Independent Living page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCVGTt4_uFmbc4koAd_Dg9Mw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_052403e8-004c-4023-880c-a1097b86418c",
+      "expectedIdentity": {
+        "name": "Aspire Promotional Products, LLC",
+        "city": "Katy",
+        "state": "TX",
+        "website": "http://www.aspirebizconsult.com/"
+      },
+      "patch": {
+        "description": "Independent branded goods specialist and promotional products consultant offering sourcing and marketing support for branded goods and apparel.",
+        "hours": "Monday to Friday from 9:00 - 5:00.",
+        "phone": "510-919-0914",
+        "tags": [
+          "promotional products",
+          "custom apparel",
+          "branded goods",
+          "fulfillment services",
+          "mailings",
+          "ppe",
+          "signage",
+          "company stores",
+          "marketing support"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.aspirebizconsult.com/about.htm",
+          "sourceLabel": "Official Aspire Promotional Products, LLC | Promotional Products &amp; Apparel - About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Natalie Garcia is a Branded Goods specialist with over a decade of success in the Promotional Products and Marketing Industry. Natalie established Aspire Promotional Products, LLC in 2009. She specializes in consulting clients with branded goods selections, marketing campaigns to generate revenue, and advice to help her clients avoid pit falls with branded goods that fail to deliver their message."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.aspirebizconsult.com/contact.htm",
+          "sourceLabel": "Official Aspire Promotional Products, LLC | Promotional Products &amp; Apparel - Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I work from my remote office Monday to Friday from 9:00 - 5:00."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.aspirebizconsult.com/",
+          "sourceLabel": "Official Aspire Promotional Products, LLC | Promotional Products &amp; Apparel - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Western Sales Region: 510-919-0914"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.aspirebizconsult.com/contact.htm",
+          "sourceLabel": "Official Aspire Promotional Products, LLC | Promotional Products &amp; Apparel - Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I can assist your marketing objectives with these quality programs: Mailings Full Color Printing Kits with single drop ship PPE Signage All Branded Goods Custom Apparel Marketing Support in lieu of a marketing POC or Dept Fulfillment Services Company Stores"
+        }
+      ]
+    },
+    {
+      "businessId": "source_775a1ce1-fc7c-4219-9b6e-0357bbb0ba75",
+      "expectedIdentity": {
+        "name": "Aspyn's Horizon LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.aspynshorizon.nyc/"
+      },
+      "patch": {
+        "description": "Aspyn’s Horizon LLC is a woman-owned MWBE organization that provides workshops and programming to support seniors, youth, and families across New York City, including mindfulness, emotional wellness, chair yoga, life skills, and social-emotional learning.",
+        "hours": "Sunday Yoga @GG & POP @10 am",
+        "phone": "718-839-5848",
+        "instagram": "http://instagram.com/aspynshorizon1",
+        "facebook": "https://www.facebook.com/profile.php?id=100084762999982"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.aspynshorizon.nyc/about",
+          "sourceLabel": "Official About &mdash; Aspyn&#39;s Horizon &amp; Zion&#39;s Zen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Aspyn’s Horizon LLC is a woman-owned MWBE organization dedicated to supporting families, seniors, and youth across New York City through transformative workshops and programming.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.aspynshorizon.nyc/about",
+          "sourceLabel": "Official About &mdash; Aspyn&#39;s Horizon &amp; Zion&#39;s Zen page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Sunday Yoga @GG & POP @10 am 345 East 104th Street, New York, NY 10029\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.aspynshorizon.nyc/about",
+          "sourceLabel": "Official About &mdash; Aspyn&#39;s Horizon &amp; Zion&#39;s Zen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"📞 718-839-5848\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.aspynshorizon.nyc/",
+          "sourceLabel": "Official Aspyn&#39;s Horizon &amp; Zion&#39;s Zen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/aspynshorizon1"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.aspynshorizon.nyc/",
+          "sourceLabel": "Official Aspyn&#39;s Horizon &amp; Zion&#39;s Zen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/profile.php?id=100084762999982"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b80ca4a0-ae31-44b1-b69e-1b8eef44441f",
+      "expectedIdentity": {
+        "name": "Astrology Trendz",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://astrologytrendz.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/AstrologyTrndz",
+        "pinterest": "https://www.pinterest.com/astrologytrendz/pins/",
+        "youtube": "https://www.youtube.com/channel/UCtLObOziEl7xpaELHmBaweQ"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://astrologytrendz.com/",
+          "sourceLabel": "Official Astrology Trendz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/AstrologyTrndz"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://astrologytrendz.com/",
+          "sourceLabel": "Official Astrology Trendz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/astrologytrendz/pins/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://astrologytrendz.com/",
+          "sourceLabel": "Official Astrology Trendz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCtLObOziEl7xpaELHmBaweQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bf466b2d-4d01-4197-a496-89867ce1a5fb",
+      "expectedIdentity": {
+        "name": "Asukar Specialty Cakes",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://myasukar.com/"
+      },
+      "patch": {
+        "hours": "MONDAY— 9AM TO 5PM TUESDAY— 9AM TO 5PM WEDNESDAY— 9AM TO 5PM THURSDAY— 9AM TO 5PM FRIDAY— 9AM TO 5PM SATURDAY— 9AM TO 5PM",
+        "phone": "210.764.9614",
+        "instagram": "https://www.instagram.com/myasukar/?hl=en",
+        "facebook": "https://www.facebook.com/myasukar/"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.asukar.com/",
+          "sourceLabel": "Official Corporate and Speciality Cakes | San Antonio, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CORPORATE HOURS MONDAY— 9AM TO 5PM TUESDAY— 9AM TO 5PM WEDNESDAY— 9AM TO 5PM THURSDAY— 9AM TO 5PM FRIDAY— 9AM TO 5PM SATURDAY— 9AM TO 5PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.asukar.com/",
+          "sourceLabel": "Official Corporate and Speciality Cakes | San Antonio, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: contact 210.764.9614"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.asukar.com/",
+          "sourceLabel": "Official Corporate and Speciality Cakes | San Antonio, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/myasukar/?hl=en"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.asukar.com/",
+          "sourceLabel": "Official Corporate and Speciality Cakes | San Antonio, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/myasukar/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e5a5ce88-3231-4a7a-b039-4e9050fb9c16",
+      "expectedIdentity": {
+        "name": "As You Wish Wings and Things",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://asyouwishcatering.org/"
+      },
+      "patch": {
+        "description": "Mobile food truck and catering business serving chicken wings, sandwiches, sides, desserts, and beverages.",
+        "hours": "Food Truck Every Friday & Saturday (weather permitting) 11:30 am - Until Sold Out",
+        "phone": "317-238-9884",
+        "twitter": "https://twitter.com/AsYouWishWings1"
+      },
+      "fieldModes": {
+        "description": "fill",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://asyouwishcatering.org/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Our wings come from farm-fed, humanely raised chickens. Try our famous Rosie's barbecue sauce. A family recipe for over 40 years. 100% Fresh Never Frozen Wings"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://asyouwishcatering.org/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Events Food Truck Every Friday & Saturday (weather permitting) 11:30 am - Until Sold Out"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://asyouwishcatering.org/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Get in touch 317-238-9884"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://asyouwishcatering.org/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/AsYouWishWings1"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0315c048-d60b-40a3-8650-856d700f09d1",
+      "expectedIdentity": {
+        "name": "ATHENA BOARD GAME CAFE",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://www.athenabgc.com/"
+      },
+      "patch": {
+        "hours": "Wednesday: 5 pm - 9 pm; Thursday: 5 pm - 9 pm; Friday: 5 pm - 11 pm; Saturday: 12 pm - 11 pm; Sunday: 12 pm - 9 pm"
+      },
+      "fieldModes": {
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.athenabgc.com/",
+          "sourceLabel": "Official Athena Board Game Cafe page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours: Wednesday: 5 pm - 9 pm Thursday: 5 pm - 9 pm Friday: 5 pm - 11 pm Saturday: 12 pm - 11 pm Sunday: 12 pm - 9 pm"
+        }
+      ]
+    },
+    {
+      "businessId": "source_64ee40f1-7b09-4c34-a84a-acd017a020d2",
+      "expectedIdentity": {
+        "name": "Athena Consulting of Manhattan",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://weareathena.co/"
+      },
+      "patch": {
+        "description": "We are a full-service, fully independent creative company that aims to make the world less complacent with brave partners and deliberate humans.",
+        "phone": "646.659.3038",
+        "tags": [
+          "brand strategy & architecture",
+          "integrated campaigns",
+          "social strategy & content production",
+          "influencer & experience marketing",
+          "performance marketing"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.weareathena.co/",
+          "sourceLabel": "Official Athena is an independent creative company headquartered in NYC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a full-service, fully independent creative company. We aim to make the world less complacent with brave partners and deliberate humans."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.weareathena.co/",
+          "sourceLabel": "Official Athena is an independent creative company headquartered in NYC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 646.659.3038"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.weareathena.co/",
+          "sourceLabel": "Official Athena is an independent creative company headquartered in NYC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: OUR CAPABILITIES • Brand Strategy & Architecture • Integrated Campaigns • Social Strategy & Content Production • Influencer & Experience Marketing • Performance MARKETING"
+        }
+      ]
+    },
+    {
+      "businessId": "source_923b3cb2-5be7-4955-8f31-4d15a2dc124d",
+      "expectedIdentity": {
+        "name": "A-TIN Transport LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://a-tin.com/"
+      },
+      "patch": {
+        "description": "A-TIN Transport LLC is a transportation company in and around the Indianapolis area that specializes in transports for both ambulatory and non-ambulatory clients, providing door to door, hands on assistance and serving assisted living facilities, nursing homes, and dialysis.",
+        "hours": "Customer Service Contact Hours: 9AM-4PM Monday - Friday; Scheduling Hours: 9am-4PM Monday - Friday",
+        "phone": "317-602-8046"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.a-tin.com/",
+          "sourceLabel": "Official A-Tin Transport: Assisting Those In Need page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"A-TIN Transport LLC is growing to become one of the leading transportation companies in and around the Indianapolis area. We specialize in transports for both ambulatory and non-ambulatory clients and offer a variety of vehicles to accommodate each type of service requested. We provide door to door, hands on assistance to those who require this level of service. We proudly assist several entities such as Assisted Living Facilities, Nursing Homes, as well as Dialysis in Indianapolis and the surrounding counties.\","
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.a-tin.com/contact-us",
+          "sourceLabel": "Official Contact Us &mdash; A-Tin Transport: Assisting Those In Need page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Customer Service Contact Hours: 9AM-4PM Monday - Friday Scheduling Hours: 9am-4PM Monday - Friday\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.a-tin.com/contact-us",
+          "sourceLabel": "Official Contact Us &mdash; A-Tin Transport: Assisting Those In Need page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 317-602-8046\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8d34db57-812a-48f7-9b00-026458c56f53",
+      "expectedIdentity": {
+        "name": "Atlanta Peach Wings",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://atlantapeachwings.com/"
+      },
+      "patch": {
+        "description": "Enjoy Atlanta-style chicken wings, fresh-cut fries, and signature peach-flavored sauces; menu includes wings, tenders, burgers, seafood, sandwiches, and family meals.",
+        "hours": "Monday 11:00 AM–10:00 PM; Tuesday 11:00 AM–10:00 PM; Wednesday 11:00 AM–10:00 PM; Thursday 11:00 AM–10:00 PM; Friday 11:00 AM–11:00 PM; Saturday 11:00 AM–11:00 PM; Sunday 12:00 PM–9:00 PM"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://atlantapeachwings.com/",
+          "sourceLabel": "Official Atlanta Peach Wings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Enjoy Atlanta-style chicken wings, fresh-cut fries, and signature peach-flavored sauces at Atlanta Peach Wings in Orlando."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://atlantapeachwings.com/",
+          "sourceLabel": "Official Atlanta Peach Wings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Day Opening Time Closing Time Monday 11:00 AM 10:00 PM Tuesday 11:00 AM 10:00 PM Wednesday 11:00 AM 10:00 PM Thursday 11:00 AM 10:00 PM Friday 11:00 AM 11:00 PM Saturday 11:00 AM 11:00 PM Sunday 12:00 PM 9:00 PM"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9a3b5ea4-bd67-4193-a7d5-5cfcc202c5e8",
+      "expectedIdentity": {
+        "name": "ATL Urban Garage",
+        "city": "Atlanta",
+        "state": "GA",
+        "website": "https://atlurbangarage.com/"
+      },
+      "patch": {
+        "description": "Full-service, dealer-alternative car repair center servicing Atlanta and metro areas.",
+        "hours": "Monday – Friday 9:00 AM – 6:00 PM; Saturday by Appointment",
+        "phone": "678.399.3810",
+        "tags": [
+          "brakes",
+          "engine",
+          "electrical",
+          "heating & cooling",
+          "tune-ups",
+          "maintenance",
+          "steering & suspension",
+          "electronics"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.atlurbangarage.com/",
+          "sourceLabel": "Official ATL Urban Garage — Atlanta&#x27;s Dealer-Alternative Auto Repair page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Full-service, dealer-alternative car repair center in Atlanta."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.atlurbangarage.com/",
+          "sourceLabel": "Official ATL Urban Garage — Atlanta&#x27;s Dealer-Alternative Auto Repair page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening Hours Monday – Friday 9:00 AM – 6:00 PM Saturday by Appointment"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.atlurbangarage.com/",
+          "sourceLabel": "Official ATL Urban Garage — Atlanta&#x27;s Dealer-Alternative Auto Repair page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call 678.399.3810"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.atlurbangarage.com/services",
+          "sourceLabel": "Official Auto Repair Services in Atlanta | ATL Urban Garage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services Brakes Engine Electrical Heating & Cooling Tune-Ups Maintenance Steering Electronics"
+        }
+      ]
+    },
+    {
+      "businessId": "source_05b572ee-7f2c-47d2-b37f-cb1f4886ceab",
+      "expectedIdentity": {
+        "name": "A Touch of Te’ Hair Studio",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://atouchoftehairstudio.com/"
+      },
+      "patch": {
+        "description": "A Touch of Te' Hair Studio is a Baltimore hair salon that specializes in pixie cuts, natural hair, silk presses, sew-ins and hair replacement services.",
+        "hours": "Open today 08:00 am – 06:00 pm",
+        "phone": "(443)-804-2998"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://atouchoftehairstudio.com/",
+          "sourceLabel": "Official Hairstyling Near Catonsville, MD page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A Touch of Te’ Hair Studio is a Baltimore hair salon specializing in pixie cuts, natural hair, silk presses, sew-ins and hair replacement services."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://atouchoftehairstudio.com/",
+          "sourceLabel": "Official Hairstyling Near Catonsville, MD page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Open today 08:00 am – 06:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://atouchoftehairstudio.com/",
+          "sourceLabel": "Official Hairstyling Near Catonsville, MD page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Book Online (443)-804-2998"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ef97c52b-afbd-4cbf-a7f4-6ab3f4d1f5f0",
+      "expectedIdentity": {
+        "name": "A to Z Spears Enterprise LLC",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://a2zspearsent.com/"
+      },
+      "patch": {
+        "description": "A to Z Spears Enterprise, LLC provides tax preparation, bookkeeping, and business consultant services to individuals and small businesses.",
+        "phone": "(414) 358-2914",
+        "facebook": "https://www.facebook.com/share/ZpmaP2NnjCRFv52R/?mibextid=sCpJLy"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://a2zspearsent.com/services",
+          "sourceLabel": "Official Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"A to Z Spears Enterprise, LLC provides tax preparation services and bookkeeping services at reasonable prices as follows: Tax Preparation Services involves preparing and filing tax returns for individuals and small businesses.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://a2zspearsent.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"PHONE: (414) 358-2914\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://a2zspearsent.com/",
+          "sourceLabel": "Official Home Of A to Z Spears Enterprise page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/share/ZpmaP2NnjCRFv52R/?mibextid=sCpJLy"
+        }
+      ]
+    },
+    {
+      "businessId": "source_daf73bc6-81f2-47be-9167-ed8bfc2d2f55",
+      "expectedIdentity": {
+        "name": "At Peace Design",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hpF6tn"
+      },
+      "patch": {
+        "description": "At Peace Design is a positive lifestyle brand. Each piece is created to carry calm, intention, and positive energy into everyday life.",
+        "instagram": "https://www.instagram.com/imatpeace/",
+        "facebook": "https://www.facebook.com/atpeacedesigns"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.atpeacedesign.com/",
+          "sourceLabel": "Official At Peace Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Peace Design is a positive lifestyle brand."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.atpeacedesign.com/",
+          "sourceLabel": "Official At Peace Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/imatpeace/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.atpeacedesign.com/",
+          "sourceLabel": "Official At Peace Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/atpeacedesigns"
+        }
+      ]
+    },
+    {
+      "businessId": "source_63cd0583-2a6e-4ca4-b320-f44226937a85",
+      "expectedIdentity": {
+        "name": "A Tribe Called Sprinters",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://tribecalledsprinters.com/"
+      },
+      "patch": {
+        "description": "A Tribe Called Sprinters is a group focused on sprint training and running-related activities.",
+        "hours": "9:30 (time shown for an open practice session)",
+        "phone": "919.824.6777"
+      },
+      "fieldModes": {
+        "description": "fill",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tribecalledsprinters.com/",
+          "sourceLabel": "Official Tribe Called Sprinters page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Find your tribe and elevate your skills. Meet us on the track (actually, a special location due to inclement weather) at 9:30 for our open practice!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://tribecalledsprinters.com/",
+          "sourceLabel": "Official Tribe Called Sprinters page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Meet us on the track (actually, a special location due to inclement weather) at 9:30 for our open practice!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tribecalledsprinters.com/contact",
+          "sourceLabel": "Official CONTACT - Tribe Called Sprinters page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: If your inquiry is urgent, please contact us: via text: 919.824.6777"
+        }
+      ]
+    },
+    {
+      "businessId": "source_652dac17-b718-4ee5-8bdd-f069a091c68c",
+      "expectedIdentity": {
+        "name": "A Tribe For Jazz",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.atribeforjazz.org/"
+      },
+      "patch": {
+        "description": "We are a 501 (c)(3) non-profit organization whose mission is to preserve the legacy and advance the future of jazz through visual storytelling, live & virtual performances, education, and community engagement."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.atribeforjazz.org/",
+          "sourceLabel": "Official A Tribe for Jazz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We are a 501 (c)(3) non-profit organization whose mission is to preserve the legacy and advance the future of jazz through visual storytelling, live & virtual performances, education, and community engagement.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_88d00011-fc29-4fda-9b39-30d32561b70e",
+      "expectedIdentity": {
+        "name": "Aud Culture",
+        "city": "Denver",
+        "state": "CO",
+        "website": "https://audculture.com/"
+      },
+      "patch": {
+        "tiktok": "https://www.tiktok.com/@hauntsandhaints",
+        "pinterest": "https://www.pinterest.com/houseofaud/",
+        "instagram": "https://instagram.com/freethebold"
+      },
+      "fieldModes": {
+        "tiktok": "fill",
+        "pinterest": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://freethebold.com/aud-bazaar",
+          "sourceLabel": "Official Aud Bazaar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@hauntsandhaints"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://freethebold.com/aud-bazaar",
+          "sourceLabel": "Official Aud Bazaar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/houseofaud/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://freethebold.com/aud-bazaar",
+          "sourceLabel": "Official Aud Bazaar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/freethebold"
+        }
+      ]
+    },
+    {
+      "businessId": "source_16e30fd6-e357-4c3c-9d25-76af81286873",
+      "expectedIdentity": {
+        "name": "Audio Moguls Media",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3wAS6TI"
+      },
+      "patch": {
+        "description": "At Audio Moguls Media, we recognize the diversity and richness of voices that need to be heard; the site states they gather podcasts spanning topics like politics, social justice, sports, music, relationships, mindfulness, and more and aim to amplify, elevate, and empower diverse voices.",
+        "instagram": "https://www.instagram.com/audiomoguls/",
+        "youtube": "https://www.youtube.com/channel/UCRzF0Rnynxzinsdr_AjfD5Q",
+        "twitter": "https://twitter.com/audiomogulsm",
+        "facebook": "https://www.facebook.com/audiomogulsmedia"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill",
+        "youtube": "fill",
+        "twitter": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.audiomoguls.com/",
+          "sourceLabel": "Official Audio Moguls Media page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Audio Moguls Media, we recognize the diversity and richness of voices that need to be heard. It&#8217;s time to grow, change, and acknowledge that voices are not monolithic. We&#8217;ve gathered the finest podcasts spanning topics like politics, social justice, sports, music, relationships, mindfulness, and more. Our aim is to amplify, elevate, and empower diverse voices, making them resonate with audiences around the world.\","
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.audiomoguls.com/",
+          "sourceLabel": "Official Audio Moguls Media page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/audiomoguls/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.audiomoguls.com/",
+          "sourceLabel": "Official Audio Moguls Media page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCRzF0Rnynxzinsdr_AjfD5Q"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.audiomoguls.com/",
+          "sourceLabel": "Official Audio Moguls Media page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/audiomogulsm"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.audiomoguls.com/",
+          "sourceLabel": "Official Audio Moguls Media page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/audiomogulsmedia"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8bb70ad0-d8f9-447f-81c3-38c8e24b312e",
+      "expectedIdentity": {
+        "name": "August Gill Apparel",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://www.augustgillapparel.com/"
+      },
+      "patch": {
+        "description": "August Gill Apparel creates clothing with bold, meaningful designs intended to inspire conversation and self-expression.",
+        "phone": "(317) 296-3858",
+        "twitter": "https://twitter.com/augustgillapprl"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://augustgillapparel.com/pages/our-story-our-why",
+          "sourceLabel": "Official Our Story + Our Why &ndash; August Gill Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"August Gill Apparel exists to inspire conversation through self-expression. We believe clothing can do more than look good—it can create connection.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://augustgillapparel.com/pages/contact-us",
+          "sourceLabel": "Official Contact &ndash; August Gill Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone (317) 296-3858\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://augustgillapparel.com/",
+          "sourceLabel": "Official Bold Graphic Tees &amp; Hoodies | August Gill Apparel &ndash; August Gill Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/augustgillapprl"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0750c306-e702-4d69-972a-e3174ee4213c",
+      "expectedIdentity": {
+        "name": "Authentic EthioAfrican",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://authenticethioafrican.com/"
+      },
+      "patch": {
+        "hours": "Open today 11:00 am – 09:00 pm; (NOW OPEN FOR BREAKFAST 9am-12pm & TUESDAYS) Open today 09:00 am – 09:00 pm",
+        "phone": "(602) 252-2286",
+        "facebook": "https://www.facebook.com/104146458708520",
+        "twitter": "https://www.x.com/EthioafricanA"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: 1st Location & Hours Authentic EthioAfrican Kitchen, Bar & Cafe Phoenix 1740 E McDowell Rd, Phoenix, AZ 85006 (602) 252-2286 Hours (NOW OPEN TUESDAYS) Open today 11:00 am – 09:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 1st Location & Hours Authentic EthioAfrican Kitchen, Bar & Cafe Phoenix 1740 E McDowell Rd, Phoenix, AZ 85006 (602) 252-2286"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/104146458708520"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.x.com/EthioafricanA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_85ac09a6-5c53-48a7-83e9-3827eea28457",
+      "expectedIdentity": {
+        "name": "Authentic Ethio African Spices",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://authenticethioafrican.com/"
+      },
+      "patch": {
+        "hours": "Open today 09:00 am – 09:00 pm; NOW OPEN FOR BREAKFAST 9am-12pm & TUESDAYS",
+        "phone": "(602) 252-2286",
+        "facebook": "https://www.facebook.com/104146458708520",
+        "instagram": "https://www.instagram.com/authenticethioafrican",
+        "twitter": "https://www.x.com/EthioafricanA"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://authenticethioafrican.com/about",
+          "sourceLabel": "Official Authentic EthioAfrican page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Hours (NOW OPEN FOR BREAKFAST 9am-12pm & TUESDAYS) Open today 09:00 am – 09:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (602) 252-2286"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/104146458708520"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/authenticethioafrican"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://authenticethioafrican.com/",
+          "sourceLabel": "Official Authentic Ethiopian Restaurant Experience page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.x.com/EthioafricanA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bbe0d330-426f-4ace-92eb-7971e84e5a80",
+      "expectedIdentity": {
+        "name": "Authentic Life Photography",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://lifesauthenticweddings.com/"
+      },
+      "patch": {
+        "description": "Minimalist & classical wedding photography serving Alabama and Mississippi."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lifesauthenticweddings.com/",
+          "sourceLabel": "Official Authentic Life Weddings - Minimalist &amp; Classical Wedding Photography in Alabama and Mississippi | Authentic Life Photography Weddings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Authentic Life Weddings - Minimalist & Classical Wedding Photography in Alabama and Mississippi | Authentic Life Photography Weddings"
+        }
+      ]
+    },
+    {
+      "businessId": "source_aac270c7-d28b-4fb5-9540-f44854856c0b",
+      "expectedIdentity": {
+        "name": "Avalon Dance",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "http://www.avalondance.net/"
+      },
+      "patch": {
+        "description": "Avalon Dance is a dance studio offering digital and in-studio programming aimed to assist dancers in achieving health, wellness, and performing arts goals.",
+        "phone": "(407) 380-3444",
+        "tags": [
+          "dance studio",
+          "dance classes",
+          "summer camp"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.avalondance.net/",
+          "sourceLabel": "Official Avalon Dance Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Avalon Dance takes the holistic approach to dance education.. Our membership offers both digital and in-studio programming aimed to assist each dancer in achieving their health, wellness, and performing arts goals.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.avalondance.net/",
+          "sourceLabel": "Official Avalon Dance Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CONTACT avalondance.dance@gmail.com (407) 380-3444"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.avalondance.net/",
+          "sourceLabel": "Official Avalon Dance Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"About Instructors Classes Store Schedule Summer Camp Contact Events\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_20bdb541-7a83-49f8-b5c7-2e493a227a91",
+      "expectedIdentity": {
+        "name": "AVANCE-Houston, Inc.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://avancehouston.org/"
+      },
+      "patch": {
+        "description": "A non-profit organization that serves low-income families using a two-generation, family engagement approach combining early childhood development and parenting education.",
+        "phone": "(713) 812-0033",
+        "facebook": "https://www.facebook.com/AVANCEHouston/",
+        "twitter": "https://twitter.com/AVANCEHouston/",
+        "instagram": "https://www.instagram.com/avancehouston/",
+        "youtube": "https://www.youtube.com/user/AVANCEhouston/",
+        "pinterest": "https://www.pinterest.com/avancehouston/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill",
+        "youtube": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.avancehouston.org/about-us/",
+          "sourceLabel": "Official About Us - AVANCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We work with families through a proven two-generation, family engagement approach that combines early childhood development and parenting education."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.avancehouston.org/",
+          "sourceLabel": "Official AVANCE-Houston - AVANCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 4281 Dacoma St, Houston, TX 77092 | (713) 812-0033"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.avancehouston.org/",
+          "sourceLabel": "Official AVANCE-Houston - AVANCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/AVANCEHouston/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.avancehouston.org/",
+          "sourceLabel": "Official AVANCE-Houston - AVANCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/AVANCEHouston/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.avancehouston.org/",
+          "sourceLabel": "Official AVANCE-Houston - AVANCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/avancehouston/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.avancehouston.org/",
+          "sourceLabel": "Official AVANCE-Houston - AVANCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/AVANCEhouston/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.avancehouston.org/",
+          "sourceLabel": "Official AVANCE-Houston - AVANCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/avancehouston/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c41803a8-e9bc-498d-9e7a-e8bec2ef86af",
+      "expectedIdentity": {
+        "name": "Avenue 25",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.avenue25events.com/"
+      },
+      "patch": {
+        "description": "Premier event venue in Nashville, TN for intimate gatherings and various events.",
+        "hours": "Hourly Rate $200 per Hour A 3 Hour Minimum is Required For Weekend Dates (Friday-Sunday) No Minimum Hour Requirement for Events Booked Monday through Thursday"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://avenue25events.com/",
+          "sourceLabel": "Official Avenue 25 Event Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Avenue 25 Event Center Premier Event Venue located in Nashville, TN\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://avenue25events.com/",
+          "sourceLabel": "Official Avenue 25 Event Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hourly Rate $200 per Hour Holiday Sale A 3 Hour Minimum is Required For Weekend Dates (Friday-Sunday) No Minimum Hour Requirement for Events Booked Monday through Thursday\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_a1704a6f-6453-414d-8f1c-8508aeae347c",
+      "expectedIdentity": {
+        "name": "Avenue D Events",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.avenuedbham.com/"
+      },
+      "patch": {
+        "hours": "By appointment only.",
+        "phone": "205-202-4647"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.avenuedbham.net/contact",
+          "sourceLabel": "Official Contact &mdash; Avenue D Events page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOURS By appointment only."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.avenuedbham.net/",
+          "sourceLabel": "Official Avenue D Events page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 205-202-4647"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a8ecceda-1101-4d47-8154-7a0886a97ba5",
+      "expectedIdentity": {
+        "name": "Aviva Builders, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.avivabuilders.com/"
+      },
+      "patch": {
+        "description": "General contractor based in New York City."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://avivabuilders.com/",
+          "sourceLabel": "Official Aviva Builders | NYC General Contractor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Aviva Builders | NYC General Contractor"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cba9f269-6e45-4ea4-971d-1b7bc953e9cc",
+      "expectedIdentity": {
+        "name": "A & W Catering",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://theanwcatering.com/"
+      },
+      "patch": {
+        "description": "A&W Catering is a family-operated catering business in Birmingham that provides catering services for weddings, corporate functions, and private gatherings."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://theanwcatering.com/",
+          "sourceLabel": "Official A&amp;W Catering: Exceptional Catering Experiences for Every Occasion page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At A&W Catering, we specialize in a diverse range of catering services tailored for weddings, corporate functions, and private gatherings, ensuring every event shines with our culinary touch.\""
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "9032df0d279a3238efd0b76b4c932efd61c5f623d2494237ae0971e086ceaef0"
+}

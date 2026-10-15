@@ -1,0 +1,4548 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-022",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_b8c35bcf-a55e-4aa9-b418-de7413c90b04",
+      "expectedIdentity": {
+        "name": "The Skin Museum",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hqoFgs"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/@theskinmuseum"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.theskinmuseum.com/",
+          "sourceLabel": "Official THE BEST TATTOOS IN WISCONSIN | The Skin Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@theskinmuseum"
+        }
+      ]
+    },
+    {
+      "businessId": "source_90ebe7bd-c701-4974-b02b-333c46a533c9",
+      "expectedIdentity": {
+        "name": "The Sosa Group, LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.thesosagroupllc.com/"
+      },
+      "patch": {
+        "description": "The Sosa Group, LLC is a NYC base-company whose team of professionals provide workmanship for painting and tiling projects across New York boroughs.",
+        "phone": "(646) 861-8063",
+        "facebook": "https://www.facebook.com/thesosagroup/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thesosagroupllc.com/",
+          "sourceLabel": "Official The Sosa Group LLC &#8211; Painting and Tiling Job page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Sosa Group, LLC is a NYC base-company, for more than six years has brought a quality service to our customers in all New York boroughs. Our team of professionals provide quality workmanship for all your projects."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://thesosagroupllc.com/",
+          "sourceLabel": "Official The Sosa Group LLC &#8211; Painting and Tiling Job page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (646) 861-8063"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://thesosagroupllc.com/",
+          "sourceLabel": "Official The Sosa Group LLC &#8211; Painting and Tiling Job page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/thesosagroup/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3e9b3b64-1d02-44dd-a4c0-65f7537744b9",
+      "expectedIdentity": {
+        "name": "The Soulsville Foundation",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://soulsvillefoundation.org/"
+      },
+      "patch": {
+        "description": "The Soulsville Foundation perpetuates the soul of Stax Records by preserving its cultural legacy, educating youth, and inspiring future artists.",
+        "hours": "Mon 9:00 AM - 5:00 PM; Tue 9:00 AM - 5:00 PM; Wed 9:00 AM - 5:00 PM; Thu 9:00 AM - 5:00 PM; Fri 9:00 AM - 5:00 PM; Sat Closed; Sun Closed",
+        "phone": "901.946.2535"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://soulsvillefoundation.org/about/",
+          "sourceLabel": "Official About | Soulsville Foundation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Soulsville Foundation perpetuates the soul of Stax Records by preserving its rich cultural legacy, educating youth to be prepared for life success, and inspiring future artists to achieve their dreams."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://soulsvillefoundation.org/contact/",
+          "sourceLabel": "Official Contact | Soulsville Foundation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Mon 9:00 AM - 5:00 PM ............................................................................................................................................................ Tue 9:00 AM - 5:00 PM ............................................................................................................................................................ Wed 9:00 AM - 5:00 PM ............................................................................................................................................................ Thu 9:00 AM - 5:00 PM ............... Fri 9:00 A"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://soulsvillefoundation.org/",
+          "sourceLabel": "Official Soulsville Foundation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 901.946.2535"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d23cfc7f-9780-4380-b1a6-75e7eeb73b24",
+      "expectedIdentity": {
+        "name": "the southern palate",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "http://thesouthernpalate.net/"
+      },
+      "patch": {
+        "phone": "912-412-8554",
+        "tags": [
+          "catering",
+          "event design",
+          "delivery",
+          "self service buffet",
+          "full service buffet"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.thesouthernpalate.net/",
+          "sourceLabel": "Official Catering Savannah, GA - The Southern Palate page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 912-412-8554"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.thesouthernpalate.net/our-catering-services/",
+          "sourceLabel": "Official Our Catering Services - The Southern Palate page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Catering Services Whatever your catering needs, we can help Business Meetings Weddings Church Banquets & Parties Family Reunions"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ccc356ed-5117-4c22-b4e4-97d136024e4a",
+      "expectedIdentity": {
+        "name": "The Studio Karaoke",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://thestudiokaraoke.com/"
+      },
+      "patch": {
+        "description": "Private karaoke suites for hourly reservation, with food and beverage menu and live DJ events.",
+        "hours": "Mon: Closed; Tues: Closed; Wednesday: 4p - 11p; Thursday: 4p - 11p; Friday: 4p - 12a; Sat: 12p - 12a; Sun: 12p - 12a",
+        "phone": "901-800-9417",
+        "tags": [
+          "private karaoke suites",
+          "karaoke rooms",
+          "food and beverages",
+          "live dj events"
+        ],
+        "tiktok": "https://www.tiktok.com/@thestudiokaraoke"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thestudiokaraoke.com/",
+          "sourceLabel": "Official Home 1 - The Studio Karaoke page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Step into your own private karaoke suite or hit the floor with our live DJ events — where lights, beats, and voices blend to create pure energy.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://thestudiokaraoke.com/",
+          "sourceLabel": "Official Home 1 - The Studio Karaoke page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon: Closed Tues: Closed Wednesday: 4p - 11p Thursday: 4p - 11p Friday: 4p - 12a Sat: 12p - 12a Sun: 12p - 12a\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://thestudiokaraoke.com/about/",
+          "sourceLabel": "Official About - The Studio Karaoke page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Get In Touch 901-800-9417 hello@thestudiokaraoke.com 3460 Plaza Ave, Memphis, TN 38111\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://thestudiokaraoke.com/faqs/",
+          "sourceLabel": "Official FAQs - The Studio Karaoke page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Private-room karaoke is just for you and your crew. You’ll rent a fully-equipped, themed suite (aka, a “karaoke box\")...\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://thestudiokaraoke.com/",
+          "sourceLabel": "Official Home 1 - The Studio Karaoke page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@thestudiokaraoke"
+        }
+      ]
+    },
+    {
+      "businessId": "source_33f8b6c6-451e-41f7-8d3e-c732c739bd4b",
+      "expectedIdentity": {
+        "name": "The Torch Room, LLC and Nurturing My Soul, LLC",
+        "city": "Canal Winchester",
+        "state": "OH",
+        "website": "http://www.thetorchroom.com/"
+      },
+      "patch": {
+        "tags": [
+          "personal training",
+          "group fitness training",
+          "yoga",
+          "pilates",
+          "strength and cardio training",
+          "line dance parties",
+          "zumba parties",
+          "fitness nutrition guidance",
+          "stress management workshops",
+          "guided meditation",
+          "cpr aed first aid training",
+          "self-defense classes"
+        ]
+      },
+      "fieldModes": {
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.thetorchroom.com/services",
+          "sourceLabel": "Official The Torch Room, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The Torch Room offers: Personal Training , Group Fitness Training, Yoga , Pilates , Strength and Cardio Training, Line Dance Parties, Zumba Parties, Fitness Nutrition Guidance, Stress Management Workshops , and Guided Meditation . The Torch Room is a Licensed Training Provider for the American Red Cross, offering certifications in Adult, Child, and Infant CPR/AED/First Aid . The Torch Room offers empowering self-defense classes for ages 12+.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_a409a170-7c54-41a5-9a2d-67c8ba51bb70",
+      "expectedIdentity": {
+        "name": "The UPS Store 5234",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://locations.theupsstore.com/tx/san-antonio/6531-fm-78"
+      },
+      "patch": {
+        "description": "The UPS Store FM 78 offers shipping, packing, printing, mailbox, notary, and postal services.",
+        "phone": "(210) 310-1196"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://locations.theupsstore.com/tx/san-antonio/6531-fm-78",
+          "sourceLabel": "Official Shipping, Mailing and Printing Service Near Me in San Antonio, TX | The UPS Store - 6531 FM 78 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Get directions, store hours & UPS pickup times. If you need printing, shipping, shredding, or mailbox services, visit us at 6531 FM 78."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://locations.theupsstore.com/tx/san-antonio/6531-fm-78",
+          "sourceLabel": "Official Shipping, Mailing and Printing Service Near Me in San Antonio, TX | The UPS Store - 6531 FM 78 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (210) 310-1196"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cb548873-b4d2-464e-86ba-4e578116bf27",
+      "expectedIdentity": {
+        "name": "The Urban Grape Wine Shop",
+        "city": "Boston",
+        "state": "MA",
+        "website": "https://theurbangrape.shop/"
+      },
+      "patch": {
+        "description": "The Urban Grape is a wine store in the South End neighborhood of Boston."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.urbancellarconsulting.com/about",
+          "sourceLabel": "Official TJ Douglas | Boston Wine Expert &amp; Sommelier | Urban Cellar Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Along with his wife, Hadley, TJ founded The Urban Grape, an award-winning wine store in the South End neighborhood of Boston, in 2010.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_cf803328-9441-49dc-b921-ef5a42639512",
+      "expectedIdentity": {
+        "name": "The Vertical Christian",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.theverticalchristian.com/"
+      },
+      "patch": {
+        "tags": [
+          "online apparel sales",
+          "inspirational apparel"
+        ],
+        "twitter": "https://twitter.com/getverticaltvc"
+      },
+      "fieldModes": {
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://getvertical7.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; The Vertical Christian Online Store page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: GET VERTICAL is an online retail fashion and inspirational business that aims to inspire, uplift and build up the Kingdom of God."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://getvertical7.com/",
+          "sourceLabel": "Official The Vertical Christian &ndash; The Vertical Christian Online Store page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/getverticaltvc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fe0a5049-5a32-462f-9002-53139c2e3e83",
+      "expectedIdentity": {
+        "name": "The Victorious Program LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.victoriousprogram.com/"
+      },
+      "patch": {
+        "description": "The Victorious Program is a self-empowerment learning initiative that inspires students to discover their strengths, set goals, and build the confidence to achieve their dreams.",
+        "tags": [
+          "sel mentorship program",
+          "recess activities and games",
+          "sports clinics",
+          "hallway monitors",
+          "lunch duty support",
+          "homework tutoring",
+          "high-quality filming for school events and sports games",
+          "assembly",
+          "basketball training"
+        ],
+        "phone": "(347) 898-3938"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.victoriousprogram.com/",
+          "sourceLabel": "Official VICTORIOUS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: THE VICTORIOUS PROGRAM IS A SELF-EMPOWERMENT LEARNING INITIATIVE THAT INSPIRES STUDENTS TO DISCOVER THEIR STRENGTHS, SET GOALS, AND BUILD THE CONFIDENCE TO ACHIEVE THEIR DREAMS."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.victoriousprogram.com/services",
+          "sourceLabel": "Official SERVICES &mdash; VICTORIOUS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: MORNING/ LUNCH / AFTERSCHOOL SEL MENTORSHIP PROGRAM RECESS ACTIVITIES AND GAMES SPORTS CLINICS HALLWAY MONITORS LUNCH DUTY SUPPORT HOMEWORK TUTORING We also provide: HIGH-QUALITY FILMING FOR SCHOOL EVENTS AND SPORTS GAMES"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.victoriousprogram.com/contact-us",
+          "sourceLabel": "Official CONTACT US &mdash; VICTORIOUS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (347) 898-3938"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8c9d2c96-5b6c-4d72-8606-3a8bcc764b51",
+      "expectedIdentity": {
+        "name": "The Wax House Nashville",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://thewaxhouse.net/"
+      },
+      "patch": {
+        "description": "The Wax House provides luxury waxing, facials, massage therapy, lash services, skincare treatments, and beauty services in Nashville and Clarksville, Tennessee.",
+        "phone": "Nashville: 615-801-0036"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thewaxhouse.net/",
+          "sourceLabel": "Official Nashville &amp; Clarksville Day Spa | The Wax House page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Wax House provides luxury waxing, facials, massage therapy, lash services, skincare treatments, and beauty services in both Nashville and Clarksville, Tennessee."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://thewaxhouse.net/",
+          "sourceLabel": "Official Nashville &amp; Clarksville Day Spa | The Wax House page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Thewaxhousenashville@gmail.com 615-801-0036 324 East Trinity Lane, Nashville TN"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1b305505-57e4-40d2-ba84-43d5a7bec4fa",
+      "expectedIdentity": {
+        "name": "The Winery at MoonLight Manor",
+        "city": "Atlanta",
+        "state": "GA",
+        "website": "https://thegothgardener.com/"
+      },
+      "patch": {
+        "description": "The Winery at Moonlight Manor is a Georgia winery offering vegan-friendly and cruelty-free wines and tastings by reservation only.",
+        "tags": [
+          "vegan-friendly",
+          "cruelty-free wines",
+          "tastings by reservation"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thegothgardener.com/about-us",
+          "sourceLabel": "Official Woman &amp; Veteran Owned Winery in Georgia | The Goth Gardener page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About Wikkid Eden Wine I promise to only use what nature provides in my wines at my Georgia winery. As the first black woman-owned winery in the Great State of Georgia, I take pride in offering vegan-friendly and cruelty-free options."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://thegothgardener.com/about-us",
+          "sourceLabel": "Official Woman &amp; Veteran Owned Winery in Georgia | The Goth Gardener page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I take pride in offering vegan-friendly and cruelty-free options."
+        }
+      ]
+    },
+    {
+      "businessId": "source_f57b8aa3-26a7-4263-a0fe-b35003ba4d1d",
+      "expectedIdentity": {
+        "name": "The Wisconsin Black Chamber of Commerce",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tP1xe6"
+      },
+      "patch": {
+        "description": "Empower Black-owned businesses and communities through unity, education, and economic development.",
+        "phone": "(414) 306-6460"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.twbcc.com/",
+          "sourceLabel": "Official Empowerment | Wisconsin Black Chamber of Commerce, Inc. | WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Empower Black-owned businesses and communities through unity, education, and economic development."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.twbcc.com/",
+          "sourceLabel": "Official Empowerment | Wisconsin Black Chamber of Commerce, Inc. | WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone (414) 306-6460"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8b087d19-1fd1-4ed3-aa1f-8f158379f6f8",
+      "expectedIdentity": {
+        "name": "Things We Like",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "http://www.thingswelikemgm.com/"
+      },
+      "patch": {
+        "description": "A gift shop located in Old Cloverdale, Montgomery, AL."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.thingswelikemgm.com/",
+          "sourceLabel": "Official Things We Like Gift Shop in Old Cloverdale, Montgomery, AL | Things We Like page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Things We Like Gift Shop in Old Cloverdale, Montgomery, AL | Things We Like"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5674bcad-013d-4fe1-a1a6-0b05c70a32ef",
+      "expectedIdentity": {
+        "name": "Think Inspired",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://thinkinspiredmarketing.com/"
+      },
+      "patch": {
+        "description": "Think Inspired is an independent, full-service brand marketing firm that provides creative resources and quantitative tools to help clients build inspiring brands.",
+        "phone": "901-201-4419",
+        "tags": [
+          "brand marketing",
+          "creative strategy",
+          "digital marketing",
+          "public relations",
+          "content creation",
+          "search engine optimization",
+          "social media marketing",
+          "paid media"
+        ],
+        "twitter": "https://twitter.com/ThinkInspired__"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thinkinspiredmarketing.com/",
+          "sourceLabel": "Official Think Inspired Marketing &#8211; Creative strategy begins with us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We’re an independent, full-service brand marketing firm with deep expertise in healthcare, B2B services and other industries."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://thinkinspiredmarketing.com/contact/",
+          "sourceLabel": "Official Contact &#8211; Think Inspired Marketing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 901-201-4419"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://thinkinspiredmarketing.com/services/",
+          "sourceLabel": "Official Services &#8211; Think Inspired Marketing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Think Inspired specializes in: Creative Strategy & Brand Consultation Digital Marketing Optimization Paid Media Earned Media Geo-Fencing Search Engine Marketing (SEM) Search Engine Optimization (SEO) Social Media Marketing and Advertising Direct Email Marketing OTT (over-the-top) Public Relations Content Creation Strategic Display Video Production Multimedia Consulting (print, radio & cable) Digital and Website Presence Analysis"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://thinkinspiredmarketing.com/",
+          "sourceLabel": "Official Think Inspired Marketing &#8211; Creative strategy begins with us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ThinkInspired__"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8b29da03-3675-4730-a2e6-ec639d55485f",
+      "expectedIdentity": {
+        "name": "Thirty6five, Inc.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.thirty6five.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/593496437358259",
+        "instagram": "https://www.instagram.com/thirty6five",
+        "twitter": "https://www.twitter.com/thirty6five",
+        "youtube": "https://www.youtube.com/channel/UCFmZcnlxZYWnINN-sqy7Q0w"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "http://www.thirty6five.com/",
+          "sourceLabel": "Official Thirty6five - Media Relations, Crisis Communications for DEI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/593496437358259"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "http://www.thirty6five.com/",
+          "sourceLabel": "Official Thirty6five - Media Relations, Crisis Communications for DEI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/thirty6five"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "http://www.thirty6five.com/",
+          "sourceLabel": "Official Thirty6five - Media Relations, Crisis Communications for DEI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/thirty6five"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "http://www.thirty6five.com/",
+          "sourceLabel": "Official Thirty6five - Media Relations, Crisis Communications for DEI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCFmZcnlxZYWnINN-sqy7Q0w"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e8525fb4-0362-46ff-b2dc-8fe20fcd6871",
+      "expectedIdentity": {
+        "name": "Thompson Pediatric Dentistry",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.thompsonpd.com/"
+      },
+      "patch": {
+        "description": "Board-certified pediatric dentistry caring for infants, kids, and teens; individualized, unhurried visits."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.thompsonpd.com/",
+          "sourceLabel": "Official Pediatric Dentist in North Nashville | Thompson Pediatric Dentistry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Board-certified · Family-owned · North Nashville Where Kids Smile Pediatric dentistry from first tooth to teen years Dr. Barbara Thompson is a board-certified pediatric dentist caring for infants, kids, and teens right off Jefferson Street on Dr. DB Todd Jr. Blvd. Every visit is individualized, unhurried, and built around one goal: a child who actually likes going to the dentist.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_63dbada6-b146-44fe-9fa1-b1bef93dc279",
+      "expectedIdentity": {
+        "name": "Thriving Loudly Podcast",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://podcasts.apple.com/us/podcast/thriving-loudly-podcast/id1832369442"
+      },
+      "patch": {
+        "description": "Thriving Loudly is a podcast that empowers BIPOC individuals to embrace their power, celebrate their voices, and discover what it means to thrive unapologetically through authentic stories and meaningful conversations."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://podcasts.apple.com/us/podcast/thriving-loudly-podcast/id1832369442",
+          "sourceLabel": "Official Thriving Loudly Podcast - Podcast - Apple Podcasts page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Thriving Loudly is a podcast that empowers BIPOC individuals to embrace their power, celebrate their voices, and discover what it means to thrive unapologetically through authentic stories and meaningful conversations.\""
+        }
+      ]
+    },
+    {
+      "businessId": "cohort-53d7d373175ad3e92f4bc4c8",
+      "expectedIdentity": {
+        "name": "Tierra Colombiana Restaurant",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://tierracolombianarestaurant.com/"
+      },
+      "patch": {
+        "description": "A restaurant serving authentic Latin American and Caribbean flavors with a warm and welcoming atmosphere.",
+        "hours": "Sun – Thurs 8 a.m. – 10 p.m.; Fri – Sat 8 a.m. – 11 p.m.",
+        "phone": "215-3246086",
+        "tags": [
+          "latin american cuisine",
+          "caribbean cuisine",
+          "catering"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tierracolombianarestaurant.com/",
+          "sourceLabel": "Official Tierra Colombiana Restaurant &#8211; A Taste of Latin Culture in Philadelphia page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: For over 30 years, Tierra Colombiana has been a beloved fixture in North Philadelphia, serving up authentic Latin American and Caribbean flavors. Our restaurant is a vibrant hub where diverse cultures converge, offering a warm and welcoming atmosphere."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://tierracolombianarestaurant.com/",
+          "sourceLabel": "Official Tierra Colombiana Restaurant &#8211; A Taste of Latin Culture in Philadelphia page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Hours Sun – Thurs 8 a.m. – 10 p.m. Fri – Sat 8 a.m. – 11 p.m."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tierracolombianarestaurant.com/contact/",
+          "sourceLabel": "Official Contact &#8211; Tierra Colombiana Restaurant page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 215-3246086"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tierracolombianarestaurant.com/party-catering-menu/",
+          "sourceLabel": "Official Party Catering Menu &#8211; Tierra Colombiana Restaurant page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Let us help you and your guests taste the real flavors of Latin America and the Caribbean! Tierra Colombiana Restaurant is the choice for birthday parties, family reunions, corporate events, weddings, holiday parties, rewarding retirement events, Quince Años, Sweet Sixteen, baby showers, and much more!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0ad0ebff-4a37-43d3-87af-49ea90128f5a",
+      "expectedIdentity": {
+        "name": "Tiff's Love Butta LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://tiffslovebutta.com/"
+      },
+      "patch": {
+        "description": "Tiff's Love Butta is a unique, creamy, low carb, Keto friendly butter that you can put on almost anything.",
+        "hours": "Open today 03:00 pm – 11:00 pm",
+        "phone": "317-440 = 0556"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tiffslovebutta.com/",
+          "sourceLabel": "Official Tiff&#x27;s Love Butta - Crablegs, Seafood Delivery, Seafood, Crablegs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Tiff's Love Butta 🧈 is Unique Creamy, low Carb, Keto friendly butter for ALL people of ALL ages, that you can put & cook on almost anything.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://tiffslovebutta.com/contact-us",
+          "sourceLabel": "Official Tiff&#x27;s Love Butta page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Open today 03:00 pm – 11:00 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tiffslovebutta.com/contact-us",
+          "sourceLabel": "Official Tiff&#x27;s Love Butta page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"317-440 = 0556\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_85aee572-ff6f-4f8e-87bf-13cc65c71a2b",
+      "expectedIdentity": {
+        "name": "Tillman Law Firm",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://www.mntillmanlawfirm.com/"
+      },
+      "patch": {
+        "description": "Practical, client-centered advocacy focused on Minnesota family law, criminal defense, and civil litigation.",
+        "hours": "Mon–Fri: 9:00 a.m.–5:00 p.m. Evenings/Weekends by appointment",
+        "phone": "(612) 823-1086"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.mntillmanlawfirm.com/",
+          "sourceLabel": "Official Tillman Law Firm, LLC — Minnesota page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Practical, Client-Centered Advocacy Focused on Minnesota family law, criminal defense, and civil litigation."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.mntillmanlawfirm.com/",
+          "sourceLabel": "Official Tillman Law Firm, LLC — Minnesota page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon–Fri: 9:00 a.m.–5:00 p.m. Evenings/Weekends by appointment"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.mntillmanlawfirm.com/",
+          "sourceLabel": "Official Tillman Law Firm, LLC — Minnesota page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (612) 823-1086"
+        }
+      ]
+    },
+    {
+      "businessId": "source_48edece0-e385-4ea9-bb77-44f117d3b3e2",
+      "expectedIdentity": {
+        "name": "Tingen Law",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://tingen.law/"
+      },
+      "patch": {
+        "description": "Tingen Law is an immigration law firm that helps families with green cards, removal of conditions, citizenship, asylum, and deportation defense.",
+        "hours": "Monday: 9AM - 5PM; Tuesday: 9AM - 5PM; Wednesday: 10AM - 5PM; Thursday: 9AM - 5PM; Friday: 9AM - 5PM",
+        "phone": "(804) 477-1720",
+        "tags": [
+          "family-based green cards",
+          "removal of conditions",
+          "citizenship & naturalization",
+          "asylum",
+          "removal defense"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tingen.law/aboutus",
+          "sourceLabel": "Official About Tingen Law | Immigration Law Firm in Richmond, VA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tingen Law is an immigration law firm founded in Richmond, Virginia in 2012. We do one kind of work: helping families get green cards, keep them, and become citizens."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://tingen.law/contact",
+          "sourceLabel": "Official Contact Tingen Law | Immigration Lawyers in Richmond, VA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday: 9AM - 5PM Tuesday: 9AM - 5PM Wednesday: 10AM - 5PM Thursday: 9AM - 5PM Friday: 9AM - 5PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tingen.law/",
+          "sourceLabel": "Official Immigration Attorneys in Richmond, VA | Tingen Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (804) 477-1720 Call Us! (804) 477-1720"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tingen.law/",
+          "sourceLabel": "Official Immigration Attorneys in Richmond, VA | Tingen Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: As immigration lawyers in Richmond, Virginia, we focus on family-based and humanitarian immigration, serving families across Virginia and in all 50 states."
+        }
+      ]
+    },
+    {
+      "businessId": "source_2bde42fe-f9ee-4edd-a1f5-5f4158c9612d",
+      "expectedIdentity": {
+        "name": "Tiny Human Skincare",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.tinyhumanskincare.com/"
+      },
+      "patch": {
+        "description": "Tiny Human Skincare is an eco-friendly line designed specifically for children's developing skin, using hand-selected natural ingredients and formulations intended to be gentle and planet-friendly.",
+        "tags": [
+          "eco-friendly skincare",
+          "children's skincare",
+          "natural ingredients"
+        ],
+        "tiktok": "https://www.tiktok.com/@tinyhumanskincare"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tinyhumanskincare.com/",
+          "sourceLabel": "Official Tiny Human Skincare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Planet friendly skincare Discover our gentle and eco-friendly line designed specifically for your little one's developing skin."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.tinyhumanskincare.com/",
+          "sourceLabel": "Official Tiny Human Skincare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Planet friendly skincare Discover our gentle and eco-friendly line designed specifically for your little one's developing skin."
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.tinyhumanskincare.com/",
+          "sourceLabel": "Official Tiny Human Skincare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@tinyhumanskincare"
+        }
+      ]
+    },
+    {
+      "businessId": "source_12470f59-98f3-4d55-8597-62ab3aeaf5dc",
+      "expectedIdentity": {
+        "name": "Tiny Pink Design Inc",
+        "city": "Whitestone",
+        "state": "NY",
+        "website": "https://www.tinypinkdesign.com/"
+      },
+      "patch": {
+        "description": "Tiny Pink Design Inc., a group of advertising professionals, dedicated to offering comprehensive creative advertising production services.",
+        "phone": "(516) 668-8906",
+        "instagram": "http://www.instagram.com/tinypinkdesign",
+        "facebook": "http://www.facebook.com/tinypinkdesign"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tinypinkdesign.com/",
+          "sourceLabel": "Official Embroidery | Tiny Pink Design | Flushing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Tiny Pink Design Inc., a group of advertising professionals, dedicated to offering comprehensive creative advertising production services.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.tinypinkdesign.com/",
+          "sourceLabel": "Official Embroidery | Tiny Pink Design | Flushing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(516) 668-8906\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.tinypinkdesign.com/",
+          "sourceLabel": "Official Embroidery | Tiny Pink Design | Flushing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://www.instagram.com/tinypinkdesign"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.tinypinkdesign.com/",
+          "sourceLabel": "Official Embroidery | Tiny Pink Design | Flushing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: http://www.facebook.com/tinypinkdesign"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1f754c95-3d71-489c-9fb4-dddbf850de4f",
+      "expectedIdentity": {
+        "name": "Tiny Travelers",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.tinytravelerstransport.com/"
+      },
+      "patch": {
+        "phone": "901-218-3183"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://tinytravelerstransport.com/",
+          "sourceLabel": "Official Tiny Travelers | Child Transportation Services in Memphis, TN &ndash; Tiny Traveler&#39;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact 901-218-3183 info@t-travelers.com Cordova, TN"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dd00b654-ab56-4fa0-bbee-ea8013902b49",
+      "expectedIdentity": {
+        "name": "Tiny Urban Escapes Boutique Hotel",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.tinyurbanescapes.com/"
+      },
+      "patch": {
+        "description": "A four-suite boutique hotel and glass pavilion event space crafted from upcycled shipping containers offering private suites, event hosting, and wellness experiences."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tinyurbanescapes.com/",
+          "sourceLabel": "Official Tiny Urban Escapes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our four suite boutique hotel and glass pavilion event space, beautifully crafted from upcycled-shipping containers serves as a sanctuary, bearing a fresh reminder that peace can be found amidst any place."
+        }
+      ]
+    },
+    {
+      "businessId": "source_7cb00aeb-1d53-4f00-99d1-ec628bc1a677",
+      "expectedIdentity": {
+        "name": "Tippedbytyla LLC",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://tippedbytylallc.as.me/"
+      },
+      "patch": {
+        "description": "Schedule Appointment with TippedByTyla LLC"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tippedbytylallc.as.me/schedule/c26fef5d",
+          "sourceLabel": "Official Schedule Appointment with TippedByTyla LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Schedule Appointment with TippedByTyla LLC"
+        }
+      ]
+    },
+    {
+      "businessId": "source_20ad3d04-78fc-4452-b9be-3ad31e6dd5f5",
+      "expectedIdentity": {
+        "name": "Tipsy Scoop Phoenix",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://tipsyscoop.com/pages/phoenix"
+      },
+      "patch": {
+        "description": "Tipsy Scoop Phoenix is a Barlour offering boozy ice cream and related offerings.",
+        "hours": "Click for store hours!",
+        "phone": "623-249-8266",
+        "tags": [
+          "boozy ice cream",
+          "catering & events",
+          "nationwide delivery"
+        ],
+        "facebook": "https://www.facebook.com/TipsyScoop",
+        "twitter": "https://twitter.com/tipsyscoop"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tipsyscoop.com/pages/phoenix",
+          "sourceLabel": "Official Phoenix &ndash; Tipsy Scoop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our first Barlour in Phoenix is FINALLY OPEN! Stop by for a boozy ice cream \\\"flight\\\" or a scoop of Prickly Pear Margarita sorbet!\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://tipsyscoop.com/pages/phoenix",
+          "sourceLabel": "Official Phoenix &ndash; Tipsy Scoop page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Click for store hours!\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tipsyscoop.com/pages/phoenix",
+          "sourceLabel": "Official Phoenix &ndash; Tipsy Scoop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"623-249-8266\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tipsyscoop.com/pages/phoenix",
+          "sourceLabel": "Official Phoenix &ndash; Tipsy Scoop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Stop by for a boozy ice cream \\\"flight\\\" or a scoop of Prickly Pear Margarita sorbet!\"; \"Email us catering@tipsyscoop.com for delivery options and information about catering and events.\"; \"Click here to order for Nationwide delivery to your door.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://tipsyscoop.com/pages/phoenix",
+          "sourceLabel": "Official Phoenix &ndash; Tipsy Scoop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/TipsyScoop"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://tipsyscoop.com/pages/phoenix",
+          "sourceLabel": "Official Phoenix &ndash; Tipsy Scoop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/tipsyscoop"
+        }
+      ]
+    },
+    {
+      "businessId": "source_47d4661e-a0e6-4824-ab4b-ea07d0dbb03d",
+      "expectedIdentity": {
+        "name": "Tired As A Mother",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://tiredasamotherllc.com/"
+      },
+      "patch": {
+        "description": "Intentional cleaning services for homes and small businesses that value calm, care, and consistency."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tiredasamotherllc.com/",
+          "sourceLabel": "Official Tired As A Mother | We Keep Life Clean! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Intentional cleaning services for homes and small businesses that value calm, care, and consistency.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_3747d819-4c86-4c32-824f-5323d75db5ec",
+      "expectedIdentity": {
+        "name": "Titanium Realty Group LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.titaniumrg.com/"
+      },
+      "patch": {
+        "description": "Titanium Realty Group LLC is a privately-held, fully integrated owner, operator and developer specializing in acquisition, ground-up development and asset management of commercial and residential real estate with a focus on Transit Oriented Development (TOD) in the New York metropolitan area."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://titaniumrg.com/",
+          "sourceLabel": "Official Home page - Titanium Realty Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Titanium Realty Group LLC is a privately-held, fully integrated owner, operator and developer. Applying a disciplined investment approach, we specialize in acquisition, ground-up development and asset management of commercial and residential real estate with a focus on Transit Oriented Development ( TOD ) in the New York metropolitan area.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_02f26699-699c-42dd-8af5-bc4268c10ce0",
+      "expectedIdentity": {
+        "name": "TJE Communications, LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.tjecommunications.com/"
+      },
+      "patch": {
+        "description": "TJE Communications empowers nonprofit organizations to turn moments into movements, drive change, and build sustainable support through structured communications and digital engagement."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tjecommunications.com/",
+          "sourceLabel": "Official TJE Communications page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"TJE Communications empowers nonprofit organizations to turn moments into movements, drive change & build sustainable support for long-term success.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_746f5cee-e09f-413e-aca0-8da2629a6d68",
+      "expectedIdentity": {
+        "name": "TNT Fix Smart Home and Climate Solutions",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://tntfix.com/"
+      },
+      "patch": {
+        "description": "Your Neighborhood Experts for Home Repairs, Smart Home Upgrades and Maintenance, and HVAC Maintenance, serving Phoenix Metro, Coolidge, and Casa Grande.",
+        "hours": "Emergency Availability Weeknights: 6:00pm – 8:30pm Saturday & Sunday: 11:00am – 3:00pm"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tntfix.com/",
+          "sourceLabel": "Official TNT Fix - Smart Home &amp; Climate Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Your Neighborhood Experts for Home Repairs, Smart Home Upgrades and Maintenance, and HVAC Maintenance, serving Phoenix Metro, Coolidge, and Casa Grande.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://tntfix.com/emergency-after-hours.html",
+          "sourceLabel": "Official Emergency &amp; After-Hours Services - TNT Fix Smart Home &amp; Climate Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Emergency Availability Weeknights: 6:00pm – 8:30pm Saturday & Sunday: 11:00am – 3:00pm\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_2e2b4d6c-7a07-43bf-a659-50ef430fa9f9",
+      "expectedIdentity": {
+        "name": "TNT Industries, Inc.",
+        "city": "Queens",
+        "state": "NY",
+        "website": "https://www.tntind.net/"
+      },
+      "patch": {
+        "description": "TNT Industries, Inc. provides commercial construction services.",
+        "tags": [
+          "commercial construction"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tntind.net/",
+          "sourceLabel": "Official Commercial Construction | TNT Industries, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Commercial Construction | TNT Industries, Inc."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tntind.net/",
+          "sourceLabel": "Official Commercial Construction | TNT Industries, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Commercial Construction | TNT Industries, Inc."
+        }
+      ]
+    },
+    {
+      "businessId": "source_2d43a07a-3119-413d-af1f-eef2dcefaa33",
+      "expectedIdentity": {
+        "name": "Tommies Pizza",
+        "city": "St. Paul",
+        "state": "Minnesota",
+        "website": "http://tommiespizza.com/"
+      },
+      "patch": {
+        "hours": "Sun, Tue, Wed, Thur, Fri, Sat 12:00 PM - 8:00 PM",
+        "phone": "(651)-432-4743"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://tommiespizza.com/",
+          "sourceLabel": "Official Tommie&apos;s Pizza – Must-Try Restaurant in Saint Paul, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Sun, Tue, Wed, Thur, Fri, Sat 12:00 PM - 8:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tommiespizza.com/",
+          "sourceLabel": "Official Tommie&apos;s Pizza – Must-Try Restaurant in Saint Paul, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (651)-432-4743"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b2c012ef-5a70-4811-a0e4-56bf6a4ba85f",
+      "expectedIdentity": {
+        "name": "Tommy John",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://www.tommyjohn.com/"
+      },
+      "patch": {
+        "description": "Tommy John sells men's and women's underwear and comfort basics."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tommyjohn.com/",
+          "sourceLabel": "Official Tommy John | Men&#39;s &amp; Women&#39;s Underwear &amp; Comfort Basics page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tommy John | Men's & Women's Underwear & Comfort Basics"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1537cbce-080a-4d7e-86d7-0c18b70dfe10",
+      "expectedIdentity": {
+        "name": "Tom Tours Services Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://tomtours.com/"
+      },
+      "patch": {
+        "hours": "10AM – 6:30pm",
+        "phone": "+1 (212) 947-3131",
+        "instagram": "https://www.instagram.com/tomtours/",
+        "facebook": "https://www.facebook.com/tomtours",
+        "twitter": "https://twitter.com/tom_tours",
+        "youtube": "https://www.youtube.com/c/TomTours"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://tomtours.com/contacto/",
+          "sourceLabel": "Official Contacto - Tom Tours page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Horarios de Oficinas: 10AM – 6:30pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tomtours.com/",
+          "sourceLabel": "Official Inicio - Tom Tours page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tom Tours Chat +1 (212) 947-3131"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://tomtours.com/",
+          "sourceLabel": "Official Inicio - Tom Tours page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/tomtours/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://tomtours.com/",
+          "sourceLabel": "Official Inicio - Tom Tours page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/tomtours"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://tomtours.com/",
+          "sourceLabel": "Official Inicio - Tom Tours page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/tom_tours"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://tomtours.com/",
+          "sourceLabel": "Official Inicio - Tom Tours page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/c/TomTours"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a3120bd8-9ae3-4688-b33b-fcc835336f36",
+      "expectedIdentity": {
+        "name": "TONIO BURGOS & ASSOCIATES, INC.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.tonioburgos.com/"
+      },
+      "patch": {
+        "phone": "(212) 566-5600",
+        "tags": [
+          "governmental consulting",
+          "lobbying",
+          "strategic planning",
+          "government affairs consulting",
+          "business development",
+          "public and community affairs",
+          "regulatory and zoning advocacy",
+          "coalition building"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.tonioburgos.com/",
+          "sourceLabel": "Official Tonio Burgos &amp; Associates | Strategic Planning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tel: (212) 566-5600"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.tonioburgos.com/about",
+          "sourceLabel": "Official About | Tonio Burgos page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Client services include lobbying, government affairs consulting, strategic planning, business development, public and community affairs, regulatory and zoning advocacy and coalition building."
+        }
+      ]
+    },
+    {
+      "businessId": "source_51728b05-e941-467e-b307-8d6a11818337",
+      "expectedIdentity": {
+        "name": "Tonya Osborne Photography & Design",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.tonyaosbornephoto.com/"
+      },
+      "patch": {
+        "description": "Tonya Osborne Photo & Design is a graphic artist, photographer, and creative professional that creates images for special moments, product or service showcases, and visual messaging.",
+        "tags": [
+          "graphic artist",
+          "photographer",
+          "creative professional",
+          "headshots",
+          "graduation & prom",
+          "engagement & couples",
+          "weddings",
+          "portraits",
+          "commercial/product"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tonyaosbornephoto.com/",
+          "sourceLabel": "Official Tonya Osborne Photo &amp; Design portfolio website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Tonya Osborne Photo & Design, we believe that every picture tells a story. As a graphic artist, photographer, and creative professional, I am dedicated to creating images that convey a message and evoke emotions."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.tonyaosbornephoto.com/",
+          "sourceLabel": "Official Tonya Osborne Photo &amp; Design portfolio website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOME ABOUT ME INVESTMENT MY PORTFOLIO Headshots Graduation & Prom Engagement & Couples Weddings Portraits CONTACT CLIENT LOGIN COMMERCIAL/PRODUCT"
+        }
+      ]
+    },
+    {
+      "businessId": "source_23d64091-d244-4448-9576-eacc35e56fa9",
+      "expectedIdentity": {
+        "name": "Tool Loan Program",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/33FxbA3"
+      },
+      "patch": {
+        "twitter": "https://x.com/HRI_Wisconsin"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.hri-wi.org/homeowners/tool-loan-program/",
+          "sourceLabel": "Official Tool Loan Program - Housing Resources Inc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/HRI_Wisconsin"
+        }
+      ]
+    },
+    {
+      "businessId": "source_40e6b3ab-e4ea-48fb-aebd-d51b9d6012bf",
+      "expectedIdentity": {
+        "name": "Topline Electric Corp.",
+        "city": "College Point",
+        "state": "NY",
+        "website": "http://toplineelectric.com/"
+      },
+      "patch": {
+        "description": "Topline Electric, based in College Point, New York, offers commercial and residential electrical services, including outdoor lighting.",
+        "hours": "Monday–Friday, 9:00 a.m.–5:00 p.m.",
+        "phone": "718-358-8494",
+        "tags": [
+          "commercial electrical services",
+          "residential electrical services",
+          "outdoor lighting"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.toplineelectric.com/",
+          "sourceLabel": "Official Home | Topline Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Topline Electric, based in College Point, New York, offers commercial and residential electrical services, including outdoor lighting.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.toplineelectric.com/contact-us",
+          "sourceLabel": "Official Contact Us | Topline Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours of Operation: Monday&ndash;Friday, 9:00 a.m.&ndash;5:00 p.m.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.toplineelectric.com/",
+          "sourceLabel": "Official Home | Topline Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 718-358-8494\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.toplineelectric.com/",
+          "sourceLabel": "Official Home | Topline Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"offers commercial and residential electrical services, including outdoor lighting.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f892c30f-5651-4bf8-a6fc-86f46d0c1acb",
+      "expectedIdentity": {
+        "name": "Top Notch Balloon Creations",
+        "city": "Detroit",
+        "state": "MI",
+        "website": "https://topnotchballooncreation.com/"
+      },
+      "patch": {
+        "description": "Top Notch Balloon Creations provides corporate balloon décor in Michigan."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://topnotchballooncreation.com/",
+          "sourceLabel": "Official Corporate Balloon Décor Michigan | Top Notch Balloon Creations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Corporate Balloon Décor Michigan | Top Notch Balloon Creations"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3453f1aa-f62e-496a-bd63-d1c2fea9c8db",
+      "expectedIdentity": {
+        "name": "Torry Low Voltage Communication",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.tlvcomm.net/"
+      },
+      "patch": {
+        "description": "Providing Life Safety and Low Voltage Services for Tennessee, Mississippi, Arkansas, Alabama and Surrounding Areas",
+        "phone": "901.519.4244",
+        "tags": [
+          "fire alarm installation",
+          "fire alarm inspection",
+          "fire alarm services",
+          "structured cabling",
+          "cat5e/cat6",
+          "fiber",
+          "security systems",
+          "audio/visual"
+        ],
+        "tiktok": "https://www.tiktok.com/@torrylvc?is_from_webapp=1&sender_device=pc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tlvcomm.net/",
+          "sourceLabel": "Official Torry Low Voltage Communication, Inc | Low Voltage Cabling | 7505 Appling Center Drive, Memphis, TN, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Providing Life Safety and Low Voltage Services for Tennessee, Mississippi, Arkansas, Alabama and Surrounding Areas"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.tlvcomm.net/",
+          "sourceLabel": "Official Torry Low Voltage Communication, Inc | Low Voltage Cabling | 7505 Appling Center Drive, Memphis, TN, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: call us now: 901.519.4244"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.tlvcomm.net/",
+          "sourceLabel": "Official Torry Low Voltage Communication, Inc | Low Voltage Cabling | 7505 Appling Center Drive, Memphis, TN, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Fire Alarm Installation Fire Alarm Inspection Fire Alarm Services"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.tlvcomm.net/",
+          "sourceLabel": "Official Torry Low Voltage Communication, Inc | Low Voltage Cabling | 7505 Appling Center Drive, Memphis, TN, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@torrylvc?is_from_webapp=1&sender_device=pc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_70ee31cc-6f70-470c-b321-2187159346f3",
+      "expectedIdentity": {
+        "name": "Total Cleaning Solution",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.totalcleaningsolutionwi.com/"
+      },
+      "patch": {
+        "description": "Total Cleaning Solutions provides residential and commercial carpet cleaning and related surface cleaning services in Milwaukee, WI.",
+        "hours": "Mon - Sat: 8am - 5pm; Sun: Closed",
+        "phone": "(414) 213-5443",
+        "tags": [
+          "residential carpet cleaning",
+          "commercial carpet cleaning",
+          "oriental rug cleaning",
+          "rug cleaning",
+          "exterior window cleaning",
+          "mobile car detailing",
+          "residential cleaning"
+        ],
+        "facebook": "https://www.facebook.com/TTLCleanSolfacebk",
+        "instagram": "https://www.instagram.com/@Totalcleaningsol1",
+        "twitter": "https://www.twitter.com/@TTLClean113",
+        "youtube": "https://www.youtube.com/@Totalcleaningsolutions4498"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From deep carpet restoration to detailed surface care, we provide customized solutions to revitalize, protect, and maintain every corner of your property."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening Hours Mon - Sat: 8am - 5pm Sun: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call Us: (414) 213-5443"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services Residential Carpet Cleaning Services in Milwaukee WI Commercial Carpet Cleaning services in Milwaukee WI Oriental Rug Cleaning Services in Milwaukee WI Rug Cleaning Exterior Window Cleaning Mobile Car Detailing Residential Cleaning"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/TTLCleanSolfacebk"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/@Totalcleaningsol1"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/@TTLClean113"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.totalcleaningsolutionwi.com/",
+          "sourceLabel": "Official Reliable Cleaning Services​ in Milwaukee WI | Total Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@Totalcleaningsolutions4498"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d4b69d1a-5de9-49f1-8433-40ff01ebf33a",
+      "expectedIdentity": {
+        "name": "Total Management Solutions",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/33HmNYH"
+      },
+      "patch": {
+        "description": "Total Management Solutions is a boutique consulting firm that helps nonprofits, small businesses, and growing organizations strengthen their workplaces and navigate complex people and culture challenges.",
+        "phone": "414.721.6333"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.totalmgmtsolutions.com/",
+          "sourceLabel": "Official Home | Total Management Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Total Management Solutions is a boutique consulting firm that helps nonprofits, small businesses, and growing organizations strengthen their workplaces and navigate complex people and culture challenges.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.totalmgmtsolutions.com/",
+          "sourceLabel": "Official Home | Total Management Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"414.721.6333\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_4c2e89b3-1b0e-4585-9b29-b7f8605167f2",
+      "expectedIdentity": {
+        "name": "Total Solution Service, Inc.",
+        "city": "Woodside",
+        "state": "NY",
+        "website": "https://www.totalsolutionservice.com/"
+      },
+      "patch": {
+        "description": "A certified Minority Business Enterprise providing turnkey sub-tier field execution, hardware commissioning, technical carpentry, and project logistics across the USA and international project sites.",
+        "phone": "+1 (646) 875-8003"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://totalsolutionservice.com/about-us/",
+          "sourceLabel": "Official About Us - Total Solution Service, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"A certified Minority Business Enterprise (MBE) providing turnkey sub-tier field execution, hardware commissioning, technical carpentry, and project logistics across the USA and international project sites.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://totalsolutionservice.com/",
+          "sourceLabel": "Official Total Solution Service - Total Solution Service, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"+1 (646) 875-8003\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_675ed9cb-359d-4dee-b240-ba731eafc8bd",
+      "expectedIdentity": {
+        "name": "Totem Holdings Inc.",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "http://totemny.com/"
+      },
+      "patch": {
+        "description": "Totem Construction is a construction services company that is focused on bringing practical and pragmatic path to construction projects with the goal of making the experience for our clients less taxing."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.totemny.com/",
+          "sourceLabel": "Official Totem Holdings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Totem Construction is a construction services company that is focused on bringing practical and pragmatic path to construction projects with the goal of making the experience for our clients less taxing.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_0f80cf2f-0f8c-4dd6-8880-429f205ea3ce",
+      "expectedIdentity": {
+        "name": "Touch Of Plush Beauty",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://touchofplush.glossgenius.com/"
+      },
+      "patch": {
+        "description": "Touch of Plush Beauty offers beauty and skin services including waxing, brows, and facials in Memphis, TN.",
+        "hours": "Monday 12:30 PM - 7 PM Tuesday Closed Wednesday 9:30 AM - 4 PM Thursday 9:30 AM - 4 PM Friday 9:30 AM - 4 PM Saturday 9 AM - 2:30 PM Sunday Closed"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://touchofplush.glossgenius.com/services",
+          "sourceLabel": "Official Services in Memphis, TN | Touch of Plush Beauty page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services in Memphis, TN | Touch of Plush Beauty"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://touchofplush.glossgenius.com/about",
+          "sourceLabel": "Official About Touch of Plush Beauty | Health &amp; Beauty in Memphis, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Monday 12:30 PM - 7 PM Tuesday Closed Wednesday 9:30 AM - 4 PM Thursday 9:30 AM - 4 PM Friday 9:30 AM - 4 PM Saturday 9 AM - 2:30 PM Sunday Closed"
+        }
+      ]
+    },
+    {
+      "businessId": "source_019d0a69-c000-4b11-9028-2562aace80f3",
+      "expectedIdentity": {
+        "name": "Tower Insurance & Financial Services",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.towerifs.com/"
+      },
+      "patch": {
+        "description": "Tower Insurance & Financial Services, LLC. is a full-service insurance, risk management, and benefits consulting firm providing expertise in property, casualty, benefits, and cyber liability risk management.",
+        "phone": "281.372.6295"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.towerifs.com/about-us",
+          "sourceLabel": "Official About Us &mdash; &quot;We Plan at a High Level&quot; page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tower is a full-service insurance, risk management, and benefits consulting firm. We provide expertise in the areas of property, casualty, benefits, and cyber liability risk management."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.towerifs.com/contact-us",
+          "sourceLabel": "Official Contact Us &mdash; &quot;We Plan at a High Level&quot; page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 281.372.6295"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f0457828-2f28-421b-8c83-a7dca524237d",
+      "expectedIdentity": {
+        "name": "Trabajador Inmigrante Corp",
+        "city": "NEW YORK",
+        "state": "NY",
+        "website": "https://www.trabajadorinmigrante.com/"
+      },
+      "patch": {
+        "description": "Periodismo de Educación e integración en los distritos inmigrantes de Nueva York.",
+        "tags": [
+          "periodismo",
+          "integración",
+          "educación",
+          "inmigración",
+          "noticias"
+        ],
+        "facebook": "https://www.facebook.com/profile.php?id=61567833843572",
+        "youtube": "https://www.youtube.com/watch?v=jx40PIybKjE",
+        "instagram": "https://instagram.com/trabajadorinmigrante?igshid=YmMyMTA2M2Y="
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "youtube": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trabajadorinmigrante.com/",
+          "sourceLabel": "Official Inicio - Trabajador Inmigrante page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: TRABAJADOR INMIGRANTE NEWSPAPER Periodismo de Educación e integración en los distritos inmigrantes de Nueva York."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://trabajadorinmigrante.com/",
+          "sourceLabel": "Official Inicio - Trabajador Inmigrante page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: TRABAJADOR INMIGRANTE NEWSPAPER Periodismo de Educación e integración en los distritos inmigrantes de Nueva York."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://trabajadorinmigrante.com/",
+          "sourceLabel": "Official Inicio - Trabajador Inmigrante page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/profile.php?id=61567833843572"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://trabajadorinmigrante.com/",
+          "sourceLabel": "Official Inicio - Trabajador Inmigrante page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=jx40PIybKjE"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://trabajadorinmigrante.com/",
+          "sourceLabel": "Official Inicio - Trabajador Inmigrante page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/trabajadorinmigrante?igshid=YmMyMTA2M2Y="
+        }
+      ]
+    },
+    {
+      "businessId": "source_751ff846-6a88-490f-b884-6df3202fd4fa",
+      "expectedIdentity": {
+        "name": "Trabian Enterprises",
+        "city": "Dublin",
+        "state": "OH",
+        "website": "http://www.trabianenterprises.com/"
+      },
+      "patch": {
+        "description": "Tra'Bian Enterprises provides IT management, IT staffing, AI solutions, and IT consulting services.",
+        "phone": "(877) 488-6329",
+        "tags": [
+          "it management",
+          "it staffing",
+          "ai solutions",
+          "it consulting"
+        ],
+        "twitter": "https://twitter.com/TraBian_Ent"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trabianenterprises.com/",
+          "sourceLabel": "Official It Management Services | Tra&#039;Bian Enterprises page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Tra'Bian Enterprises, we don’t just provide IT solutions—we engineer success. Whether you need expert IT management, elite staffing solutions, or strategic consulting services, we deliver top-tier technology expertise that transforms organizations from the inside out."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://trabianenterprises.com/contact1/",
+          "sourceLabel": "Official Information Technology Solutions | Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office: (877) 488-6329"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://trabianenterprises.com/services1/",
+          "sourceLabel": "Official Services | IT Staffing Services at Tra&#039;Bian Enterprises page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We recruit these IT talent specialties: Infrastructure, Amazon Web Services (AWS) DevOps, Application Developers, Data Scientist, Engineers, SAP, Oracle, Peoplesoft, Datawarehouse, Full Stack Java, J2EE, DBA, Business Analyst, Project Managers, Quality Assurance, Business Intelligence, Networking, .Net, ERP, Help Desk, Security, Mobile and Cloud…"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://trabianenterprises.com/",
+          "sourceLabel": "Official It Management Services | Tra&#039;Bian Enterprises page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/TraBian_Ent"
+        }
+      ]
+    },
+    {
+      "businessId": "source_42353f44-d7ae-4fe9-9482-a8acdf8fdd0f",
+      "expectedIdentity": {
+        "name": "Trailercakes",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "http://trailercakes.com/"
+      },
+      "patch": {
+        "phone": "214-789-1642",
+        "twitter": "https://twitter.com/trailercakes"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "http://trailercakes.com/",
+          "sourceLabel": "Official *Dallas Cupcakes - Happiness is in the Frosting | Trailercakes | Happiness is in the Frosting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"GET IN TOUCH IF YOU NEED TO SPEAK WITH SOMEONE! 214-789-1642 or email us\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "http://trailercakes.com/",
+          "sourceLabel": "Official *Dallas Cupcakes - Happiness is in the Frosting | Trailercakes | Happiness is in the Frosting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/trailercakes"
+        }
+      ]
+    },
+    {
+      "businessId": "source_69784097-3ee7-46c2-9c5d-428f7070958c",
+      "expectedIdentity": {
+        "name": "Trailer King Builders",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.trailerkingbuilders.com/"
+      },
+      "patch": {
+        "phone": "(346) 571-3888",
+        "youtube": "https://www.youtube.com/@trailerkingbuilders",
+        "twitter": "https://x.com/trailerbuilders"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.trailerkingbuilders.com/",
+          "sourceLabel": "Official Custom Food Truck Builders in Houston, TX | Trailer King Builders page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(346) 571-3888\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.trailerkingbuilders.com/",
+          "sourceLabel": "Official Custom Food Truck Builders in Houston, TX | Trailer King Builders page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@trailerkingbuilders"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.trailerkingbuilders.com/",
+          "sourceLabel": "Official Custom Food Truck Builders in Houston, TX | Trailer King Builders page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/trailerbuilders"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0ea869ed-cd06-4671-8a53-0f18c4975d10",
+      "expectedIdentity": {
+        "name": "Transformation Consulting Group",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.transformationcg.com/"
+      },
+      "patch": {
+        "description": "Transformation Consulting Group provides organizational and leadership consulting services.",
+        "tags": [
+          "organizational consulting",
+          "leadership consulting"
+        ]
+      },
+      "fieldModes": {
+        "description": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.transformationcg.com/",
+          "sourceLabel": "Official Home | Transformation Consulting Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Home | Transformation Consulting Group"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.transformationcg.com/",
+          "sourceLabel": "Official Home | Transformation Consulting Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Home | Transformation Consulting Group"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c3f0dc9c-5381-4da8-8b3a-310d635aba44",
+      "expectedIdentity": {
+        "name": "Transformative Family Dentistry",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://transformdentistry.com/"
+      },
+      "patch": {
+        "description": "Transformative Family Dentistry provides general dentistry services including prevention, diagnosis, and treatment of conditions affecting teeth, gums, and oral health.",
+        "hours": "Monday: 7:30am - 5pm; Tuesday: 9am - 6pm; Wednesday: 9am - 6pm; Thursday: 7:30am - 5pm",
+        "phone": "317-802-0649",
+        "tags": [
+          "general dentistry",
+          "family dentistry",
+          "cosmetic dentistry",
+          "teeth whitening",
+          "exam and cleaning",
+          "dental implants",
+          "dental fillings",
+          "dental crowns",
+          "clear aligners",
+          "sedation dentistry",
+          "emergency dentistry",
+          "dentures','root canal','wisdom tooth removal"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.transformdentistry.com/about/",
+          "sourceLabel": "Official Dentist in Indianapolis - IN 46268, Transformative Family Dentistry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our practice provides general dentistry services including the prevention, diagnosis, and treatment of a wide variety of conditions and diseases that affect your teeth, gums, and oral health."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.transformdentistry.com/",
+          "sourceLabel": "Official Dentist in Indianapolis IN, Family and Cosmetic Dentistry 46268 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office Hours: Monday: 7:30am - 5pm Tuesday: 9am - 6pm Wednesday - 9am - 6pm Thursday: 7:30am - 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.transformdentistry.com/",
+          "sourceLabel": "Official Dentist in Indianapolis IN, Family and Cosmetic Dentistry 46268 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call Today 317-802-0649"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.transformdentistry.com/appointment/",
+          "sourceLabel": "Official Dentist in Indianapolis, Request an Appointment with Transformative Family Dentistry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services General Dentistry Cosmetic Dentistry Family Dentistry Exam and Cleaning Emergency Dentistry Dental Implants Dental Fillings Dental Crowns Teeth Whitening Clear Aligners Sedation Dentistry Dentures Root Canal Wisdom Tooth Removal"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5ead5c60-390f-410f-969d-816729e94706",
+      "expectedIdentity": {
+        "name": "Transitional Reentry Adult Program",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.trapevolution.com/"
+      },
+      "patch": {
+        "description": "Transitional Reentry Adult Program (T.R.A.P) provides reentry support, workforce development, and pathways to economic mobility for justice-impacted individuals, including mentorship, basic computer training, interview preparation, financial coaching, and job placement assistance.",
+        "hours": "Mon 09:00 am – 05:00 pm; Tue 09:00 am – 05:00 pm; Wed 09:00 am – 05:00 pm; Thu 09:00 am – 05:00 pm; Fri 09:00 am – 05:00 pm; Sat Closed; Sun Closed",
+        "phone": "1-833-901-8727",
+        "tags": [
+          "reentry support",
+          "workforce development",
+          "job placement assistance",
+          "mentorship",
+          "basic computer training",
+          "interview preparation",
+          "financial coaching"
+        ],
+        "tiktok": "https://www.tiktok.com/@thenewtrap?_t=8ja5DTqXwac&_r=1",
+        "youtube": "https://www.youtube.com/@TRAPEVOLUTION-hd7kv"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trapevolution.com/",
+          "sourceLabel": "Official Transitional ReEntry Adult Program (T.R.A.P) - Reentry, Best Charities to Donate To, Soft Skills Training, Reentry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Her passion was to build a program for those with criminal justice impacted and at- risk who lack Professional and Skill Development. She aims to rewrite the \"Second- Chance\" stigma by providing Mentorship, Basic Computer Training, Interview Preparation, Financial Coaching, and Job placement assistance."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://trapevolution.com/contact",
+          "sourceLabel": "Official Contact Transitional ReEntry Adult Program | T.R.A.P page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 09:00 am – 05:00 pm Tue 09:00 am – 05:00 pm Wed 09:00 am – 05:00 pm Thu 09:00 am – 05:00 pm Fri 09:00 am – 05:00 pm Sat Closed Sun Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://trapevolution.com/",
+          "sourceLabel": "Official Transitional ReEntry Adult Program (T.R.A.P) - Reentry, Best Charities to Donate To, Soft Skills Training, Reentry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Transitional ReEntry Adult Program (T.R.A.P) 1-833-901-8727"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://trapevolution.com/",
+          "sourceLabel": "Official Transitional ReEntry Adult Program (T.R.A.P) - Reentry, Best Charities to Donate To, Soft Skills Training, Reentry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: T.R.A.P.'s mission is to transform the mindset of justice-impacted individuals and assist with navigating life after incarceration by providing reentry support, workforce development, and pathways to economic mobility that lead to sustainable employment, stability, and self-sufficiency."
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://trapevolution.com/",
+          "sourceLabel": "Official Transitional ReEntry Adult Program (T.R.A.P) - Reentry, Best Charities to Donate To, Soft Skills Training, Reentry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@thenewtrap?_t=8ja5DTqXwac&_r=1"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://trapevolution.com/",
+          "sourceLabel": "Official Transitional ReEntry Adult Program (T.R.A.P) - Reentry, Best Charities to Donate To, Soft Skills Training, Reentry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@TRAPEVOLUTION-hd7kv"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ab4ffd32-d8eb-4d25-84b3-f49f8298d8d8",
+      "expectedIdentity": {
+        "name": "Transit Resources, LLC",
+        "city": "Richmond Hill",
+        "state": "NY",
+        "website": "https://tr2006.com/"
+      },
+      "patch": {
+        "description": "Transit Resources LLC provides construction management, project management, CPM scheduling, operations (BIN services, CAD drawings, system integration), and supplies including CCTV/IP cameras, fiber optic cable, and conduit.",
+        "hours": "Open today 08:00 am – 05:00 pm",
+        "phone": "(646)696-1108",
+        "tags": [
+          "construction management",
+          "project management",
+          "cpm scheduling",
+          "bin services",
+          "cad drawings",
+          "system integration",
+          "cctv/ip cameras",
+          "fiber optic cable",
+          "conduit"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tr2006.com/",
+          "sourceLabel": "Official Transit Resources, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Transit Capabilities # Construction Management Project Management, CPM Scheduling Services # Operations BIN Services, CAD Drawings, System Integration # Supplies CCTV/IP Cameras Fiber Optic Cable Conduit"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://tr2006.com/contact-us",
+          "sourceLabel": "Official Transit Resources, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Open today 08:00 am – 05:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tr2006.com/contact-us",
+          "sourceLabel": "Official Transit Resources, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: phone: (646)696-1108"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tr2006.com/",
+          "sourceLabel": "Official Transit Resources, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Transit Capabilities # Construction Management Project Management, CPM Scheduling Services # Operations BIN Services, CAD Drawings, System Integration # Supplies CCTV/IP Cameras Fiber Optic Cable Conduit"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ef3f00ae-17ed-4a24-900f-fd3f2980c03d",
+      "expectedIdentity": {
+        "name": "Transworld Business Advisors of Houston",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.tworld.com/locations/houston"
+      },
+      "patch": {
+        "description": "Transworld Business Advisors of South & West Texas is a business brokerage specializing in assisting owners with buying and selling companies and franchises.",
+        "phone": "(281) 769-4277"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tworld.com/locations/texas/southandwesttexas",
+          "sourceLabel": "Official South and West Texas Business Brokers | Transworld Business Advisors page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Transworld Business Advisors of South & West Texas is a trusted business brokerage specializing in assisting owners with buying and selling companies and franchises.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.tworld.com/locations/texas/southandwesttexas/contact-us",
+          "sourceLabel": "Official South and West Texas | Contact Us | Transworld Business Advisors page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(281) 769-4277\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_bd5f80b4-72d9-494e-8dcb-f75056974c91",
+      "expectedIdentity": {
+        "name": "TrapHouse Wingz",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.traphousewingztn.com/"
+      },
+      "patch": {
+        "description": "Restaurant serving hamburgers and wings.",
+        "hours": "Mon - Wed: 11:00 AM - Midnight; Thu & Fri: 11:00 AM - 2:00 AM; Sat: 11:00 AM - Midnight; Sun: Midnight - 10:00 PM",
+        "phone": "(615) 621-3103",
+        "tags": [
+          "hamburgers",
+          "wings"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.traphousewingztn.com/",
+          "sourceLabel": "Official Home - Traphouse Wingz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Traphouse Wingz Cuisines Hamburgers Wings"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.traphousewingztn.com/",
+          "sourceLabel": "Official Home - Traphouse Wingz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Mon - Wed: 11:00 AM - Midnight Thu & Fri: 11:00 AM - 2:00 AM Sat: 11:00 AM - Midnight Sun: Midnight - 10:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.traphousewingztn.com/",
+          "sourceLabel": "Official Home - Traphouse Wingz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 1204 Buchanan St Nashville, TN 37208 (615) 621-3103"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.traphousewingztn.com/",
+          "sourceLabel": "Official Home - Traphouse Wingz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Traphouse Wingz Cuisines Hamburgers Wings"
+        }
+      ]
+    },
+    {
+      "businessId": "source_879204e3-338d-4561-beea-e7d3c3c1a0ff",
+      "expectedIdentity": {
+        "name": "Trasaterra, LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://trasaterra.com/"
+      },
+      "patch": {
+        "description": "Trasaterra is a New York City-based design studio that provides branding, design, and web services.",
+        "phone": "917 749 6850"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trasaterra.com/about/",
+          "sourceLabel": "Official Trasaterra | About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Trasaterra, a New York City-based design studio founded in 2010 by Ewa Orzech and Jason Paul Guzman, leverages a combined wealth of branding, design and digital expertise to craft transformative, refined, and forthright creative solutions\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://trasaterra.com/",
+          "sourceLabel": "Official Authentic Brands Thrive | Brand, Design &amp; Web Agency | Trasaterra page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"New York, NY / 917 749 6850 / info@trasaterra.com\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_e6cf389b-7e26-4eec-9bb1-f1737b450e7a",
+      "expectedIdentity": {
+        "name": "Travel Well Concierge",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://travelwellconcierge.com/"
+      },
+      "patch": {
+        "description": "Travel Well Concierge provides travel planning and related services."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://travelwellconcierge.com/about-travel-well-concierge/",
+          "sourceLabel": "Official About Travel Well Concierge | Your Trusted Travel Planning Experts page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About Travel Well Concierge | Your Trusted Travel Planning Experts"
+        }
+      ]
+    },
+    {
+      "businessId": "source_eb936164-98e1-4517-adef-7e918775b1c7",
+      "expectedIdentity": {
+        "name": "Tre'Bella Nail & Spa",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://trebellanailspa.com/"
+      },
+      "patch": {
+        "description": "Tre'Bella Nail Spa offers classic, gel, and gel overlay manicures, Aprés Gel-X™ nail enhancements, acrylic and various pedicure services.",
+        "tags": [
+          "manicures",
+          "pedicures",
+          "gel nails",
+          "acrylic nails",
+          "nail art",
+          "aprés gel-x nail enhancements"
+        ],
+        "facebook": "https://www.facebook.com/1017570431433056",
+        "instagram": "https://www.instagram.com/trebellanailspa",
+        "twitter": "https://www.x.com/NailTre",
+        "youtube": "https://www.youtube.com/channel/UCtB0jAB9SuOiy6Ma5fdd2-Q"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trebellanailspa.com/",
+          "sourceLabel": "Official Tre&#x27;Bella Nail Spa - Nail Salon, Manicure, Apres Nails page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Tre'Bella Nail Spa offers classic, gel, and gel overlay manicures, Aprés Gel-X™ nail enhancements, acrylic and various pedicure services.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://trebellanailspa.com/book-services",
+          "sourceLabel": "Official Tre&#x27;Bella Nail Spa - Nail Salon, Manicure Pedicures page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Tre'Bella Nail Spa offers classic, gel, and gel overlays manicure pedicures , Aprés Gel-X™ nail enhancements, and various pedicure services.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://trebellanailspa.com/",
+          "sourceLabel": "Official Tre&#x27;Bella Nail Spa - Nail Salon, Manicure, Apres Nails page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/1017570431433056"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://trebellanailspa.com/",
+          "sourceLabel": "Official Tre&#x27;Bella Nail Spa - Nail Salon, Manicure, Apres Nails page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/trebellanailspa"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://trebellanailspa.com/",
+          "sourceLabel": "Official Tre&#x27;Bella Nail Spa - Nail Salon, Manicure, Apres Nails page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.x.com/NailTre"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://trebellanailspa.com/",
+          "sourceLabel": "Official Tre&#x27;Bella Nail Spa - Nail Salon, Manicure, Apres Nails page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCtB0jAB9SuOiy6Ma5fdd2-Q"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cf0540d7-fe3f-49d7-a1a1-0ae65014e667",
+      "expectedIdentity": {
+        "name": "Tree of Life Agencies LLC",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://treeoflifeagencies.com/"
+      },
+      "patch": {
+        "description": "Financial Planning & Income Protection in Alabama. We help you secure what you've worked so hard to build, ensuring financial security for you and generations to come.",
+        "tags": [
+          "financial planning",
+          "income protection"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://treeoflifeagencies.com/",
+          "sourceLabel": "Official Financial Planning & Income Protection | Tree of Life page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Financial Planning & Income Protection in Alabama We help you secure what you've worked so hard to build, ensuring financial security for you and generations to come."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://treeoflifeagencies.com/",
+          "sourceLabel": "Official Financial Planning & Income Protection | Tree of Life page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Financial Planning & Income Protection in Alabama"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e3bdb56b-7208-47bb-aadf-32481e632f63",
+      "expectedIdentity": {
+        "name": "Trenae's Boutique",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "http://www.trenaesboutique.com/"
+      },
+      "patch": {
+        "description": "Trenae's Boutique is a locally owned boutique in Montgomery, Al that offers an array of men and women's clothing, shoes, jewelry, designer fragrances, and cell phone accessories.",
+        "hours": "Open today 09:00 am – 09:00 pm",
+        "phone": "(334) 414-5897",
+        "tags": [
+          "plus-size boutique",
+          "men's clothing",
+          "women's clothing",
+          "shoes",
+          "jewelry",
+          "designer fragrances",
+          "cell phone accessories"
+        ],
+        "facebook": "https://www.facebook.com/525194214353366"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trenaesboutique.com/",
+          "sourceLabel": "Official Trenae&#x27;s Boutique - Your Go-To Plus-Size Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Trenae's Boutique is a locally owned boutique in Montgomery, Al that offers an array of men and women's clothing, shoes, jewelry, designer fragrances, and cell phone accessories.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://trenaesboutique.com/",
+          "sourceLabel": "Official Trenae&#x27;s Boutique - Your Go-To Plus-Size Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Open today 09:00 am – 09:00 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://trenaesboutique.com/",
+          "sourceLabel": "Official Trenae&#x27;s Boutique - Your Go-To Plus-Size Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(334) 414-5897\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://trenaesboutique.com/",
+          "sourceLabel": "Official Trenae&#x27;s Boutique - Your Go-To Plus-Size Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"offers an array of men and women's clothing, shoes, jewelry, designer fragrances, and cell phone accessories.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://trenaesboutique.com/",
+          "sourceLabel": "Official Trenae&#x27;s Boutique - Your Go-To Plus-Size Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/525194214353366"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1c5c3d6d-b553-48fe-b446-190aed715b3e",
+      "expectedIdentity": {
+        "name": "Tribe Called Sprinters Run Club",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://tribecalledsprinters.com/"
+      },
+      "patch": {
+        "description": "A Tribe Called Sprinters is a running training organization that runs sprint training and open practices.",
+        "phone": "919.824.6777"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tribecalledsprinters.com/",
+          "sourceLabel": "Official Tribe Called Sprinters page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Find your tribe and elevate your skills. Meet us on the track (actually, a special location due to inclement weather) at 9:30 for our open practice!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tribecalledsprinters.com/contact",
+          "sourceLabel": "Official CONTACT - Tribe Called Sprinters page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: If your inquiry is urgent, please contact us: via text: 919.824.6777"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b2b45c28-d595-4bd4-92c7-f2f6bd1cc5b9",
+      "expectedIdentity": {
+        "name": "Tribe Social Cafe",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://tribesocialcafe.com/"
+      },
+      "patch": {
+        "description": "Tribe Social Cafe is a cafe and art gallery and community space in downtown Baltimore."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tribesocialcafe.com/",
+          "sourceLabel": "Official Tribe Social Cafe | Best Cafe &amp; Gallery in Downtown Baltimore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Tribe Social Cafe is a vibrant gathering place in the heart of downtown Baltimore. This unique cafe doubles as a gallery, bringing together exceptional food and a curated selection of art.\""
+        }
+      ]
+    },
+    {
+      "businessId": "national-06c8d753f2777b62800b239e",
+      "expectedIdentity": {
+        "name": "Tri-Construction",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://tri-construction.com/"
+      },
+      "patch": {
+        "description": "Founded in 2001, Tri-Construction, Inc. is a union contractor offering commercial general contracting and self-perform services and providing construction services throughout Minneapolis, St. Paul and surrounding communities.",
+        "phone": "(612) 529-5924",
+        "twitter": "https://twitter.com/tricales"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tri-construction.com/",
+          "sourceLabel": "Official Commercial General Contracting | TRI Construction, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Founded in 2001, Tri-Construction, Inc. is a union contractor offering commercial general contracting and self-perform services. Located in the heart of North Minneapolis, the company takes great pride in its community roots and is passionate about supporting the people who call the area home."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tri-construction.com/",
+          "sourceLabel": "Official Commercial General Contracting | TRI Construction, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (612) 529-5924"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://tri-construction.com/",
+          "sourceLabel": "Official Commercial General Contracting | TRI Construction, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/tricales"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1c194693-b248-41a6-bfd6-424fcf98d312",
+      "expectedIdentity": {
+        "name": "TriCore Growth Partners",
+        "city": "Columbus",
+        "state": "OHIO",
+        "website": "https://tricoregrowthpartners.com/"
+      },
+      "patch": {
+        "description": "Fractional CFO & Strategic Finance",
+        "tags": [
+          "fractional cfo",
+          "strategic finance"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tricoregrowthpartners.com/",
+          "sourceLabel": "Official TriCore Growth Partners | Fractional CFO & Strategic Finance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: TriCore Growth Partners | Fractional CFO & Strategic Finance"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tricoregrowthpartners.com/",
+          "sourceLabel": "Official TriCore Growth Partners | Fractional CFO & Strategic Finance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: TriCore Growth Partners | Fractional CFO & Strategic Finance"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c2a2be8f-c625-4727-a5fd-ef752712faae",
+      "expectedIdentity": {
+        "name": "TRILLFIT Wellness Center",
+        "city": "Boston",
+        "state": "MA",
+        "website": "https://www.trill.fit/"
+      },
+      "patch": {
+        "description": "TRILLFIT is a boutique fitness studio offering a purpose-driven wellness experience that combines hip-hop music with fitness classes.",
+        "hours": "Monday - Sunday 6:00 AM - 9:00 PM",
+        "phone": "(800) 242-8478"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.trill.fit/",
+          "sourceLabel": "Official TRILLFIT - Where Hip Hop and Wellness Meet | Boutique Fitness Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: TRILLFIT - Where Hip Hop and Wellness Meet | Boutique Fitness Studio"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.trill.fit/contact",
+          "sourceLabel": "Official Contact Us - TRILLFIT | Book Classes, Get Info, Studio Locations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours: Monday - Sunday 6:00 AM - 9:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.trill.fit/",
+          "sourceLabel": "Official TRILLFIT - Where Hip Hop and Wellness Meet | Boutique Fitness Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Boston Studio 101 Tremont Street, Boston, MA 02120 (800) 242-8478"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f5f80d31-fad2-41fd-9255-95fbc343bb2f",
+      "expectedIdentity": {
+        "name": "Trilogy Business Solutions, Inc.",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://trilogysolutionsinc.com/"
+      },
+      "patch": {
+        "hours": "Feel free to contact us during normal business hours."
+      },
+      "fieldModes": {
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://trilogysolutionsinc.com/contact-us",
+          "sourceLabel": "Official Trilogy Business Solutions Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Feel free to contact us during normal business hours."
+        }
+      ]
+    },
+    {
+      "businessId": "dir-5a0037a0cd7dcffdc6fd288c",
+      "expectedIdentity": {
+        "name": "Trio Plant-Based",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://www.trioplant-based.com/"
+      },
+      "patch": {
+        "description": "100% plant-based soul food made with love; Chef Louis Hunter veganizes Southern family recipes such as mac & cheese, collard greens, BBQ jackfruit ribs, and cornbread with maple butter.",
+        "hours": "Now at Midtown Global Market · Mon–Sat 11:30–7:30 · Sun 11–5",
+        "phone": "(612) 446-3832",
+        "tags": [
+          "plant-based food",
+          "vegan soul food",
+          "southern-style dishes",
+          "takeout",
+          "online ordering"
+        ],
+        "instagram": "https://www.instagram.com/trioplantbasedmn",
+        "facebook": "https://www.facebook.com/TrioPlantbased/",
+        "tiktok": "https://www.tiktok.com/@trioplantbasedmn"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill",
+        "facebook": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 100% plant-based soul food made with love. Chef Louis Hunter veganizes the Southern family recipes he grew up on — mac & cheese, collard greens, BBQ jackfruit ribs, cornbread with maple butter."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Now at Midtown Global Market · Mon–Sat 11:30–7:30 · Sun 11–5 · Order online or call (612) 446-3832"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Order online or call (612) 446-3832"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: 100% plant-based soul food made with love. Chef Louis Hunter veganizes the Southern family recipes he grew up on — mac & cheese, collard greens, BBQ jackfruit ribs, cornbread with maple butter."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/trioplantbasedmn"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/TrioPlantbased/"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@trioplantbasedmn"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6a72d4d8-b303-4661-b587-fc042b38ee2e",
+      "expectedIdentity": {
+        "name": "Trio Plant-Based",
+        "city": "Minneapolis",
+        "state": "Minnesota",
+        "website": "https://www.trioplant-based.com/"
+      },
+      "patch": {
+        "description": "100% plant-based soul food restaurant offering Southern-derived dishes such as mac & cheeze, collard greens, BBQ jackfruit ribs, and cornbread with maple butter.",
+        "hours": "Mon–Sat 11:30–7:30 · Sun 11–5",
+        "phone": "(612) 446-3832",
+        "instagram": "https://www.instagram.com/trioplantbasedmn",
+        "facebook": "https://www.facebook.com/TrioPlantbased/",
+        "tiktok": "https://www.tiktok.com/@trioplantbasedmn"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"100% plant-based soul food made with love. Chef Louis Hunter veganizes the Southern family recipes he grew up on — mac & cheese, collard greens, BBQ jackfruit ribs, cornbread with maple butter.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Now at Midtown Global Market · Mon–Sat 11:30–7:30 · Sun 11–5 · Order online or call (612) 446-3832\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Order online or call (612) 446-3832\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/trioplantbasedmn"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/TrioPlantbased/"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.trioplant-based.com/",
+          "sourceLabel": "Official Trio Plant-Based — 100% Plant-Based Soul Food · Midtown Global Market, Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@trioplantbasedmn"
+        }
+      ]
+    },
+    {
+      "businessId": "source_39a9ae6b-d1aa-4324-8012-f16280b706ed",
+      "expectedIdentity": {
+        "name": "Triune",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.triunekc.com/"
+      },
+      "patch": {
+        "description": "Restaurant offering dinner, brunch, and reservations.",
+        "hours": "WEDNESDAY: 4-10 PM THURSDAY: 4-10PM FRIDAY: 4-11PM SATURDAY: 4-11PM BRUNCH SATURDAY-SUNDAY:10:30-3PM THE HAPPIEST HOUR WEDNESDAY-FRIDAY: 4-6PM",
+        "phone": "816.863.1100"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.triunekc.com/",
+          "sourceLabel": "Official TRIUNE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dinner Menu Brunch Menu Reservations"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.triunekc.com/",
+          "sourceLabel": "Official TRIUNE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: WEDNESDAY: 4-10 PM THURSDAY: 4-10PM FRIDAY: 4-11PM SATURDAY: 4-11PM THE HAPPIEST HOUR WEDNESDAY-FRIDAY: 4-6PM BRUNCH SATURDAY-SUNDAY:10:30-3PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.triunekc.com/",
+          "sourceLabel": "Official TRIUNE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 1656 Washington St. Kansas City, MO 64108 · 816.863.1100"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a7699d0e-e60a-4e08-8724-1b50b487f1ad",
+      "expectedIdentity": {
+        "name": "Trucannabliss",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tIWA6B"
+      },
+      "patch": {
+        "description": "TruCannaBliss is a modern, woman-owned cannabis dispensary that specializes in hemp-derived products including THCa flower, Delta-9 edibles, CBD, CBN, and CBG.",
+        "hours": "Sunday 10:00 AM — 5:00 PM Monday thru Saturday 10:00 AM — 8:00 PM",
+        "phone": "414-792-9681",
+        "tags": [
+          "thca flower",
+          "delta-9 edibles",
+          "cbd",
+          "cbn",
+          "cbg",
+          "in-store pickup",
+          "local delivery",
+          "shipping"
+        ],
+        "youtube": "https://youtube.com/trucannabliss"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.trucannabliss.com/products/pages/about",
+          "sourceLabel": "Official TruCannaBliss | Premium Hemp, THCa Flower &amp; Delta-9 Edibles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"TruCannaBliss is a modern, woman-owned cannabis dispensary rooted in quality, clarity, and intention. Founded in Milwaukee in 2019, we specialize in hemp-derived products including THCa flower, Delta-9 edibles, CBD, CBN, and CBG , along with curated accessories and everyday essentials.\","
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.trucannabliss.com/",
+          "sourceLabel": "Official TruCannaBliss | Premium Hemp, THCa Flower &amp; Delta-9 Edibles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Open Daily Sunday 10:00 AM — 5:00 PM Monday thru Saturday 10:00 AM — 8:00 PM\",\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.trucannabliss.com/",
+          "sourceLabel": "Official TruCannaBliss | Premium Hemp, THCa Flower &amp; Delta-9 Edibles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact 414-792-9681 info@trucannabliss.com\",\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.trucannabliss.com/",
+          "sourceLabel": "Official TruCannaBliss | Premium Hemp, THCa Flower &amp; Delta-9 Edibles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Shop THCa flower, Delta-9 edibles, CBD, and more — available for local pickup, delivery, and shipping across the U.S.\","
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.trucannabliss.com/",
+          "sourceLabel": "Official TruCannaBliss | Premium Hemp, THCa Flower &amp; Delta-9 Edibles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/trucannabliss"
+        }
+      ]
+    },
+    {
+      "businessId": "source_607a3894-3bfe-42e5-b8d0-d7e2143fb74a",
+      "expectedIdentity": {
+        "name": "True Alliance Background Screenings",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://truealliancebgs.com/"
+      },
+      "patch": {
+        "hours": "Mon 08:00 am – 05:00 pm; Tue 08:00 am – 05:00 pm; Wed 08:00 am – 05:00 pm; Thu 08:00 am – 05:00 pm; Fri 08:00 am – 05:00 pm; Sat Closed; Sun Closed",
+        "phone": "(866) 425-9671",
+        "facebook": "https://www.facebook.com/TrueAllianceBGS/",
+        "instagram": "https://www.instagram.com/tabscreenings"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://truealliancebgs.com/",
+          "sourceLabel": "Official Background Screening Services - True Alliance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon 08:00 am – 05:00 pm Tue 08:00 am – 05:00 pm Wed 08:00 am – 05:00 pm Thu 08:00 am – 05:00 pm Fri 08:00 am – 05:00 pm Sat Closed Sun Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://truealliancebgs.com/",
+          "sourceLabel": "Official Background Screening Services - True Alliance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"For more information about our business hiring solutions, which include comprehensive background screening and reliable background checks, call (866) 425-9671 !\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://truealliancebgs.com/",
+          "sourceLabel": "Official Background Screening Services - True Alliance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/TrueAllianceBGS/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://truealliancebgs.com/",
+          "sourceLabel": "Official Background Screening Services - True Alliance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/tabscreenings"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b714b432-867a-4943-b0c2-7cca7a6759a6",
+      "expectedIdentity": {
+        "name": "True NutritionPS",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.truenutritionps.com/"
+      },
+      "patch": {
+        "description": "Welcome to True NutritionPS, your number one source for all things CBD Hemp related.",
+        "twitter": "https://twitter.com/squarespace"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.truenutritionps.com/our-story",
+          "sourceLabel": "Official True NutritionPS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Welcome to True NutritionPS, your number one source for all things CBD Hemp related.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.truenutritionps.com/",
+          "sourceLabel": "Official True Nutrition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/squarespace"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a87ce68e-e0f3-4f11-b6ca-eb181de51749",
+      "expectedIdentity": {
+        "name": "True Restoration Services",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://truerestorationservicesmn.com/"
+      },
+      "patch": {
+        "description": "Provides 245D compliance consulting services for Minnesota HCBS providers."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://truerestorationservicesmn.com/",
+          "sourceLabel": "Official 245D Provider Compliance Consultant | Minnesota HCBS | True Restoration Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 245D compliance services for Minnesota providers"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7ccaf2b8-4e3a-45bc-aff0-80ff4519f733",
+      "expectedIdentity": {
+        "name": "Trulytics Financial Corp",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.trulytics.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/BobbyRPeters"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.trulytics.com/",
+          "sourceLabel": "Official Home - Trulytics Financial Corp page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/BobbyRPeters"
+        }
+      ]
+    },
+    {
+      "businessId": "source_81b471df-9713-45db-b590-0f0d1566ab74",
+      "expectedIdentity": {
+        "name": "Tru Royalty Boutique",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://tru-royalty-boutique-1.ueniweb.com/"
+      },
+      "patch": {
+        "description": "Plus-size boutique in Birmingham.",
+        "tags": [
+          "plus-size clothing",
+          "boutique"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tru-royalty-boutique-1.ueniweb.com/",
+          "sourceLabel": "Official Tru Royalty Boutique | Plus-Size Boutique in Birmingham page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tru Royalty Boutique | Plus-Size Boutique in Birmingham"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tru-royalty-boutique-1.ueniweb.com/",
+          "sourceLabel": "Official Tru Royalty Boutique | Plus-Size Boutique in Birmingham page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tru Royalty Boutique | Plus-Size Boutique in Birmingham"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1b1fd172-8351-45f0-a928-4091aebfa3b7",
+      "expectedIdentity": {
+        "name": "Trust Marketing & Communications",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://trustmkt.com/"
+      },
+      "patch": {
+        "description": "Trust Marketing & Communications is a marketing and PR consulting firm providing a wide range of services including marketing and public relations strategy, creative development, advertising production, media planning & placement, and marketing research.",
+        "phone": "(901) 521-1300",
+        "tags": [
+          "marketing & pr strategy",
+          "creative development",
+          "advertising production",
+          "media planning & placement",
+          "marketing research",
+          "community & media relations",
+          "brand strategy & positioning",
+          "crisis communications",
+          "press conference coordination",
+          "copywriting",
+          "production services",
+          "tv & radio production','scriptwriting','graphic & design services','web & intere"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trustmkt.com/",
+          "sourceLabel": "Official Trust - Marketing &amp; Communications Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Trust Marketing & Communications is an award-winning marketing and PR consulting firm providing a wide range of services including marketing and public relations strategy, creative development, advertising production, media planning & placement, and marketing research.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://trustmkt.com/",
+          "sourceLabel": "Official Trust - Marketing &amp; Communications Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone (901) 521-1300\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://trustmkt.com/",
+          "sourceLabel": "Official Trust - Marketing &amp; Communications Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Trust Marketing delivers unmatched expertise, strategic consulting, and flawless execution in the following areas: Marketing & PR Strategy Marketing & Strategic Planning Community & Media Relations Brand Strategy & Positioning Public Participation/Consensus Building Crisis Communications Press Conference Coordination Advertising & Media Campaign Concepting & Development Media Planning & Placement Copywriting Production Services TV & Radio Production Scriptwriting Graphic & Design Services Web & Interactive Services Podcasts Digital Content Development Market Research Qualitative Research...\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f2754eb3-c751-4954-b00e-2a4f644a0dfa",
+      "expectedIdentity": {
+        "name": "Trustworthy Electric",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "http://www.trustworthyelectric.net/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/channel/UChZZF4PRgmcXyUY2nH4iQiQ"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.trustworthyelectric.net/",
+          "sourceLabel": "Official Trustworthy Electric: Trusted Electrical Services in Mont page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UChZZF4PRgmcXyUY2nH4iQiQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7526585f-3394-4d57-aace-c3254e2460c1",
+      "expectedIdentity": {
+        "name": "tryst. Kitchen + Cocktails",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://www.trystsatx.com/"
+      },
+      "patch": {
+        "description": "Tryst Kitchen + Cocktails blends Southern flavors with a contemporary dining experience, offering menu items such as oxtail dishes, house-made grits, fresh seafood, and brunch.",
+        "hours": "Mon - Thurs : 12:00 pm to 9:00 pm Fri : 11:00 am to 10: 00 pm Sat : 10:00 am to 10:00 pm Sun : 10:00 am to 9:00 pm",
+        "phone": "(210)-233-8809"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://trystsatx.com/about",
+          "sourceLabel": "Official Tryst Kitchen + Cocktails - About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"tryst. blends bold Southern flavors with a contemporary dining experience. Our menu celebrates Southern classics, reimagined with a touch of refinement — from savory oxtail dishes to house-made grits, fresh seafood, and vibrant brunch creations\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://trystsatx.com/",
+          "sourceLabel": "Official Tryst Kitchen + Cocktails - San Antonio, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon - Thurs : 12:00 pm to 9:00 pm Fri : 11:00 am to 10: 00 pm Sat : 10:00 am to 10:00 pm Sun : 10:00 am to 9:00 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://trystsatx.com/",
+          "sourceLabel": "Official Tryst Kitchen + Cocktails - San Antonio, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call us at (210)-233-8809\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_16d762a4-953a-468e-b7e0-4ad14325eb28",
+      "expectedIdentity": {
+        "name": "T Street Eatz",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.tstreeteatzindy.com/"
+      },
+      "patch": {
+        "description": "T Street Eatz Café Coffee & Catering"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tstreeteatzindy.com/",
+          "sourceLabel": "Official T Street Eatz Café Coffee & Catering | Central Library, Downtown Indy | T Street Eatz Cafe & Catering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: T Street Eatz Café Coffee & Catering | Central Library, Downtown Indy | T Street Eatz Cafe & Catering"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b18532b4-1179-4dbc-a136-06d1992b54de",
+      "expectedIdentity": {
+        "name": "TTG Protection Group",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://ttgprotectiongroup.com/"
+      },
+      "patch": {
+        "description": "TTG Protection Group is a leading provider of comprehensive security solutions for businesses and individuals."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ttgprotectiongroup.com/",
+          "sourceLabel": "Official TTG SECURITY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"TTG Protection Group is a leading provider of comprehensive security solutions for businesses and individuals.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_b94ec497-68a4-4a0c-934d-24676df4d911",
+      "expectedIdentity": {
+        "name": "T- Town Motorsports Collision & Restoration",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://www.ttownmotorsports.com/"
+      },
+      "patch": {
+        "description": "T- Town Motorsports Collision & Restoration provides auto repair, paint, and restoration services.",
+        "hours": "Mon - Fri 9:00 am - 5:00 pm Saturday 10:00 am - 4:00 pm Sunday Closed",
+        "phone": "+1 918-955-3929",
+        "instagram": "https://www.instagram.com/ttown_motorsports/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ttownmotorsports.com/",
+          "sourceLabel": "Official T- Town Motorsports page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: T- Town Motorsports Collision & Restoration Discover a Reliable, Locally Owned Auto Repair Business..."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ttownmotorsports.com/",
+          "sourceLabel": "Official T- Town Motorsports page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: VISIT Mon - Fri 9:00 am - 5:00 pm Saturday 10:00 am - 4:00 pm Sunday Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ttownmotorsports.com/",
+          "sourceLabel": "Official T- Town Motorsports page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 918-955-3929 +1 918-955-3929"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.ttownmotorsports.com/",
+          "sourceLabel": "Official T- Town Motorsports page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/ttown_motorsports/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_50a0a5a6-97c3-47db-a791-b12b66db0b63",
+      "expectedIdentity": {
+        "name": "T&T TECHNOLOGY",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "https://ttechnologygroup.com/"
+      },
+      "patch": {
+        "description": "T&T Technology is a privately held company providing network systems, hardware, software, security systems, and managed information technology services.",
+        "phone": "(912) 200-8700"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ttechnologygroup.com/about-us/",
+          "sourceLabel": "Official About Us | T&amp;T Technology page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"T&T Technology, LLC is a privately held, certified Service Disabled Veteran Owned Small Business located in Savannah, GA employing Network Systems, Hardware, Software, and Security Systems, and Managed Information Technology Services.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ttechnologygroup.com/",
+          "sourceLabel": "Official T&amp;T Technology | Tomorrow’s Technology Today, Managed Technology For Your Business page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(912) 200-8700\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_ea725bd7-2a7e-4f68-8134-ac391e077cfd",
+      "expectedIdentity": {
+        "name": "Tubby's Taste",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://www.tubbystaste.com/"
+      },
+      "patch": {
+        "description": "Tubby's Taste sells boldly flavored Jamaican-inspired vegan cookies.",
+        "tags": [
+          "vegan cookies",
+          "jamaican-inspired cookies"
+        ],
+        "youtube": "https://youtu.be/3MdX3gsy-HI?si=rBHrRK-J2Y-WNYe1",
+        "twitter": "https://twitter.com/tubbystaste"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tubbystaste.com/",
+          "sourceLabel": "Official Jamaican-Inspired Vegan Cookies! &ndash; Tubby&#39;s Taste- Boldly Flavored. Jamaican-Inspired. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: In the meantime learn more about our Boldly Flavored Jamaican-Inspired Cookies!"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.tubbystaste.com/",
+          "sourceLabel": "Official Jamaican-Inspired Vegan Cookies! &ndash; Tubby&#39;s Taste- Boldly Flavored. Jamaican-Inspired. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Boldly Flavored Jamaican-Inspired Cookies"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.tubbystaste.com/",
+          "sourceLabel": "Official Jamaican-Inspired Vegan Cookies! &ndash; Tubby&#39;s Taste- Boldly Flavored. Jamaican-Inspired. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtu.be/3MdX3gsy-HI?si=rBHrRK-J2Y-WNYe1"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.tubbystaste.com/",
+          "sourceLabel": "Official Jamaican-Inspired Vegan Cookies! &ndash; Tubby&#39;s Taste- Boldly Flavored. Jamaican-Inspired. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/tubbystaste"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6bc0c365-954a-4d34-ad21-b8b0a9b70eb6",
+      "expectedIdentity": {
+        "name": "Tulipano",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.shoptulipano.com/"
+      },
+      "patch": {
+        "description": "Women's boutique offering clothing, jewelry, shoes and accessories.",
+        "hours": "Mon-Sat, 10am - 5pm",
+        "phone": "205.518.0222"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.shoptulipano.com/",
+          "sourceLabel": "Official Tulipano Boutique : Atlanta | Birmingham &ndash; Tulipano - Birmingham page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOME SHOP Dresses Bottoms Denim Pants Shorts & Skirts Jackets Shirts & Tops Sweaters & Knits Fine Jewelry Shoes Jewelry & Accessories"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.shoptulipano.com/pages/locations",
+          "sourceLabel": "Official LOCATIONS &ndash; Tulipano - Birmingham page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: STORE HOURS: Mon-Sat, 10am - 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.shoptulipano.com/",
+          "sourceLabel": "Official Tulipano Boutique : Atlanta | Birmingham &ndash; Tulipano - Birmingham page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: BIRMINGHAM 230 Rele Street, Mountain Brook, AL 35223 Phone: 205.518.0222 Mon-Sat, 10am - 5pm"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9b5952ed-9aee-439d-9935-34588a3ac94c",
+      "expectedIdentity": {
+        "name": "Tulsa Criminal Defense Law Firm",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "http://www.tulsacriminalattorney.pro/"
+      },
+      "patch": {
+        "description": "Tulsa Criminal Defense Law Firm provides criminal defense counsel and representation in Tulsa and surrounding counties.",
+        "phone": "(918) 256-3400",
+        "tags": [
+          "alcohol offenses (dui/dwi)",
+          "bad checks",
+          "shoplifting",
+          "drug charges (possession, distribution, manufacturing)",
+          "conspiracy",
+          "embezzlement",
+          "firearms",
+          "manslaughter",
+          "murder (1st degree, 2nd degree)",
+          "sex crimes",
+          "animal cruelty",
+          "violent crimes"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.tulsacriminalattorney.pro/",
+          "sourceLabel": "Official Tulsa Criminal Attorney | Free Consultation | (918) 256-3400 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tulsa Criminal Defense Law Firm offers counsel and representation for most criminal defense matters, in Tulsa and the surrounding counties."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.tulsacriminalattorney.pro/",
+          "sourceLabel": "Official Tulsa Criminal Attorney | Free Consultation | (918) 256-3400 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: To begin your low-cost initial strategy session, call today: (918) 256-3400 ."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.tulsacriminalattorney.pro/",
+          "sourceLabel": "Official Tulsa Criminal Attorney | Free Consultation | (918) 256-3400 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tulsa Criminal Defense Law Firm has the skill and experience to defend against a wide range of criminal charges including: Alcohol Offenses (DUI/DWI) Bad Checks Shoplifting Drug Charges (Possession, Distribution, Manufacturing) Conspiracy Embezzlement Firearms Manslaughter Murder (1st Degree, 2nd Degree) Sex Crimes Animal Cruelty Violent Crimes"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a0e2e473-6496-44ea-a0e4-230b460ce34b",
+      "expectedIdentity": {
+        "name": "Tulsa FATHERS RIGHTS Lawyer",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://tulsafathersrights.lawyer/"
+      },
+      "patch": {
+        "description": "Tulsa Fathers Rights Lawyer providing family law representation and legal services for men in Tulsa, Oklahoma.",
+        "phone": "(918) 986-7724",
+        "tags": [
+          "alimony",
+          "child custody",
+          "child neglect defense",
+          "child support",
+          "divorce",
+          "establishing parentage",
+          "high net worth divorce",
+          "legal separation",
+          "paternity determination",
+          "protective orders",
+          "relocation hearings"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://tulsafathersrights.lawyer/",
+          "sourceLabel": "Official Fathers Rights Attorney Tulsa: Family Law for Men (918) 986-7724 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tulsa Fathers Rights Lawyer Empowering Men, Dads, Families, and Children for Success"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://tulsafathersrights.lawyer/",
+          "sourceLabel": "Official Fathers Rights Attorney Tulsa: Family Law for Men (918) 986-7724 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call now for a consultation (918) 986-7724"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://tulsafathersrights.lawyer/",
+          "sourceLabel": "Official Fathers Rights Attorney Tulsa: Family Law for Men (918) 986-7724 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services Alimony Child Custody Child Neglect Defense Child Support Divorce Establishing Parentage High Net Worth Divorce Legal Separation Paternity Determinaton Protective Orders Relocation Hearings"
+        }
+      ]
+    },
+    {
+      "businessId": "source_62cc0ee1-9ae9-4a83-ad87-ab3023f94fcd",
+      "expectedIdentity": {
+        "name": "Turner Feild",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "http://turnerfeildlaw.com/"
+      },
+      "patch": {
+        "description": "Turner Feild Law provides legal services in business law, government law, property law, and personal injury law.",
+        "phone": "(901) 290-6610",
+        "tags": [
+          "business law",
+          "government law",
+          "property law",
+          "personal injury"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://turnerfeildlaw.com/",
+          "sourceLabel": "Official Turner Feild Law | Memphis Business Law, Government Law, Property Law, Personal Injury Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Turner Feild Law | Memphis Business Law, Government Law, Property Law, Personal Injury Law"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "http://turnerfeildlaw.com/",
+          "sourceLabel": "Official Turner Feild Law | Memphis Business Law, Government Law, Property Law, Personal Injury Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (901) 290-6610"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "http://turnerfeildlaw.com/",
+          "sourceLabel": "Official Turner Feild Law | Memphis Business Law, Government Law, Property Law, Personal Injury Law page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Practice Areas Business Law Government Law Property Law Personal Injury"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9be7608e-1161-4ce3-9017-508981f71fae",
+      "expectedIdentity": {
+        "name": "Twin Cities Radio Network",
+        "city": "St. Paul",
+        "state": "MN",
+        "website": "https://twincitiesradionetwork.com/"
+      },
+      "patch": {
+        "description": "The Twin Cities Radio Network is a grassroots, arts and community-based internet radio station located in the Twin Cities Metro Area offering 24-hour streaming Smooth Jazz and original programming.",
+        "hours": "24-hour streaming",
+        "phone": "(612) 223-1425",
+        "facebook": "https://www.facebook.com/groups/903569109655551/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://twincitiesradionetwork.com/about/",
+          "sourceLabel": "Official About &#8211; Twin Cities Radio Network page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Twin Cities Radio Network is a grassroots, Arts and community-based internet radio station located in The Twin Cities Metro Area. The Twin Cities Radio Network ( TCRN) offers its listeners a 24-hour streaming radio experience of only the best in Smooth Jazz as well as original programming through the broadcast week."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://twincitiesradionetwork.com/about/",
+          "sourceLabel": "Official About &#8211; Twin Cities Radio Network page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Twin Cities Radio Network ( TCRN) offers its listeners a 24-hour streaming radio experience"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://twincitiesradionetwork.com/",
+          "sourceLabel": "Official Twin Cities Radio Network &#8211; Smooth Jazz Radio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us (612) 223-1425"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://twincitiesradionetwork.com/",
+          "sourceLabel": "Official Twin Cities Radio Network &#8211; Smooth Jazz Radio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/groups/903569109655551/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e84ecc18-3986-4188-bcfe-27e7088ad64a",
+      "expectedIdentity": {
+        "name": "Twirls and Tiaras Spa Party Bus",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "http://twirlsandtiaras.com/"
+      },
+      "patch": {
+        "description": "Mobile spa party bus offering spa services for children, including manicures, pedicures, facials, and DIY activities; serves Kansas City and surrounding areas.",
+        "phone": "816-406-4066",
+        "tags": [
+          "mobile spa",
+          "kids parties",
+          "manicures",
+          "pedicures",
+          "facials",
+          "spa party bus"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://twirlsandtiaras.com/",
+          "sourceLabel": "Official Mobile Spa for Kids - Twirls and Tiaras Spa Party Bus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Twirls and Tiaras brings the luxury of a mobile spa party right to your doorstep! Our spa party bus is perfect for birthdays and special events, offering manis, pedis, facials, and more. Serving Kansas City and surrounding areas, we create lasting memories—all from our beautifully decorated spa bus.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://twirlsandtiaras.com/",
+          "sourceLabel": "Official Mobile Spa for Kids - Twirls and Tiaras Spa Party Bus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 816-406-4066\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://twirlsandtiaras.com/",
+          "sourceLabel": "Official Mobile Spa for Kids - Twirls and Tiaras Spa Party Bus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our spa party bus is perfect for birthdays and special events, offering manis, pedis, facials, and more.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_b86a3714-84b7-42e8-a5d0-634b5b174b90",
+      "expectedIdentity": {
+        "name": "Two Podners",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.twopodnersbbq.com/"
+      },
+      "patch": {
+        "description": "Two Podners Bar-B-Que & Seafood is a restaurant that offers dine-in, take-out, drive thru, and catering services.",
+        "hours": "Sunday - Thursday 10:30am-8pm Friday - Saturday 10:30am-9pm",
+        "tags": [
+          "barbecue",
+          "catering",
+          "dine-in",
+          "take-out",
+          "drive thru"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.twopodnersbbq.com/home",
+          "sourceLabel": "Official HOME | Two Podners-Dallas, Tx||Best Barbeque|Dine-in|Take-out|Drive thru|Catering services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOME | Two Podners-Dallas, Tx||Best Barbeque|Dine-in|Take-out|Drive thru|Catering services"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.twopodnersbbq.com/home",
+          "sourceLabel": "Official HOME | Two Podners-Dallas, Tx||Best Barbeque|Dine-in|Take-out|Drive thru|Catering services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Sunday - Thursday 10:30am-8pm Friday - Saturday 10:30am-9pm"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.twopodnersbbq.com/home",
+          "sourceLabel": "Official HOME | Two Podners-Dallas, Tx||Best Barbeque|Dine-in|Take-out|Drive thru|Catering services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOME | Two Podners-Dallas, Tx||Best Barbeque|Dine-in|Take-out|Drive thru|Catering services"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cbe3d712-8473-4c41-a549-736c57e515b9",
+      "expectedIdentity": {
+        "name": "Two-Way Site Services LLC",
+        "city": "FRESH MEADOWS",
+        "state": "NY",
+        "website": "https://twowaysiteservices.com/"
+      },
+      "patch": {
+        "description": "Two Way Site Services is a New York–based company providing professional cleaning and site services support, including cleaning, waste management, and site-support solutions.",
+        "hours": "Mon 04:00 am – 10:00 pm; Tue 04:00 am – 10:00 pm; Wed 04:00 am – 10:00 pm; Thu 04:00 am – 10:00 pm; Fri 04:00 am – 10:00 pm; Sat 04:00 am – 10:00 pm; Sun 04:00 am – 10:00 pm; Holidays won’t slow us down—open year-round!",
+        "phone": "(929) 754-8132"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://twowaysiteservices.com/",
+          "sourceLabel": "Official Post Construction Cleaning &amp; Portable Potty Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Two Way Site Services is a New York–based, woman-owned company providing professional cleaning and Site services support."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://twowaysiteservices.com/",
+          "sourceLabel": "Official Post Construction Cleaning &amp; Portable Potty Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 04:00 am – 10:00 pm Tue 04:00 am – 10:00 pm Wed 04:00 am – 10:00 pm Thu 04:00 am – 10:00 pm Fri 04:00 am – 10:00 pm Sat 04:00 am – 10:00 pm Sun 04:00 am – 10:00 pm Holidays won’t slow us down—open year-round!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://twowaysiteservices.com/",
+          "sourceLabel": "Official Post Construction Cleaning &amp; Portable Potty Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (929) 754-8132"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dd0ae365-7d4e-41a4-96fd-713feba0f54f",
+      "expectedIdentity": {
+        "name": "Tyga-Box Systems, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "http://www.tygabox.com/"
+      },
+      "patch": {
+        "phone": "+1 (212 )-398-3809",
+        "facebook": "https://www.facebook.com/TygaBoxSystems/",
+        "twitter": "https://twitter.com/TygaBoxSystems",
+        "instagram": "https://www.instagram.com/tygabox/"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "http://www.tygasmart.com/",
+          "sourceLabel": "Official Home | TygaSmart.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Get in Touch Contact Us info@t ygabox.com +1 (212 )-398-3809"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "http://www.tygasmart.com/",
+          "sourceLabel": "Official Home | TygaSmart.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/TygaBoxSystems/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "http://www.tygasmart.com/",
+          "sourceLabel": "Official Home | TygaSmart.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/TygaBoxSystems"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "http://www.tygasmart.com/",
+          "sourceLabel": "Official Home | TygaSmart.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/tygabox/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_af374f1a-f8a9-439a-8285-800e19a09d51",
+      "expectedIdentity": {
+        "name": "tzuco",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://www.tzuco.com/"
+      },
+      "patch": {
+        "hours": "DINNER Monday - Wednesday 4:00 pm - 9 :00 pm; Thursday 4:00pm - 10:00pm; Friday & Saturday 4:00 pm - 11:00 pm; Sunday 4:00 pm - 9:00 pm. BRUNCH Saturday & Sunday: 10:00 am - 2:00 pm. HAPPY HOUR Monday - Friday 4:00 pm - 5:30 pm.",
+        "phone": "(312) 374-8995"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.tzuco.com/location/tzuco/",
+          "sourceLabel": "Official TZUCO | Mexican restaurant in River North, Chicago page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"DINNER Monday - Wednesday 4:00 pm - 9 :00 pm Thursday 4:00pm - 10:00pm Friday & Saturday 4:00 pm - 11:00 pm Sunday 4:00 pm - 9:00 pm BRUNCH Saturday & Sunday: 10:00 am - 2:00 pm HAPPY HOUR Monday - Friday 4:00 pm - 5:30 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.tzuco.com/",
+          "sourceLabel": "Official TZUCO | Mexican restaurant in River North, Chicago page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"720 N State Street, Chicago, IL 60654 (312) 374-8995\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f3e92a4c-2a3f-451c-831d-ad907f962dfa",
+      "expectedIdentity": {
+        "name": "Uba Law Group, PLLC",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.ubalawgroup.com/"
+      },
+      "patch": {
+        "description": "Uba Law Group provides legal services including estate planning, business formation, and trademark protection.",
+        "phone": "(214) 897-3598",
+        "tags": [
+          "estate planning",
+          "business formation",
+          "trademark protection"
+        ],
+        "facebook": "https://www.facebook.com/ubalawgroup",
+        "instagram": "https://www.instagram.com/ubalawgroup/",
+        "youtube": "https://www.youtube.com/ubalawgroup"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ubalawgroup.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Uba Law Group, we provide guidance and walk with you through very important decisions to ensure you are protected and your wishes are honored. Whether it is establishing a performing business entity to protect you, creating a tailored estate plan, or protecting your brand from being hijacked by someone else, Uba Law Group will walk you through every phase of the legal process."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ubalawgroup.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (214) 897-3598"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://ubalawgroup.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Estate Planning Plan for your future taking into account your unique circumstances and what's best for your family while honoring your wishes. Business Protection Protect your company with an entity that allows you to play offense and defense in the business. Trademark Protection A great business name means nothing if you don’t have the full legal rights to it. Secure your trademark so you own your brand."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://ubalawgroup.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/ubalawgroup"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://ubalawgroup.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/ubalawgroup/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://ubalawgroup.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/ubalawgroup"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5172775a-7139-4d2f-9e73-9b11b55d1568",
+      "expectedIdentity": {
+        "name": "U Dream I Plan Travels",
+        "city": "Green Cove Springs",
+        "state": "FL",
+        "website": "https://udreamiplantravels.com/"
+      },
+      "patch": {
+        "description": "U DREAM I PLAN TRAVELS Travel Agency, a Veteran family-owned company specializing in creating personalized travel experiences for individuals, couples, families, and groups; handles flights, accommodations, excursions, and travel insurance.",
+        "phone": "904-551-8811",
+        "tags": [
+          "ethical travel agent",
+          "group travel specialist",
+          "family travel specialist",
+          "all-inclusive resorts specialist",
+          "adults only",
+          "all inclusive cruises",
+          "family vacations",
+          "luxury",
+          "national parks and preserves",
+          "safari, animals, and wildlife",
+          "theme parks"
+        ],
+        "youtube": "http://www.youtube.com/@udreamiplantravels"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://udreamiplantravels.com/about-us/",
+          "sourceLabel": "Official About &#8211; U Dream I Plan Travels page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"I’m the owner of ​U DREAM I PLAN TRAVELS Travel Agency , a Veteran family-owned company specializing in creating personalized travel experiences for individuals, couples, families, and groups who want to explore the world without the stress of planning. Dreaming of a relaxing beach getaway, a thrilling adventure, or a cultural deep dive, we handle all the details—from flights and accommodations to excursions and travel insurance.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://udreamiplantravels.com/about-us/",
+          "sourceLabel": "Official About &#8211; U Dream I Plan Travels page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Feel free to reach out to me directly at ​904-551-8811.\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://udreamiplantravels.com/",
+          "sourceLabel": "Official U Dream I Plan Travels &#8211; Travel More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Specialties Ethical Travel Agent Group Travel Specialist Family Travel Specialist All-Inclusive Resorts Specialist Promotions Adults Only All Inclusive Cruises Family Vacations Hot Deals! Luxury National Parks and Preserves Safari, Animals, and Wildlife Theme Parks\","
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://udreamiplantravels.com/",
+          "sourceLabel": "Official U Dream I Plan Travels &#8211; Travel More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: http://www.youtube.com/@udreamiplantravels"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5ffd0dd1-e946-4f56-aaa1-7a602c3561d8",
+      "expectedIdentity": {
+        "name": "Ugly Guppy Productions",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.uglyguppy.com/"
+      },
+      "patch": {
+        "hours": "Mon - Fri : 08:00am - 04:00pm Sat - Sun : Closed",
+        "phone": "(281) 974-3912",
+        "tags": [
+          "screen printing",
+          "embroidery",
+          "direct-to-film (dtf) printing",
+          "promotional products",
+          "banner printing",
+          "custom online stores"
+        ]
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://uglyguppy.com/",
+          "sourceLabel": "Official Screen Printing &amp; Embroidery Houston | Ugly Guppy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Opening Hours Mon - Fri : 08:00am - 04:00pm Sat - Sun : Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://uglyguppy.com/",
+          "sourceLabel": "Official Screen Printing &amp; Embroidery Houston | Ugly Guppy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Office (281) 974-3912\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://uglyguppy.com/services/",
+          "sourceLabel": "Official Print &amp; Apparel Services Houston | Screen, Embroidery &amp; Banners page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Services Printing, embroidery, DTF, and banners. Promotional products and managed online stores.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_b6c8a3ed-6742-457a-ad82-0b68b470d31e",
+      "expectedIdentity": {
+        "name": "Ugly Hair Prevention",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "http://theglowuhp.as.me/"
+      },
+      "patch": {
+        "description": "Online scheduling page to book appointments with Ugly Hair Prevention."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://theglowuhp.as.me/schedule/ade8935e",
+          "sourceLabel": "Official Schedule Appointment with Ugly Hair Prevention page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Schedule Appointment with Ugly Hair Prevention"
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "db5d7e4d578dcc67862d166d4310778acd14ccb14f88dc17735c3b489f987795"
+}

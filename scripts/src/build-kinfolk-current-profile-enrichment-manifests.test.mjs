@@ -17,7 +17,7 @@ const proposal = {
   website: "https://communitybooks.example/",
   identityConfirmed: true,
   observedAt: "2026-10-15",
-  sourceSnapshot: { Description: "Barber" },
+  sourceSnapshot: { Category: "Books" },
   accepted: [{ field: "description", value: "Independent bookstore.", sourcePageIndex: 0, evidenceQuote: "Community Books is an independent bookstore.", confidence: "high" }],
 };
 

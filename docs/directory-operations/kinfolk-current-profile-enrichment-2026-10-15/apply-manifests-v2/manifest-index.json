@@ -1,0 +1,132 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "productionWrite": false,
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "proposalsPath": "/home/ubuntu/mwm-kinfolk-nozip-map-restoration/docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/profile-enrichment-proposals.jsonl",
+  "pagesPath": "/home/ubuntu/mwm-kinfolk-nozip-map-restoration/docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/profile-enrichment-pages.jsonl",
+  "candidateCount": 2364,
+  "batchCount": 24,
+  "batches": [
+    {
+      "batchId": "current-official-site-v2-001",
+      "candidateCount": 100,
+      "contentFingerprint": "d4e9c9bdd3c554eec943db4df9593ddf462560b56f1a6d87e25a63e9c358ac31"
+    },
+    {
+      "batchId": "current-official-site-v2-002",
+      "candidateCount": 100,
+      "contentFingerprint": "9032df0d279a3238efd0b76b4c932efd61c5f623d2494237ae0971e086ceaef0"
+    },
+    {
+      "batchId": "current-official-site-v2-003",
+      "candidateCount": 100,
+      "contentFingerprint": "63c705461953a74d6e9e47016bd503b95004c67e6f052cc977a450a5ed5e08ca"
+    },
+    {
+      "batchId": "current-official-site-v2-004",
+      "candidateCount": 100,
+      "contentFingerprint": "cf6a81c44cebb02d34ce4d256a3db0a24747f4811c300d1767148b05264f3235"
+    },
+    {
+      "batchId": "current-official-site-v2-005",
+      "candidateCount": 100,
+      "contentFingerprint": "55029e31233efe1e4f045a1ddae6e8ccba680e2e3b5e4e53ffe3b4c226dd64fd"
+    },
+    {
+      "batchId": "current-official-site-v2-006",
+      "candidateCount": 100,
+      "contentFingerprint": "5dc9580bbdab31a1379067605a0e2531d120991d0737c9ef438ed9239d7f5bb3"
+    },
+    {
+      "batchId": "current-official-site-v2-007",
+      "candidateCount": 100,
+      "contentFingerprint": "2dc7eab609be68996f8cdf4048e7b9ef36171b96c21155cbb09ab87fbed88cdb"
+    },
+    {
+      "batchId": "current-official-site-v2-008",
+      "candidateCount": 100,
+      "contentFingerprint": "31524885f939fa975fd60b1ccab157583ecb019e85581a9b6b828be50eddec11"
+    },
+    {
+      "batchId": "current-official-site-v2-009",
+      "candidateCount": 100,
+      "contentFingerprint": "93bf670230dfdc0a01d9aa91a907785bbfdb67e50502063e6df3d79e93dff7da"
+    },
+    {
+      "batchId": "current-official-site-v2-010",
+      "candidateCount": 100,
+      "contentFingerprint": "1a3c0f4850d12992d3bef96000d921c6750ba3b98b576a44fc7d4c0879ea4384"
+    },
+    {
+      "batchId": "current-official-site-v2-011",
+      "candidateCount": 100,
+      "contentFingerprint": "513115706bc49105550fa3a66ab787634c9aeb41f3d7f4f49281ddc79d6ff104"
+    },
+    {
+      "batchId": "current-official-site-v2-012",
+      "candidateCount": 100,
+      "contentFingerprint": "e483ed38c42901ef1ded6eb4eeef6f88879519a34c6325614a70b767021b7cf1"
+    },
+    {
+      "batchId": "current-official-site-v2-013",
+      "candidateCount": 100,
+      "contentFingerprint": "3c88f3b6c4e2fee2929105dacb405beb089d86819036f3fb20103802d04425b4"
+    },
+    {
+      "batchId": "current-official-site-v2-014",
+      "candidateCount": 100,
+      "contentFingerprint": "7942f893f1b8cb79a3ff5b240d34c12e2ffd7ded40a1623807cf12bfdbe534fd"
+    },
+    {
+      "batchId": "current-official-site-v2-015",
+      "candidateCount": 100,
+      "contentFingerprint": "fdbc0e28ecfaa20e797cdeaec8841e91b179a9b9c14514f0bbfde56764fb569c"
+    },
+    {
+      "batchId": "current-official-site-v2-016",
+      "candidateCount": 100,
+      "contentFingerprint": "067e10184d8facb96393e225e2eca54fee9408d585d7f0948560630f18c74393"
+    },
+    {
+      "batchId": "current-official-site-v2-017",
+      "candidateCount": 100,
+      "contentFingerprint": "5b15bcae9f2a42eb07f60933cda8dcd2f6244641d7de2e160b289ee111faea65"
+    },
+    {
+      "batchId": "current-official-site-v2-018",
+      "candidateCount": 100,
+      "contentFingerprint": "39be0ba839ed65a81d5f7741927300b0b673d02ec045b672dc997d9ee3bc2288"
+    },
+    {
+      "batchId": "current-official-site-v2-019",
+      "candidateCount": 100,
+      "contentFingerprint": "1d1b6d878a89dd35e1aef07a1d7c75acb905b48ddf2c33e247b2f94b1041532a"
+    },
+    {
+      "batchId": "current-official-site-v2-020",
+      "candidateCount": 100,
+      "contentFingerprint": "af98d6482179c80cd31b27f7aeb1b6d8466b515bc0f1710db00fea5f30a19676"
+    },
+    {
+      "batchId": "current-official-site-v2-021",
+      "candidateCount": 100,
+      "contentFingerprint": "ea9497d4c3fbb0655b7b50da6f09eac7bd053d96f980af40a641dc6a872146c9"
+    },
+    {
+      "batchId": "current-official-site-v2-022",
+      "candidateCount": 100,
+      "contentFingerprint": "db5d7e4d578dcc67862d166d4310778acd14ccb14f88dc17735c3b489f987795"
+    },
+    {
+      "batchId": "current-official-site-v2-023",
+      "candidateCount": 100,
+      "contentFingerprint": "ef48eac1c2de1dcc31c600e1f808019c04af3c1b8cc26fea89d6b6d8e779612b"
+    },
+    {
+      "batchId": "current-official-site-v2-024",
+      "candidateCount": 64,
+      "contentFingerprint": "c71930f7a81366df5e0cdf7f9a96b0190fe6c0ece4318e9f124e799be3e55851"
+    }
+  ]
+}

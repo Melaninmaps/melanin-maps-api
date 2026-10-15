@@ -1,0 +1,4489 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-003",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_c76943fc-19db-4d6c-b351-30130038d1b3",
+      "expectedIdentity": {
+        "name": "A&W Greek Shop",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.awgreekshop.com/"
+      },
+      "patch": {
+        "description": "A&W Greek Shop sells officially licensed Divine Nine apparel, accessories, gifts, and Heritage collections.",
+        "hours": "Regular Hours November 1 - June 30 Open Wednesday through Saturday 11:00 AM – 5:30 PM Sunday - Tuesday Closed; Special Hours July 1 - October 31 Open Friday & Saturday Only 11:00 AM – 5:30 PM Sunday - Thursday Closed",
+        "phone": "(205) 925-4777",
+        "youtube": "https://www.youtube.com/@awgreekshop1996",
+        "pinterest": "https://www.pinterest.com/awgreekshop/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.awgreekshop.com/",
+          "sourceLabel": "Official Official Divine Nine Apparel &amp; Accessories | A&amp;W Greek Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Official Divine Nine Apparel & Accessories | A&W Greek Shop\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.awgreekshop.com/pages/store-hours",
+          "sourceLabel": "Official Store Hours &ndash; A&amp;W Greek Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Regular Hours November 1 - June 30 Open Wednesday through Saturday 11:00 AM – 5:30 PM Sunday - Tuesday Closed Special Hours July 1 - October 31 Open Friday & Saturday Only 11:00 AM – 5:30 PM Sunday - Thursday Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.awgreekshop.com/",
+          "sourceLabel": "Official Official Divine Nine Apparel &amp; Accessories | A&amp;W Greek Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"P: (205) 925-4777\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.awgreekshop.com/",
+          "sourceLabel": "Official Official Divine Nine Apparel &amp; Accessories | A&amp;W Greek Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@awgreekshop1996"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.awgreekshop.com/",
+          "sourceLabel": "Official Official Divine Nine Apparel &amp; Accessories | A&amp;W Greek Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/awgreekshop/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ac06a14f-ad1b-46e7-8c36-af69852c8558",
+      "expectedIdentity": {
+        "name": "Axis Hookah Lounge",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://axishookahlounge.com/"
+      },
+      "patch": {
+        "description": "A hookah lounge offering premium hookah flavors and a space for socializing and events.",
+        "hours": "Open 2pm-2am everyday",
+        "phone": "(602) 881-5220"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://axishookahlounge.com/",
+          "sourceLabel": "Official Hookah Lounge - Phoenix AZ, 85032 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: WELCOME TO AXIS HOOKAH LOUNGE A hookah lounge, also known as a shisha bar or a hookah bar, is a place where people gather to smoke flavored tobacco from a hookah, a traditional Middle Eastern water pipe."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://axishookahlounge.com/",
+          "sourceLabel": "Official Hookah Lounge - Phoenix AZ, 85032 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Open 2pm-2am everyday"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://axishookahlounge.com/",
+          "sourceLabel": "Official Hookah Lounge - Phoenix AZ, 85032 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Direct: (602) 881-5220"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ae7de040-e1ed-48be-86cc-faa21a8d35c1",
+      "expectedIdentity": {
+        "name": "Ayesha Rodriguez, Children's Diversity Author",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://ayesharodriguez.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/MsAyeshaRod",
+        "youtube": "https://www.youtube.com/channel/UCS2AgcO94j7DLJFduOuwAcw"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://ayesharodriguez.com/",
+          "sourceLabel": "Official Ayesha Rodriguez &#8211; Meet Ayesha Rodriguez the children&#039;s diversity author page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/MsAyeshaRod"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://ayesharodriguez.com/",
+          "sourceLabel": "Official Ayesha Rodriguez &#8211; Meet Ayesha Rodriguez the children&#039;s diversity author page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCS2AgcO94j7DLJFduOuwAcw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f968921b-6257-4297-b97e-bb7c8ae1dcf9",
+      "expectedIdentity": {
+        "name": "Ayesha Rodriguez, Children's Diversity Author",
+        "city": "Tampa Bay",
+        "state": "FL",
+        "website": "https://ayesharodriguez.com/"
+      },
+      "patch": {
+        "description": "Ayesha Rodriguez is a children's diversity author, speaker, educator and entrepreneur dedicated to creating self-affirming, confidence-building products for children of all colors, hair types and abilities.",
+        "twitter": "https://twitter.com/MsAyeshaRod",
+        "youtube": "https://www.youtube.com/channel/UCS2AgcO94j7DLJFduOuwAcw"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ayesharodriguez.com/about-ayesha/",
+          "sourceLabel": "Official About Ayesha Rodriguez &#8211; Ayesha Rodriguez page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Ayesha Rodriguez is a children's diversity author, speaker, educator and entrepreneur dedicated to creating self-affirming, confidence-building products for children of all colors, hair types and abilities.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://ayesharodriguez.com/",
+          "sourceLabel": "Official Ayesha Rodriguez &#8211; Meet Ayesha Rodriguez the children&#039;s diversity author page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/MsAyeshaRod"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://ayesharodriguez.com/",
+          "sourceLabel": "Official Ayesha Rodriguez &#8211; Meet Ayesha Rodriguez the children&#039;s diversity author page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCS2AgcO94j7DLJFduOuwAcw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_55a34bc3-ef3f-407b-b736-6ed488d60e29",
+      "expectedIdentity": {
+        "name": "Ayon Studio Architecture Preservation, P.C.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.ayonstudio.com/"
+      },
+      "patch": {
+        "description": "AYON Studio integrates architecture and historic preservation to engage in conservation, rehabilitation, and adaptive reuse projects with public agencies, private property owners, cultural institutions, and individual homeowners.",
+        "phone": "(212) 256-0074"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ayonstudio.com/about",
+          "sourceLabel": "Official About &mdash; AYON Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are service-focused. We integrate architecture, design, engineering, historic preservation, and materials conservation in our projects to ensure a structure’s new life is even better than its previous one."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ayonstudio.com/",
+          "sourceLabel": "Official AYON Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: info@AyonStudio.com | (212) 256-0074 | 41 Union Square West, Suite 721, New York, NY 10003"
+        }
+      ]
+    },
+    {
+      "businessId": "source_53a09b8d-b626-48bc-be0c-8efc8b16a4b1",
+      "expectedIdentity": {
+        "name": "Azar Design Co, Architecture, Landscape Architecture, Engineering and Surveying, P.C",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.azardzn.com/"
+      },
+      "patch": {
+        "description": "Azar Design Co is a multidisciplinary design firm providing architecture, engineering, and landscape architecture services.",
+        "phone": "(212) 986-1471",
+        "tags": [
+          "architecture",
+          "civil engineering",
+          "landscape architecture",
+          "building systems engineering",
+          "transportation & structural engineering",
+          "construction management",
+          "surveying",
+          "environmental"
+        ],
+        "facebook": "https://www.facebook.com/azardznco",
+        "instagram": "https://www.instagram.com/azardznco"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://azardzn.com/",
+          "sourceLabel": "Official Azar Design Co | Multidisciplinary Design Solutions for the Built World page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Designing the future through comprehensive, in-house services including architecture, engineering, and landscape architecture."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://azardzn.com/contact/",
+          "sourceLabel": "Official Contact Us | Azar Design Co page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: New York 220 East 42nd Street, Suite 3105, New York, NY 10017 (212) 986-1471"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://azardzn.com/",
+          "sourceLabel": "Official Azar Design Co | Multidisciplinary Design Solutions for the Built World page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Expertise Designing the future through comprehensive, in-house services including architecture, engineering, and landscape architecture."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://azardzn.com/",
+          "sourceLabel": "Official Azar Design Co | Multidisciplinary Design Solutions for the Built World page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/azardznco"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://azardzn.com/",
+          "sourceLabel": "Official Azar Design Co | Multidisciplinary Design Solutions for the Built World page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/azardznco"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7513e321-710b-4aac-a326-1164a441fbea",
+      "expectedIdentity": {
+        "name": "B2Z Engineering, LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.b2zeng.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/b2zengineering",
+        "twitter": "https://x.com/B2zEngineering",
+        "youtube": "https://www.youtube.com/@b2zengineering460"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://b2zeng.com/",
+          "sourceLabel": "Official Home - B2Z Engineering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/b2zengineering"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://b2zeng.com/",
+          "sourceLabel": "Official Home - B2Z Engineering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/B2zEngineering"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://b2zeng.com/",
+          "sourceLabel": "Official Home - B2Z Engineering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@b2zengineering460"
+        }
+      ]
+    },
+    {
+      "businessId": "source_18e4b3cd-4b3f-4e3c-959d-30929ed94ee9",
+      "expectedIdentity": {
+        "name": "BABEL Movement",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://babelmovement.org/"
+      },
+      "patch": {
+        "description": "BABEL Movement connects people through dance using storytelling and community engagement; the company creates performances, dance films, embodiment workshops, and mentorship programs focused on Upper Manhattan and BIPOC youth."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.babelmovement.org/",
+          "sourceLabel": "Official BABEL MOVEMENT page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Connecting people through the unifying language of dance using storytelling and community engagement."
+        }
+      ]
+    },
+    {
+      "businessId": "source_367cbcf2-c7a3-412d-bcd2-7fdad4c2968e",
+      "expectedIdentity": {
+        "name": "Baby Back Shak",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://babybackshak.com/"
+      },
+      "patch": {
+        "description": "We specialize in Memphis-style BBQ, including brisket, ribs, and chicken, served with sides like potato salad, cole slaw, and Memphis-style BBQ baked beans.",
+        "hours": "Tuesday - Thursday : 11:00am - 5:45pm; Friday - Saturday : 11:00am - 6:45pm; Sunday - Monday : Closed",
+        "phone": "(214) 428-7427",
+        "twitter": "https://x.com/babybackshak"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://babybackshak.com/",
+          "sourceLabel": "Official Baby Back Shak | Dallas, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We specialize in making you BBQ happy. Tender, juicy beef brisket, fall-off-the-bone smoked ribs, or succulent chicken breast served up just the way you like it, with tangy potato salad, fresh cole slaw or the Shak&#8217;s very own Memphis style BBQ baked beans.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://babybackshak.com/",
+          "sourceLabel": "Official Baby Back Shak | Dallas, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Tuesday - Thursday : 11:00am - 5:45pm Friday - Saturday : 11:00am - 6:45pm Sunday - Monday : Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://babybackshak.com/",
+          "sourceLabel": "Official Baby Back Shak | Dallas, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(214) 428-7427\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://babybackshak.com/",
+          "sourceLabel": "Official Baby Back Shak | Dallas, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/babybackshak"
+        }
+      ]
+    },
+    {
+      "businessId": "source_03707beb-2e45-48e8-8b18-b2449047b0ff",
+      "expectedIdentity": {
+        "name": "Baby in the kitchen & Co LLC",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "http://www.babyinthekitchen1051.com/"
+      },
+      "patch": {
+        "description": "At BABY IN THE KITCHEN, we bring soulful flavors with a unique twist straight to the streets of Orlando.",
+        "twitter": "https://x.com/",
+        "tiktok": "https://www.tiktok.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.babyinthekitchen1051.com/",
+          "sourceLabel": "Official BABY IN THE KITCHEN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At BABY IN THE KITCHEN, we bring soulful flavors with a unique twist straight to the streets of Orlando.\","
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.babyinthekitchen1051.com/",
+          "sourceLabel": "Official BABY IN THE KITCHEN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.babyinthekitchen1051.com/",
+          "sourceLabel": "Official BABY IN THE KITCHEN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7bf7558d-818a-4453-84ff-8a99017d4c10",
+      "expectedIdentity": {
+        "name": "Backyard Grill",
+        "city": "Atlanta",
+        "state": "GA",
+        "website": "https://www.backyardgrillatlanta.com/"
+      },
+      "patch": {
+        "hours": "Wed, Thur 12:00 PM - 10:00 PM; Fri 12:00 PM - 12:00 AM; Sat 1:00 PM - 12:00 AM; Sun 3:00 PM - 9:00 PM",
+        "phone": "(404)-565-2786"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://backyardgrillatlanta.com/",
+          "sourceLabel": "Official Must-Try BBQ in Atlanta | Backyard Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Wed, Thur 12:00 PM - 10:00 PM Fri 12:00 PM - 12:00 AM Sat 1:00 PM - 12:00 AM Sun 3:00 PM - 9:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://backyardgrillatlanta.com/",
+          "sourceLabel": "Official Must-Try BBQ in Atlanta | Backyard Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us at (404)-565-2786"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1fcfd604-d8f9-47fd-9ca9-9eace006ddab",
+      "expectedIdentity": {
+        "name": "Bake Me Happy, LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.bakemehappygf.com/"
+      },
+      "patch": {
+        "phone": "614-477-3642",
+        "twitter": "https://twitter.com/bakemehappygf"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bakemehappygf.com/locations",
+          "sourceLabel": "Official Locations &mdash; Bake Me Happy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"500 E Whittier Columbus, OH 43206 Phone: 614-477-3642\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.bakemehappygf.com/",
+          "sourceLabel": "Official Bake Me Happy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/bakemehappygf"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dfc549b2-f7da-40ca-b896-e688b2bbb02c",
+      "expectedIdentity": {
+        "name": "Bake Something MKE",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3w4SPtL"
+      },
+      "patch": {
+        "description": "Bake Something is presented on the site as a business offering custom cakes and pre-order desserts.",
+        "tags": [
+          "custom cakes",
+          "pre-order desserts"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bakesomethingmke.com/",
+          "sourceLabel": "Official Bake Something page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Custom Cake Inquiry Pre Order Desserts Pre Order Desserts Custom Cakes Custom Cakes"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bakesomethingmke.com/",
+          "sourceLabel": "Official Bake Something page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Custom Cake Inquiry Pre Order Desserts Pre Order Desserts Custom Cakes Custom Cakes"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c13c2c26-d556-4b89-bd71-9fc3fbf54da5",
+      "expectedIdentity": {
+        "name": "Ballpark Realty",
+        "city": "Lakeville",
+        "state": "MN",
+        "website": "https://ballparkrealtymn.com/"
+      },
+      "patch": {
+        "phone": "(952) 431-1930",
+        "youtube": "https://www.youtube.com/watch?v=NRu3h0Rp1L4"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://ballparkrealtymn.com/",
+          "sourceLabel": "Official Real Estate Agent | Lakeville Real Estate Agents page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone Us: (952) 431-1930\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://ballparkrealtymn.com/",
+          "sourceLabel": "Official Real Estate Agent | Lakeville Real Estate Agents page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=NRu3h0Rp1L4"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f7eebabd-a473-4478-b0a0-4411fc2f4d45",
+      "expectedIdentity": {
+        "name": "Bama Hotdogs",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://bamahotdogs.com/"
+      },
+      "patch": {
+        "description": "Come in and try our 100% all beef hot dogs, fresh hand-pattied burgers, grilled sandwiches, and made-to-order breakfast.",
+        "hours": "Mon - Sat: 5:00 am to 2:00 pm",
+        "phone": "(205) 849 2244",
+        "tags": [
+          "hot dogs",
+          "burgers",
+          "grilled sandwiches",
+          "breakfast"
+        ],
+        "instagram": "https://www.instagram.com/bamahotdogs/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bamahotdogs.com/",
+          "sourceLabel": "Official Websites | | bama-hot-dog3 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Come in and try our 100% all beef hot dogs, fresh hand-pattied burgers that are never frozen. We also have a selection of grilled sandwiches such as Reubens, Philly cheesesteaks, Patty Melts and More. Want you to start your day off right? we open at 5 AM, serving a fresh, made to order breakfast."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://bamahotdogs.com/",
+          "sourceLabel": "Official Websites | | bama-hot-dog3 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours: Mon - Sat: 5:00 am to 2:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bamahotdogs.com/",
+          "sourceLabel": "Official Websites | | bama-hot-dog3 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (205) 849 2244"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bamahotdogs.com/",
+          "sourceLabel": "Official Websites | | bama-hot-dog3 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Come in and try our 100% all beef hot dogs, fresh hand-pattied burgers that are never frozen. We also have a selection of grilled sandwiches such as Reubens, Philly cheesesteaks, Patty Melts and More. Want you to start your day off right? we open at 5 AM, serving a fresh, made to order breakfast."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://bamahotdogs.com/",
+          "sourceLabel": "Official Websites | | bama-hot-dog3 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/bamahotdogs/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_51be5ff5-1a07-4a81-8ef6-51c684d3671f",
+      "expectedIdentity": {
+        "name": "Bambi Rae Collections",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.bambirae.co/"
+      },
+      "patch": {
+        "description": "Cultural & faith-rooted statement pieces.",
+        "pinterest": "https://www.pinterest.com/BambiRaeCollections/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bambirae.co/",
+          "sourceLabel": "Official Bambi Rae Collections page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Cultural & faith-rooted statement pieces - no explanations required."
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://bambirae.co/",
+          "sourceLabel": "Official Bambi Rae Collections page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/BambiRaeCollections/"
+        }
+      ]
+    },
+    {
+      "businessId": "dir-6c6d7e4fe237365a0c50f739",
+      "expectedIdentity": {
+        "name": "Banana Mousse",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.bananamousse.com/"
+      },
+      "patch": {
+        "description": "Banana Mousse is a Philadelphia dessert destination serving signature mousse, creamy milkshakes, and sweet treats; they also offer catering for events, parties, and gatherings.",
+        "tags": [
+          "mousse",
+          "milkshakes",
+          "catering",
+          "ice cream"
+        ],
+        "twitter": "https://twitter.com/BananaMousse_"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bananamousse.com/",
+          "sourceLabel": "Official Banana Mousse page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Banana Mousse is a Philadelphia dessert destination serving signature mousse, creamy milkshakes, and sweet treats made to bring people together. We’re becoming a local favorite just like cheesesteaks and soft pretzels. Families, friends, and offices stop in for something sweet and memorable. We also offer catering for events, parties, and gatherings.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.bananamousse.com/menu",
+          "sourceLabel": "Official Menu &mdash; Banana Mousse page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"From our signature mousse to delectable milkshakes, allergen-friendly, and non-dairy options, our menu caters to every taste and dietary preference. MOUSSE MILKSHAKE ICE CREAM\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.bananamousse.com/",
+          "sourceLabel": "Official Banana Mousse page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/BananaMousse_"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3cc3024f-e088-4ed2-95dc-2076be494260",
+      "expectedIdentity": {
+        "name": "Bancoff Inc.",
+        "city": "East Elmhurst",
+        "state": "NY",
+        "website": "https://www.bancoffny.com/"
+      },
+      "patch": {
+        "hours": "24/7 emergency services",
+        "facebook": "https://www.facebook.com/BancoffLocksmith",
+        "twitter": "https://twitter.com/bancoffnyc",
+        "instagram": "https://www.instagram.com/bancofflocksmithandsecurity/",
+        "pinterest": "https://in.pinterest.com/login/"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://bancoffny.com/",
+          "sourceLabel": "Official Bancoff Locksmith &amp; Security page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: EMERGENCY SERVICES 24/7 WHEN AND WHERE YOU NEED US, WE'RE THERE!"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://bancoffny.com/",
+          "sourceLabel": "Official Bancoff Locksmith &amp; Security page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BancoffLocksmith"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://bancoffny.com/",
+          "sourceLabel": "Official Bancoff Locksmith &amp; Security page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/bancoffnyc"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://bancoffny.com/",
+          "sourceLabel": "Official Bancoff Locksmith &amp; Security page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/bancofflocksmithandsecurity/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://bancoffny.com/",
+          "sourceLabel": "Official Bancoff Locksmith &amp; Security page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://in.pinterest.com/login/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3216def8-b27e-45f1-9cbf-edd035bd712b",
+      "expectedIdentity": {
+        "name": "Bandujo Advertising & Design, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.bandujo.com/"
+      },
+      "patch": {
+        "description": "Bandujo is a full-service, New York City based advertising and digital agency that partners with marketing teams to create advertising and marketing campaigns across traditional, digital and social channels."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bandujo.com/",
+          "sourceLabel": "Official Bandujo Advertising + Design | New York City, NY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Bandujo is a full-service, New York City based advertising and digital agency that’s here to partner with you and your marketing teams to create smartly written and visually compelling campaigns that get your customers to act.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_c0ae4682-3cb2-4128-8834-5dd358f598e2",
+      "expectedIdentity": {
+        "name": "Bang AutoGlass",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://bangautoglass.com/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/channel/UCtjiNejHINjf1GHHs1dizkQ",
+        "twitter": "https://x.com/BangAutoGlass",
+        "pinterest": "https://www.pinterest.com/bangautoglass/"
+      },
+      "fieldModes": {
+        "youtube": "fill",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://bangautoglass.com/",
+          "sourceLabel": "Official Mobile Windshield &amp; Auto Glass in AZ &amp; FL | Bang AutoGlass page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCtjiNejHINjf1GHHs1dizkQ"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://bangautoglass.com/",
+          "sourceLabel": "Official Mobile Windshield &amp; Auto Glass in AZ &amp; FL | Bang AutoGlass page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/BangAutoGlass"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://bangautoglass.com/",
+          "sourceLabel": "Official Mobile Windshield &amp; Auto Glass in AZ &amp; FL | Bang AutoGlass page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/bangautoglass/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_19ebaf39-448d-4261-ab4f-a88ca9d7f560",
+      "expectedIdentity": {
+        "name": "BaQ Bone BBQ",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.baqbonebbq.com/"
+      },
+      "patch": {
+        "hours": "Food truck open every Friday at Bearded Iris Brewing hours - 5:00 PM to 9:00 PM or sold-out; check Instagram for closures and scheduling.",
+        "phone": "629-270-7033",
+        "tiktok": "https://www.tiktok.com/@baqbonebbq",
+        "youtube": "https://www.youtube.com/@BaQBoneBBQ"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://baqbonebbq.com/",
+          "sourceLabel": "Official Delicious Barbecue BBQ - Taste the Best at Baqbone page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"BAQ-BONE BBQ FOOD TRUCK OPEN EVERY FRIDAY at BEARDED IRIS BREWING HOURS - 5:00 PM TO 9:00 PM OR SOLD-OUT CHECK OUR INSTAGRAM @BAQBONEBBQ FOR CLOSURES AND SCHEDULING\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://baqbonebbq.com/",
+          "sourceLabel": "Official Delicious Barbecue BBQ - Taste the Best at Baqbone page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"629-270-7033\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://baqbonebbq.com/",
+          "sourceLabel": "Official Delicious Barbecue BBQ - Taste the Best at Baqbone page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@baqbonebbq"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://baqbonebbq.com/",
+          "sourceLabel": "Official Delicious Barbecue BBQ - Taste the Best at Baqbone page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@BaQBoneBBQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e05002e2-2f0b-4ed8-bb71-e5932971ddb2",
+      "expectedIdentity": {
+        "name": "Bare Necessities Spa + MedSpa",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://bnwax.com/"
+      },
+      "patch": {
+        "description": "Med Spa in Houston, TX"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bnwax.com/",
+          "sourceLabel": "Official Med Spa in Houston, TX | Bare Necessities Spa + MedSpa page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Med Spa in Houston, TX | Bare Necessities Spa + MedSpa"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fff8d12d-1842-4c68-8bd4-6725bd5fec14",
+      "expectedIdentity": {
+        "name": "Barfoot & Schoettker L.L.C",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://www.barfootschoettker.com/"
+      },
+      "patch": {
+        "description": "Barfoot & Schoettker is a law firm handling civil and criminal litigation, including personal injury and criminal defense.",
+        "phone": "(334) 834-3444",
+        "tags": [
+          "personal injury",
+          "car accident",
+          "truck accident",
+          "wrongful death",
+          "family law",
+          "medical malpractice",
+          "criminal representation",
+          "traffic tickets",
+          "premise liability",
+          "defective products"
+        ],
+        "twitter": "https://x.com/BFSchoettker",
+        "facebook": "https://www.facebook.com/barfootschoettker/",
+        "youtube": "https://www.youtube.com/channel/UC2QqTJDt1yC1463IoIgLEjQ",
+        "instagram": "https://www.instagram.com/benjaminschoettker/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "facebook": "fill",
+        "youtube": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.barfootschoettker.com/about-us/",
+          "sourceLabel": "Official About Our Professional Team | Barfoot and Schoettker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Since our inception we have dedicated ourselves exclusively to civil and criminal litigation."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.barfootschoettker.com/",
+          "sourceLabel": "Official Top-Rated Personal Injury Attorneys in Montgomery, AL | Barfoot and Schoettker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone (334) 834-3444"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.barfootschoettker.com/",
+          "sourceLabel": "Official Top-Rated Personal Injury Attorneys in Montgomery, AL | Barfoot and Schoettker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services Personal Injury Car Accident Truck Accident Slip and Fall Injuries Wrongful Death Family Law Medical Malpractice Criminal Representation Traffic Tickets Federal Court Premise Liability Defective Products"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.barfootschoettker.com/",
+          "sourceLabel": "Official Top-Rated Personal Injury Attorneys in Montgomery, AL | Barfoot and Schoettker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/BFSchoettker"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.barfootschoettker.com/",
+          "sourceLabel": "Official Top-Rated Personal Injury Attorneys in Montgomery, AL | Barfoot and Schoettker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/barfootschoettker/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.barfootschoettker.com/",
+          "sourceLabel": "Official Top-Rated Personal Injury Attorneys in Montgomery, AL | Barfoot and Schoettker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UC2QqTJDt1yC1463IoIgLEjQ"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.barfootschoettker.com/",
+          "sourceLabel": "Official Top-Rated Personal Injury Attorneys in Montgomery, AL | Barfoot and Schoettker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/benjaminschoettker/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_af1f8982-9630-447a-9d91-c82eb20ca1cf",
+      "expectedIdentity": {
+        "name": "BARRALES LAW",
+        "city": "Boston",
+        "state": "MA",
+        "website": "https://www.barraleslaw.com/"
+      },
+      "patch": {
+        "hours": "Mon - Fri: 9 am - 5 pm",
+        "phone": "(617) 720-3600",
+        "tags": [
+          "immigration law",
+          "green card applications",
+          "consular processing",
+          "u visas",
+          "vawa self-petitions",
+          "temporary protected status (tps)",
+          "daca",
+          "asylum",
+          "removal defense"
+        ],
+        "twitter": "https://twitter.com/barraleslaw?lang=en"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://barraleslaw.com/contact-massachusetts-immigration-law-firm/",
+          "sourceLabel": "Official Contact Our Massachusetts Immigration Law Firm - Speak With a Boston Immigration Attorney page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: our hours Mon - Fri: 9 am - 5 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://barraleslaw.com/",
+          "sourceLabel": "Official Barrales Law Massachusetts Immigration Law Attorneys - Boston Immigration Lawyers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us at 617-720-3600"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://barraleslaw.com/",
+          "sourceLabel": "Official Barrales Law Massachusetts Immigration Law Attorneys - Boston Immigration Lawyers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We handle traditional immigration pathways such as green card applications and consular processing, and, depending on your situation, we can also pursue humanitarian relief options like: U visas VAWA self-petitions Temporary Protected Status (TPS) Deferred Action for Childhood Arrivals (DACA) Asylum If you are facing removal or deportation, we will work diligently to build a strong legal defense and represent you in court to protect your right to remain in the U.S."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://barraleslaw.com/",
+          "sourceLabel": "Official Barrales Law Massachusetts Immigration Law Attorneys - Boston Immigration Lawyers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/barraleslaw?lang=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ff196d17-6b13-4d19-976b-795581048555",
+      "expectedIdentity": {
+        "name": "Barreau Legal, PLLC",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://www.blegalfl.com/"
+      },
+      "patch": {
+        "description": "Barreau Legal, PLLC helps individuals and families protect assets, prepare for the future, and preserve wealth across generations; the practice focuses on estate planning, high-net-worth estate planning, probate and trust administration, and mediation.",
+        "hours": "Mon - Fri, 8:30am - 5:00pm (by appointment only)",
+        "phone": "772-236-5204",
+        "tags": [
+          "estate planning",
+          "high-net-worth estate planning",
+          "probate and trust administration",
+          "mediation"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://blegalfl.com/about-us/",
+          "sourceLabel": "Official About Us - Barreau Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Barreau Legal, PLLC, where he helps individuals and families protect what they have built, prepare for the future, and preserve wealth across generations. His practice focuses on estate planning, high-net-worth estate planning, probate and trust administration, and mediation.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://blegalfl.com/",
+          "sourceLabel": "Official Barreau Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Mon - Fri, 8:30am - 5:00pm (by appointment only)\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://blegalfl.com/",
+          "sourceLabel": "Official Barreau Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"772-236-5204\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://blegalfl.com/about-us/",
+          "sourceLabel": "Official About Us - Barreau Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"His practice focuses on estate planning, high-net-worth estate planning, probate and trust administration, and mediation.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_e544b48a-6aa5-4374-b591-bedb739465cf",
+      "expectedIdentity": {
+        "name": "Barr's Music City Soul Food",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://order.tsgpos.com/store/33dda421-1f7e-468d-a5f6-254a4e9768b2"
+      },
+      "patch": {
+        "phone": "(615) 429-7836"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://order.tsgpos.com/store/33dda421-1f7e-468d-a5f6-254a4e9768b2",
+          "sourceLabel": "Official Barr&#x27;s Music City Soul Food page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(615) 429-7836\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f67aef8f-454c-4613-9fb9-a878cf9e1071",
+      "expectedIdentity": {
+        "name": "Bartlett Church of Christ",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.bartlettchurchofchrist.org/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/channel/UCrU3iBop4m_IGDF1BdoSWEw"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.bartlettchurchofchrist.org/",
+          "sourceLabel": "Official Bartlett church of Christ Home Page &lsaquo; Bartlett church of Christ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCrU3iBop4m_IGDF1BdoSWEw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8a9275ac-692e-470f-970d-5821800ba98d",
+      "expectedIdentity": {
+        "name": "Bartlett Dairy Inc.",
+        "city": "Jamaica",
+        "state": "NY",
+        "website": "https://www.bartlettny.com/"
+      },
+      "patch": {
+        "phone": "718-658-2299"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://bartlettny.com/",
+          "sourceLabel": "Official Bartlett Dairy &#8211; A New York Milk Company &#8211; Bartlett Dairy &#8211; A New York Milk Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us Today! 718-658-2299"
+        }
+      ]
+    },
+    {
+      "businessId": "source_416e552c-4861-42e3-a1cc-509c4b075dda",
+      "expectedIdentity": {
+        "name": "Baste Southern Style Sauces & Seasonings",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://justbaste.com/"
+      },
+      "patch": {
+        "description": "We craft small-batch sauces and seasonings using premium, all-natural ingredients and time-honored recipes.",
+        "tags": [
+          "sauces",
+          "seasonings",
+          "small-batch sauces",
+          "all-natural ingredients"
+        ],
+        "facebook": "https://www.facebook.com/justbaste",
+        "tiktok": "https://www.tiktok.com/@just_baste"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://justbaste.com/pages/about-us",
+          "sourceLabel": "Official About BASTE | Southern Style Sauces &amp; Seasonings &ndash; Baste Southern Style Sauces and Seasonings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We craft small-batch sauces and seasonings with the same devotion our ancestors brought to their family meals. Using only premium, all-natural ingredients and time-honored recipes that transform ordinary moments into extraordinary memories.\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://justbaste.com/",
+          "sourceLabel": "Official BASTE Sauces &amp; Seasonings | Handcrafted in North Carolina &ndash; Baste Southern Style Sauces and Seasonings page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"BASTE Sauces & Seasonings | Handcrafted in North Carolina &ndash; Baste Southern Style Sauces and Seasonings\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://justbaste.com/",
+          "sourceLabel": "Official BASTE Sauces &amp; Seasonings | Handcrafted in North Carolina &ndash; Baste Southern Style Sauces and Seasonings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/justbaste"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://justbaste.com/",
+          "sourceLabel": "Official BASTE Sauces &amp; Seasonings | Handcrafted in North Carolina &ndash; Baste Southern Style Sauces and Seasonings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@just_baste"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f8cfaf37-70c5-4ce0-83b3-cef6d75b4e0a",
+      "expectedIdentity": {
+        "name": "Battle Box",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3w2JXoA"
+      },
+      "patch": {
+        "hours": "Sunday closed; Monday 10AM–6:00PM; Tuesday 10AM–6:00PM; Wednesday 10AM–6:00PM; Thursday 10AM–5:00PM; Friday 10AM–5:00PM; Saturday 10AM–5:00PM",
+        "phone": "(414) 242-1286"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://thebattleboxvideogames.com/",
+          "sourceLabel": "Official Home - The Battlebox Video Games page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Store Hours Sunday closed Monday 10AM–6:00PM Tuesday 10AM–6:00PM Wednesday 10AM–6:00PM Thursday 10AM–5:00PM Friday 10AM–5:00PM Saturday 10AM–5:00PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://thebattleboxvideogames.com/",
+          "sourceLabel": "Official Home - The Battlebox Video Games page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Please call us before coming by (414) 242-1286"
+        }
+      ]
+    },
+    {
+      "businessId": "source_404bf976-8075-4936-832f-c458c2cdda49",
+      "expectedIdentity": {
+        "name": "Baumgartner Law Firm",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://baumgartnerlawyers.com/"
+      },
+      "patch": {
+        "description": "Baumgartner Law Firm is a Houston personal injury law firm that handles serious injury and wrongful death cases.",
+        "hours": "8am to 5pm Mon - Fri",
+        "phone": "(281) 587-1111"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://baumgartnerlawyers.com/about/",
+          "sourceLabel": "Official About Baumgartner Law Firm | Houston Personal Injury Lawyer — 40+ Years page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The Baumgartner Law Firm is a top-rated Houston personal injury law firm that has protected the financial future of personal injury victims in Houston, Texas, for over 40 years.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://baumgartnerlawyers.com/contact-us/",
+          "sourceLabel": "Official Contact Baumgartner Law Firm | Free Injury Consultation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"CONTACT US Time Working: 8am to 5pm Mon - Fri\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://baumgartnerlawyers.com/contact-us/",
+          "sourceLabel": "Official Contact Baumgartner Law Firm | Free Injury Consultation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact Us Phone: (281) 587-1111\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9f078e0a-bdb6-475c-a781-d8aa8d678e6e",
+      "expectedIdentity": {
+        "name": "Bazzini Plumbing and Mechanical LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.bazziniplumbingandmechanical.com/"
+      },
+      "patch": {
+        "description": "Bazzini Plumbing & Mechanical provides plumbing and heating services.",
+        "hours": "Mon 08:00 am – 05:00 pm; Tue 08:00 am – 05:00 pm; Wed 08:00 am – 05:00 pm; Thu 08:00 am – 05:00 pm; Fri 08:00 am – 05:00 pm; Sat 09:00 am – 02:00 pm; Sun Closed",
+        "phone": "1-718-974-9556",
+        "tags": [
+          "plumbing",
+          "heating"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bazziniplumbingandmechanical.com/",
+          "sourceLabel": "Official Expert Plumbing and Heating Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Expert Plumbing and Heating Services Bazzini Plumbing & Mechanical"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://bazziniplumbingandmechanical.com/",
+          "sourceLabel": "Official Expert Plumbing and Heating Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office Hours Mon 08:00 am – 05:00 pm Tue 08:00 am – 05:00 pm Wed 08:00 am – 05:00 pm Thu 08:00 am – 05:00 pm Fri 08:00 am – 05:00 pm Sat 09:00 am – 02:00 pm Sun Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bazziniplumbingandmechanical.com/",
+          "sourceLabel": "Official Expert Plumbing and Heating Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 1-718-974-9556"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bazziniplumbingandmechanical.com/",
+          "sourceLabel": "Official Expert Plumbing and Heating Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Expert Plumbing and Heating Services"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4162d92d-99a4-4942-9107-57d9fb778c3c",
+      "expectedIdentity": {
+        "name": "BCforward",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://www.bcforward.com/"
+      },
+      "patch": {
+        "description": "BCforward provides talent, technology, advisory, and global delivery/managed services to help organizations scale, modernize, and deliver outcomes.",
+        "tags": [
+          "talent + workforce solutions",
+          "ai + technology solutions",
+          "advisory + transformation",
+          "global delivery + managed services"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bcforward.com/",
+          "sourceLabel": "Official BCforward: Global Talent &amp; Technology Solutions Partner page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"BC forward supports our clients across the full value chain of work: attracting and developing talent, delivering technology solutions that modernize the way work gets done, and running managed services that create efficiency, resilience and scale.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.bcforward.com/",
+          "sourceLabel": "Official BCforward: Global Talent &amp; Technology Solutions Partner page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Solutions Talent + Workforce Solutions AI + Technology Solutions Advisory + Transformation Global Delivery + Managed Services\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9840ba4b-a774-47ff-a80e-02b97a4f9db9",
+      "expectedIdentity": {
+        "name": "BC Global LP",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.bcglobal.law/"
+      },
+      "patch": {
+        "phone": "713.731.1050"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://bcglobal.law/",
+          "sourceLabel": "Official BC Global LP | Home | Texas, NY, Washington Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"713.731.1050\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_db04604b-c80d-4a58-b7bf-902c6f5765a4",
+      "expectedIdentity": {
+        "name": "BC Modern",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hm7EEh"
+      },
+      "patch": {
+        "description": "BC Modern is a Milwaukee destination for curated mid-century modern and vintage furniture, décor, and collectibles. They offer styling services for residential, commercial, and event spaces.",
+        "hours": "Open the last full weekend of every month (except in December) on Saturday and Sunday from 10 AM – 4 PM.",
+        "phone": "414.737.3745",
+        "tags": [
+          "mid-century modern furniture",
+          "vintage furniture",
+          "furniture restoration",
+          "estate buying",
+          "styling services",
+          "event styling"
+        ],
+        "youtube": "https://www.youtube.com/channel/UCUKYfFUeoqE0lNR4ORc7lhQ"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bcmodernmke.com/",
+          "sourceLabel": "Official BC MODERN MKE | Discover Vintage Finds Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Located in Bay View, BC Modern is Milwaukee’s destination for curated mid-century modern and vintage furniture, décor, and collectibles."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.bcmodernmke.com/",
+          "sourceLabel": "Official BC MODERN MKE | Discover Vintage Finds Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are open the last full weekend of every month (except in December) on Saturday and Sunday from 10 AM – 4 PM."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bcmodernmke.com/",
+          "sourceLabel": "Official BC MODERN MKE | Discover Vintage Finds Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us 414.737.3745"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.bcmodernmke.com/",
+          "sourceLabel": "Official BC MODERN MKE | Discover Vintage Finds Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: BC Modern is Milwaukee’s destination for curated mid-century modern and vintage furniture, décor, and collectibles."
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.bcmodernmke.com/",
+          "sourceLabel": "Official BC MODERN MKE | Discover Vintage Finds Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCUKYfFUeoqE0lNR4ORc7lhQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_94c4168a-f5c0-4383-84e0-741734113eb1",
+      "expectedIdentity": {
+        "name": "B.D. Feliz, LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://bdfeliz.com/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/watch?v=WuZM3j2H8qA",
+        "instagram": "https://instagram.com/bdfeliz",
+        "pinterest": "https://pinterest.com/bdfeliz"
+      },
+      "fieldModes": {
+        "youtube": "fill",
+        "instagram": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.bdfeliz.com/",
+          "sourceLabel": "Official BD FELIZ – Design strategy, Radical thinking, and Concepts rooted in making the world a better place. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=WuZM3j2H8qA"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.bdfeliz.com/",
+          "sourceLabel": "Official BD FELIZ – Design strategy, Radical thinking, and Concepts rooted in making the world a better place. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/bdfeliz"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.bdfeliz.com/",
+          "sourceLabel": "Official BD FELIZ – Design strategy, Radical thinking, and Concepts rooted in making the world a better place. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/bdfeliz"
+        }
+      ]
+    },
+    {
+      "businessId": "source_018210ce-ba9a-4600-b96b-85802819460d",
+      "expectedIdentity": {
+        "name": "Beauty and The Beast Driving School",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.porratax.com/"
+      },
+      "patch": {
+        "description": "Driving school offering driving lessons, defensive driving and related services; also lists tax and notary services on the same site.",
+        "hours": "Mon - Fri, 10am - 6pm Saturday, 11am - 5pm Sunday, by appointment only",
+        "phone": "(917) 737-7623",
+        "tags": [
+          "5-hour pre-licensing class",
+          "defensive driving course",
+          "driving lessons",
+          "dmv road test appointment scheduling",
+          "notary public",
+          "tax services",
+          "passport photos",
+          "point reduction"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.porratax.com/",
+          "sourceLabel": "Official Beauty and the Beast Driving School / Porrata Tax Services &ndash; Beauty and The Beast Driving School / Porrata Tax Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services • Tax Services (ITIN, EIN, 1040, Self-Employed Taxes & More) • Notary Public • Copy, Laminations, Fax & Scan • Passport Photos (Castle Hill) • Point Reduction / Defensive Driving Course • DMV Road Test Appointment Scheduling • Certified Marriage Officiant (New York & Connecticut) • Pro-Se Divorce Service"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.porratax.com/",
+          "sourceLabel": "Official Beauty and the Beast Driving School / Porrata Tax Services &ndash; Beauty and The Beast Driving School / Porrata Tax Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Beauty and The Beast Driving School 909 E. 169th Street Bronx, NY 10459 Mon - Fri, 10am - 6pm Saturday, 11am - 5pm Sunday, by appointment only"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.porratax.com/pages/terms-of-service",
+          "sourceLabel": "Official Terms of Service &ndash; Beauty and The Beast Driving School / Porrata Tax Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: by calling the Beauty and the Beast Driving office at: 909 E. 169th St. - (917) 737-7623; 847 Castle Hill Ave. - (347) 281-8032"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.porratax.com/",
+          "sourceLabel": "Official Beauty and the Beast Driving School / Porrata Tax Services &ndash; Beauty and The Beast Driving School / Porrata Tax Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services • Tax Services (ITIN, EIN, 1040, Self-Employed Taxes & More) • Notary Public • Copy, Laminations, Fax & Scan • Passport Photos (Castle Hill) • Point Reduction / Defensive Driving Course • DMV Road Test Appointment Scheduling • Certified Marriage Officiant (New York & Connecticut) • Pro-Se Divorce Service"
+        }
+      ]
+    },
+    {
+      "businessId": "source_955c892b-7686-4d43-97e6-00d04c49af56",
+      "expectedIdentity": {
+        "name": "Beauty Box Nashville",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://beautyboxnashville.com/"
+      },
+      "patch": {
+        "hours": "By Appointment Only; Same-Day Walk-ins Available Upon Request",
+        "phone": "615-887-1244"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://beautyboxnashville.com/",
+          "sourceLabel": "Official Beauty Box Website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours By Appointment Only Same-Day Walk-ins Available Upon Request"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://beautyboxnashville.com/",
+          "sourceLabel": "Official Beauty Box Website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 615-887-1244"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6e80afa4-6eb6-459e-a25e-f422fe0612bf",
+      "expectedIdentity": {
+        "name": "Beauty from the Root LLC",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.beautyfromtherootllc.com/"
+      },
+      "patch": {
+        "description": "Holistic, plant-based skincare inspired by Ayurveda."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.beautyfromtherootllc.com/",
+          "sourceLabel": "Official Home | Beauty from the Root | Holistic, Plant-Based Skincare Inspired by Ayurveda page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Home | Beauty from the Root | Holistic, Plant-Based Skincare Inspired by Ayurveda"
+        }
+      ]
+    },
+    {
+      "businessId": "source_15014fbd-15e4-4eac-9d1e-30c6f6b9dbc8",
+      "expectedIdentity": {
+        "name": "BEE Cosmetics Pro",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3eLM0aU"
+      },
+      "patch": {
+        "description": "BEE Cosmetics specializes in cruelty free formulations, offering intense pigment and quality cosmetics at an affordable price.",
+        "twitter": "http://www.twitter.com/BEECosmeticsPro",
+        "youtube": "https://www.youtube.com/channel/UCPk2hLe4g7HnU8ulPerEDyA",
+        "pinterest": "http://pinterest.com/pin/create/button/?url=https://beecosmeticspro.com/products/spice-lip-duo&media=http://beecosmeticspro.com/cdn/shop/products/image_a6c7c683-3072-43d7-9def-54082adf0d10_1024x1024.png?v=1571439479"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://beecosmeticspro.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; BEECOSMETICSPRO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"BEE Cosmetics specializes in cruelty free formulations for it's products, offering intense pigment and quality cosmetics at an affordable price.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://beecosmeticspro.com/",
+          "sourceLabel": "Official BEE COSMETICS PRO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://www.twitter.com/BEECosmeticsPro"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://beecosmeticspro.com/",
+          "sourceLabel": "Official BEE COSMETICS PRO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCPk2hLe4g7HnU8ulPerEDyA"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://beecosmeticspro.com/",
+          "sourceLabel": "Official BEE COSMETICS PRO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: http://pinterest.com/pin/create/button/?url=https://beecosmeticspro.com/products/spice-lip-duo&media=http://beecosmeticspro.com/cdn/shop/products/image_a6c7c683-3072-43d7-9def-54082adf0d10_1024x1024.png?v=1571439479"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1d59ffde-5c0b-4f1a-9f83-6d3f3f5ca110",
+      "expectedIdentity": {
+        "name": "Bellevue Baptist Church",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "http://www.bellevue.org/"
+      },
+      "patch": {
+        "description": "Bellevue Baptist Church is a church that holds worship services and offers ministries, groups, and resources for various age groups.",
+        "hours": "Worship with us Sundays at 9:30 and 11 a.m.",
+        "phone": "(901) 347-2000",
+        "youtube": "https://www.youtube.com/bellevuememphis",
+        "twitter": "https://x.com/bellevuememphis"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bellevue.org/",
+          "sourceLabel": "Official Home - Bellevue Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Be part of the family Worship with us Sundays at 9:30 and 11 a.m."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.bellevue.org/",
+          "sourceLabel": "Official Home - Bellevue Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Be part of the family Worship with us Sundays at 9:30 and 11 a.m."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bellevue.org/contact/",
+          "sourceLabel": "Official Contact - Bellevue Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (901) 347-2000"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.bellevue.org/",
+          "sourceLabel": "Official Home - Bellevue Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/bellevuememphis"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.bellevue.org/",
+          "sourceLabel": "Official Home - Bellevue Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/bellevuememphis"
+        }
+      ]
+    },
+    {
+      "businessId": "source_da08d07b-282f-44fd-ade5-d541f4d33652",
+      "expectedIdentity": {
+        "name": "Bellido Insurance Brokerage Inc.",
+        "city": "Glendale",
+        "state": "NY",
+        "website": "https://www.bellidoinsurance.com/"
+      },
+      "patch": {
+        "description": "Independent insurance brokerage offering personal and business insurance products to protect lives, families, businesses and assets.",
+        "hours": "Office Hours: 9am-5pm Monday-Friday",
+        "phone": "P: 718.326.2992",
+        "facebook": "https://www.facebook.com/BellidoIns/",
+        "instagram": "https://www.instagram.com/bellido.insurance.brokerage/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://bellidoins.com/about-us/",
+          "sourceLabel": "Official About Us - Bellido Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Bellido Insurance offers a full portfolio of personal and business insurance products to help our clients protect their lives, families, businesses and assets."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "http://bellidoins.com/contact-us/",
+          "sourceLabel": "Official Contact Us - Bellido Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office Hours: 9am-5pm Monday-Friday"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "http://bellidoins.com/",
+          "sourceLabel": "Official Personal &amp; Business Insurance – Bellido Insurance NY – Insurance Broker Queens page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: P: 718.326.2992"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "http://bellidoins.com/",
+          "sourceLabel": "Official Personal &amp; Business Insurance – Bellido Insurance NY – Insurance Broker Queens page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BellidoIns/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "http://bellidoins.com/",
+          "sourceLabel": "Official Personal &amp; Business Insurance – Bellido Insurance NY – Insurance Broker Queens page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/bellido.insurance.brokerage/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1dc74bfd-1a74-4047-b058-e2670253ed37",
+      "expectedIdentity": {
+        "name": "Benda CPR Services Milwaukee",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3qTU3au"
+      },
+      "patch": {
+        "description": "Provides American Heart Association CPR, ACLS, PALS, first aid/AED training and phlebotomy/mobile blood draw services.",
+        "hours": "CPR & CBRF Scheduled Slots CPR: Saturdays 10am-11:30am Medication Aide: Monday & Tuesday 9am-4pm Standard Precaution Wednesday 9am-1pm First Aide and Choking Wednesday 2pm -5pm Fire Safety Thursday 10am-12pm",
+        "phone": "262-278-3722"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bendacprmilwaukee.com/",
+          "sourceLabel": "Official Benda CPR Services Miwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Your Approved American Heart Association ACLS BLS CPR Certification Services"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://bendacprmilwaukee.com/",
+          "sourceLabel": "Official Benda CPR Services Miwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CPR & CBRF Scheduled Slots CPR: Saturdays 10am-11:30am Medication Aide: Monday & Tuesday 9am-4pm Standard Precaution Wednesday 9am-1pm First Aide and Choking Wednesday 2pm -5pm Fire Safety Thursday 10am-12pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bendacprmilwaukee.com/",
+          "sourceLabel": "Official Benda CPR Services Miwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us today for more information! 262-278-3722"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ca1d24b6-ecf6-4ef8-9678-e6349f9f9987",
+      "expectedIdentity": {
+        "name": "Benji's Beauty Bar",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://squareup.com/appointments/book/sc32i4k4njp142/LF8S1Z0D58DVF/services"
+      },
+      "patch": {
+        "description": "Benji's Beauty Bar provides appointment-based beauty services."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://book.squareup.com/appointments/sc32i4k4njp142/location/LF8S1Z0D58DVF",
+          "sourceLabel": "Official Benji&#39;s Beauty Bar | Book Appointments | Orlando, FL page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Benji's Beauty Bar | Book Appointments | Orlando, FL"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f466fedd-137e-4378-903b-38b69edd5707",
+      "expectedIdentity": {
+        "name": "Ben Williams Law",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.bwilliams.law/"
+      },
+      "patch": {
+        "description": "Immigration attorney based in Richmond, VA."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bwilliams.law/",
+          "sourceLabel": "Official Ben Williams Law - Immigration Attorney Richmond, VA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Ben Williams Law - Immigration Attorney Richmond, VA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4d2d8f56-e0f7-41c6-b41b-48221150f200",
+      "expectedIdentity": {
+        "name": "Berger Quality Electrical Contracting, Inc.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.bergerqualityelectric.com/"
+      },
+      "patch": {
+        "description": "Berger Quality Electrical Contracting is a New York City based electrical contracting company providing residential and commercial lighting and electrical services, smart home and data wiring, solar installation, and backup power systems.",
+        "phone": "718-768-3300"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bergerqualityelectric.com/",
+          "sourceLabel": "Official Welcome To Berger Quality Electrical Contracting Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Berger Quality Electrical Contracting is a New York City based electrical contracting company. We've been proudly serving the Bronx, Brooklyn, Queens and Manhattan for over 20 years. We specialize in both residential and commercial lighting & electrical"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bergerqualityelectric.com/",
+          "sourceLabel": "Official Welcome To Berger Quality Electrical Contracting Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 718-768-3300"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1564226f-048d-4cde-b9ae-f79ad611e56c",
+      "expectedIdentity": {
+        "name": "Berries by Quicha",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://berriesbyquicha.com/"
+      },
+      "patch": {
+        "description": "Local gourmet chocolate-covered strawberry shop that handcrafts chocolate-covered strawberries using fresh berries and premium ingredients.",
+        "phone": "(410) 440-3239"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://berriesbyquicha.com/",
+          "sourceLabel": "Official Berries by Quicha &#8211; Chocolate Covered Strawberries page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a local gourmet chocolate-covered strawberry shoppe, known for turning the ordinary into the extraordinary. Using only the freshest berries and premium ingredients, we create chocolate-covered strawberries that stand in a class of their own."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://berriesbyquicha.com/",
+          "sourceLabel": "Official Berries by Quicha &#8211; Chocolate Covered Strawberries page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact 922 Light Street, Baltimore, MD 21230 (410) 440-3239 Instagram Facebook"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ab66ef46-be5b-4adf-8825-2bfac1beecd7",
+      "expectedIdentity": {
+        "name": "Bertha’s Soul Food Bar and Grill",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://berthassoulfood.com/"
+      },
+      "patch": {
+        "hours": "Fri, Sat 12:00 PM - 1:00 AM; Sun, Tue, Wed, Thur 12:00 PM - 11:00 PM",
+        "phone": "(443)-759-9701"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://berthassoulfood.com/",
+          "sourceLabel": "Official Bertha&apos;s Soul Food Bar and Grill - Belair- Edison, Baltimore, MD page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Fri, Sat 12:00 PM - 1:00 AM Sun, Tue, Wed, Thur 12:00 PM - 11:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://berthassoulfood.com/",
+          "sourceLabel": "Official Bertha&apos;s Soul Food Bar and Grill - Belair- Edison, Baltimore, MD page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (443)-759-9701"
+        }
+      ]
+    },
+    {
+      "businessId": "source_49678abe-0971-4354-8720-d176bb7c4676",
+      "expectedIdentity": {
+        "name": "Bessie Loops",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://bessieloops.com/"
+      },
+      "patch": {
+        "description": "Bessie Loops creates unique, handcrafted crochet products designed to be cherished and passed down through generations.",
+        "hours": "9 AM - 5 PM",
+        "tags": [
+          "custom orders",
+          "handmade crochet products"
+        ],
+        "twitter": "https://www.twitter.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bessieloops.com/",
+          "sourceLabel": "Official Unique Handmade Crochet Products for Generations | Bessie Loops page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Bessie Loops, we create unique, handcrafted crochet products designed to be cherished and passed down through generations."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://bessieloops.com/about",
+          "sourceLabel": "Official Unique Handmade Crochet Products for Generations | Bessie Loops page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours 9 AM - 5 PM"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bessieloops.com/services",
+          "sourceLabel": "Official Custom Orders with Adjustable Sale Amounts for You | Bessie Loops page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Custom Orders Made Create your unique order with adjustable sale amounts tailored to your specific needs and preferences."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://bessieloops.com/",
+          "sourceLabel": "Official Unique Handmade Crochet Products for Generations | Bessie Loops page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d03666f9-8f33-4a30-99ee-1218cc7ff8ad",
+      "expectedIdentity": {
+        "name": "Best astrologer psychic & spiritual healer",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://spiritualhealingusa.com/"
+      },
+      "patch": {
+        "description": "Psychic Shriram provides psychic reading, spiritual healing, energy cleansing, and astrological services to help with love, marriage, career, and negative energy problems.",
+        "phone": "+1 (689) 305-7225"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://spiritualhealingusa.com/",
+          "sourceLabel": "Official Best Astrologer &amp; Psychic In Orlando, FL | Psychic Shriram page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Psychic Shriram is a trusted spiritual guide dedicated to transforming lives through divine wisdom and powerful intuitive insight. With years of experience in psychic reading, spiritual healing, and energy cleansing, he helps people overcome love problems, marriage issues, career obstacles, and negative influences."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://spiritualhealingusa.com/",
+          "sourceLabel": "Official Best Astrologer &amp; Psychic In Orlando, FL | Psychic Shriram page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 (689) 305-7225"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d2d65a97-4579-43e9-a3f0-a77d6a5dae9e",
+      "expectedIdentity": {
+        "name": "Best Fitted",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://www.bestfitted.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/shopify"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://bestfitted.com/",
+          "sourceLabel": "Official Premium Men&#39;s Jeans &amp; Stylish Denim Collection | Best Fitted page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/shopify"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d38acdf4-b380-401d-8084-0511a23e69ba",
+      "expectedIdentity": {
+        "name": "Bethel A.M.E. Church",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://bethel1.org/"
+      },
+      "patch": {
+        "description": "Bethel AME Church is a church committed to following Jesus and worshipping Him, practicing radical hospitality, passionate worship, intentional faith development, risk-taking mission and service, and extravagant generosity.",
+        "hours": "SUNDAY SERVICES 9:45 AM; PRAYER Tuesdays & Thursdays — 7 AM ONLINE ONLY; BIBLE STUDY Wednesdays —12 PM ONLINE ONLY",
+        "phone": "(410) 523-4273 ext 0",
+        "youtube": "https://youtube.com/playlist?list=PL8x4LtLDHoD2Fb_Y7kPFVkex2Rh-J4MN4&si=7kTPPLPoHMCFIGYJ",
+        "twitter": "https://twitter.com/bethelnation"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bethel1.org/",
+          "sourceLabel": "Official Home | Bethel AME Church -Baltimore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Welcome to the Bethel AME Church website. We are glad you have chosen to spend time with us online. We’re known as Bethel Nation — a nation made up of community and family . We are committed to following Jesus and to worshipping Him with vigor and joy. We believe in practicing Radical Hospitality, Passionate Worship, Intentional Faith Development, Risk-taking Mission and Service, and Extravagant Generosity.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://bethel1.org/",
+          "sourceLabel": "Official Home | Bethel AME Church -Baltimore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"TIMES & LOCATION SUNDAY SERVICES 9:45 AM PRAYER Tuesdays & Thursdays — 7 AM ONLINE ONLY BIBLE STUDY Wednesdays —12 PM ONLINE ONLY\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bethel1.org/",
+          "sourceLabel": "Official Home | Bethel AME Church -Baltimore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Awesome! Here is our contact information: (410) 523-4273 ext 0 info@Bethel1.org\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://bethel1.org/",
+          "sourceLabel": "Official Home | Bethel AME Church -Baltimore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/playlist?list=PL8x4LtLDHoD2Fb_Y7kPFVkex2Rh-J4MN4&si=7kTPPLPoHMCFIGYJ"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://bethel1.org/",
+          "sourceLabel": "Official Home | Bethel AME Church -Baltimore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/bethelnation"
+        }
+      ]
+    },
+    {
+      "businessId": "source_abac67ca-aa20-4a7d-8ffb-537976d916cc",
+      "expectedIdentity": {
+        "name": "Bethel AME Church",
+        "city": "Portland",
+        "state": "OR",
+        "website": "https://bamepdx.com/"
+      },
+      "patch": {
+        "phone": "(503) 288 5429",
+        "youtube": "https://www.youtube.com/@bethelportland6533/streams"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://bamepdx.com/",
+          "sourceLabel": "Official Home - Bethel AME Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Info (503) 288 5429 church.administrator@bamepdx.com"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://bamepdx.com/",
+          "sourceLabel": "Official Home - Bethel AME Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@bethelportland6533/streams"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4c8687ce-3bfb-4262-88b1-d91373e73527",
+      "expectedIdentity": {
+        "name": "Beth Wolff Realtors",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.bethwolff.com/"
+      },
+      "patch": {
+        "description": "Beth Wolff Realtors is a real estate brokerage that assists clients with buying, selling, renting, and relocation services in the Greater Houston area.",
+        "phone": "(713) 622-9339",
+        "twitter": "https://twitter.com/WolffRealtors?s=20&t=IbmIp330YEkqHdmn59biNQ",
+        "youtube": "https://www.youtube.com/user/BethWolffRealtor/featured"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bethwolff.com/",
+          "sourceLabel": "Official Houston Real Estate Experts | Beth Wolff Realtors® page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Whether buying, selling, investing, or renting, we are there for you!\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bethwolff.com/Our-Story",
+          "sourceLabel": "Official Our Story | Houston Real Estate | Beth Wolff Realtors®️ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"CONTACT (713) 622-9339\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://bethwolff.com/",
+          "sourceLabel": "Official Houston Real Estate Experts | Beth Wolff Realtors® page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/WolffRealtors?s=20&t=IbmIp330YEkqHdmn59biNQ"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://bethwolff.com/",
+          "sourceLabel": "Official Houston Real Estate Experts | Beth Wolff Realtors® page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/BethWolffRealtor/featured"
+        }
+      ]
+    },
+    {
+      "businessId": "source_03fd2184-8970-4901-993c-25d1ff2af736",
+      "expectedIdentity": {
+        "name": "Betty's Catering Corp.",
+        "city": "Elmhurst",
+        "state": "NY",
+        "website": "https://www.bettyscatering.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/bettyscatering/",
+        "instagram": "https://www.instagram.com/bettyscatering/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.bettyscatering.com/",
+          "sourceLabel": "Official Betty's Catering | Catering Hall Facilities in New York and Off Permises Catering Services (Tri-State)... page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/bettyscatering/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.bettyscatering.com/",
+          "sourceLabel": "Official Betty's Catering | Catering Hall Facilities in New York and Off Permises Catering Services (Tri-State)... page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/bettyscatering/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c26bd87e-4a34-4e48-af24-6325064681f8",
+      "expectedIdentity": {
+        "name": "Betty's Promos Plus",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "http://bettyspromosplus.com/"
+      },
+      "patch": {
+        "description": "Betty's Promos Plus: Your Home for Greek Paraphernalia, HBCU Collegiate Apparel, & Masonic Regalia",
+        "tags": [
+          "divine 9 greek paraphernalia",
+          "hbcu collegiate apparel",
+          "masonic regalia"
+        ],
+        "tiktok": "https://www.tiktok.com/@bettyspromos"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bettyspromosplus.com/",
+          "sourceLabel": "Official Betty&#39;s Greek Paraphernalia, HBCU Apparel, Sorority &amp; Fraternity Gifts &ndash; Betty&#39;s Promos Plus, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Betty's Promos Plus Your Home for Greek Paraphernalia, HBCU Collegiate Apparel, & Masonic Regalia"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bettyspromosplus.com/",
+          "sourceLabel": "Official Betty&#39;s Greek Paraphernalia, HBCU Apparel, Sorority &amp; Fraternity Gifts &ndash; Betty&#39;s Promos Plus, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Betty's Promos Plus Your Home for Greek Paraphernalia, HBCU Collegiate Apparel, & Masonic Regalia"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://bettyspromosplus.com/",
+          "sourceLabel": "Official Betty&#39;s Greek Paraphernalia, HBCU Apparel, Sorority &amp; Fraternity Gifts &ndash; Betty&#39;s Promos Plus, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@bettyspromos"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a78982bc-fa02-4454-acf1-7f44feaae92e",
+      "expectedIdentity": {
+        "name": "Betty's Promos Plus -- Orlando's #1 Greek Paraphernalia Store!",
+        "city": "Orlando",
+        "state": "FL",
+        "website": "https://www.bettyspromosplus.com/"
+      },
+      "patch": {
+        "description": "Betty's Promos Plus is a vendor of Greek paraphernalia, HBCU collegiate apparel, and Masonic regalia.",
+        "tags": [
+          "divine 9 paraphernalia",
+          "hbcu collegiate apparel",
+          "masonic regalia",
+          "custom t-shirts",
+          "accessories"
+        ],
+        "tiktok": "https://www.tiktok.com/@bettyspromos"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bettyspromosplus.com/",
+          "sourceLabel": "Official Betty&#39;s Greek Paraphernalia, HBCU Apparel, Sorority &amp; Fraternity Gifts &ndash; Betty&#39;s Promos Plus, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Betty's Promos Plus Your Home for Greek Paraphernalia, HBCU Collegiate Apparel, & Masonic Regalia"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bettyspromosplus.com/",
+          "sourceLabel": "Official Betty&#39;s Greek Paraphernalia, HBCU Apparel, Sorority &amp; Fraternity Gifts &ndash; Betty&#39;s Promos Plus, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Betty's Promos Plus: Your Premier Vendor for Divine 9 Greek Paraphernalia"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://bettyspromosplus.com/",
+          "sourceLabel": "Official Betty&#39;s Greek Paraphernalia, HBCU Apparel, Sorority &amp; Fraternity Gifts &ndash; Betty&#39;s Promos Plus, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@bettyspromos"
+        }
+      ]
+    },
+    {
+      "businessId": "source_08c8006b-2888-4d7b-babc-73c0dd355c30",
+      "expectedIdentity": {
+        "name": "Beyond Barre Fitness",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.beyondbarrefitness.com/"
+      },
+      "patch": {
+        "description": "Pilates and Barre studio offering reformer Pilates, mat Pilates, barre, sculpt classes, private sessions, and pop-up events in Downtown Kansas City.",
+        "hours": "Mon, Wed — 6:00 AM to 7:30 PM; Tue, Thur — 12:00 PM to 7:30 PM; Fri — 6:00 AM to 1:00 PM; Sat — 8:15 AM to 1 PM",
+        "phone": "+18167691062"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.beyondbarrefitness.com/services",
+          "sourceLabel": "Official Pilates Classes in Downtown KC | Beyond Barre Fitness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"From reformer Pilates and Mat Sculpt to private sessions and pop-up events, every class at Beyond Barre Fitness is built for real bodies and real progress.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.beyondbarrefitness.com/services",
+          "sourceLabel": "Official Pilates Classes in Downtown KC | Beyond Barre Fitness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Opening Hours Mon, Wed — 6:00 AM to 7:30 PM Tue, Thur — 12:00 PM to 7:30 PM Fri — 6:00 AM to 1:00 PM Sat — 8:15 AM to 1 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.beyondbarrefitness.com/services",
+          "sourceLabel": "Official Pilates Classes in Downtown KC | Beyond Barre Fitness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact Us +18167691062 info@beyondbarrefitness.com\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7f467d24-7090-44e4-b9fd-36a3ea0b94ab",
+      "expectedIdentity": {
+        "name": "Beyond Limits Consulting, LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.beyondlimits.consulting/"
+      },
+      "patch": {
+        "description": "K–12 education strategy for EdTech and education companies; strategic advisory and implementation, nationwide."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.beyondlimits.consulting/",
+          "sourceLabel": "Official Beyond Limits | K–12 Education Strategy for EdTech Companies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Beyond Limits Consulting K–12 education strategy for EdTech and education companies. Strategic advisory and implementation, nationwide."
+        }
+      ]
+    },
+    {
+      "businessId": "source_5a5cceaa-8435-4021-a797-2dafeaadb550",
+      "expectedIdentity": {
+        "name": "Big Al's Deli & Catering",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.bigalsdeliandcatering.com/"
+      },
+      "patch": {
+        "description": "Big Al's specializes in Southern comfort food.",
+        "hours": "Sat 9:00 AM - 1:00 PM; Tue, Wed, Thur, Fri 8:00 AM - 2:00 PM",
+        "phone": "(615)-242-8118",
+        "tags": [
+          "catering",
+          "breakfast",
+          "lunch",
+          "dinner"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bigalsdeliandcatering.com/",
+          "sourceLabel": "Official Big Al&apos;s Deli – Best Restaurant in Germantown page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About Big Al Big Al's specializes in Southern comfort food with a lot of soul."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://bigalsdeliandcatering.com/",
+          "sourceLabel": "Official Big Al&apos;s Deli – Best Restaurant in Germantown page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Sat 9:00 AM - 1:00 PM Tue, Wed, Thur, Fri 8:00 AM - 2:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bigalsdeliandcatering.com/",
+          "sourceLabel": "Official Big Al&apos;s Deli – Best Restaurant in Germantown page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us at (615)-242-8118"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bigalsdeliandcatering.com/",
+          "sourceLabel": "Official Big Al&apos;s Deli – Best Restaurant in Germantown page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Catering Big Al's caters any and all events and functions. Corporate functions, office parties, board meetings, weddings, anniversaries, holidays and other special events – Breakfast, lunch or dinner!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5e65e996-f52d-4577-ba8b-83d39d05ac81",
+      "expectedIdentity": {
+        "name": "Big Apple Bites Back Productions",
+        "city": "New York",
+        "state": "NY",
+        "website": "http://bigapplebitesback.com/"
+      },
+      "patch": {
+        "description": "Big Apple Bites Back Productions (MWBE certified) is a NYC-based boutique production house offering film/video production services, graphic design and website design/development and event production.",
+        "phone": "917-721-4160",
+        "facebook": "https://www.facebook.com/",
+        "instagram": "https://www.instagram.com/",
+        "twitter": "https://twitter.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bigapplebitesbackproductions.com/",
+          "sourceLabel": "Official Big Apple Bites Back Productions | Big Apple Bites Back helps you show your passion! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Big Apple Bites Back Productions (MWBE certified) is a NYC-based boutique production house offering film/video production services, graphic design and website design/development and event production.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bigapplebitesbackproductions.com/",
+          "sourceLabel": "Official Big Apple Bites Back Productions | Big Apple Bites Back helps you show your passion! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 917-721-4160"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.bigapplebitesbackproductions.com/",
+          "sourceLabel": "Official Big Apple Bites Back Productions | Big Apple Bites Back helps you show your passion! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.bigapplebitesbackproductions.com/",
+          "sourceLabel": "Official Big Apple Bites Back Productions | Big Apple Bites Back helps you show your passion! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.bigapplebitesbackproductions.com/",
+          "sourceLabel": "Official Big Apple Bites Back Productions | Big Apple Bites Back helps you show your passion! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_90fa730e-1829-4a69-9767-82620bbea101",
+      "expectedIdentity": {
+        "name": "Big Back Eatery KC",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://bigbackeaterykc.com/"
+      },
+      "patch": {
+        "description": "Big Back Eatery is a Kansas City late-night eatery serving wings, fish, and other classics including oxtail, catfish sandwich, and lamb chop dinner.",
+        "hours": "Business Hours Mon - Wed: Closed Thu: Midnight - 5:00 AM 5:00 PM - 5:00 AM Fri & Sat: 5:00 PM - 5:00 AM Sun: 11:00 AM - Midnight",
+        "phone": "(816) 379-6628"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bigbackeaterykc.com/",
+          "sourceLabel": "Official Home - Big Back Eatery page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Big Back Eatery in Kansas City, we serve Wings, Fish, and a variety of other classics such as our Big Back Oxtail Dinner, Catfish Sandwich, and Big Back Lamb Chop Dinner.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.bigbackeaterykc.com/",
+          "sourceLabel": "Official Home - Big Back Eatery page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Hours Mon - Wed: Closed Thu: Midnight - 5:00 AM 5:00 PM - 5:00 AM Fri & Sat: 5:00 PM - 5:00 AM Sun: 11:00 AM - Midnight\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bigbackeaterykc.com/",
+          "sourceLabel": "Official Home - Big Back Eatery page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"7208 Prospect Ave Kansas City, MO 64132 (816) 379-6628\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9e8d40e4-5200-4815-993b-465a25583f52",
+      "expectedIdentity": {
+        "name": "Big Bacon’s",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://bigbacons.com/"
+      },
+      "patch": {
+        "hours": "Thu–Sat · 3–9pm; Sun · 12–8pm; Mon–Wed · Closed",
+        "phone": "(480) 930-7900",
+        "tags": [
+          "catering",
+          "hookah lounge"
+        ]
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://bigbacons.com/",
+          "sourceLabel": "Official Chicago Soul Food in Phoenix, AZ | Big Bacon&#x27;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Weekly Hours Thu–Sun · Closed Mon–Wed (480) 930-7900 719 E Roosevelt St, Phoenix Directions & contact → Sun 12–8pm Mon Closed Tue Closed Wed Closed Thu 3–9pm Fri 3–9pm Sat 3–9pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bigbacons.com/contact",
+          "sourceLabel": "Official Contact Big Bacon&#x27;s | Phoenix Soul Food &amp; Hours page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call (480) 930-7900"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bigbacons.com/about",
+          "sourceLabel": "Official About Big Bacon&#x27;s | Chicago Soul Food in Phoenix page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We cater events and parties across the Phoenix area."
+        }
+      ]
+    },
+    {
+      "businessId": "source_ba287c59-b44e-4b5f-9ed0-2b9a1032de3e",
+      "expectedIdentity": {
+        "name": "Big Brothers Big Sisters Lone Star-Greater Houston",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.bbbstx.org/"
+      },
+      "patch": {
+        "description": "Big Brothers Big Sisters helps children realize their potential and build their futures. Through youth mentoring we nurture children and strengthen communities."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bbbstx.org/about/",
+          "sourceLabel": "Official About Big Brothers Big Sisters Lone Star | Mentoring Youth in Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Big Brothers Big Sisters helps children realize their potential and build their futures. Through youth mentoring we nurture children and strengthen communities.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_575bfc14-9c8e-498a-af1a-fbd14dc5ab2b",
+      "expectedIdentity": {
+        "name": "Big Ju Smoke Pit",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://big-ju-smoke-pit-llc.merlin-site.com/"
+      },
+      "patch": {
+        "description": "We unite people through the art of slow-smoking, delivering premium meats & high - energy service in every bite Jackson, MS & Surrounding Areas",
+        "phone": "+16014545017",
+        "tags": [
+          "small event catering",
+          "on-site grilling"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://big-ju-smoke-pit-llc.merlin.site/",
+          "sourceLabel": "Official big_ju_smoke_pit_llc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We unite people through the art of slow-smoking, delivering premium meats & high - energy service in every bite Jackson, MS & Surrounding Areas"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://big-ju-smoke-pit-llc.merlin.site/",
+          "sourceLabel": "Official big_ju_smoke_pit_llc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +16014545017"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://big-ju-smoke-pit-llc.merlin.site/",
+          "sourceLabel": "Official big_ju_smoke_pit_llc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services 01 Small Event Catering 02 On-site Grilling"
+        }
+      ]
+    },
+    {
+      "businessId": "source_eb781559-b7ae-45fc-9d97-e6b5b2cf66f1",
+      "expectedIdentity": {
+        "name": "Big Luck Cut It - Private VIP Barbershop",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://bigluckcutit.com/"
+      },
+      "patch": {
+        "hours": "Current business hours Sunday 12–5 Monday 9–2 Tuesday 9–2, 3–6 Wednesday 12–6 Thursday 9–2, 3–9 Friday 9–2, 3–9 Saturday 7–2 Appointments only",
+        "phone": "(615) 274-1991",
+        "tags": [
+          "precision haircuts",
+          "fades",
+          "tapers",
+          "beard grooming",
+          "private barber suite"
+        ],
+        "tiktok": "https://www.tiktok.com/@bigluckcutit11",
+        "youtube": "https://www.youtube.com/@bigluckcutit"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://bigluckcutit.com/",
+          "sourceLabel": "Official Private VIP Barber Nashville TN | Big Luck Cut It page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Current business hours Sunday 12–5 Monday 9–2 Tuesday 9–2, 3–6 Wednesday 12–6 Thursday 9–2, 3–9 Friday 9–2, 3–9 Saturday 7–2 Appointments only\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bigluckcutit.com/",
+          "sourceLabel": "Official Private VIP Barber Nashville TN | Big Luck Cut It page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(615) 274-1991\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://bigluckcutit.com/",
+          "sourceLabel": "Official Private VIP Barber Nashville TN | Big Luck Cut It page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Precision haircuts, fades, tapers and beard grooming in a private one-on-one Nashville barber suite.\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://bigluckcutit.com/",
+          "sourceLabel": "Official Private VIP Barber Nashville TN | Big Luck Cut It page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@bigluckcutit11"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://bigluckcutit.com/",
+          "sourceLabel": "Official Private VIP Barber Nashville TN | Big Luck Cut It page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@bigluckcutit"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d58c5896-95d6-45fc-8a8f-2a8197a4e5e6",
+      "expectedIdentity": {
+        "name": "Big Mamma’s House Books!",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://bigmammashousebooks.com/"
+      },
+      "patch": {
+        "description": "Big Mamma’s House Books® is an Urban Children’s Book Company that produces uniquely designed, high-quality literature where children see relatable characters, images & stories that mirror themselves & it enhances their self-esteem, literacy & reading comprehension.",
+        "phone": "877-44-BIGMA (4462)",
+        "facebook": "https://www.facebook.com/BigMammasHouseBooks/",
+        "youtube": "https://www.youtube.com/@bigmammashousebooks3189"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bigmammashousebooks.com/about/",
+          "sourceLabel": "Official About - Big Mammas House Books page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Big Mamma’s House Books® is an Urban Children’s Book Company that produces uniquely designed, high-quality literature where children see relatable characters, images & stories that mirror themselves & it enhances their self-esteem, literacy & reading comprehension.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bigmammashousebooks.com/",
+          "sourceLabel": "Official Home - Big Mammas House Books page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"877-44-BIGMA (4462)\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://bigmammashousebooks.com/",
+          "sourceLabel": "Official Home - Big Mammas House Books page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BigMammasHouseBooks/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://bigmammashousebooks.com/",
+          "sourceLabel": "Official Home - Big Mammas House Books page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@bigmammashousebooks3189"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8674e61a-cd6c-4423-b689-ff593f3ca71a",
+      "expectedIdentity": {
+        "name": "Big Snow Logistics",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.bigsnowllc.com/"
+      },
+      "patch": {
+        "hours": "We run 24 hours, 7 days a week.",
+        "phone": "(614) 769-4404"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://bigsnowllc.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours We run 24 hours, 7 days a week.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bigsnowllc.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(614) 769-4404\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_97b20d15-f200-4d67-ac49-ea897a874b3f",
+      "expectedIdentity": {
+        "name": "Bilingual Institute of Professional Studies",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.bilingualprofessionalstudies.com/"
+      },
+      "patch": {
+        "phone": "+1 (713) 722-9669",
+        "twitter": "https://twitter.com/Bilingual_Educ"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://bilingualprofessionalstudies.com/",
+          "sourceLabel": "Official BIPS-HOME - Bilingual Institute Of Professional Studies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1(713)722-9669"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://bilingualprofessionalstudies.com/",
+          "sourceLabel": "Official BIPS-HOME - Bilingual Institute Of Professional Studies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/Bilingual_Educ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ee93e7c5-59a3-4e37-a048-78d2cd6a3aba",
+      "expectedIdentity": {
+        "name": "Birdie Brown",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://sipbirdie.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/sipbirdie/",
+        "facebook": "https://www.facebook.com/sipbirdie/"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://birdiebrown.com/",
+          "sourceLabel": "Official shop.sipbirdie.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/sipbirdie/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://birdiebrown.com/",
+          "sourceLabel": "Official shop.sipbirdie.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/sipbirdie/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_79de7cdc-d4dd-4271-bbcb-00452eb1b121",
+      "expectedIdentity": {
+        "name": "Bird of Paradise Events",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://birdofparadiseevents.com/"
+      },
+      "patch": {
+        "description": "Bird of Paradise Events is a premier, full-service event planning and design firm specializing in weddings and milestone celebrations."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://birdofparadiseevents.com/",
+          "sourceLabel": "Official Luxury Wedding Planner | Bird of Paradise Events page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Bird of Paradise Events is a premier, full-service event planning and design firm.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9eada50c-fe0e-4426-99df-814a22da0521",
+      "expectedIdentity": {
+        "name": "Birdsong's",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tNuM15"
+      },
+      "patch": {
+        "description": "Nourish Your Skin Naturally. Discover organic skin care for radiant beauty.",
+        "hours": "Mon Closed Tue 10:00 am – 06:00 pm Wed 10:00 am – 06:00 pm Thu 10:00 am – 06:00 pm Fri 10:00 am – 06:00 pm Sat 10:00 am – 06:00 pm Sun Closed",
+        "phone": "414-372-5001",
+        "tags": [
+          "organic skin care",
+          "skin care products"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://birdsongsonline.com/",
+          "sourceLabel": "Official Birdsong&#x27;s online store page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Discover organic skin care for radiant beauty."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://birdsongsonline.com/",
+          "sourceLabel": "Official Birdsong&#x27;s online store page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon Closed Tue 10:00 am – 06:00 pm Wed 10:00 am – 06:00 pm Thu 10:00 am – 06:00 pm Fri 10:00 am – 06:00 pm Sat 10:00 am – 06:00 pm Sun Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://birdsongsonline.com/",
+          "sourceLabel": "Official Birdsong&#x27;s online store page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 414-372-5001"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://birdsongsonline.com/",
+          "sourceLabel": "Official Birdsong&#x27;s online store page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Discover organic skin care for radiant beauty."
+        }
+      ]
+    },
+    {
+      "businessId": "source_f4a57144-a902-47f5-87b2-b327ce6a0e3b",
+      "expectedIdentity": {
+        "name": "Birria Babe",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://birriababenash.wixsite.com/birriababe"
+      },
+      "patch": {
+        "hours": "Friday thru Sunday 12 noon - 6 pm",
+        "phone": "615-746-7817",
+        "tiktok": "https://www.tiktok.com/@birriababenash"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://birriababenash.wixsite.com/birriababe",
+          "sourceLabel": "Official Home | Birria Babe Taco Truck page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Permanent Location: @ 2600 Clifton Ave @ Vannies Table Friday thru Sunday 12 noon - 6 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://birriababenash.wixsite.com/birriababe",
+          "sourceLabel": "Official Home | Birria Babe Taco Truck page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone : 615-746-7817\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://birriababenash.wixsite.com/birriababe",
+          "sourceLabel": "Official Home | Birria Babe Taco Truck page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@birriababenash"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ec0e6943-87ab-45d1-a7b5-798b50dedc13",
+      "expectedIdentity": {
+        "name": "Birth in Color Midwifery, LLC",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.birthincolormidwifery.com/"
+      },
+      "patch": {
+        "description": "Personalized prenatal, home birth, newborn, lactation, and postpartum care rooted in relationship and trauma-informed practice."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.birthincolormidwifery.com/",
+          "sourceLabel": "Official Milwaukee Home Birth Midwife | Birth in Color Midwifery page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Experienced Home Birth Midwifery Care in Milwaukee & Southeastern Wisconsin Personalized prenatal, home birth, newborn, lactation, and postpartum care rooted in relationship, trust, and more than 10 years of experience."
+        }
+      ]
+    },
+    {
+      "businessId": "source_eaaaa7f3-1692-4ed9-a23c-e3f1150870be",
+      "expectedIdentity": {
+        "name": "Birthing Your Way MKE",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.birthingyourwaymke.com/"
+      },
+      "patch": {
+        "description": "Provides doula and midwifery-related support including prenatal education, birth support, and postpartum services.",
+        "phone": "(414) 301-0075"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.birthingyourwaymke.com/",
+          "sourceLabel": "Official Birthing Your Way MKE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Birthing Your Way MKE, our mission is to empower, support, and nurture families through every step of their birthing journey. We honor each person’s unique path to parenthood by providing compassionate, personalized doula and midwifery care that centers your voice, your choices, and your well-being. From prenatal education to postpartum support, we are here to hold space, offer guidance, and ensure you feel confident, informed, and truly cared for—every step of the way."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.birthingyourwaymke.com/",
+          "sourceLabel": "Official Birthing Your Way MKE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (414) 301-0075"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8fbebe4e-7cad-47f1-9d11-e0d1a81bd953",
+      "expectedIdentity": {
+        "name": "Bitty's Living Kitchen",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.bittyslivingkitchen.com/"
+      },
+      "patch": {
+        "description": "Bitty's Living Kitchen (site identifies as BITTY'S LIVING KITCHEN).",
+        "tags": [
+          "restaurant"
+        ],
+        "instagram": "https://www.instagram.com/bittyslivingkitchen/",
+        "facebook": "https://www.facebook.com/bittyslivingkitchen/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bittyslivingkitchen.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: SUBSCRIBE BITTY'S LIVING KITCHEN © 2022 Privacy policy"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.bittyslivingkitchen.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: BITTY'S LIVING KITCHEN © 2022 Privacy policy"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.bittyslivingkitchen.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/bittyslivingkitchen/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.bittyslivingkitchen.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/bittyslivingkitchen/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3c1f73b5-a29a-4997-9fdd-8072566a451c",
+      "expectedIdentity": {
+        "name": "Bizini's Olney Business Center",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.olneybusinesscenter.com/"
+      },
+      "patch": {
+        "description": "The Olney Business Insurance Center provides insurance, auto tags, notary services, and related motor vehicle and tax services.",
+        "phone": "215-549-1999",
+        "tags": [
+          "insurance",
+          "auto tags",
+          "notary services",
+          "motor vehicle services",
+          "tax services"
+        ],
+        "facebook": "https://www.facebook.com/olneybusinesscenter",
+        "twitter": "https://twitter.com/OlneyCenter",
+        "instagram": "https://www.instagram.com/olneybusinesscenter"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Olney Business Insurance Center is your trusted partner for all your insurance, auto tags, notary needs, and more."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Need Help? 215-549-1999"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Life Insurance Home Insurance Auto Insurance Auto Tags Business Insurance Simple Will"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/olneybusinesscenter"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/OlneyCenter"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/olneybusinesscenter"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f0564998-4f09-4d0b-9b6f-b99bf1deb31d",
+      "expectedIdentity": {
+        "name": "Bizini's Olney Business Center",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.olneybusinesscenter.com/"
+      },
+      "patch": {
+        "description": "The Olney Business Insurance Center provides insurance, auto tags, notary services, and related motor vehicle and document services.",
+        "phone": "215-549-1999",
+        "tags": [
+          "insurance",
+          "auto tags",
+          "notary services",
+          "motor vehicle services",
+          "simple wills"
+        ],
+        "facebook": "https://www.facebook.com/olneybusinesscenter",
+        "twitter": "https://twitter.com/OlneyCenter",
+        "instagram": "https://www.instagram.com/olneybusinesscenter"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The Olney Business Insurance Center is your trusted partner for all your insurance, auto tags, notary needs, and more.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Need Help? 215-549-1999\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Your One-Stop Solution for Insurance and Auto Tags Services\"; \"Life Insurance Home Insurance Auto Insurance Auto Tags Business Insurance Simple Will\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/olneybusinesscenter"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/OlneyCenter"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.olneybusinesscenter.com/",
+          "sourceLabel": "Official Olney Business Insurance Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/olneybusinesscenter"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d7364612-86fa-4566-9516-7e1b97441f79",
+      "expectedIdentity": {
+        "name": "B&J Transportation",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://bjtransportation.com/"
+      },
+      "patch": {
+        "description": "Group transportation provider offering airport transfers, business transfers, and event/wedding transportation in the New Orleans area.",
+        "hours": "Mo-Su: 07:00am - 10:00pm",
+        "phone": "(504) 453-4592"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://bjtransportation.com/",
+          "sourceLabel": "Official BJ Transportation LLC &#8211; Group Transportation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: BJ Transportation Over 20 Years Of Serving The New Orleans Area Airport Travel | Around the City | Small or Large Groups"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://bjtransportation.com/",
+          "sourceLabel": "Official BJ Transportation LLC &#8211; Group Transportation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Mo-Su: 07:00am - 10:00pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://bjtransportation.com/",
+          "sourceLabel": "Official BJ Transportation LLC &#8211; Group Transportation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call to book : (504) 453-4592"
+        }
+      ]
+    },
+    {
+      "businessId": "source_650dd623-b2e0-41fb-a0e3-caad93f333a1",
+      "expectedIdentity": {
+        "name": "Black Books For United States",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.blackbooksforus.com/"
+      },
+      "patch": {
+        "youtube": "https://youtu.be/PkAnqkmvao4"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.blackbooksforus.com/",
+          "sourceLabel": "Official Black Books For United States page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtu.be/PkAnqkmvao4"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2ba2f102-8ba6-4e45-8408-6c3ef184fe7f",
+      "expectedIdentity": {
+        "name": "Black Diamond Candle Co.",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://blackdiamondcandleco.com/"
+      },
+      "patch": {
+        "description": "Black Diamond Candle Co. is a business producing handcrafted scented candles and room sprays, made in small batches using natural wax and wooden wicks."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://blackdiamondcandleco.com/",
+          "sourceLabel": "Official Hand Poured Luxury Candles | Black Diamond Candle Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Premium hand poured luxury candles from Black Diamond Candle Co., made in small batches with a signature diamond-tier glow and the soothing crackle of a wooden wick."
+        }
+      ]
+    },
+    {
+      "businessId": "source_709eadb3-d879-41c0-9fd8-9bd71e3635b4",
+      "expectedIdentity": {
+        "name": "Black Esthetics & Artistry",
+        "city": "Glendale",
+        "state": "CO",
+        "website": "http://bridgetteblack.com/"
+      },
+      "patch": {
+        "phone": "(720) 434-8208"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bridgetteblack.com/",
+          "sourceLabel": "Official BLACK Esthetics &amp; Artistry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: call us: (720) 434-8208 | info@bridgetteblack.com"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9f48dda3-5b88-4f93-b531-4fbacc38ae53",
+      "expectedIdentity": {
+        "name": "Black Esthetics & Artistry",
+        "city": "Denver",
+        "state": "CO",
+        "website": "http://bridgetteblack.com/"
+      },
+      "patch": {
+        "phone": "(720) 434-8208"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bridgetteblack.com/",
+          "sourceLabel": "Official BLACK Esthetics &amp; Artistry page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: call us: (720) 434-8208 | info@bridgetteblack.com"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e91cbcdb-41ea-434f-8296-680499ebfa2d",
+      "expectedIdentity": {
+        "name": "Black Girl PR",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://blackgirlpr.com/"
+      },
+      "patch": {
+        "description": "Black Girl PR® is a Black-owned digital PR firm focused on helping Black women entrepreneurs and professionals gain publicity and boost their online presence.",
+        "facebook": "https://www.facebook.com/Black-Girl-PR-107124994453485",
+        "youtube": "https://www.youtube.com/@blackgirlpr"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://blackgirlpr.com/",
+          "sourceLabel": "Official Black Girl PR® | Black-Owned PR Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Black Girl PR® is a Black-owned digital PR firm focused on helping Black women entrepreneurs and professionals gain publicity and boost their online presence, so they reach more people and have a bigger impact.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://blackgirlpr.com/",
+          "sourceLabel": "Official Black Girl PR® | Black-Owned PR Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Black-Girl-PR-107124994453485"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://blackgirlpr.com/",
+          "sourceLabel": "Official Black Girl PR® | Black-Owned PR Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@blackgirlpr"
+        }
+      ]
+    },
+    {
+      "businessId": "source_04d6889d-7847-4ae1-8a7f-ba8c46538ff8",
+      "expectedIdentity": {
+        "name": "Black Label Men's Grooming",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "http://www.blacklabelmg.us/"
+      },
+      "patch": {
+        "description": "Black Label Men’s Grooming is a barbershop offering haircuts, fades, beard trimming, straight razor shaves, scalp treatments, and grooming education.",
+        "hours": "MON 12PM-6PM TUES-FRI 9AM-6PM SAT 10AM-4PM",
+        "phone": "(918) 270-3444",
+        "tags": [
+          "precision haircuts",
+          "fades",
+          "shear cuts",
+          "beard trimming & shaping",
+          "straight razor shave",
+          "scalp treatments",
+          "grooming education"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blacklabelmg.us/",
+          "sourceLabel": "Official Best Barbershop in Tulsa | Black Label Men’s Grooming page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Precision Haircuts | Fades | Shear Cuts Beard Trimming & Shaping | Straight Razor Shave Scalp Treatments | Grooming Education\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.blacklabelmg.us/",
+          "sourceLabel": "Official Best Barbershop in Tulsa | Black Label Men’s Grooming page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"HOURS MON 12PM-6PM TUES-FRI 9AM-6PM SAT 10AM-4PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.blacklabelmg.us/",
+          "sourceLabel": "Official Best Barbershop in Tulsa | Black Label Men’s Grooming page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(918) 270-3444\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.blacklabelmg.us/",
+          "sourceLabel": "Official Best Barbershop in Tulsa | Black Label Men’s Grooming page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Precision Haircuts | Fades | Shear Cuts Beard Trimming & Shaping | Straight Razor Shave Scalp Treatments | Grooming Education\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_cdf893e9-210e-4158-ac04-f039c78d8a3a",
+      "expectedIdentity": {
+        "name": "Black Lotus Hair Company",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://blacklotushair.com/"
+      },
+      "patch": {
+        "description": "Full-service hair and body salon offering hairdressing, beauty, and personal care services for men and women.",
+        "hours": "Sunday : Closed Monday : Closed Tues - Sat. 10 am to 6 pm",
+        "phone": "+1 (317) 536-5020",
+        "facebook": "https://www.facebook.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://blacklotushair.com/",
+          "sourceLabel": "Official Hair and Beauty Salon in Indianapolis, IN – Black Lotus Hair Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Black Lotus Hair Company is located in Indianapolis, Indiana, we are a full-service hair and body salon that offers a wide array of hairdressing, beauty, and personal care services for men and women."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://blacklotushair.com/contact/",
+          "sourceLabel": "Official Contact and Location Details – Black Lotus Hair Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Sunday : Closed Monday : Closed Tues - Sat. 10 am to 6 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://blacklotushair.com/",
+          "sourceLabel": "Official Hair and Beauty Salon in Indianapolis, IN – Black Lotus Hair Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 (317) 536-5020"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://blacklotushair.com/",
+          "sourceLabel": "Official Hair and Beauty Salon in Indianapolis, IN – Black Lotus Hair Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e50fd517-c720-4707-9e9e-f97b7777f043",
+      "expectedIdentity": {
+        "name": "Black & Nobel Bookstore",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.blackandnobel.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/sharer.php?u=https://www.blackandnobel.com/products/sea-moss-gold-raw-one-oz",
+        "twitter": "https://twitter.com/share?text=One%20Ounce%20of%20Sea%20Moss%20Gold%20Raw%20(Dr%20Sebi%20Approved)&url=https://www.blackandnobel.com/products/sea-moss-gold-raw-one-oz",
+        "pinterest": "https://pinterest.com/pin/create/button/?url=https://www.blackandnobel.com/products/sea-moss-gold-raw-one-oz&media=//www.blackandnobel.com/cdn/shop/products/image_790cb19b-b85e-4359-b1f4-c4cb3048e3ea_1024x1024.jpg?v=1617314684&description=One%20Ounce%20of%20Sea%20Moss%20Gold%20Raw%20(Dr%20Sebi%20Approved)"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blackandnobel.com/",
+          "sourceLabel": "Official Black and Nobel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/sharer.php?u=https://www.blackandnobel.com/products/sea-moss-gold-raw-one-oz"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.blackandnobel.com/",
+          "sourceLabel": "Official Black and Nobel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/share?text=One%20Ounce%20of%20Sea%20Moss%20Gold%20Raw%20(Dr%20Sebi%20Approved)&url=https://www.blackandnobel.com/products/sea-moss-gold-raw-one-oz"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.blackandnobel.com/",
+          "sourceLabel": "Official Black and Nobel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/pin/create/button/?url=https://www.blackandnobel.com/products/sea-moss-gold-raw-one-oz&media=//www.blackandnobel.com/cdn/shop/products/image_790cb19b-b85e-4359-b1f4-c4cb3048e3ea_1024x1024.jpg?v=1617314684&description=One%20Ounce%20of%20Sea%20Moss%20Gold%20Raw%20(Dr%20Sebi%20Approved)"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f029906c-bf83-451e-b4d1-6a089d640d1c",
+      "expectedIdentity": {
+        "name": "Black Onyx Management",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.blackonyxmanagement.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/blackonyxmanagement"
+      },
+      "fieldModes": {
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blackonyxmanagement.com/",
+          "sourceLabel": "Official Homepage - Black Onyx Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/blackonyxmanagement"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a59a621e-2784-4b5f-874b-4323625997e1",
+      "expectedIdentity": {
+        "name": "Black Orchid Barbers - 16 Tech",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.blackorchidbarbers.com/"
+      },
+      "patch": {
+        "description": "Black Orchid Barbers operates a barbershop and an apprenticeship program providing hands-on barber training.",
+        "facebook": "https://www.facebook.com/BlackOrchidBarberLounge"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blackorchidbarbers.com/apprenticeship-program",
+          "sourceLabel": "Official Apprenticeship Program &mdash; Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About the Program: Black Orchid Barbers is now accepting applications for our Apprenticeship Program – a hands-on, 18-month training journey to launch your barbering career."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BlackOrchidBarberLounge"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2a066b46-5ca0-4088-9b1d-f0444cc28e8e",
+      "expectedIdentity": {
+        "name": "Black Orchid Barbers - Fountain Square",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.blackorchidbarbers.com/"
+      },
+      "patch": {
+        "description": "Black Orchid Barbers is a barbershop that offers haircuts and an apprenticeship program.",
+        "tags": [
+          "apprenticeship program",
+          "apprenticeship haircuts"
+        ],
+        "facebook": "https://www.facebook.com/BlackOrchidBarberLounge"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: GREAT HAIRCUTS. BAD ADVICE."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.blackorchidbarbers.com/apprenticeship-haircuts",
+          "sourceLabel": "Official Apprentice Cuts | Get a Discounted Cut Today &mdash; Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: APPRENTICESHIP HAIRCUTS"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BlackOrchidBarberLounge"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1231dd5b-a1d6-40c6-ba81-4d4a2dd68bd8",
+      "expectedIdentity": {
+        "name": "Black Orchid Barbers - Keystone",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.blackorchidbarbers.com/"
+      },
+      "patch": {
+        "description": "Barbershop offering haircuts and an apprenticeship program.",
+        "tags": [
+          "apprenticeship program",
+          "apprenticeship haircuts"
+        ],
+        "facebook": "https://www.facebook.com/BlackOrchidBarberLounge"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: GREAT HAIRCUTS. BAD ADVICE."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.blackorchidbarbers.com/apprenticeship-program",
+          "sourceLabel": "Official Apprenticeship Program &mdash; Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Black Orchid Barbers is now accepting applications for our Apprenticeship Program – a hands-on, 18-month training journey to launch your barbering career."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BlackOrchidBarberLounge"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e366f7aa-66a4-4330-a9fc-4cccd6aca621",
+      "expectedIdentity": {
+        "name": "Black Orchid Barbers - Mass Ave",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.blackorchidbarbers.com/"
+      },
+      "patch": {
+        "description": "Black Orchid Barbers operates barbershop locations and an apprenticeship program offering haircut services and training.",
+        "facebook": "https://www.facebook.com/BlackOrchidBarberLounge"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: GREAT HAIRCUTS. BAD ADVICE."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BlackOrchidBarberLounge"
+        }
+      ]
+    },
+    {
+      "businessId": "source_27775413-b86e-42af-9aa1-80d18517852e",
+      "expectedIdentity": {
+        "name": "Black Orchid Barbers - SoBro",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.blackorchidbarbers.com/"
+      },
+      "patch": {
+        "description": "Black Orchid Barbers operates barbershop locations and offers barbering services, including an apprenticeship program.",
+        "tags": [
+          "apprenticeship program",
+          "apprenticeship haircuts"
+        ],
+        "facebook": "https://www.facebook.com/BlackOrchidBarberLounge"
+      },
+      "fieldModes": {
+        "description": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: GREAT HAIRCUTS. BAD ADVICE."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.blackorchidbarbers.com/apprenticeship-haircuts",
+          "sourceLabel": "Official Apprentice Cuts | Get a Discounted Cut Today &mdash; Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"APPRENTICESHIP HAIRCUTS\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blackorchidbarbers.com/",
+          "sourceLabel": "Official Black Orchid Barbers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/BlackOrchidBarberLounge"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d7294e2f-ed02-4989-83f7-e8bf6f699e45",
+      "expectedIdentity": {
+        "name": "Blacksauce Kitchen",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://www.blacksaucekitchen.com/"
+      },
+      "patch": {
+        "description": "Blacksauce Kitchen is a mobile food business in Baltimore that sells handmade biscuits, operates a shop on 29th Street, sells at farmer’s markets, and provides private catering."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blacksaucekitchen.com/",
+          "sourceLabel": "Official Blacksauce Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Blacksauce Kitchen is a mobile food business in Baltimore. Handmade biscuits are our signature product, though we make so much more. We sell our goods at our shop on 29 th Street and farmer’s markets, in addition to doing private catering in and around the city.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_c760a0eb-fc12-40f3-8c26-10b0da84f865",
+      "expectedIdentity": {
+        "name": "Blackstar Lighting, LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://blackstarlighting.com/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/embed/TJ6E1_6Cp0s"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.blackstarlighting.com/",
+          "sourceLabel": "Official BlackStar Lighting - Blackstar Lighting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/embed/TJ6E1_6Cp0s"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9248f93c-7fcf-4dc8-8fc9-47ad01c5c25b",
+      "expectedIdentity": {
+        "name": "Black Theatre Troupe",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.blacktheatretroupe.org/"
+      },
+      "patch": {
+        "description": "Black Theatre Troupe is a theatre company based at the Helen K. Mason Performing Arts Center in downtown Phoenix.",
+        "hours": "Evening performances begin promptly at 7:30 pm; Sunday matinees begin at 2:30 pm; second week Thursday and Saturday matinees begin at 2:00 pm.",
+        "phone": "602-258-8128"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blacktheatretroupe.org/faqs-3",
+          "sourceLabel": "Official FAQs &mdash; BlackTheatreTroupe page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Black Theatre Troupe’s home, the Helen K. Mason Performing Arts Center, is located at 1333 East Washington in Downtown Phoenix."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.blacktheatretroupe.org/faqs-3",
+          "sourceLabel": "Official FAQs &mdash; BlackTheatreTroupe page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Unless otherwise stated, evening performances begin promptly at 7:30 pm and Sunday matinees begin at 2:30 pm. Second week Thursday and Saturday matinees begin at 2:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.blacktheatretroupe.org/",
+          "sourceLabel": "Official BlackTheatreTroupe page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Administration 602-258-8128"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c1606c05-90cf-4d54-b718-bfa9b88a4ec0",
+      "expectedIdentity": {
+        "name": "Black Wallstreet",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.blackwallstreettogo.com/"
+      },
+      "patch": {
+        "description": "At Black Wall Street, you can find a variety of cuisine such as Cheese Sauce, Hot Taco, Tator Tots, 10 Pc Shrimp, and Hot Sauce. We are conveniently located Prospect Avenue. Order online for carryout or delivery!",
+        "hours": "Mon - Sun: 11:00 AM - 11:00 PM",
+        "phone": "(816) 895-3145"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.blackwallstreettogo.com/",
+          "sourceLabel": "Official Home - Black Wallstreet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Black Wall Street, you can find a variety of cuisine such as Cheese Sauce, Hot Taco, Tator Tots, 10 Pc Shrimp, and Hot Sauce. We are conveniently located Prospect Avenue. Order online for carryout or delivery!\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.blackwallstreettogo.com/",
+          "sourceLabel": "Official Home - Black Wallstreet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Hours Mon - Sun: 11:00 AM - 11:00 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.blackwallstreettogo.com/",
+          "sourceLabel": "Official Home - Black Wallstreet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"5908 Prospect Ave Kansas City, MO 64130 (816) 895-3145\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_a036013a-cc76-49b5-a577-daaaa2944e22",
+      "expectedIdentity": {
+        "name": "Black Women 50+ Health & Lifestyles Magazine",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://blackwomen50plusmagazine.weebly.com/"
+      },
+      "patch": {
+        "description": "A quarterly periodical dedicated to exploring the challenges, hopes, fears, and celebrations of Black women aged 50 and over; produced since 2003 and distributed to subscribers and at businesses, churches, clinics, and events in southeast Wisconsin.",
+        "phone": "(414) 263-4266"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://blackwomen50plusmagazine.weebly.com/about.html",
+          "sourceLabel": "Official About - Black Women 50+ Health & Lifestyles Magazine page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Since 2003, BLACK WOMEN 50+ HEALTH & LIFESTYLES MAGAZINE has been one of the few periodicals nationally dedicated exclusively to exploring the challenges, hopes, fears, and celebrations of this demographic. Produced quarterly, it is distributed to paid subscribers, and also available free at businesses, churches, beauty shops, clinics, and at special events throughout southeast Wisconsin.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://blackwomen50plusmagazine.weebly.com/about.html",
+          "sourceLabel": "Official About - Black Women 50+ Health & Lifestyles Magazine page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: (414) 263-4266\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_d0da3ab4-d00c-467c-aa56-b0df64bb3b86",
+      "expectedIdentity": {
+        "name": "Blazin Flavorz",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.ecwid.com/store/blazinflavorz/"
+      },
+      "patch": {
+        "description": "Food business offering items such as pretzels, funnel cake, baked potatoes, nachos, and desserts.",
+        "hours": "Business hours",
+        "phone": "267-435-7114",
+        "tags": [
+          "\"dessert\"",
+          "\"pretzels\"",
+          "\"funnel cake\"",
+          "\"gourmet baked potatoe platter\"",
+          "\"gourmet pretzels & pretzel bites\"",
+          "\"signature nachos\""
+        ],
+        "instagram": "https://instagram.com/blazinflavorz",
+        "facebook": "https://facebook.com/363366617189016"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://blazinflavorz.company.site/",
+          "sourceLabel": "Official Blazin Flavorz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Categories Dessert Pretzels Funnel Cake Gourmet Baked Potatoe Platter Gourmet Pretzels & Pretzel Bites Signature Nachos\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://blazinflavorz.company.site/",
+          "sourceLabel": "Official Blazin Flavorz page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Business hours\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://blazinflavorz.company.site/",
+          "sourceLabel": "Official Blazin Flavorz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"267-435-7114\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://blazinflavorz.company.site/",
+          "sourceLabel": "Official Blazin Flavorz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Categories Dessert Pretzels Funnel Cake Gourmet Baked Potatoe Platter Gourmet Pretzels & Pretzel Bites Signature Nachos\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://blazinflavorz.company.site/",
+          "sourceLabel": "Official Blazin Flavorz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/blazinflavorz"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://blazinflavorz.company.site/",
+          "sourceLabel": "Official Blazin Flavorz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/363366617189016"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3d425082-fb38-4c77-95a3-4859b6cb1ece",
+      "expectedIdentity": {
+        "name": "BLD Land Surveyors LLP",
+        "city": "Richmond Hill",
+        "state": "NY",
+        "website": "https://www.bldsurvey.com/"
+      },
+      "patch": {
+        "description": "\"City & land Surveying Professionals, Since 1809. Successors to Bartlett, Ludlam & Dill Associates.\"",
+        "hours": "\"Monday – Friday from 8:00 a.m. to 4:30 p.m.\"",
+        "tags": [
+          "accident surveys",
+          "boundary line determination",
+          "construction layout",
+          "expert witness testimony",
+          "title surveys",
+          "elevation studies",
+          "topographical surveys",
+          "alta/nsps surveys",
+          "architectural surveys",
+          "street surveys",
+          "stakeout survey"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bldsurvey.com/",
+          "sourceLabel": "Official BLD LAND SURVEYORS, LLP. NYS &amp; NYC MBE certified &#8211; City &amp; land Surveying Professionals, Since 1809. Successors to Bartlett, Ludlam &amp; Dill Associates. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"BLD LAND SURVEYORS, LLP. NYS & NYC MBE certified City & land Surveying Professionals, Since 1809. Successors to Bartlett, Ludlam & Dill Associates.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.bldsurvey.com/contact/",
+          "sourceLabel": "Official Contact Us &#8211; BLD LAND SURVEYORS, LLP. NYS &amp; NYC MBE certified page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"BUSINESS HOURS: Monday – Friday from 8:00 a.m. to 4:30 p.m.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.bldsurvey.com/",
+          "sourceLabel": "Official BLD LAND SURVEYORS, LLP. NYS &amp; NYC MBE certified &#8211; City &amp; land Surveying Professionals, Since 1809. Successors to Bartlett, Ludlam &amp; Dill Associates. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The scope of services of the firm include, but are not limited to, Accident Surveys, Boundary Line Determination, Construction Layout, Expert Witness Testimony, Title Surveys, Elevation Studies, and Topographical Surveys.\""
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "63c705461953a74d6e9e47016bd503b95004c67e6f052cc977a450a5ed5e08ca"
+}

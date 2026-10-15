@@ -1,0 +1,4642 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-011",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_84293ce8-d522-42ad-a783-5be652a4fbaa",
+      "expectedIdentity": {
+        "name": "IVY Kitchen + Cocktails",
+        "city": "Detroit",
+        "state": "MI",
+        "website": "https://ivykc.com/"
+      },
+      "patch": {
+        "description": "Contemporary American restaurant serving dinner, weekend brunch, cocktails, wine, and nonalcoholic drinks in a modern, relaxed setting.",
+        "hours": "Monday – Thursday 4:00 PM - Midnight; Friday – Saturday 11:00 AM - Midnight; Sunday 11:00 AM - 10:00 PM",
+        "phone": "(313) 332-0607",
+        "tags": [
+          "contemporary american",
+          "brunch",
+          "cocktails",
+          "wine",
+          "dinner"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ivykc.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: If you’re looking for a Detroit restaurant that serves up contemporary American cuisine, look no further than IVY Kitchen + Cocktails. Whether you’re stopping by for brunch or dinner, we’ve got something to satisfy you."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://ivykc.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening Hours Monday – Thursday 4:00 PM - Midnight Friday – Saturday 11:00 AM - Midnight Sunday 11:00 AM - 10:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ivykc.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone - (313) 332-0607"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://ivykc.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contemporary American Dining, Brunch and Cocktails in Detroit."
+        }
+      ]
+    },
+    {
+      "businessId": "source_5144b1a9-e5a1-451f-8a05-4b3773ea0deb",
+      "expectedIdentity": {
+        "name": "Ivy Lane Pre-K Academy",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://ivylaneprekacademy.com/"
+      },
+      "patch": {
+        "description": "At Ivy Lane Pre-K Academy, We Help Your Preschoolers Get Ready for Kindergarten, Strengthen their Social-Emotional Skills, and Have Fun, all through an online platform!"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ivylaneprekacademy.com/",
+          "sourceLabel": "Official Ivy Lane Pre-K Academy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Ivy Lane Pre-K Academy, We Help Your Preschoolers Get Ready for Kindergarten, Strengthen their Social-Emotional Skills, and Have Fun, all through an online platform!\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f9d802e2-3649-497a-85a5-3da5f0dfab5d",
+      "expectedIdentity": {
+        "name": "IXTA Apparel",
+        "city": "Los Angeles",
+        "state": "CA",
+        "website": "http://ixtapparel.com/"
+      },
+      "patch": {
+        "description": "IXTA Apparel is an online shop offering clothing and accessories such as t-shirts, sets, mugs, hats, and earrings.",
+        "tags": [
+          "t-shirts",
+          "earrings",
+          "hats",
+          "mugs",
+          "sets"
+        ],
+        "pinterest": "https://www.pinterest.com/ixtapparel/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ixtapparel.com/",
+          "sourceLabel": "Official IXTA Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Home Shop Shop T-Shirts Sets Mugs Hats Summer Earrings Earrings Winter Collection Café Collection About Us"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://ixtapparel.com/",
+          "sourceLabel": "Official IXTA Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Home Shop Shop T-Shirts Sets Mugs Hats Summer Earrings Earrings Winter Collection Café Collection"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://ixtapparel.com/",
+          "sourceLabel": "Official IXTA Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/ixtapparel/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_02294cf4-72b1-4e4f-bfbd-4d5e3e334104",
+      "expectedIdentity": {
+        "name": "Jabo's Bar-BE-Q",
+        "city": "Denver",
+        "state": "CO",
+        "website": "http://www.jabosbarbeq.com/"
+      },
+      "patch": {
+        "phone": "720-394-8367",
+        "tags": [
+          "catering",
+          "delivery service",
+          "barbecue",
+          "made-from-scratch sauces",
+          "homemade desserts"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "http://www.jabosbarbeq.com/",
+          "sourceLabel": "Official Jabo's Bar-Be-Q Louisianna based recipe page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Text: 720-394-8367"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "http://www.jabosbarbeq.com/Menu.html",
+          "sourceLabel": "Official Menu page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a delivery service only, no pick up orders or dine in."
+        }
+      ]
+    },
+    {
+      "businessId": "source_9ad40dd8-0d2e-48a5-a822-ec534b4d40d4",
+      "expectedIdentity": {
+        "name": "Jackie Mae's Place",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.jackiemaesplace.com/"
+      },
+      "patch": {
+        "description": "Welcome to Jackie Mae's Place. Our menu features Sweet Peas, Collard Greens, Fried Catfish 2sides, and more! Don't forget to try our Cole Slaw and the Baked Spaghetti 2 Sides! Find us at Us Highway 51. Order online for carryout or delivery!",
+        "hours": "Mon - Wed: Closed; Thu & Fri: 11:00 AM - 4:00 PM; Sat: Closed; Sun: Noon - 5:00 PM",
+        "phone": "(901) 872-1047"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jackiemaesplace.com/",
+          "sourceLabel": "Official Home - Jackie Mae&#39;s Place page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Jackie Mae's Place. Our menu features Sweet Peas, Collard Greens, Fried Catfish 2sides, and more! Don't forget to try our Cole Slaw and the Baked Spaghetti 2 Sides! Find us at Us Highway 51. Order online for carryout or delivery!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jackiemaesplace.com/",
+          "sourceLabel": "Official Home - Jackie Mae&#39;s Place page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Mon - Wed: Closed Thu & Fri: 11:00 AM - 4:00 PM Sat: Closed Sun: Noon - 5:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jackiemaesplace.com/",
+          "sourceLabel": "Official Home - Jackie Mae&#39;s Place page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (901) 872-1047"
+        }
+      ]
+    },
+    {
+      "businessId": "source_169a19f9-f09b-449c-b7f5-1d0aa44d4e77",
+      "expectedIdentity": {
+        "name": "Jacks Jamaican Food Products",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.jacksproducts.com/"
+      },
+      "patch": {
+        "description": "Producer of authentic Jamaican seasonings and related food products.",
+        "hours": "Monday - Saturday: 9am - 5pm; Sunday: Closed",
+        "phone": "8163650837",
+        "tags": [
+          "jamaican seasonings",
+          "caribbean flavors"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jacksproducts.com/",
+          "sourceLabel": "Official Jack&#x27;s Jamaican Food Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Authentic Seasonings Inspired by Jamaica"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://jacksproducts.com/contact-us",
+          "sourceLabel": "Official Jack&#x27;s Jamaican Food Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday - Saturday: 9am - 5pm Sunday: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://jacksproducts.com/contact-us",
+          "sourceLabel": "Official Jack&#x27;s Jamaican Food Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 8163650837"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://jacksproducts.com/",
+          "sourceLabel": "Official Jack&#x27;s Jamaican Food Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Bringing Caribbean Flavors to Your Kitchen"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e54f13f4-d2b1-463a-ba9a-ce290228875e",
+      "expectedIdentity": {
+        "name": "Jackson’s Moving",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://jacksons-moving.com/"
+      },
+      "patch": {
+        "hours": "We are open 7 days a week, 365 days a year",
+        "phone": "(480) 604-0338"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jacksons-moving.com/about-us",
+          "sourceLabel": "Official About Jackson’s Moving | Trusted Movers Since 2020 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We are open 7 days a week, 365 days a year\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jacksons-moving.com/",
+          "sourceLabel": "Official Best Moving Company in Phoenix | Jackson’s Moving page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call: (480) 604-0338\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9ca48920-f12e-4ff9-b3cc-6cbbe188bef8",
+      "expectedIdentity": {
+        "name": "Jajan & Associates, PLLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.jajanlaw.com/"
+      },
+      "patch": {
+        "phone": "+1.212.352.8616"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jajanlaw.com/",
+          "sourceLabel": "Official Welcome to Martin I. Jajan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tel. +1.212.352.8616"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ed79675c-d859-4536-9b0f-53a0112ceabc",
+      "expectedIdentity": {
+        "name": "Jajja Wellness",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://jajjawellness.com/"
+      },
+      "patch": {
+        "description": "Jajja Wellness produces wellness tonics inspired by indigenous African recipes and Grandma (Jajja) Margaret’s tonic recipes.",
+        "facebook": "https://www.facebook.com/jajjawellness/?modal=admin_todo_tour",
+        "twitter": "https://twitter.com/JajjaWellness?lang=en",
+        "instagram": "https://www.instagram.com/jajjawellness/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jajjawellness.com/",
+          "sourceLabel": "Official Home - Jajja Wellness | A Wellness Tonic With Ancient Origins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A Wellness Tonic with Ancient Origins Indigenous African Recipe After millenia, the indigenous tribes of Africa learned of the individual wellness and energizing properties of local fruits, vegetables and plants. Today, we use those same recipes, passed down from generation to generation, for our delicious Jajja Wellness Tonics that are refreshingly healthy and naturally energizing!!!"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://jajjawellness.com/",
+          "sourceLabel": "Official Home - Jajja Wellness | A Wellness Tonic With Ancient Origins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/jajjawellness/?modal=admin_todo_tour"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://jajjawellness.com/",
+          "sourceLabel": "Official Home - Jajja Wellness | A Wellness Tonic With Ancient Origins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/JajjaWellness?lang=en"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://jajjawellness.com/",
+          "sourceLabel": "Official Home - Jajja Wellness | A Wellness Tonic With Ancient Origins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/jajjawellness/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_52963468-38de-49b5-a115-6562cd1e2a93",
+      "expectedIdentity": {
+        "name": "Jalia Pettis",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.jaliapettis.com/"
+      },
+      "patch": {
+        "description": "I am a multidisciplinary makeup artist, hairstylist, educator, and creative director based in Arizona. My work spans film, television, editorial, and live production.",
+        "tags": [
+          "makeup artist",
+          "hairstylist",
+          "creative director",
+          "educator",
+          "men's grooming"
+        ],
+        "tiktok": "https://www.tiktok.com/@jaliadp",
+        "youtube": "https://www.youtube.com/@jaliadp",
+        "facebook": "https://www.facebook.com/JaliaPettis/",
+        "pinterest": "https://www.pinterest.com/jaliadp"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "tiktok": "fill",
+        "youtube": "fill",
+        "facebook": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jaliapettis.com/about",
+          "sourceLabel": "Official About | Jalia Pettis, Licensed Session Stylist &amp; Educator page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"I am a multidisciplinary makeup artist, hairstylist, educator, and creative director based in Arizona. With expertise across all skin tones and hair textures, my work spans film, television, editorial, and live production.\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jaliapettis.com/about",
+          "sourceLabel": "Official About | Jalia Pettis, Licensed Session Stylist &amp; Educator page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"I am a multidisciplinary makeup artist, hairstylist, educator, and creative director based in Arizona.\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.jaliapettis.com/",
+          "sourceLabel": "Official Jalia Pettis | Beauty Professional page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@jaliadp"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.jaliapettis.com/",
+          "sourceLabel": "Official Jalia Pettis | Beauty Professional page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@jaliadp"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.jaliapettis.com/",
+          "sourceLabel": "Official Jalia Pettis | Beauty Professional page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/JaliaPettis/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.jaliapettis.com/",
+          "sourceLabel": "Official Jalia Pettis | Beauty Professional page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/jaliadp"
+        }
+      ]
+    },
+    {
+      "businessId": "source_748f5b09-6037-4125-9b72-387a5e1d895e",
+      "expectedIdentity": {
+        "name": "Jamaican Breeze",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://jamaicanbreezeindy.com/"
+      },
+      "patch": {
+        "description": "Family friendly restaurant which specializes in Jamaican and Caribbean cuisine in a tropical, sports-filled atmosphere.",
+        "hours": "Mon, Wed & Thur: 11 AM - 8 PM; Fri: 11 AM - 9 PM; Sat & Sun: 12 PM - 9 PM; CLOSED TUESDAY",
+        "phone": "+13174264045",
+        "tags": [
+          "jamaican cuisine",
+          "caribbean cuisine",
+          "catering"
+        ],
+        "facebook": "https://www.facebook.com/JamaicanBreeze317/",
+        "twitter": "https://x.com/Jbreeze317"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Family friendly restaurant which specializes in Jamaican cuisine wrapped in a tropical, sports-filled, inviting atmosphere.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours CLOSED TUESDAY Mon, Wed & Thur: 11 AM - 8 PM Fri: 11 AM - 9 PM Sat & Sun 12 PM - 9 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact us​ +13174264045\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Jamaican Breeze Sports Bar & Grill is a family friendly restaurant which specializes in Jamaican cuisine wrapped in a tropical, sports-filled, inviting atmosphere.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/JamaicanBreeze317/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/Jbreeze317"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1abcaa5a-2cb1-40b1-9e1d-2df09588deec",
+      "expectedIdentity": {
+        "name": "Jamaican Breeze Sports Bar & Grill",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://jamaicanbreezeindy.com/"
+      },
+      "patch": {
+        "description": "Family friendly restaurant which specializes in Jamaican cuisine wrapped in a tropical, sports-filled, inviting atmosphere.",
+        "hours": "Mon, Wed & Thur: 11 AM - 8 PM; Fri: 11 AM - 9 PM; Sat & Sun: 12 PM - 9 PM; CLOSED TUESDAY",
+        "facebook": "https://www.facebook.com/JamaicanBreeze317/",
+        "twitter": "https://x.com/Jbreeze317",
+        "instagram": "https://www.instagram.com/Jamaicanbreeze317/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Jamaican Breeze Sports Bar & Grill is a family friendly restaurant which specializes in Jamaican cuisine wrapped in a tropical, sports-filled, inviting atmosphere.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours CLOSED TUESDAY Mon, Wed & Thur: 11 AM - 8 PM Fri: 11 AM - 9 PM Sat & Sun 12 PM - 9 PM\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/JamaicanBreeze317/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/Jbreeze317"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://jamaicanbreezeindy.com/",
+          "sourceLabel": "Official Jamaican &amp; Caribbean Food in Indianapolis | Jamaican Breeze page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/Jamaicanbreeze317/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fdff6555-b927-41ab-b720-0976ba3ffb04",
+      "expectedIdentity": {
+        "name": "Jamba",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://locations.jamba.com/al/birmingham/1400-university-blvd-student-hill-center"
+      },
+      "patch": {
+        "description": "Jamba University of Alabama (UAB) offers plant-based smoothies, bowls with fresh fruit toppings, protein-packed food, and on-the-go snacks.",
+        "twitter": "https://x.com/JambaJuice",
+        "youtube": "https://www.youtube.com/channel/UChGfFA4ktuNXW9cZJyggIeQ"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://locations.jamba.com/al/birmingham/1400-university-blvd-student-hill-center",
+          "sourceLabel": "Official Jamba University of Alabama (UAB) | Smoothie Bowls &amp; Juices | Smoothie Place &amp; Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We're committed to making eating better easier and more fun. Try our plant-based smoothies, delicious bowls with fresh fruit toppings, to protein-packed food and on-the-go snacks.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://locations.jamba.com/al/birmingham/1400-university-blvd-student-hill-center",
+          "sourceLabel": "Official Jamba University of Alabama (UAB) | Smoothie Bowls &amp; Juices | Smoothie Place &amp; Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/JambaJuice"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://locations.jamba.com/al/birmingham/1400-university-blvd-student-hill-center",
+          "sourceLabel": "Official Jamba University of Alabama (UAB) | Smoothie Bowls &amp; Juices | Smoothie Place &amp; Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UChGfFA4ktuNXW9cZJyggIeQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_16698db9-f1f0-41df-b124-4a77764947f2",
+      "expectedIdentity": {
+        "name": "Jambrina CPA, Accounting, Tax & Payroll",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.jambrina.com/"
+      },
+      "patch": {
+        "description": "Jambrina CPA provides Tax, Accounting, Payroll, and Advisory services and offers bilingual (English and Spanish) personalized tax strategies.",
+        "hours": "Monday — Friday 9:00 am — 5:00 pm",
+        "phone": "(713) 574-2377",
+        "tags": [
+          "tax",
+          "accounting",
+          "payroll",
+          "advisory",
+          "bilingual services"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jambrina.com/aboutus",
+          "sourceLabel": "Official Professional accounting service in Spanish &mdash; www.jambrina.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Jambrina CPA! Your destination for comprehensive Tax, Accounting, Payroll, and Advisory services. With over 20 years serving the Houston community, we offer personalized tax strategies in both English and Spanish, ensuring you save money and stay compliant with tax laws."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jambrina.com/contact",
+          "sourceLabel": "Official Contact | Get in Touch Today &mdash; www.jambrina.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday — Friday 9:00 am — 5:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jambrina.com/contact",
+          "sourceLabel": "Official Contact | Get in Touch Today &mdash; www.jambrina.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (713) 574-2377"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jambrina.com/",
+          "sourceLabel": "Official Jambrina CPA, Accounting, Tax and Payroll page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services TAX SOFTWARE PAYROLL Accounting ADVISORY"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d785d31c-5452-4e8c-a10e-6d7ff0b578a7",
+      "expectedIdentity": {
+        "name": "Jamcob Electric LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://jamcobelectric.com/"
+      },
+      "patch": {
+        "phone": "+1 347-577-6644"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jamcobelectric.com/contact",
+          "sourceLabel": "Official Contact Us | JAMCOB Electric | JAMCOB Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone 347-577-6644\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_e08ae034-6fa7-4b86-8a99-2dc1137d555b",
+      "expectedIdentity": {
+        "name": "Jamerson Strategic Consulting",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://jscstrategy.com/"
+      },
+      "patch": {
+        "description": "Jamerson is a global consultancy that helps clients design solutions with strategic goals in mind."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jscstrategy.com/who-we-are/",
+          "sourceLabel": "Official Who We Are &#8211; Jamerson Strategic Consulting, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We are a global consultancy that helps our clients design solutions with strategic goals in mind.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f349caf2-cdb9-4018-8513-39de2eee5c93",
+      "expectedIdentity": {
+        "name": "Jamesha Norwood - Indy Home Source Group",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.indyhomesource.com/"
+      },
+      "patch": {
+        "description": "Real estate broker and REALTOR® affiliated with eXp Realty in Metropolitan Indianapolis, providing real estate listings and buyer/seller resources.",
+        "phone": "317-507-2611",
+        "facebook": "https://www.facebook.com/JameshaNorwood",
+        "twitter": "https://www.x.com/JameshaNorwood",
+        "pinterest": "https://www.pinterest.com/jameshanorwood/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.indyhomesource.com/",
+          "sourceLabel": "Official Indianapolis IN Real Estate & Homes for Sale | eXp Realty in Metropolitan Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Jamesha Norwood Real Estate Broker | REALTIST | REALTOR® eXp Realty in Metropolitan Indianapolis"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.indyhomesource.com/contact.php",
+          "sourceLabel": "Official Contact Me page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 317-507-2611"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.indyhomesource.com/",
+          "sourceLabel": "Official Indianapolis IN Real Estate & Homes for Sale | eXp Realty in Metropolitan Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/JameshaNorwood"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.indyhomesource.com/",
+          "sourceLabel": "Official Indianapolis IN Real Estate & Homes for Sale | eXp Realty in Metropolitan Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.x.com/JameshaNorwood"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.indyhomesource.com/",
+          "sourceLabel": "Official Indianapolis IN Real Estate & Homes for Sale | eXp Realty in Metropolitan Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/jameshanorwood/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_046e7a42-1468-4608-a90c-b4b68c5e97d2",
+      "expectedIdentity": {
+        "name": "Janitorial Multi Services LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.jmsnewyork.com/"
+      },
+      "patch": {
+        "description": "Janitorial Multi Services delivers janitorial and maintenance solutions for businesses, restaurants, medical facilities, retail spaces, and public sector projects."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jmsnewyork.com/",
+          "sourceLabel": "Official Janitorial Multi Services | Comprehensive Cleaning &amp; Maintenance Solutions | New York page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Janitorial Multi Services, we go beyond basic cleaning—we deliver meticulous, high-quality janitorial and maintenance solutions for businesses, restaurants, medical facilities, retail spaces, and public sector projects.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_3e2ebded-a59d-4bed-805e-6553258491be",
+      "expectedIdentity": {
+        "name": "Jasper Float Spa & Wellness Center",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://jasperfloatspa.com/"
+      },
+      "patch": {
+        "description": "Jasper Float Spa & Wellness Center, LLC appears to be a spa and wellness center in Memphis."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jasperfloatspa.com/",
+          "sourceLabel": "Official Jasper Float Spa & Wellness Center, LLC | An Everyday Spa Haven in Memphis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Jasper Float Spa & Wellness Center, LLC | An Everyday Spa Haven in Memphis"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b5474376-d18d-464b-a53c-1288d5aa882a",
+      "expectedIdentity": {
+        "name": "Javelin Electric, Inc.",
+        "city": "Long Island City",
+        "state": "NY",
+        "website": "https://www.javelinelectricinc.com/"
+      },
+      "patch": {
+        "hours": "Monday - Friday: 8am - 5pm; Saturday: By appointment; Sunday: Closed",
+        "phone": "(718)300-1683",
+        "tags": [
+          "commercial electrical contractor",
+          "design build",
+          "design assist",
+          "audio-visual",
+          "low voltage",
+          "control wiring & bms systems",
+          "value engineering",
+          "maintenance contracts",
+          "ballast & bulb replacement",
+          "electrical additions",
+          "generators",
+          "new builds"
+        ]
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://javelinelectricinc.com/contact-us",
+          "sourceLabel": "Official Javelin Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday - Friday: 8am - 5pm Saturday: By appointment Sunday: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://javelinelectricinc.com/contact-us",
+          "sourceLabel": "Official Javelin Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Javelin Electric (718)300-1683"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://javelinelectricinc.com/services",
+          "sourceLabel": "Official Javelin Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We provide Audio-Visual, Low Voltage, Control Wiring & BMS Systems, Value Engineering, Maintenance contracts, Ballast & Bulb replacement, Electrical additions, and Generators just to name a few."
+        }
+      ]
+    },
+    {
+      "businessId": "source_bbc271c0-6430-4a0a-a1e9-35a761f7f5cd",
+      "expectedIdentity": {
+        "name": "JAX Gold Standard Painting",
+        "city": "Jacksonville",
+        "state": "FL",
+        "website": "https://www.jaxgoldstandardpainting.com/home"
+      },
+      "patch": {
+        "phone": "904-660-0315"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jaxgoldstandardpainting.com/home",
+          "sourceLabel": "Official Jacksonville’s White Glove Painting Team page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Get My Free Quote 904-660-0315\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f7cd249b-3146-4deb-9f25-751aa02d04b6",
+      "expectedIdentity": {
+        "name": "Jayour LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.jayourintl.com/"
+      },
+      "patch": {
+        "description": "Manufacturer and supplier of apparel and custom clothing solutions, offering manufacturing, supply, distribution, and custom apparel services.",
+        "phone": "929-251-8151"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jayourintl.com/",
+          "sourceLabel": "Official Jayour page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Manufacture • Supply • Distribute Leaders in the supply of fine apparel."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jayourintl.com/",
+          "sourceLabel": "Official Jayour page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 929-251-8151"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5d253230-6099-48f1-aea1-90b04eb7ada9",
+      "expectedIdentity": {
+        "name": "Jazmyn Bethel, Realtor at COMPASS",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://jazmynbethel.com/"
+      },
+      "patch": {
+        "description": "Real estate agent affiliated with Compass."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.compass.com/agents/jazmyn-bethel/",
+          "sourceLabel": "Official Jazmyn Bethel, Real Estate Agent - Compass page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Jazmyn Bethel, Real Estate Agent - Compass"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7aae59fe-4e5f-4434-bf9f-9a6ba457293c",
+      "expectedIdentity": {
+        "name": "Jazzy J’s LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://jazzyjs.biz/"
+      },
+      "patch": {
+        "description": "Provides procurement solutions including IT equipment, office supplies, and support to enhance business efficiency.",
+        "hours": "8 AM – 6 PM Monday-Friday",
+        "phone": "(317) 561-8903",
+        "twitter": "https://x.com/JazzyjsLlc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jazzyjs.biz/index.php/about/",
+          "sourceLabel": "Official About &#8211; Jazzy J&#039;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our primary goal is to offer innovative product and service solutions that lead to increased productivity, cost reduction, and enhanced sales for companies.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://jazzyjs.biz/",
+          "sourceLabel": "Official Jazzy J&#039;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"8 AM – 6 PM Monday-Friday\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://jazzyjs.biz/",
+          "sourceLabel": "Official Jazzy J&#039;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"📞 (317) 561-8903\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://jazzyjs.biz/",
+          "sourceLabel": "Official Jazzy J&#039;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/JazzyjsLlc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_41c31578-6990-4e32-81cc-150286329d3a",
+      "expectedIdentity": {
+        "name": "JazzyRae' Jewels and Accessories",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3eLMZb6"
+      },
+      "patch": {
+        "description": "JazzyRae' Jewels & Accessories offers a variety of trendy styles for women.",
+        "hours": "Sunday - Wednesday [BY APPOINTMENT] Thursday/Friday [5:30pm-7:30pm] Saturdays [10am-1pm]",
+        "phone": "414.671.9220",
+        "tags": [
+          "women's fashion",
+          "jewelry",
+          "accessories"
+        ],
+        "facebook": "https://www.facebook.com/jazzyraejewels/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jazzyraejewels.com/about-us",
+          "sourceLabel": "Official About Us | JazzyRae' Jewels & Accessories page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"JazzyRae' Jewels & Accessories offers a variety of trendy styles for women.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jazzyraejewels.com/store-hours-location",
+          "sourceLabel": "Official Store Hours/Location | JazzyRae' Jewels & Accessories page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Due to COVID-19, our hours have changed. The store hours are as follows: Sunday - Wednesday [BY APPOINTMENT] Thursday/Friday [5:30pm-7:30pm] Saturdays [10am-1pm]\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jazzyraejewels.com/store-hours-location",
+          "sourceLabel": "Official Store Hours/Location | JazzyRae' Jewels & Accessories page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"You can schedule an appointment by calling 414.671.9220 .\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jazzyraejewels.com/about-us",
+          "sourceLabel": "Official About Us | JazzyRae' Jewels & Accessories page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"JazzyRae' Jewels & Accessories offers a variety of trendy styles for women.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.jazzyraejewels.com/products",
+          "sourceLabel": "Official Products | JazzyRae' Jewels & Accessories page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/jazzyraejewels/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3ed09759-cd61-4ff6-98ff-4dd2b9eaa5ba",
+      "expectedIdentity": {
+        "name": "JCP Construction",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3eHUEXQ"
+      },
+      "patch": {
+        "description": "JCP Construction is a general contractor providing preconstruction, general contracting, construction management, and self-performed construction services in the greater Milwaukee / Southeastern Wisconsin area.",
+        "phone": "414-372-7300"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jcp-construction.com/",
+          "sourceLabel": "Official Construction Services in Southeast Wisconsin | JCP Construction page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We deliver high-quality, on-budget projects with precision, experience, and integrity."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://jcp-construction.com/",
+          "sourceLabel": "Official Construction Services in Southeast Wisconsin | JCP Construction page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 414-372-7300"
+        }
+      ]
+    },
+    {
+      "businessId": "source_760066f1-becc-4091-99fc-648f4f772996",
+      "expectedIdentity": {
+        "name": "JCW Computer Consulting, LLC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "http://jcwcc.com/"
+      },
+      "patch": {
+        "phone": "(215) 740-6701"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jcwcc.com/services-store",
+          "sourceLabel": "Official Black-Owned IT Consulting in Philadelphia | JCW Computer Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact info@jcwcc.com (215) 740-6701"
+        }
+      ]
+    },
+    {
+      "businessId": "source_766331eb-e770-46f3-84ef-f91c4efbafff",
+      "expectedIdentity": {
+        "name": "JCW Computer Consulting, LLC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "http://jcwcc.com/"
+      },
+      "patch": {
+        "description": "A technology consulting and implementation firm offering IT and Managed Services, both on-site and remote, supporting small-to-medium businesses, nonprofits, and K-12 schools.",
+        "phone": "(215) 740-6701",
+        "tags": [
+          "it consulting",
+          "managed services",
+          "technology consulting",
+          "it support"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jcwcc.com/about",
+          "sourceLabel": "Official Black-Owned IT Consulting in Philadelphia | JCW Computer Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a leading technology consulting and implementation firm, offering a comprehensive range of best-practice IT and Managed Services, both on-site and remote. As an Authorized Business Partner and Reseller of top-tier industry brands, we are dedicated to supporting small-to-medium businesses, nonprofits, and K-12 schools with reliable, cutting-edge technology solutions."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jcwcc.com/services-store",
+          "sourceLabel": "Official Black-Owned IT Consulting in Philadelphia | JCW Computer Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Location Philadelphia, PA Contact info@jcwcc.com (215) 740-6701"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jcwcc.com/about",
+          "sourceLabel": "Official Black-Owned IT Consulting in Philadelphia | JCW Computer Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a leading technology consulting and implementation firm, offering a comprehensive range of best-practice IT and Managed Services, both on-site and remote."
+        }
+      ]
+    },
+    {
+      "businessId": "source_6f5777f5-e980-4b37-9a59-c2300338df3a",
+      "expectedIdentity": {
+        "name": "J & D Mobile Express Detailing",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.jdmobiledetailing.com/"
+      },
+      "patch": {
+        "description": "Mobile car detailing in Birmingham, AL.",
+        "tags": [
+          "mobile car detailing"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jdmobiledetailing.com/",
+          "sourceLabel": "Official J&D Detailing | Mobile Car Detailing Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: J&D Detailing | Mobile Car Detailing Birmingham, AL"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://jdmobiledetailing.com/",
+          "sourceLabel": "Official J&D Detailing | Mobile Car Detailing Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: J&D Detailing | Mobile Car Detailing Birmingham, AL"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f9fd9871-940f-4c57-b986-9ee45a04f773",
+      "expectedIdentity": {
+        "name": "JdSmith Notary",
+        "city": "Mobile",
+        "state": "AL",
+        "website": "https://www.jdsmithnotary.com/"
+      },
+      "patch": {
+        "description": "Mobile notary public offering mobile notary, wedding officiant and marriage certificate notarization, apostille facilitation, loan signing/closing, courier and document services, and estate planning-related notarial services in Mobile, Alabama.",
+        "hours": "Business Hours: 8am-8pm 7 days a week",
+        "phone": "(251) 463-0991",
+        "tags": [
+          "mobile notary services",
+          "apostilles",
+          "marriage certificates",
+          "real estate closings",
+          "trust & estate planning",
+          "loan signing agent",
+          "courier services",
+          "document printing and scanning",
+          "wedding officiant"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jdsmithnotary.com/",
+          "sourceLabel": "Official JdSmith Notary: Mobile Notary Services in Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Professional Mobile Notary Services near you! I specialize in ~Apostilles ~Marriage Certificates ~Real Estate Closings ~Trust & Estate Planning Documents"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://jdsmithnotary.com/",
+          "sourceLabel": "Official JdSmith Notary: Mobile Notary Services in Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours: 8am-8pm 7 days a week"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://jdsmithnotary.com/",
+          "sourceLabel": "Official JdSmith Notary: Mobile Notary Services in Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CALL FOR AN APPOINTMENT TODAY (251) 463-0991"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://jdsmithnotary.com/",
+          "sourceLabel": "Official JdSmith Notary: Mobile Notary Services in Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I specialize in ~Apostilles ~Marriage Certificates ~Real Estate Closings ~Trust & Estate Planning Documents"
+        }
+      ]
+    },
+    {
+      "businessId": "source_97312e9a-8aea-40aa-a07c-63cfcdffd7f0",
+      "expectedIdentity": {
+        "name": "Jessie's Smokin' NOLA",
+        "city": "Denver",
+        "state": "CO",
+        "website": "https://smokinnola.com/"
+      },
+      "patch": {
+        "description": "A restaurant serving authentic New Orleans cuisine including gumbo, jambalaya, po'boys, and other NOLA staples.",
+        "hours": "Tue, Wed, Thur 11:00 AM - 7:30 PM; Fri, Sat 11:00 AM - 8:30 PM; Sun 11:00 AM - 5:00 PM",
+        "phone": "(720)-600-1191"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://smokinnola.com/faq",
+          "sourceLabel": "Official Jessie&apos;s Smokin NOLA - FAQ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We specialize in authentic New Orleans cuisine — think bold, and soulful. Our menu features classic NOLA staples like gumbo, jambalaya, crawfish étouffée, po'boys, red beans & rice."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://smokinnola.com/",
+          "sourceLabel": "Official Best Southern Restaurant in Parker | Jessie&apos;s Smokin NOLA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Tue, Wed, Thur 11:00 AM - 7:30 PM Fri, Sat 11:00 AM - 8:30 PM Sun 11:00 AM - 5:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://smokinnola.com/",
+          "sourceLabel": "Official Best Southern Restaurant in Parker | Jessie&apos;s Smokin NOLA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us at (720)-600-1191"
+        }
+      ]
+    },
+    {
+      "businessId": "source_808acc05-ecaf-49d8-b5b9-c218f785a662",
+      "expectedIdentity": {
+        "name": "Jess M. Portraits",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.jessmportraits.com/"
+      },
+      "patch": {
+        "description": "Houston portrait photography for families, couples, and milestone moments. Thoughtfully planned, naturally guided portrait sessions with posing guidance, location and wardrobe help, and professionally edited online galleries."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jessmportraits.com/",
+          "sourceLabel": "Official Houston Portrait Photographer | Jess M. Portraits page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Houston portrait photography for the people and milestones you want to remember. Thoughtfully planned, naturally guided portrait sessions for Houston families, couples, and milestone moments.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_2ce4c7be-fe37-414f-af8c-c6ac211933bb",
+      "expectedIdentity": {
+        "name": "Jet Constellations",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3ofwlDK"
+      },
+      "patch": {
+        "description": "Jet Constellations is a technology consulting and software development company helping organizations use artificial intelligence and custom technology to solve problems, improve operations, and create new opportunities."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jetconstellations.com/",
+          "sourceLabel": "Official Jet Constellations — AI Consulting &amp; Custom Software Development page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Jet Constellations is a technology consulting and software development company helping organizations use artificial intelligence and custom technology to solve problems, improve operations, and create new opportunities.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f074ee21-276f-4970-bb83-4d10ad68c486",
+      "expectedIdentity": {
+        "name": "Jeva Design Studio, LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.jevadesign.com/"
+      },
+      "patch": {
+        "description": "Jeva Design Studio specializes in custom, hand-applied plaster and concrete finishes for residential and commercial interiors in New York.",
+        "hours": "by appointment only",
+        "phone": "(908) 693-9437",
+        "facebook": "https://facebook.com/",
+        "twitter": "https://twitter.com/",
+        "youtube": "https://youtube.com/",
+        "instagram": "https://www.instagram.com/jevadesign/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "youtube": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jevadesign.com/",
+          "sourceLabel": "Official High-End Plaster &amp; Concrete Finishes | Jeva Design NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Based in Brooklyn and serving all of New York, we specialize in custom plaster and concrete finishes that bring depth, artistry, and refinement to residential and commercial interiors."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jevadesign.com/",
+          "sourceLabel": "Official High-End Plaster &amp; Concrete Finishes | Jeva Design NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business hours: by appointment only"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jevadesign.com/",
+          "sourceLabel": "Official High-End Plaster &amp; Concrete Finishes | Jeva Design NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (908) 693-9437"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.jevadesign.com/",
+          "sourceLabel": "Official High-End Plaster &amp; Concrete Finishes | Jeva Design NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.jevadesign.com/",
+          "sourceLabel": "Official High-End Plaster &amp; Concrete Finishes | Jeva Design NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.jevadesign.com/",
+          "sourceLabel": "Official High-End Plaster &amp; Concrete Finishes | Jeva Design NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.jevadesign.com/",
+          "sourceLabel": "Official High-End Plaster &amp; Concrete Finishes | Jeva Design NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/jevadesign/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_227a5473-1c71-416e-8b52-28e82aaf49aa",
+      "expectedIdentity": {
+        "name": "Jimenez Counseling",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.jimenezcounseling.com/"
+      },
+      "patch": {
+        "description": "Jimenez Counseling provides psychological evaluations for immigration cases and offers therapy services including individual and couples counseling and consultations.",
+        "hours": "Monday - Friday 9:00 am - 8:00 pm; Saturdays 8:00 am to 4:00 pm",
+        "phone": "(281) 709-2933",
+        "tags": [
+          "immigration evaluations",
+          "individual therapy",
+          "couples counseling",
+          "consultation"
+        ],
+        "pinterest": "https://www.pinterest.com/latinopsy/therapy-wwwjimenezcounselingcom"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jimenezcounseling.com/",
+          "sourceLabel": "Official Houston Immigration Evaluations | Jimenez Counseling, PLLC | Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Jimenez Counseling is committed to providing the best quality psychological evaluations for immigration cases ( VAWA, U visa, Asylum, Hardship waiver, Cancelation of removal, T visa, and Removal of conditions) in Texas via online and in person appointments in English and Spanish."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jimenezcounseling.com/contact",
+          "sourceLabel": "Official Jimenez Counseling contact information page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday - Friday 9:00 am - 8:00 pm Saturdays 8:00 am to 4:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jimenezcounseling.com/",
+          "sourceLabel": "Official Houston Immigration Evaluations | Jimenez Counseling, PLLC | Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: For appointments call (281) 709-2933 Monday to Friday 9 am to 1 pm"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jimenezcounseling.com/services",
+          "sourceLabel": "Official Individual, Couples, Consultations Counseling Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: SERVICES INDIVIDUAL THERAPY COUPLES COUNSELING CONSULTATION IMMIGRATION EVALUATIONS"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.jimenezcounseling.com/",
+          "sourceLabel": "Official Houston Immigration Evaluations | Jimenez Counseling, PLLC | Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/latinopsy/therapy-wwwjimenezcounselingcom"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8fda1563-c10e-40c1-aace-b25d4f459eff",
+      "expectedIdentity": {
+        "name": "J.Jill",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://locations.jjill.com/al/birmingham/196/"
+      },
+      "patch": {
+        "hours": "Monday: 10am - 7pm; Tuesday: 10am - 7pm; Wednesday: 10am - 7pm; Thursday: 10am - 7pm; Friday: 10am - 7pm; Saturday: 10am - 7pm; Sunday: 12pm - 6pm",
+        "phone": "+1 205-262-9535",
+        "twitter": "https://www.twitter.com/jjill",
+        "pinterest": "https://www.pinterest.com/jjillstyle"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://locations.jjill.com/al/birmingham/196/",
+          "sourceLabel": "Official J. Jill - Shop Women&#x27;s Apparel in In Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Store Hours Monday: 10am - 7pm Tuesday: 10am - 7pm Wednesday: 10am - 7pm Thursday: 10am - 7pm Friday: 10am - 7pm Saturday: 10am - 7pm Sunday: 12pm - 6pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://locations.jjill.com/al/birmingham/196/",
+          "sourceLabel": "Official J. Jill - Shop Women&#x27;s Apparel in In Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 205-262-9535"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://locations.jjill.com/al/birmingham/196/",
+          "sourceLabel": "Official J. Jill - Shop Women&#x27;s Apparel in In Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/jjill"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://locations.jjill.com/al/birmingham/196/",
+          "sourceLabel": "Official J. Jill - Shop Women&#x27;s Apparel in In Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/jjillstyle"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a861f897-eda4-4aa7-9564-ab471fcfca87",
+      "expectedIdentity": {
+        "name": "J McLaughlin",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.jmclaughlin.com/"
+      },
+      "patch": {
+        "description": "J.McLaughlin is a clothing retailer offering apparel and accessories for women and men.",
+        "tags": [
+          "women's clothing",
+          "men's clothing",
+          "accessories",
+          "online retailer"
+        ],
+        "twitter": "https://x.com/JMcLaughlinNY",
+        "pinterest": "https://www.pinterest.com/j.mclaughlin/",
+        "youtube": "https://www.youtube.com/channel/UCND87QJIABW06Giq2Pp8eAQ"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "twitter": "fill",
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jmclaughlin.com/",
+          "sourceLabel": "Official J.McLaughlin | Timeless Clothing for Women &amp; Men page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"J.McLaughlin | Timeless Clothing for Women & Men\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jmclaughlin.com/",
+          "sourceLabel": "Official J.McLaughlin | Timeless Clothing for Women &amp; Men page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"J.McLaughlin | Timeless Clothing for Women & Men\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.jmclaughlin.com/",
+          "sourceLabel": "Official J.McLaughlin | Timeless Clothing for Women &amp; Men page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/JMcLaughlinNY"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.jmclaughlin.com/",
+          "sourceLabel": "Official J.McLaughlin | Timeless Clothing for Women &amp; Men page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/j.mclaughlin/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.jmclaughlin.com/",
+          "sourceLabel": "Official J.McLaughlin | Timeless Clothing for Women &amp; Men page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCND87QJIABW06Giq2Pp8eAQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fe93fac0-7c01-45e7-bd7b-2b06a3d7d228",
+      "expectedIdentity": {
+        "name": "JNE Green Team/THR Enterprises, Inc.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.jnegreenteam.com/"
+      },
+      "patch": {
+        "description": "JNE Green Team, Inc. provides sanitation, waste management, disinfecting/sanitization, construction inspection and project management, disaster recovery, and related professional services.",
+        "tags": [
+          "\"sanitation\"",
+          "\"waste management\"",
+          "\"disinfecting / sanitization services\"",
+          "\"construction inspections\"",
+          "\"disaster recovery\"",
+          "\"janitorial/cleaning services\"",
+          "\"consulting\""
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jnegreenteam.com/services/",
+          "sourceLabel": "Official Services &#8211; JNE Green Team, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"JNE Green Team has over 30 years of combined experience and expertise in the fields of: sanitation, waste management, disinfecting / sanitization services construction inspections, project management, disaster recovery and other professional services.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://jnegreenteam.com/",
+          "sourceLabel": "Official JNE Green Team, Inc. &#8211; Sustainable, Successful, Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Janitorial/Cleaning Services ▫ Construction Services ▫ Consulting\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8f24c247-0f7c-41e8-9361-b8d91c06f70a",
+      "expectedIdentity": {
+        "name": "Johin'na",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://www.johinnabhm.com/"
+      },
+      "patch": {
+        "description": "Johin’na is a modern Japanese restaurant offering robata, sushi, oysters, and omakase in downtown Birmingham.",
+        "phone": "205-202-3409",
+        "tags": [
+          "robata",
+          "sushi",
+          "oysters",
+          "omakase"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.johinnabhm.com/",
+          "sourceLabel": "Official Johin&#39;na | Discover Authentic Japanese Dining – Reserve Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Johin’na is a modern Japanese restaurant rooted in tradition and driven by detail—offering robata, sushi, oysters, and omakase in the heart of downtown Birmingham.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.johinnabhm.com/contact",
+          "sourceLabel": "Official Contact | Reserve Your Spot Today &mdash; Johin&#39;na page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"205-202-3409\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.johinnabhm.com/",
+          "sourceLabel": "Official Johin&#39;na | Discover Authentic Japanese Dining – Reserve Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"offering robata, sushi, oysters, and omakase in the heart of downtown Birmingham.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9acb260a-4f6a-4749-acbc-3a64ea156372",
+      "expectedIdentity": {
+        "name": "Johnson House Historic Site",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://johnsonhouse.org/"
+      },
+      "patch": {
+        "description": "Johnson House Historic Site is an Underground Railroad station and historic house museum that offers guided tours and educational programs.",
+        "phone": "215-438-1768",
+        "twitter": "https://twitter.com/JohnsonHouse215"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.johnsonhouse.org/",
+          "sourceLabel": "Official - Johnson House Historic Site page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Johnson House Historic Site, an Underground Railroad Station and Center for Social Advocacy , is a historic house museum"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.johnsonhouse.org/",
+          "sourceLabel": "Official - Johnson House Historic Site page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 215-438-1768"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.johnsonhouse.org/",
+          "sourceLabel": "Official - Johnson House Historic Site page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/JohnsonHouse215"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3f5012bc-872d-40d0-a304-b8f7ea3a275b",
+      "expectedIdentity": {
+        "name": "Jones and Rose",
+        "city": "Jacksonville",
+        "state": "FL",
+        "website": "https://www.jonesandrose.com/"
+      },
+      "patch": {
+        "instagram": "https://instagram.com/jonesandrose",
+        "facebook": "https://www.facebook.com/jonesandrosebody"
+      },
+      "fieldModes": {
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.jonesandrose.com/",
+          "sourceLabel": "Official Jones &amp; Rose: Naturals Plant Based Skin &amp; Body Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/jonesandrose"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.jonesandrose.com/",
+          "sourceLabel": "Official Jones &amp; Rose: Naturals Plant Based Skin &amp; Body Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/jonesandrosebody"
+        }
+      ]
+    },
+    {
+      "businessId": "source_98f1ea01-be35-4ff6-9173-1dd8e0679e28",
+      "expectedIdentity": {
+        "name": "JR Fordham Painting Corp.",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.jrfordhampc.com/"
+      },
+      "patch": {
+        "phone": "(347) 373-2991",
+        "facebook": "https://www.facebook.com/pages/category/Construction-Company/JR-Fordham-Painting-Contracting-632050593580561/",
+        "instagram": "https://www.instagram.com/jrfordhampaintingcontracting"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://jrfordhampc.com/",
+          "sourceLabel": "Official J.R. Fordham Painting &amp; Contracting - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (347) 373-2991 Office"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://jrfordhampc.com/",
+          "sourceLabel": "Official J.R. Fordham Painting &amp; Contracting - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/pages/category/Construction-Company/JR-Fordham-Painting-Contracting-632050593580561/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://jrfordhampc.com/",
+          "sourceLabel": "Official J.R. Fordham Painting &amp; Contracting - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/jrfordhampaintingcontracting"
+        }
+      ]
+    },
+    {
+      "businessId": "national-107c858bb68ef309b8f8216d",
+      "expectedIdentity": {
+        "name": "J. Selmer Law, PA",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://www.jselmerlaw.com/"
+      },
+      "patch": {
+        "description": "J. Selmer Law, P.A. provides legal representation to businesses, public institutions, families and individuals and handles litigation, individual claims and business matters.",
+        "phone": "612-338-6005",
+        "tags": [
+          "commercial litigation",
+          "insurance law",
+          "products liability",
+          "real estate",
+          "eminent domain and condemnation",
+          "banking and financial services",
+          "employment law and investigations",
+          "business law and business formation",
+          "estate planning"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jselmerlaw.com/",
+          "sourceLabel": "Official J. Selmer Law, P.A. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: J. Selmer Law provides the highest quality legal representation to businesses, public institutions, families and individuals. Our experience across multidisciplinary legal spaces has made us expert litigators and prudent advisors. With a steady hand and strength, we confidently handle high-stakes litigation, individual claims and your business needs."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jselmerlaw.com/contact",
+          "sourceLabel": "Official Contact 1 &mdash; J. Selmer Law, P.A. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone : 612-338-6005"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jselmerlaw.com/",
+          "sourceLabel": "Official J. Selmer Law, P.A. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our attorneys have a proven ability to assess, adapt and succeed in the following areas of focus: Commercial Litigation and Complex Business Disputes Insurance Law Products Liability Real Estate, Real Estate Litigation Eminent Domain and Condemnation Banking and Financial Services Employment Law and Investigations Business Law and Business Formation Estate Planning"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3ecb4449-61a4-4b36-961a-af95453da509",
+      "expectedIdentity": {
+        "name": "J’s Fish and Chicken",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://jsfishandchickenmarket.com/"
+      },
+      "patch": {
+        "description": "Restaurant serving fried fish and chicken (soul food) with multiple locations.",
+        "tags": [
+          "soul food",
+          "fried fish",
+          "fried chicken"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jsfishandchickenmarket.com/",
+          "sourceLabel": "Official Home - J&#39;S FISH AND CHICKEN (Order Online) page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Be prepared for some incredible soul food. Fried okra, fish, shrimp, wings...all delicious."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jsfishandchickenmarket.com/",
+          "sourceLabel": "Official Home - J&#39;S FISH AND CHICKEN (Order Online) page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Be prepared for some incredible soul food. Fried okra, fish, shrimp, wings...all delicious."
+        }
+      ]
+    },
+    {
+      "businessId": "source_fba1014a-6be3-4366-b520-7e1792673a9c",
+      "expectedIdentity": {
+        "name": "J’s Sweet Tea",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.jssweettea.com/"
+      },
+      "patch": {
+        "description": "J's Sweet Tea sells flavored sweet tea, including sugar free options, gallon sizes, and event catering.",
+        "phone": "816.686.7495",
+        "tags": [
+          "flavored tea",
+          "sugar free options",
+          "gallon sizes",
+          "event catering"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jssweettea.com/",
+          "sourceLabel": "Official J's Sweet Tea LLC | buy flavored tea page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We offer a variety of flavors, sugar free options, gallon sizes and event catering!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jssweettea.com/",
+          "sourceLabel": "Official J's Sweet Tea LLC | buy flavored tea page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 816.686.7495 | $JSSWEETTEA | JSSWEETTEA@GMAIL.COM"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jssweettea.com/",
+          "sourceLabel": "Official J's Sweet Tea LLC | buy flavored tea page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We offer a variety of flavors, sugar free options, gallon sizes and event catering!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c13d2b52-8cb2-4767-bc3f-fe44fe170dca",
+      "expectedIdentity": {
+        "name": "JTE Electrical Services LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://jteelectric.com/"
+      },
+      "patch": {
+        "description": "Licensed electricians serving the New York and New Jersey area; services include electrical services and network wiring.",
+        "phone": "(917) 673-1096",
+        "tags": [
+          "commercial services",
+          "residential services",
+          "industrial services",
+          "control wiring",
+          "access control",
+          "intercom systems",
+          "voice & data wiring",
+          "trouble shooting"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jteelectric.com/about",
+          "sourceLabel": "Official About Us &mdash; JTE Electrical page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Who we are: Licensed electricians in the New York and New Jersey area What we do: Our expert specialists are equipped for all of your needs from electrical services to network wiring."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jteelectric.com/",
+          "sourceLabel": "Official JTE Electrical page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (917) 673-1096"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jteelectric.com/services",
+          "sourceLabel": "Official Services &mdash; JTE Electrical page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services Commercial, Residential, and Industrial Services Control Wiring Access Control Intercom Systems Voice & Data Wiring Trouble Shooting"
+        }
+      ]
+    },
+    {
+      "businessId": "source_45416515-43cb-47ca-9f57-3af7f5f8971c",
+      "expectedIdentity": {
+        "name": "Juan Alfaro Design Inc.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://juanalfarodesign.com/"
+      },
+      "patch": {
+        "description": "Juan Alfaro Design is a Brooklyn-based, full-service design and fabrication studio specializing in architectural and ornamental metalwork, glass, and millwork.",
+        "phone": "917.674.6690"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.juanalfarodesign.com/about-1",
+          "sourceLabel": "Official About &mdash; JUAN ALFARO DESIGN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Juan Alfaro Design is a Brooklyn-based, full-service design and fabrication studio specializing in architectural and ornamental metalwork, glass, and millwork."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.juanalfarodesign.com/contact",
+          "sourceLabel": "Official Contact &mdash; JUAN ALFARO DESIGN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 917.674.6690"
+        }
+      ]
+    },
+    {
+      "businessId": "source_269cd70c-8bb6-4176-a3d7-7239f3b1152c",
+      "expectedIdentity": {
+        "name": "Juggle Learning, LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.jugglelearning.com/"
+      },
+      "patch": {
+        "description": "Professional learning and early literacy services."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://jugglelearning.com/",
+          "sourceLabel": "Official Juggle Learning | Professional Learning &amp; Early Literacy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Juggle Learning | Professional Learning & Early Literacy"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3f6097fe-1c7f-4845-b336-d74f432b7a5a",
+      "expectedIdentity": {
+        "name": "Juice Pharm",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.juicepharmco.com/"
+      },
+      "patch": {
+        "description": "Juice Pharm is a local juice delivery company that focuses on blending unique ingredients to create fresh cold-pressed juices and cleanses designed to provide nutrition and convenience.",
+        "phone": "813-833-3472"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.juicepharmco.com/about",
+          "sourceLabel": "Official Juice Pharm | About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Juice Pharm is a local juice delivery company that focuses on blending unique ingredients for the benefit of your taste buds and body.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.juicepharmco.com/about",
+          "sourceLabel": "Official Juice Pharm | About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"T: 813-833-3472\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_57c43ede-59e2-432e-9422-07fc55b28e4e",
+      "expectedIdentity": {
+        "name": "Julian Palacio Architecture Studio PLLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.jpastudio.com/"
+      },
+      "patch": {
+        "description": "JPAS is a New York–based architecture and design practice working across buildings, interiors, installations, and research.",
+        "phone": "929.269.5858",
+        "tags": [
+          "architecture",
+          "interior design",
+          "installations",
+          "research"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jpastudio.com/",
+          "sourceLabel": "Official JPAS: Julian Palacio Architecture Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: JPAS is a New York–based architecture and design practice working across buildings, interiors, installations, and research."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jpastudio.com/",
+          "sourceLabel": "Official JPAS: Julian Palacio Architecture Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: For commissions, collaborations, and inquiries: studio@jpastudio.com 929.269.5858"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jpastudio.com/",
+          "sourceLabel": "Official JPAS: Julian Palacio Architecture Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: JPAS is a New York–based architecture and design practice working across buildings, interiors, installations, and research."
+        }
+      ]
+    },
+    {
+      "businessId": "source_4b3a98ec-9aec-4b24-8279-79082cdd13f6",
+      "expectedIdentity": {
+        "name": "Juniors Express Car Service, Inc.",
+        "city": "BROOKLYN",
+        "state": "NY",
+        "website": "https://www.juniorscarservice.com/"
+      },
+      "patch": {
+        "description": "Car service."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.juniorscarservice.com/",
+          "sourceLabel": "Official Juniors Car Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Juniors Car Service"
+        }
+      ]
+    },
+    {
+      "businessId": "source_72d90b6a-7c11-4766-a178-6332d46947a7",
+      "expectedIdentity": {
+        "name": "Jussides LLC",
+        "city": "Columbus",
+        "state": "OHIO",
+        "website": "http://jussides.com/"
+      },
+      "patch": {
+        "description": "American soul food restaurant offering takeout and food delivery in Columbus.",
+        "hours": "Monday - Sunday 08:00 AM - 08:00 PM",
+        "phone": "+1 614-598-8729",
+        "tags": [
+          "soul food",
+          "event catering",
+          "takeout",
+          "food delivery"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jussides.com/",
+          "sourceLabel": "Official JusSides - Food delivery - Columbus - Order online page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We offer Takeout and Food Delivery"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jussides.com/",
+          "sourceLabel": "Official JusSides - Food delivery - Columbus - Order online page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening hours Monday - Sunday 08:00 AM - 08:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jussides.com/",
+          "sourceLabel": "Official JusSides - Food delivery - Columbus - Order online page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 614-598-8729"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.jussides.com/menu",
+          "sourceLabel": "Official Menu of JusSides page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: We offer Takeout and Food Delivery"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a96fd226-e243-4949-95a0-94016d4a25da",
+      "expectedIdentity": {
+        "name": "Jussides LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://jussides.com/"
+      },
+      "patch": {
+        "description": "American Soul Food offering takeout and food delivery.",
+        "hours": "Monday - Sunday 08:00 AM - 08:00 PM",
+        "phone": "+1 614-598-8729"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jussides.com/",
+          "sourceLabel": "Official JusSides - Food delivery - Columbus - Order online page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"JusSides American Soul Food in Columbus We offer Takeout and Food Delivery\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jussides.com/",
+          "sourceLabel": "Official JusSides - Food delivery - Columbus - Order online page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Opening hours Monday - Sunday 08:00 AM - 08:00 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.jussides.com/",
+          "sourceLabel": "Official JusSides - Food delivery - Columbus - Order online page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"+1 614-598-8729\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_fcf1c744-b2e6-4b12-a445-202b3ea27c79",
+      "expectedIdentity": {
+        "name": "Just Hair by Kalli",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://justhairbykalli.com/"
+      },
+      "patch": {
+        "description": "Just Hair by Kalli offers hair care products and hair styling services, including raw Indian hair and Brazilian hair extensions.",
+        "hours": "\"You can pick up any day between normal business hours 10am-4pm.\"",
+        "tiktok": "https://tiktok.com/@justhairbykalli",
+        "youtube": "https://www.youtube.com/@justhairbykalli"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://justhairbykalli.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; Just Hair By Kalli page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"we take pride in being your trusted destination for all things hair care. Our passion for helping you achieve your hair goals drives us to curate an exceptional range of hair care products, including the finest raw Indian hair and luxurious Brazilian hair extensions.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://justhairbykalli.com/pages/faqs",
+          "sourceLabel": "Official Frequently Asked Questions &ndash; Just Hair By Kalli page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"You can pick up any day between normal business hours 10am-4pm.\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://justhairbykalli.com/",
+          "sourceLabel": "Official Just Hair By Kalli page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://tiktok.com/@justhairbykalli"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://justhairbykalli.com/",
+          "sourceLabel": "Official Just Hair By Kalli page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@justhairbykalli"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ed1ab0d3-cb06-4640-8384-6fbd4dd1f0dc",
+      "expectedIdentity": {
+        "name": "Just Judy's Cakes & Designs LLC",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "http://justjudyscakesanddesigns.com/"
+      },
+      "patch": {
+        "hours": "The Shoppes at East Chase Farmers Market May 9, 2026 - September 12, 2026 Every Saturday, 7 AM - 12 PM",
+        "phone": "Phone: (833)-559-6488",
+        "tags": [
+          "homemade desserts",
+          "event planning",
+          "event design"
+        ]
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.justjudyscakesanddesigns.com/",
+          "sourceLabel": "Official JUST JUDY'S CAKES & DESIGNS, LLC - CUSTOMER CONTACT FORM page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The Shoppes at East Chase Farmers Market May 9, 2026 - September 12, 2026 Every Saturday, 7 AM - 12 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.justjudyscakesanddesigns.com/",
+          "sourceLabel": "Official JUST JUDY'S CAKES & DESIGNS, LLC - CUSTOMER CONTACT FORM page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: (833)-559-6488\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.justjudyscakesanddesigns.com/about.html",
+          "sourceLabel": "Official ABOUT - JUST JUDY'S CAKES & DESIGNS, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We specialize in homemade desserts made from scratch and unforgettable event planning and design services\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_1200015d-1632-409c-a342-07266186fcb9",
+      "expectedIdentity": {
+        "name": "Juva Juice - Jackson",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://juvajuice.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/pages/Juva-Juice/166348933384463",
+        "instagram": "http://instagram.com/juvajuice",
+        "twitter": "https://twitter.com/JuvaSmoothies",
+        "pinterest": "https://www.pinterest.com/juvajuice/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://juvajuice.com/",
+          "sourceLabel": "Official JUVA &#8211; The Juice &amp; Smoothie Bar &#8211; The Juice and Smoothie Bar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/pages/Juva-Juice/166348933384463"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://juvajuice.com/",
+          "sourceLabel": "Official JUVA &#8211; The Juice &amp; Smoothie Bar &#8211; The Juice and Smoothie Bar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/juvajuice"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://juvajuice.com/",
+          "sourceLabel": "Official JUVA &#8211; The Juice &amp; Smoothie Bar &#8211; The Juice and Smoothie Bar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/JuvaSmoothies"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://juvajuice.com/",
+          "sourceLabel": "Official JUVA &#8211; The Juice &amp; Smoothie Bar &#8211; The Juice and Smoothie Bar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/juvajuice/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0a3edf9d-1c08-41ff-9bd7-bef596b8abee",
+      "expectedIdentity": {
+        "name": "JWA Accounting and Tax Services",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.jwataxservices.com/"
+      },
+      "patch": {
+        "description": "Bookkeeping review and clean up, tax, and advisory for individuals and small businesses — led by Joy W. Adams, Enrolled Agent.",
+        "hours": "Mon – Fri · 9 AM – 5 PM CT"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jwataxservices.com/",
+          "sourceLabel": "Official JWA Tax Services — Clarity in Your Numbers, Confidence in Your Year page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: JWA Tax Services Bookkeeping review and clean up, tax, and advisory for individuals and small businesses — led by Joy W. Adams, Enrolled Agent."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.jwataxservices.com/contact",
+          "sourceLabel": "Official Contact — IRS Tax Problems Help | JWA Tax Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon – Fri · 9 AM – 5 PM CT"
+        }
+      ]
+    },
+    {
+      "businessId": "source_413e0c51-bfea-43fd-8b44-2296cd0f3e53",
+      "expectedIdentity": {
+        "name": "Kabod Coffee",
+        "city": "Denver",
+        "state": "CO",
+        "website": "https://kabodcoffee.com/"
+      },
+      "patch": {
+        "description": "Kabod Coffee is a specialty coffee roaster brand offering 100% organic, single-source Ethiopian coffee, roasting in small batches and operating cafés.",
+        "twitter": "https://x.com/CoffeeKabod"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kabodcoffee.com/",
+          "sourceLabel": "Official Kabod Coffee &#8211; Organic Single-Source Specialty Coffee Roaster in Denver, Colorado &#8211; Kabod Coffee is a specialty coffee roaster brand dedicated to offering high-quality, ethically sourced Ethiopian Coffee roasted in small batches in De",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kabod Coffee is a specialty coffee roaster brand dedicated to offering high-quality, ethically sourced Ethiopian Coffee roasted in small batches in Denver, Colorado."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://kabodcoffee.com/",
+          "sourceLabel": "Official Kabod Coffee &#8211; Organic Single-Source Specialty Coffee Roaster in Denver, Colorado &#8211; Kabod Coffee is a specialty coffee roaster brand dedicated to offering high-quality, ethically sourced Ethiopian Coffee roasted in small batches in De",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/CoffeeKabod"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f30a828d-b6f2-4745-b7bd-fc177c9dbd07",
+      "expectedIdentity": {
+        "name": "Kaizen Beauty",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://kaizenbeautymd.com/"
+      },
+      "patch": {
+        "description": "Black-owned luxury nail salon in downtown Baltimore."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kaizenbeautymd.com/",
+          "sourceLabel": "Official Kaizen Beauty | Black-Owned Luxury Nail Salon in Downtown Baltimore page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kaizen Beauty | Black-Owned Luxury Nail Salon in Downtown Baltimore"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e463d80a-11ba-4f98-92e8-711f3ca711db",
+      "expectedIdentity": {
+        "name": "Kalm Wellness Services",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.welkalm.com/"
+      },
+      "patch": {
+        "description": "Kalm Wellness Services — Prioritize YOU consistently"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.welkalm.com/",
+          "sourceLabel": "Official Kalm Wellness Services — Prioritize YOU consistently page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kalm Wellness Services — Prioritize YOU consistently"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8cb64cdb-d56b-4a67-b8a5-b470792dc446",
+      "expectedIdentity": {
+        "name": "KAM Photo Booth Services",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://kamphotobooth.com/"
+      },
+      "patch": {
+        "description": "KAM Photo Booth Services provides photo booth rentals for events including weddings, birthdays, and corporate events.",
+        "facebook": "https://www.facebook.com/kam.photobooth"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kamphotobooth.com/",
+          "sourceLabel": "Official Photo Booth Rentals for Unforgettable Events | KAM Photo Booth Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"KAM Photo Booth Services is dedicated to making your events unforgettable. Our photo booth rentals add a fun and engaging experience to weddings, birthdays, corporate events, and more.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kamphotobooth.com/",
+          "sourceLabel": "Official Photo Booth Rentals for Unforgettable Events | KAM Photo Booth Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/kam.photobooth"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7e6a352e-f15e-49db-89b5-d2228980e962",
+      "expectedIdentity": {
+        "name": "Kandy's",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://kandysnola.com/"
+      },
+      "patch": {
+        "description": "French-inspired cuisine with unmistakable New Orleans soul.",
+        "hours": "Sun, Mon, Wed, Thur, Fri, Sat Open for Lunch: 11 AM - 2 PM Dinner Service: 4 PM - 10 PM",
+        "phone": "(504)-881-0851"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kandysnola.com/",
+          "sourceLabel": "Official Kandy&apos;s - New Orleans, LA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"French-inspired cuisine with unmistakable New Orleans soul\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kandysnola.com/",
+          "sourceLabel": "Official Kandy&apos;s - New Orleans, LA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Sun, Mon, Wed, Thur, Fri, Sat Open for Lunch: 11 AM - 2 PM Dinner Service: 4 PM - 10 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kandysnola.com/",
+          "sourceLabel": "Official Kandy&apos;s - New Orleans, LA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(504)-881-0851\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9aa205dd-8eeb-492a-b2eb-075356c477eb",
+      "expectedIdentity": {
+        "name": "Karen’s Kakes",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.mskakes120.com/"
+      },
+      "patch": {
+        "description": "Karen's Kakes offers over 120 flavors of kake and a variety of baked goods including layered kakes, pound kakes, bundt kakes, stuffed cupkakes, kake bites, kakes in a cup, kookies, ice cream sandwiches, chocolate covered pretzels, oreos, strawberries, and crunch apples.",
+        "hours": "Wednesdays 11-5 pm Thursday & Fridays 12-6 Saturdays 11-4",
+        "phone": "816-704-1804",
+        "tags": [
+          "kakes",
+          "baked goods",
+          "desserts",
+          "cupkakes",
+          "kookies",
+          "ice cream sandwiches",
+          "chocolate covered pretzels"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.mskakes120.com/",
+          "sourceLabel": "Official 130+ Delicious Cake Flavors | Karen's Kakes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Karen's Kakes offers over 120 flavors of kake in many shapes and form. Perfect for every occasion! We specialize in layered kakes, pound kakes, bundt kakes, twice baked kakes, stuffed cupkakes, kake bites, kakes in a cup, kookies, ice cream sandwiches, chocolate covered pretzels, oreos, strawberries, and crunch apples.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.mskakes120.com/contact",
+          "sourceLabel": "Official Contact Us to Order | Karen's Kakes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours : Wednesdays 11-5 pm Thursday & Fridays 12-6 Saturdays 11-4\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.mskakes120.com/contact",
+          "sourceLabel": "Official Contact Us to Order | Karen's Kakes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"by calling us at 816-704-1804.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.mskakes120.com/",
+          "sourceLabel": "Official 130+ Delicious Cake Flavors | Karen's Kakes page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We specialize in layered kakes, pound kakes, bundt kakes, twice baked kakes, stuffed cupkakes, kake bites, kakes in a cup, kookies, ice cream sandwiches, chocolate covered pretzels, oreos, strawberries, and crunch apples.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_cbc40010-c9b9-4ff0-9363-22fbe59b176a",
+      "expectedIdentity": {
+        "name": "Kassia African Hair Braiding",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://kassiaafricanhairbraiding.com/"
+      },
+      "patch": {
+        "description": "Kassia African Hair Braiding offers professional African hair braiding services in Birmingham, AL for women and children, providing neat, long-lasting, and protective styles in a clean and welcoming salon environment.",
+        "phone": "(205) 223-1666",
+        "tags": [
+          "knotless braids",
+          "box braids",
+          "lemonade braids",
+          "fulani braids",
+          "cornrows",
+          "twists",
+          "micro braids",
+          "tree braids",
+          "invisible braids",
+          "weaves",
+          "take down",
+          "touch up"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kassiaafricanhairbraiding.com/services/",
+          "sourceLabel": "Official African Hair Braiding Services in Birmingham AL - Birmingham Professional African Hair Braiding page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kassia African Hair Braiding proudly offers professional African hair braiding services in Birmingham, AL for women and children. Our experienced braiders provide neat, long-lasting, and protective styles designed to enhance your beauty while keeping your natural hair healthy.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kassiaafricanhairbraiding.com/",
+          "sourceLabel": "Official African Hair Braiding in Birmingham, AL - Birmingham Professional African Hair Braiding page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact (205) 223-1666\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://kassiaafricanhairbraiding.com/",
+          "sourceLabel": "Official African Hair Braiding in Birmingham, AL - Birmingham Professional African Hair Braiding page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kassia African Hair Braiding specializes in the latest and most popular styles, including knotless braids, box braids, lemonade braids, Fulani braids, cornrows, twists, micro braids, tree braids, invisible braids , and many more.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_c5a65f67-136c-4171-831e-d6134243335c",
+      "expectedIdentity": {
+        "name": "KATCH?",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://katch-e.com/"
+      },
+      "patch": {
+        "description": "KATCHē is a clothing brand that was created for the woman who’s not afraid to stand out in a crowd.",
+        "hours": "Customer Service Hours: 9:00 am - 5:30 pm Monday - Friday EST. Weekends and all national holidays we will reply next business day.",
+        "phone": "810-610-0712",
+        "tags": [
+          "women's clothing",
+          "dresses",
+          "accessories"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://katch-e.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; KATCHē page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"KATCHē is a clothing brand that was created for the woman who’s not afraid to stand out in a crowd.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://katch-e.com/pages/contact-us",
+          "sourceLabel": "Official Contact Us &ndash; KATCHē page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Customer Service Hours: 9:00 am - 5:30 pm Monday - Friday EST. Weekends and all national holidays we will reply next business day.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://katch-e.com/pages/contact-us",
+          "sourceLabel": "Official Contact Us &ndash; KATCHē page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 810-610-0712\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://katch-e.com/",
+          "sourceLabel": "Official Women’s Clothing Boutique &ndash; KATCHē page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Shop Dresses Bottoms Jumpsuits Sets Accessories Swimsuits Outerwear Tops\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f6326a20-dadb-4b0a-b452-25f03952fb95",
+      "expectedIdentity": {
+        "name": "Kbattle Photography",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3yc2QqP"
+      },
+      "patch": {
+        "description": "K Battle Photography offers photography services including weddings, engagement, family, newborn, portraits, boudoir, seniors, and headshots.",
+        "phone": "(414)405-9796"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kbattlephotography.com/",
+          "sourceLabel": "Official Home - kbattlephotography.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: weddings | family | SENIORS | portraits"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kbattlephotography.com/contact",
+          "sourceLabel": "Official Contact | K Battle Photography Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (414)405-9796"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e1528742-2692-45e7-ac02-a80a8f841ce2",
+      "expectedIdentity": {
+        "name": "K&C Entertainment",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://www.kcentertainment1.com/"
+      },
+      "patch": {
+        "description": "Photo booth rental and DJ services in Jackson.",
+        "tags": [
+          "photo booth rental",
+          "dj services"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kcentertainment1.com/",
+          "sourceLabel": "Official K&C Entertainment | Photo Booth Rental & DJ Services | Jackson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: K&C Entertainment | Photo Booth Rental & DJ Services | Jackson"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kcentertainment1.com/",
+          "sourceLabel": "Official K&C Entertainment | Photo Booth Rental & DJ Services | Jackson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: K&C Entertainment | Photo Booth Rental & DJ Services | Jackson"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b79a620e-d2cf-4778-9ae4-4cee8b842a2f",
+      "expectedIdentity": {
+        "name": "KC Fry Bro’s",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://kcfrybros.com/"
+      },
+      "patch": {
+        "description": "KC Fry Bros Chicken And Seafood is a casual fast-food restaurant serving fried chicken and seafood in Kansas City, Missouri.",
+        "hours": "Mon - Thu: 10:30 AM - 9:45 PM Fri & Sat: 10:30 AM - 11:45 PM Sun: 10:30 AM - 9:45 PM",
+        "phone": "(816) 663-3866"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kcfrybros.com/",
+          "sourceLabel": "Official Home - KC Fry Bros Chicken And Seafood page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"KC Fry Bros Chicken And Seafood is a casual fast-food restaurant serving flavorful fried chicken and seafood in Kansas City, Missouri.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.kcfrybros.com/",
+          "sourceLabel": "Official Home - KC Fry Bros Chicken And Seafood page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Hours Mon - Thu: 10:30 AM - 9:45 PM Fri & Sat: 10:30 AM - 11:45 PM Sun: 10:30 AM - 9:45 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kcfrybros.com/",
+          "sourceLabel": "Official Home - KC Fry Bros Chicken And Seafood page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(816) 663-3866\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_36a4fc94-b576-4ff0-8e27-e4d80a88369f",
+      "expectedIdentity": {
+        "name": "KeeBooms Kitchen",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.keeboomskitchen.com/"
+      },
+      "patch": {
+        "description": "KEEBOOM'S KITCHEN: Cuisines Soul Food Hamburgers Wings Chicken.",
+        "phone": "(267) 416-3076"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.keeboomskitchen.com/",
+          "sourceLabel": "Official Home - KEEBOOM&#39;S KITCHEN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: KEEBOOM'S KITCHEN Cuisines Soul Food Hamburgers Wings Chicken"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.keeboomskitchen.com/",
+          "sourceLabel": "Official Home - KEEBOOM&#39;S KITCHEN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (267) 416-3076"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ba455f57-640f-4236-8e58-c0ac992ad52c",
+      "expectedIdentity": {
+        "name": "KEEN Renovations, Inc.",
+        "city": "South Richmond Hill",
+        "state": "NY",
+        "website": "https://www.keenrenovationsinc.com/"
+      },
+      "patch": {
+        "description": "KEEN Renovations Inc. is a Licensed & Insured renovation contracting firm that specializes in full aspects of Kitchen & Bathroom gut renovations in NYC area.",
+        "phone": "Office : 718-522-7243"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.keenrenovationsinc.com/",
+          "sourceLabel": "Official Home | KEEN Renovations Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: KEEN Renovations Inc. is a Licensed & Insured renovation contracting firm that specializes in full aspects of Kitchen & Bathroom gut renovations in NYC area."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.keenrenovationsinc.com/",
+          "sourceLabel": "Official Home | KEEN Renovations Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office : 718-522-7243"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c6ca9775-af0e-45e8-8952-258a54bc3432",
+      "expectedIdentity": {
+        "name": "KELISIA Co.",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.kelisiaco.com/"
+      },
+      "patch": {
+        "description": "\"Gift Shop, Custom Gift Shop, Hand-crafted, Artisan gifts, Memories | KELISIA Co.\"",
+        "tags": [
+          "\"gift shop\"",
+          "\"custom gift shop\"",
+          "\"hand-crafted\"",
+          "\"artisan gifts\""
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kelisiaco.com/",
+          "sourceLabel": "Official Gift Shop, Custom Gift Shop, Hand-crafted, Artisan gifts, Memories | KELISIA Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Gift Shop, Custom Gift Shop, Hand-crafted, Artisan gifts, Memories | KELISIA Co.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kelisiaco.com/",
+          "sourceLabel": "Official Gift Shop, Custom Gift Shop, Hand-crafted, Artisan gifts, Memories | KELISIA Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Gift Shop, Custom Gift Shop, Hand-crafted, Artisan gifts, Memories | KELISIA Co.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_eaf8ddc9-6fa0-4d30-97db-1206a4a72876",
+      "expectedIdentity": {
+        "name": "Kendra McCrae, Attorney-at-law LLC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.kendramccraelaw.com/"
+      },
+      "patch": {
+        "tags": [
+          "violent crimes",
+          "weapon charge",
+          "drug charge",
+          "personal injury"
+        ]
+      },
+      "fieldModes": {
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kendramccraelaw.com/",
+          "sourceLabel": "Official Kendra McCrae Lawyer Philadelphia page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: PRACTICE AREAS Violent Crimes Weapon Charge Personal Injury Drugs"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9d1d1dcb-00f0-4d18-b830-f1f09f84f99f",
+      "expectedIdentity": {
+        "name": "Kendrick Creations",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://kendrickcreations.com/"
+      },
+      "patch": {
+        "description": "Kendrick Creations creates custom floral and event designs for special occasions.",
+        "phone": "(317) 902-1822",
+        "tags": [
+          "wedding bouquets",
+          "reception and banquet centerpieces",
+          "boutonnieres",
+          "corsages",
+          "floral home decor",
+          "party decor",
+          "floating candles",
+          "funeral flowers and sprays"
+        ],
+        "facebook": "https://www.facebook.com/KCfloral/",
+        "instagram": "https://www.instagram.com/kendrick_creations?igshid=u39y56r7vv92"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kendrickcreations.com/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Here at Kendrick Creations we offer an array of custom designs created with you in mind."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kendrickcreations.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (317) 902-1822"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://kendrickcreations.com/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our creations include, but are not limited to: • Wedding Bouquets • Reception and Banquet Centerpieces • Boutonnieres • Corsages • Floral Home Decor • Party Decor • Floating Candles • Funeral Flowers and Sprays"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kendrickcreations.com/",
+          "sourceLabel": "Official Kendrick Creations - Floral, Home Decor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/KCfloral/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://kendrickcreations.com/",
+          "sourceLabel": "Official Kendrick Creations - Floral, Home Decor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kendrick_creations?igshid=u39y56r7vv92"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a59274fc-4cfc-4c3c-9118-46ee2e76dffd",
+      "expectedIdentity": {
+        "name": "Ken Jones Photography",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.kenjonesphotography.com/"
+      },
+      "patch": {
+        "description": "Commercial, convention, and portrait photography services.",
+        "tags": [
+          "commercial photography",
+          "convention photography",
+          "portrait photography"
+        ],
+        "twitter": "https://twitter.com/kenjonesphoto",
+        "pinterest": "https://www.pinterest.com/kenjphotography"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kenjonesphotography.com/",
+          "sourceLabel": "Official Commercial, Convention, Portrait Photography | Ken Jones Photography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Commercial, Convention, Portrait Photography | Ken Jones Photography"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kenjonesphotography.com/",
+          "sourceLabel": "Official Commercial, Convention, Portrait Photography | Ken Jones Photography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Commercial, Convention, Portrait Photography | Ken Jones Photography"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.kenjonesphotography.com/",
+          "sourceLabel": "Official Commercial, Convention, Portrait Photography | Ken Jones Photography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/kenjonesphoto"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.kenjonesphotography.com/",
+          "sourceLabel": "Official Commercial, Convention, Portrait Photography | Ken Jones Photography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/kenjphotography"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0705b157-e318-4d0b-96ae-43c62b0aa7e6",
+      "expectedIdentity": {
+        "name": "Ken K Works",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3JBOncL"
+      },
+      "patch": {
+        "description": "Ken K Creative Agency provides branding solutions and printing services, including brand development, creative design, and printing.",
+        "phone": "414-212-5365",
+        "tags": [
+          "designs & printing",
+          "brand development",
+          "web design & social media",
+          "apparel & merch",
+          "memorial services"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kenkcreative.com/",
+          "sourceLabel": "Official Ken K Creative Agency | The Brand Experts page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Ken K Creative Agency , your go-to destination for cutting-edge branding solutions and high-quality printing services."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kenkcreative.com/",
+          "sourceLabel": "Official Ken K Creative Agency | The Brand Experts page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: hello@kenkcreative.com | 414-212-5365"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kenkcreative.com/service",
+          "sourceLabel": "Official Services | Ken K Creative Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Designs & Printing Brand Development Web Design & Social Media Apparel & Merch Memorial Services"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0a7aa420-2d63-44fb-a798-4ac59aaf463d",
+      "expectedIdentity": {
+        "name": "Kenna Law Center",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "http://kennalawcenter.com/"
+      },
+      "patch": {
+        "description": "Kenna Law Center, PLLC provides legal services in family law, trust and estate planning, contracts, and mediation.",
+        "hours": "Mon 08:30 am – 05:00 pm; Tue 08:30 am – 05:00 pm; Wed 08:30 am – 05:00 pm; Thu 08:30 am – 05:00 pm; Fri 08:30 am – 05:00 pm; Sat By Appointment; Sun Closed",
+        "phone": "602-800-5787",
+        "tags": [
+          "family law",
+          "trusts and estate planning",
+          "mediation"
+        ],
+        "facebook": "https://www.facebook.com/1507260652821943"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kennalawcenter.com/",
+          "sourceLabel": "Official Keovonne Wilson Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Whether the matter is in the area of family law, trust and estate planning, contracts or mediation, Kenna Law Center, PPLC is committed to providing comprehensive legal services to EVERY ONE of OUR CLIENTS."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kennalawcenter.com/contact-us",
+          "sourceLabel": "Official Keovonne Wilson Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 08:30 am – 05:00 pm Tue 08:30 am – 05:00 pm Wed 08:30 am – 05:00 pm Thu 08:30 am – 05:00 pm Fri 08:30 am – 05:00 pm Sat By Appointment Sun Closed Get directions"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kennalawcenter.com/",
+          "sourceLabel": "Official Keovonne Wilson Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us today at 602-800-5787"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://kennalawcenter.com/",
+          "sourceLabel": "Official Keovonne Wilson Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Areas of Practice # Family Law Family Law # Trusts and Estate Planning # Mediation"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kennalawcenter.com/",
+          "sourceLabel": "Official Keovonne Wilson Legal, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/1507260652821943"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9523189a-e08e-4b57-9dc4-979a764fbccc",
+      "expectedIdentity": {
+        "name": "Kenney Ellison Photography",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://3shotsphotography.com/"
+      },
+      "patch": {
+        "description": "Photographer (headshots, love and family).",
+        "tags": [
+          "headshots",
+          "love and family",
+          "photographer"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://3shotsphotography.com/",
+          "sourceLabel": "Official Kenney Ellison page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kenney Ellison 3 Shots Photography Headshots Love and Family husband . father . photographer . creative"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://3shotsphotography.com/",
+          "sourceLabel": "Official Kenney Ellison page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kenney Ellison 3 Shots Photography Headshots Love and Family husband . father . photographer . creative"
+        }
+      ]
+    },
+    {
+      "businessId": "source_09a2c6bb-6b04-40a9-a6b7-93eb7f1660ec",
+      "expectedIdentity": {
+        "name": "Kenny & Khan Architects, P.C.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.kennykhan.com/"
+      },
+      "patch": {
+        "description": "Kenny & Khan Architects PC is a full service New York City architectural firm that leads jobs of any size and complexity and provides management and design solutions addressing function, budget, and schedule.",
+        "phone": "212 206 0722"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kennykhan.com/about",
+          "sourceLabel": "Official Who We Are &mdash; kenny &amp; khan architects pc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kenny & Khan Architects PC is a full service New York City architectural firm with the proven experience, creativity, knowledge and resources to successfully lead jobs of any size and complexity.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kennykhan.com/contact",
+          "sourceLabel": "Official Contact &mdash; kenny &amp; khan architects pc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"212 206 0722\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_95516f35-8fe1-4750-9a6a-00365efbf450",
+      "expectedIdentity": {
+        "name": "Kernels Nashville Popcorn",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://kernelsnashville.com/"
+      },
+      "patch": {
+        "description": "Kernels Nashville Popcorn is a family-owned business located in East Nashville that offers popcorn in 14+ flavors and catering for events.",
+        "hours": "Mon, Tue, Wed, Thur, Fri 10:00 AM - 4:00 PM; Sat 10:00 AM - 2:00 PM",
+        "phone": "(629)-278-1556",
+        "twitter": "https://www.twitter.com/kernelsnashvill"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kernelsnashville.com/",
+          "sourceLabel": "Official Must-Try Desserts in Nashville | Kernels Nahville Popcorn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kernels Nashville Popcorn is a family-owned business located in East Nashville. We value each customer who pops by and seeks to make each visit unique and enjoyable! If you're in the area, pop by and sample our 14+ flavors!\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kernelsnashville.com/",
+          "sourceLabel": "Official Must-Try Desserts in Nashville | Kernels Nahville Popcorn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Sat 10:00 AM - 2:00 PM Mon, Tue, Wed, Thur, Fri 10:00 AM - 4:00 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kernelsnashville.com/",
+          "sourceLabel": "Official Must-Try Desserts in Nashville | Kernels Nahville Popcorn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call us at (629)-278-1556\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://kernelsnashville.com/",
+          "sourceLabel": "Official Must-Try Desserts in Nashville | Kernels Nahville Popcorn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/kernelsnashvill"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c7beda0d-473f-4ba3-a625-36af34aebe81",
+      "expectedIdentity": {
+        "name": "Kessler Baking Studio",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.kesslerbakingstudio.com/"
+      },
+      "patch": {
+        "description": "Happy & Creative Sweets Boutique in Dallas, TX."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kesslerbakingstudio.com/",
+          "sourceLabel": "Official Kessler Baking Studio–Happy & Creative Sweets Boutique in Dallas, TX | Kessler Baking Studio–A Happy and Creative Sweets Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kessler Baking Studio–Happy & Creative Sweets Boutique in Dallas, TX | Kessler Baking Studio–A Happy and Creative Sweets Boutique"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c32a12c5-beee-4c0d-9937-c45be2682dab",
+      "expectedIdentity": {
+        "name": "KEVIN A JERRY MST & ASSOCIATES",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.kajmst.com/"
+      },
+      "patch": {
+        "description": "Kevin A Jerry MST & Associates (KAJMST) provides real estate tax and wealth-building services focused on commercial and income property owners."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kajmst.com/",
+          "sourceLabel": "Official Real Estate Tax Strategies &amp; Wealth Building | Kevin A Jerry MST &amp; Associates page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Beyond Cost Segregation Comprehensive Tax and Wealth Strategies Kevin A Jerry MST & Associates (KAJMST) is the only firm in the U.S. specializing in real estate tax strategies exclusively for commercial and income property owners.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_39645c64-d510-4543-8f27-621060a5de48",
+      "expectedIdentity": {
+        "name": "Keystone Advisors",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://keystonema.com/"
+      },
+      "patch": {
+        "description": "Keystone Advisors helps independent health and life agents save time, retain clients, and grow their business and offers back-office and BPO services to agencies and partners.",
+        "phone": "866-469-4921",
+        "facebook": "https://www.facebook.com/keystoneadvisorsagency",
+        "instagram": "https://www.instagram.com/keystoneadvisors/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://keystonema.com/",
+          "sourceLabel": "Official Home - Keystone Advisors page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Keystone Advisors helps independent Health and Life agents save time, retain more clients, and grow their business."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://keystonema.com/",
+          "sourceLabel": "Official Home - Keystone Advisors page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Get in touch 866-469-4921"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://keystonema.com/",
+          "sourceLabel": "Official Home - Keystone Advisors page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/keystoneadvisorsagency"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://keystonema.com/",
+          "sourceLabel": "Official Home - Keystone Advisors page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/keystoneadvisors/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_32f017c6-b81d-4f1a-aa92-9a85e70c3788",
+      "expectedIdentity": {
+        "name": "K&G Upright Consulting, Inc",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.kgupright.com/"
+      },
+      "patch": {
+        "description": "Affordable housing marketing, compliance, and applicant services.",
+        "hours": "Monday - Friday 9:00 AM - 5:00 PM; Saturday & Sunday Closed",
+        "tags": [
+          "affordable housing marketing",
+          "lease-up management",
+          "housing lottery administration",
+          "applicant processing & screening",
+          "income certifications & recertifications",
+          "compliance monitoring",
+          "fair housing marketing plans (afhmp)",
+          "occupancy & stabilization support"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kgupright.com/",
+          "sourceLabel": "Official K&amp;G Upright Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Affordable Housing Marketing, Compliance & Applicant Services"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kgupright.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office Hours Monday - Friday 9:00 AM - 5:00 PM Saturday & Sunday Closed"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://kgupright.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: ✔ Affordable Housing Marketing ✔ Lease-Up Management ✔ Housing Lottery Administration ✔ Applicant Processing & Screening ✔ Income Certifications & Recertifications ✔ Compliance Monitoring ✔ Fair Housing Marketing Plans (AFHMP) ✔ Occupancy & Stabilization Support"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ceaa7550-52d3-4c36-8ad4-475bdaf49581",
+      "expectedIdentity": {
+        "name": "Khawly Law PLLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.khawlylaw.com/"
+      },
+      "patch": {
+        "phone": "(929) 419-1187",
+        "youtube": "https://www.youtube.com/@khawlylaw"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.khawlylaw.com/",
+          "sourceLabel": "Official Business Litigation Attorney in Brooklyn NYC | Khawly Law PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact (929) 419-1187 angie@khawlylaw.com"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.khawlylaw.com/",
+          "sourceLabel": "Official Business Litigation Attorney in Brooklyn NYC | Khawly Law PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@khawlylaw"
+        }
+      ]
+    },
+    {
+      "businessId": "dir-db3e481045a1f7b205130c17",
+      "expectedIdentity": {
+        "name": "Kicasso Sneaker Art Bar",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.kicassoindy.com/"
+      },
+      "patch": {
+        "hours": "Wednesday through Saturday: sessions at 12:00-2:30pm, 3:00-5:30pm, and 6:00-8:30pm; Sunday: 1 class session at 3:00-5:30pm; Duration: 2.5 hours",
+        "phone": "317-500-7332"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.kicassoindy.com/faq",
+          "sourceLabel": "Official FAQ | Kicasso Sneaker Art Bar page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Wednesday through Saturday: sessions at 12:00-2:30pm, 3:00-5:30pm, and 6:00-8:30pm Sunday: 1 class session at 3:00-5:30pm Duration: 2.5 hours\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kicassoindy.com/",
+          "sourceLabel": "Official Sneaker Art Class | Kicasso Sneaker Art Bar | Indianapolis IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kicasso Sneaker Art Bar 6416 Ferguson St. Indianapolis, IN 46220 317-500-7332 info@kicassoindy.com\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8e08cddf-67bb-425a-8c87-14970a5e7d48",
+      "expectedIdentity": {
+        "name": "Kiddie Academy of Downtown Columbus",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.kiddieacademy.com/downtowncolumbus"
+      },
+      "patch": {
+        "hours": "Mon 7am - 5:30pm; Tue 7am - 5:30pm; Wed 7am - 5:30pm; Thu 7am - 5:30pm; Fri 7am - 5:30pm",
+        "phone": "614-441-0980"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://kiddieacademy.com/academies/downtown-columbus/about-us/",
+          "sourceLabel": "Official Look Inside Kiddie Academy of Downtown Columbus, OH page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our Hours Mon 7am - 5:30pm Tue 7am - 5:30pm Wed 7am - 5:30pm Thu 7am - 5:30pm Fri 7am - 5:30pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kiddieacademy.com/academies/downtown-columbus/",
+          "sourceLabel": "Official Best Daycare & Preschool | Kiddie Academy of Downtown Columbus, OH page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 614-441-0980\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_6832260b-ce9d-421e-b1f2-1089f743d9d7",
+      "expectedIdentity": {
+        "name": "Kids' Meals, Inc.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://kidsmealsinc.org/"
+      },
+      "patch": {
+        "description": "Kids' Meals delivers free, healthy meals to the doorsteps of Greater Houston’s preschool-aged children and provides families with resources to help end the cycle of poverty.",
+        "hours": "Monday–Friday 8:00 a.m. – 4:00 p.m.",
+        "phone": "713-695-5437",
+        "instagram": "https://www.instagram.com/kidsmealsinc/",
+        "facebook": "https://www.facebook.com/kidsmealsinc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Together, we are ending childhood hunger by delivering free, healthy meals to the doorsteps of Greater Houston’s hungriest preschool-aged children and through collaboration providing their families with resources to help end the cycle of poverty."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours of Operation Monday–Friday 8:00 a.m. – 4:00 p.m."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 713-695-5437"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kidsmealsinc/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/kidsmealsinc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9b175934-d7e9-4f62-a3d5-ef4da730e572",
+      "expectedIdentity": {
+        "name": "Kids' Meals, Inc.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://kidsmealsinc.org/"
+      },
+      "patch": {
+        "description": "Kids’ Meals is ending childhood hunger by delivering free, healthy meals to the doorsteps of Greater Houston’s hungriest preschool-aged children and, through collaboration, providing their families with resources to help end the cycle of poverty.",
+        "hours": "Monday–Friday 8:00 a.m. – 4:00 p.m.",
+        "phone": "713-695-5437",
+        "tags": [
+          "deliver free, healthy meals",
+          "preschool-aged children",
+          "family resource services"
+        ],
+        "instagram": "https://www.instagram.com/kidsmealsinc/",
+        "facebook": "https://www.facebook.com/kidsmealsinc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kidsmealsinc.org/about-us/",
+          "sourceLabel": "Official About Us - Kids&#039; Meals Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kids’ Meals is ending childhood hunger by delivering free, healthy meals to the doorsteps of Greater Houston’s hungriest preschool-aged children and, through collaboration, providing their families with resources to help end the cycle of poverty.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours of Operation Monday–Friday 8:00 a.m. – 4:00 p.m.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 713-695-5437\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"We deliver free, healthy meals right to your home—no strings attached.\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kidsmealsinc/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kidsmealsinc.org/",
+          "sourceLabel": "Official Kids&#039; Meals Inc. - End Childhood Hunger Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/kidsmealsinc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5d20cbd0-d58b-4ad9-9e8a-beec2e7da24a",
+      "expectedIdentity": {
+        "name": "Kid-Tastic Child Care",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.yourkidtastic.com/"
+      },
+      "patch": {
+        "description": "Kid-Tastic provides child care and early learning programs for children from 6 weeks through age 13, including infant care, toddler programs, preschool (Smart Start, K3–K5), before & after school care, and transportation services.",
+        "hours": "\"Open 6 AM – 6 PM Monday-Friday for working families.\"",
+        "phone": "\"Call us at 414-502-5515\""
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yourkidtastic.com/",
+          "sourceLabel": "Official Child Care with Openings | Kid-Tastic Child Care Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Quality child care and early learning for Milwaukee-area families, from 6 weeks through age 13. Infant Care • K3–K5 Elementary Prep • Before & After School • Free Transportation*\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://yourkidtastic.com/",
+          "sourceLabel": "Official Child Care with Openings | Kid-Tastic Child Care Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Open 6 AM &#8211; 6 PM Monday-Friday for working families.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://yourkidtastic.com/",
+          "sourceLabel": "Official Child Care with Openings | Kid-Tastic Child Care Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Prefer a quick chat? Or, have a question? Call us at 414-502-5515!\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_1095469c-24c4-46ad-b996-45cf48bd9327",
+      "expectedIdentity": {
+        "name": "Kiki's Sweet Treats & Events",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3aJ8Joe"
+      },
+      "patch": {
+        "description": "KiKi's Sweet Treats & Events (KSTE) is a mother-daughter creative studio specializing in elevated event design, intentional decor, and handcrafted sweet experiences.",
+        "phone": "(414) 435-2811",
+        "tags": [
+          "elevated event design",
+          "intentional decor",
+          "handcrafted desserts",
+          "custom sugar cookies",
+          "gourmet confections",
+          "dessert displays"
+        ],
+        "facebook": "https://www.facebook.com/kikissweettreatsandeventsllc/",
+        "instagram": "https://www.instagram.com/kikissweettreatsandeventsllc/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kikissweetsandeven.wixsite.com/sweettreatsandevents/about",
+          "sourceLabel": "Official About | Sweettreatsandevents page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: KiKi's Sweet Treats & Events (KSTE) is a mother-daughter creative studio specializing in elevated event design, intentional decor, and handcrafted sweet experiences."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kikissweetsandeven.wixsite.com/sweettreatsandevents/contact-us",
+          "sourceLabel": "Official Contact Us | Sweettreatsandevents page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (414) 435-2811 (Text or Call - We will respond during business hours)"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://kikissweetsandeven.wixsite.com/sweettreatsandevents/about",
+          "sourceLabel": "Official About | Sweettreatsandevents page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From stunning tablescapes and statement installations, to custom sugar cookies, gourmet confections, and elevated dessert displays, we believe every detail should be as beautiful as it is memorable."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kikissweetsandeven.wixsite.com/sweettreatsandevents",
+          "sourceLabel": "Official Home | Sweettreatsandevents page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/kikissweettreatsandeventsllc/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://kikissweetsandeven.wixsite.com/sweettreatsandevents",
+          "sourceLabel": "Official Home | Sweettreatsandevents page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kikissweettreatsandeventsllc/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_954016a1-2be6-4ba3-803c-9d6beca577b6",
+      "expectedIdentity": {
+        "name": "Kilwins Ice Cream - Chocolate - Fudge",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://www.kilwins.com/pages/stores-near-me-tulsa-ok-74120-0228"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/Kilwins/",
+        "instagram": "https://www.instagram.com/kilwins",
+        "youtube": "https://www.youtube.com/@Kilwinschocolatesfudgeicecream",
+        "tiktok": "https://www.tiktok.com/@kilwins_official",
+        "pinterest": "https://www.pinterest.com/kilwins_official/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill",
+        "tiktok": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.kilwins.com/pages/store-locator",
+          "sourceLabel": "Official Store Locator &ndash; Kilwins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Kilwins/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.kilwins.com/pages/store-locator",
+          "sourceLabel": "Official Store Locator &ndash; Kilwins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kilwins"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.kilwins.com/pages/store-locator",
+          "sourceLabel": "Official Store Locator &ndash; Kilwins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@Kilwinschocolatesfudgeicecream"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.kilwins.com/pages/store-locator",
+          "sourceLabel": "Official Store Locator &ndash; Kilwins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@kilwins_official"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.kilwins.com/pages/store-locator",
+          "sourceLabel": "Official Store Locator &ndash; Kilwins page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/kilwins_official/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0f415762-a2d8-4983-89c9-2e4a9274ab44",
+      "expectedIdentity": {
+        "name": "Kindra's Sacred Healing",
+        "city": "Coon Rapids",
+        "state": "MN",
+        "website": "https://kindrassacredhealing.godaddysites.com/"
+      },
+      "patch": {
+        "description": "Wellness Practitioner helping you balance your: Chi, Aura, Spirit and Physical Body through: Reiki, Meditation, movement, and Shamanism.",
+        "hours": "APPT ONLY & WALK-INS Open today 12:00 pm – 06:00 pm",
+        "phone": "(612) 860-9188 (M)",
+        "facebook": "https://www.facebook.com/kindrassacredhealing",
+        "instagram": "https://www.instagram.com/kindrassacredhealing/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kindrassacredhealing.godaddysites.com/",
+          "sourceLabel": "Official Kindra&#x27;s Sacred Healing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Wellness Practitioner helping you balance your: Chi, Aura, Spirit and Physical Body through: Reiki, Meditation, movement, and Shamanism.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kindrassacredhealing.godaddysites.com/",
+          "sourceLabel": "Official Kindra&#x27;s Sacred Healing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"APPT ONLY & WALK-INS Open today 12:00 pm – 06:00 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kindrassacredhealing.godaddysites.com/",
+          "sourceLabel": "Official Kindra&#x27;s Sacred Healing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(612) 860-9188 (M)\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kindrassacredhealing.godaddysites.com/",
+          "sourceLabel": "Official Kindra&#x27;s Sacred Healing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/kindrassacredhealing"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://kindrassacredhealing.godaddysites.com/",
+          "sourceLabel": "Official Kindra&#x27;s Sacred Healing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kindrassacredhealing/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_64f5a7e5-74c6-4012-aa36-e8a87ecc20df",
+      "expectedIdentity": {
+        "name": "Kingdom Image Arts",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.kiarts.live/"
+      },
+      "patch": {
+        "description": "Kingdom Image Arts empowers all generations through inspirational arts, performances, education, and influential programming.",
+        "phone": "(614) 934-5012",
+        "youtube": "https://www.youtube.com/@kingdomimagearts"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kiarts.live/",
+          "sourceLabel": "Official Kingdom Image Arts | Arts that grow page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kingdom Image Arts empowers all generations through inspirational arts, performances, education, and influential programming contributing to personal wellness, economic impact, and social change.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kiarts.live/contact",
+          "sourceLabel": "Official Contact | Kingdom Image Arts page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(614) 934-5012\",\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.kiarts.live/",
+          "sourceLabel": "Official Kingdom Image Arts | Arts that grow page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@kingdomimagearts"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5ef3b3a1-a636-4d2a-804b-e3b1e4c524d6",
+      "expectedIdentity": {
+        "name": "King of Massage LLC",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.kingofmassage.net/"
+      },
+      "patch": {
+        "description": "Mobile and in-location massage therapy services provided by a licensed massage therapist offering treatments from relaxation to rehabilitation of injuries.",
+        "phone": "(615) 425-1366",
+        "tags": [
+          "massage therapy",
+          "mobile appointments"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kingofmassage.net/about",
+          "sourceLabel": "Official About &mdash; King of Massage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: As a Massage Therapist, I take pride in educating my clients about massage therapy and helping them see that it is a necessary tool to a healthier lifestyle and not just a luxury. With over ten years of experience in massage therapy I am able to offer you everything from a relaxing massage to rehabilitation of injuries."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kingofmassage.net/",
+          "sourceLabel": "Official King of Massage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (615) 425-1366"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kingofmassage.net/contact",
+          "sourceLabel": "Official Contact &mdash; King of Massage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Available for Mobile appointments & events."
+        }
+      ]
+    },
+    {
+      "businessId": "source_5bf58ee4-b84d-42cf-aee3-d0c5a6da8b72",
+      "expectedIdentity": {
+        "name": "King & Queen Emporium International",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://kingqueenemporium.com/"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/kingandqueenemporium",
+        "facebook": "http://facebook.com/squarespace",
+        "twitter": "http://twitter.com/squarespace"
+      },
+      "fieldModes": {
+        "instagram": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.kingqueenemporium.com/",
+          "sourceLabel": "Official King &amp; Queen Emporium Int&#39;l page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kingandqueenemporium"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.kingqueenemporium.com/",
+          "sourceLabel": "Official King &amp; Queen Emporium Int&#39;l page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: http://facebook.com/squarespace"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.kingqueenemporium.com/",
+          "sourceLabel": "Official King &amp; Queen Emporium Int&#39;l page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://twitter.com/squarespace"
+        }
+      ]
+    },
+    {
+      "businessId": "source_74360a58-0c1e-400f-b99e-b09b1341bb3e",
+      "expectedIdentity": {
+        "name": "Kingsway Exterminating Co., Inc.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://kingswayexterminating.com/"
+      },
+      "patch": {
+        "description": "Kingsway Pest Control (Kingsway Exterminating Co., Inc.) provides exterminator/pest control services in Brooklyn."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kingswayexterminating.com/",
+          "sourceLabel": "Official Brooklyn Exterminator | Kingsway Pest Control Since 1976 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Brooklyn Exterminator | Kingsway Pest Control Since 1976"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a535ac6d-d92f-47ed-9a98-699c26b7fbc1",
+      "expectedIdentity": {
+        "name": "Kitsune Brewing Co.",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.kitsunebrewingco.com/"
+      },
+      "patch": {
+        "description": "Brewery operating as Kitsune Brewing Company in Phoenix, AZ.",
+        "phone": "(602) 245-8593",
+        "tags": [
+          "brewery"
+        ],
+        "facebook": "https://www.facebook.com/KitsuneBrewCo"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kitsunebrewingco.com/",
+          "sourceLabel": "Official Kitsune page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kitsune Brewing Company 3321 E Bell Rd Ste B-05, Phoenix, United States"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kitsunebrewingco.com/",
+          "sourceLabel": "Official Kitsune page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 3321 E Bell Rd Suite B-5 Phoenix, AZ 85032 (602) 245-8593"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kitsunebrewingco.com/",
+          "sourceLabel": "Official Kitsune page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Kitsune Brewing Company 3321 E Bell Rd Ste B-05, Phoenix, United States"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.kitsunebrewingco.com/",
+          "sourceLabel": "Official Kitsune page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/KitsuneBrewCo"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1d2f4e41-a769-4e8a-8d72-fdab2e4f085f",
+      "expectedIdentity": {
+        "name": "Kiva Williams The Fun Foodie Mama",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://thefunfoodiemama.com/"
+      },
+      "patch": {
+        "description": "A blog that shares food, family, and lifestyle content for the Tampa Bay area.",
+        "pinterest": "http://www.pinterest.com/thefunfoodiemama"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thefunfoodiemama.com/about/",
+          "sourceLabel": "Official About - The Fun Foodie Mama page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Please follow along as The Fun Foodie Mama keeps you in the know for all things food, family and fun across the Tampa Bay!"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://thefunfoodiemama.com/",
+          "sourceLabel": "Official The Fun Foodie Mama - Follow me for food, family and FUN! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: http://www.pinterest.com/thefunfoodiemama"
+        }
+      ]
+    },
+    {
+      "businessId": "source_10a46652-9596-4994-9574-b0d43abc9193",
+      "expectedIdentity": {
+        "name": "Klassik",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/2Qllk7s"
+      },
+      "patch": {
+        "description": "Artist / Producer / Songwriter / Curator from Milwaukee, WI.",
+        "tags": [
+          "one-on-one custom music production sessions",
+          "music production sessions",
+          "custom music production"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.iamklassik.com/",
+          "sourceLabel": "Official IAMKLASSIK.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Artist / Producer / Songwriter / Curator from Milwaukee, WI\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.iamklassik.com/study-hall-appointments",
+          "sourceLabel": "Official STUDY HALL APPOINTMENTS &mdash; IAMKLASSIK.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Reserve time for a unique opportunity to have a one-on-one custom music production session with Klassik.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7d8226e8-3e55-4185-814b-8b4a805dd8f0",
+      "expectedIdentity": {
+        "name": "Klean Kutz Barbershop",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "http://www.kleankutz.com/"
+      },
+      "patch": {
+        "description": "At klean kutz barbershop, my mission is to provide a personalized, high-quality grooming experience in a private and relaxing setting. i blend precision, style, and comfort to help every client look and feel their best.",
+        "hours": "Monday-Friday 8AM–4PM; Saturday 7AM–3PM; Sunday 7AM–1PM",
+        "phone": "(602) 821-8926",
+        "tags": [
+          "private suite appointments",
+          "grooming"
+        ],
+        "facebook": "https://www.facebook.com/people/Klean-Kutz-Barbershop/100089144409071/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kleankutz.com/",
+          "sourceLabel": "Official Klean Kutz Barbershop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At klean kutz barbershop, my mission is to provide a personalized, high-quality grooming experience in a private and relaxing setting.i blend precision, style, and comfort to help every client look and feel their best."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.kleankutz.com/",
+          "sourceLabel": "Official Klean Kutz Barbershop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Monday-Friday 8AM–4PM Saturday 7AM–3PM Sunday 7AM–1PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kleankutz.com/",
+          "sourceLabel": "Official Klean Kutz Barbershop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (602) 821-8926"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kleankutz.com/",
+          "sourceLabel": "Official Klean Kutz Barbershop page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: private suite appointments only 7 days a week!!!!"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.kleankutz.com/",
+          "sourceLabel": "Official Klean Kutz Barbershop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/people/Klean-Kutz-Barbershop/100089144409071/"
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "513115706bc49105550fa3a66ab787634c9aeb41f3d7f4f49281ddc79d6ff104"
+}

@@ -1,0 +1,4572 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-012",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_f54c08dd-2cc2-43d7-ae5f-ba8fa6cdb39f",
+      "expectedIdentity": {
+        "name": "KLUTCH 21 Apparel",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://shopklutch21.com/"
+      },
+      "patch": {
+        "tags": [
+          "online apparel",
+          "clothing retailer",
+          "accessories"
+        ]
+      },
+      "fieldModes": {
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.klutchdistrict.com/",
+          "sourceLabel": "Official KLUTCH DISTRICT &ndash; Klutch District page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: SHOP KLUTCH OG COLLECTION SHOP NOW ACCESSORIES ABOUT US A KLUTCH STORY"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e1422284-302e-461b-9e2d-242978740471",
+      "expectedIdentity": {
+        "name": "Knight, Morris & Reddick Law Group",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://kmrlawgroup.com/"
+      },
+      "patch": {
+        "description": "A boutique law firm based in Chicago that provides real estate law services, including assistance with buying and selling property and related transactional matters.",
+        "phone": "312-574-0181",
+        "instagram": "https://www.instagram.com/keliknightesq/",
+        "facebook": "https://www.facebook.com/kmrlawgroup/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kmrlawgroup.com/",
+          "sourceLabel": "Official Home - KMR Law Group | Chicago, IL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Knight, Morris & Reddick Law Group A boutique law firm based in Chicago."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kmrlawgroup.com/",
+          "sourceLabel": "Official Home - KMR Law Group | Chicago, IL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: 312-574-0181"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://kmrlawgroup.com/",
+          "sourceLabel": "Official Home - KMR Law Group | Chicago, IL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/keliknightesq/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kmrlawgroup.com/",
+          "sourceLabel": "Official Home - KMR Law Group | Chicago, IL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/kmrlawgroup/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_db0a38ca-b24d-4312-a224-af2ebb12817e",
+      "expectedIdentity": {
+        "name": "Knights Lawn & Landscaping",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://knightslawnllc.com/"
+      },
+      "patch": {
+        "description": "Knight's Lawn & Landscaping, LLC provides commercial and residential lawn services.",
+        "hours": "Open today 07:00 am – 08:00 pm (homepage) and Open today 09:00 am – 05:00 pm (contact page)",
+        "phone": "(601) 260-8684",
+        "tags": [
+          "tree removal and trimming",
+          "mulch install",
+          "pine straw install",
+          "lawn mowing",
+          "weed control & removal",
+          "artificial turf install",
+          "stump grinding",
+          "sod installation",
+          "gutter & roof cleaning"
+        ],
+        "facebook": "https://www.facebook.com/153995037790202",
+        "instagram": "https://www.instagram.com/knights_lawn_landscaping_llc",
+        "tiktok": "https://www.tiktok.com/@knightslawnlandscaping",
+        "youtube": "https://www.youtube.com/@knightslawnandlandscaping"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our team is made up of certified and highly skilled professionals who are passionate about lawn care and nature altogether. We are committed to providing commercial and residential lawn services and ensuring that customers needs are always satisfied."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Open today 07:00 am – 08:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call now (601) 260-8684"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: All Services Tree Removal and Trimming Mulch Install Pine straw Install Lawn Mowing Weed control & removal Artificial Turf Install Stump Grinding Sod Installation Gutter & roof cleaning"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/153995037790202"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/knights_lawn_landscaping_llc"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@knightslawnlandscaping"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://knightslawnllc.com/",
+          "sourceLabel": "Official Affordable Lawn Care in Jackson &amp; Central Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@knightslawnandlandscaping"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0a07e2ca-4b76-4cd7-bb2d-2958baae180a",
+      "expectedIdentity": {
+        "name": "Knotted",
+        "city": "Mobile",
+        "state": "AL",
+        "website": "https://www.knottedhandcraftedbowties.com/"
+      },
+      "patch": {
+        "description": "Handcrafted bowtie maker established in Mobile, Alabama that creates and sells unique, handcrafted bowties and related accessories."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.knottedhandcraftedbowties.com/pages/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our mission is to create the most unique, handcrafted bowties available!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7fba92d9-f294-4a82-ae3a-e8ef5fc1c666",
+      "expectedIdentity": {
+        "name": "Know NOLA Tours",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://knownolatours.com/"
+      },
+      "patch": {
+        "description": "Know NOLA Tours offers services to tourists and New Orleans natives including historical walking tours, transportation tours, bike tours, historical consulting, historical research, cultural & historical presentations, and planning assistance for cultural experiences.",
+        "phone": "(504) 264-2483",
+        "tags": [
+          "historical walking tours",
+          "transportation tours",
+          "bike tours",
+          "historical consulting",
+          "historical research",
+          "cultural presentations",
+          "planning assistance"
+        ],
+        "twitter": "https://twitter.com/KnowNOLATours"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.knownolatours.com/about/",
+          "sourceLabel": "Official About &#8211; KNOW NOLA TOURS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Know NOLA Tours offers services to tourists and New Orleans natives alike. These tours include historical walking tours, transportation tours, bike tours, historical consulting, historical research, cultural & historical presentations and assisting you in planning for the best cultural experience possible during your stay in the Big Easy."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.knownolatours.com/contact/",
+          "sourceLabel": "Official Contact &#8211; KNOW NOLA TOURS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (504) 264-2483"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.knownolatours.com/about/",
+          "sourceLabel": "Official About &#8211; KNOW NOLA TOURS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: These tours include historical walking tours, transportation tours, bike tours, historical consulting, historical research, cultural & historical presentations and assisting you in planning for the best cultural experience possible during your stay in the Big Easy."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.knownolatours.com/",
+          "sourceLabel": "Official KNOW NOLA TOURS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/KnowNOLATours"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0e287b08-8e80-4a24-9ae9-2358d4554240",
+      "expectedIdentity": {
+        "name": "Koba Cafe",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://www.kobacafe.co/"
+      },
+      "patch": {
+        "hours": "Mon-Fri 6:00 am - 6:00 pm; Sat-Sun 7:00 am - 6:00 pm",
+        "phone": "(410) 986-0366"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.kobacafe.co/location--hours.html",
+          "sourceLabel": "Official LOCATION + HOURS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"OUR HOURS Mon-Fri 6:00 am - 6:00 pm Sat-Sun 7:00 am - 6:00 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kobacafe.co/",
+          "sourceLabel": "Official HOME page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(410) 986-0366\""
+        }
+      ]
+    },
+    {
+      "businessId": "national-4b47313a33440d2b70a3b718",
+      "expectedIdentity": {
+        "name": "Kobi Co.",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://www.lovekobico.com/"
+      },
+      "patch": {
+        "phone": "612-388-4463"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lovekobico.com/",
+          "sourceLabel": "Official Kobi Co. Soy Candles, Bath Salts, Bath Bombs, Sprays and Wax Melts page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: “WHERE TO FIND US 48 S. 9TH ST. DOWNTOWN, MPLS 612-388-4463 WEDNESDAY -SATURDAY 11AM-6PM”"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4673287f-f9ce-46a1-b6bf-479651db977a",
+      "expectedIdentity": {
+        "name": "Konceited Styles by Andrea",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://konceitedstylesbyandrea.as.me/"
+      },
+      "patch": {
+        "description": "Scheduling page for Konceited Styles by Andrea."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://konceitedstylesbyandrea.as.me/schedule/9916baf4",
+          "sourceLabel": "Official Schedule Appointment with Konceited Styles by Andrea page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Schedule Appointment with Konceited Styles by Andrea"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a54300bd-b394-4318-aba0-ff3c86ab93f0",
+      "expectedIdentity": {
+        "name": "Kool Vibes Pizza & Wings",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "http://www.koolvibespizza.com/"
+      },
+      "patch": {
+        "phone": "(912) 499-5665"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://koolvibespizza.com/",
+          "sourceLabel": "Official Kool Vibez | page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phones (912) 499-5665"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8c8a860d-c769-419a-85e9-f854c5c31aa6",
+      "expectedIdentity": {
+        "name": "Korporate Logistics LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.korporatelogisticsonline.com/"
+      },
+      "patch": {
+        "description": "We specialize in providing Non-Emergency Medical Transportation (NEMT) services tailored to individuals with disabilities or medical conditions.",
+        "hours": "Open 24Hrs",
+        "phone": "380-203-3140",
+        "twitter": "https://twitter.com/KorporateLlc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://korporatelogisticsonline.com/",
+          "sourceLabel": "Official Korporate Logistics LLC &#8211; Driving Growth page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We specialize in providing Non-Emergency Medical Transportation (NEMT) services tailored to individuals with disabilities or medical conditions.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://korporatelogisticsonline.com/",
+          "sourceLabel": "Official Korporate Logistics LLC &#8211; Driving Growth page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Open 24Hrs | Info@korporatelogisticsonline.com | 380-203-3140 request a ride\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://korporatelogisticsonline.com/",
+          "sourceLabel": "Official Korporate Logistics LLC &#8211; Driving Growth page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"380-203-3140\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://korporatelogisticsonline.com/",
+          "sourceLabel": "Official Korporate Logistics LLC &#8211; Driving Growth page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/KorporateLlc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_737a1526-31ae-4f7a-8522-100619a42f43",
+      "expectedIdentity": {
+        "name": "KoS: Kiss of Silk",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://www.kissofsilk.com/"
+      },
+      "patch": {
+        "facebook": "http://facebook.com/kissofsilk",
+        "youtube": "https://www.youtube.com/@KissofSilk"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.kissofsilk.com/",
+          "sourceLabel": "Official Kiss of Silk | Plant-Based Body Care, Skincare &amp; Fragrance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: http://facebook.com/kissofsilk"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.kissofsilk.com/",
+          "sourceLabel": "Official Kiss of Silk | Plant-Based Body Care, Skincare &amp; Fragrance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@KissofSilk"
+        }
+      ]
+    },
+    {
+      "businessId": "dir-629d692f6d335ce79fec0d40",
+      "expectedIdentity": {
+        "name": "Kouklet & Tanda Brazilian Bakehouse",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.kouklet.com/"
+      },
+      "patch": {
+        "description": "\"Handmade Brazilian Cake Rolls\"",
+        "hours": "\"Monday, Thursday - Sunday from 09 am to 4 pm\"",
+        "phone": "\"Phone: 973-664-7076\"",
+        "tags": [
+          "pão de queijo",
+          "cake rolls",
+          "cookies",
+          "brazilian pastries"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kouklet.com/",
+          "sourceLabel": "Official Authentic Brazilian Bakery - Delicious Cakes &amp; Pastries &ndash; Kouklet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Handmade Brazilian Cake Rolls At Kouklet, Brazilian-born pastry chef Mardhory Santos-Cepeda has mastered the delicate art of Bolo de Rolo , a specialty from Pernambuco.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.kouklet.com/pages/contact-us-locations",
+          "sourceLabel": "Official Contact Us | Find Us &ndash; Kouklet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Monday, Thursday - Sunday from 09 am to 4 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kouklet.com/pages/contact-us-locations",
+          "sourceLabel": "Official Contact Us | Find Us &ndash; Kouklet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 973-664-7076 (*If we're unable to get your call be sure to leave a voice or text message, thank you!)\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kouklet.com/collections/weekly-menu",
+          "sourceLabel": "Official Monthly Local Menu 🍰✨💛 &ndash; Kouklet page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Pão de Queijo - Tapioca Cheese Bread From $2\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_1908add1-c263-42df-be29-64abc0b27af6",
+      "expectedIdentity": {
+        "name": "KP Empowered Solutions",
+        "city": "Minnetonka",
+        "state": "MN",
+        "website": "https://kpempoweredsolutions.com/"
+      },
+      "patch": {
+        "description": "We help guide you to find a better way to live by providing strategies, financial coaching, business consulting, credit counseling, investments, and courses/workshops.",
+        "phone": "507-369-4198"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kpempoweredsolutions.com/",
+          "sourceLabel": "Official KP Empowered Solutions &#8211; Solutions to Create and Sustain Generational Wealth page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At KP Empowered Solutions we help guide you to find a better way to live. From providing strategies that actually work to gaining clarity on your next steps in order for you to enjoy the freedom, success, and flexibility you have always hoped for.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kpempoweredsolutions.com/",
+          "sourceLabel": "Official KP Empowered Solutions &#8211; Solutions to Create and Sustain Generational Wealth page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"507-369-4198\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7c56da83-c253-4b16-891b-ac351bb59871",
+      "expectedIdentity": {
+        "name": "Kudzukian",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://kudzukian.com/"
+      },
+      "patch": {
+        "description": "KUDZUKIAN is an independently-owned branded audio and visual content producer that creates turn-key production of on-demand virtual, in-studio, and livestream content and produces live, hybrid, and virtual livestream events.",
+        "hours": "Monday 10am - 5pm Tuesday 10am - 5pm Wednesday 10am - 5pm Thursday 10am - 5pm Friday 10am - 5pm Saturday Closed Sunday Closed",
+        "phone": "Memphis 901.512.6767",
+        "twitter": "https://twitter.com/KudzukianMedia",
+        "youtube": "https://www.youtube.com/channel/UCKLZ5nYI1HXUW-l7Bh9z3fA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kudzukian.com/",
+          "sourceLabel": "Official KUDZUKIAN | Audio &amp; Visual Content Producer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kudzukian is an independently-owned branded audio and visual content producer, specializing in creating “turn-key” production of on-demand virtual, in-studio, and livestream content across all media platforms."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kudzukian.com/contact/",
+          "sourceLabel": "Official Contact Us | KUDZUKIAN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday 10am - 5pm Tuesday 10am - 5pm Wednesday 10am - 5pm Thursday 10am - 5pm Friday 10am - 5pm Saturday Closed Sunday Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kudzukian.com/contact/",
+          "sourceLabel": "Official Contact Us | KUDZUKIAN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Memphis 901.512.6767"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://kudzukian.com/",
+          "sourceLabel": "Official KUDZUKIAN | Audio &amp; Visual Content Producer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/KudzukianMedia"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://kudzukian.com/",
+          "sourceLabel": "Official KUDZUKIAN | Audio &amp; Visual Content Producer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCKLZ5nYI1HXUW-l7Bh9z3fA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_57c26700-7440-461a-826f-b9fd7402a2cd",
+      "expectedIdentity": {
+        "name": "Kulture Bar & Lounge",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://kultureindy.com/"
+      },
+      "patch": {
+        "description": "Kulture Bar & Lounge is Indy's new premier spot for great food, drinks, and music.",
+        "hours": "Mon-Wednesday (Lunch) 11:00 AM - 2:00 PM (Dinner) 7:00 PM - 12:00 AM; Thursday (Lunch) 11:00 AM - 2:00 PM (Dinner) 7:00 PM - 1:00 AM; Friday (After Work Rush Hour) 11:00 AM - 2:00 AM; Saturday 7:00 PM - 2:00 AM; Sunday 4:00PM - 9:00PM",
+        "phone": "(317)-222-4964",
+        "facebook": "https://www.facebook.com/103345348258245",
+        "instagram": "https://www.instagram.com/kultureindy"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://kultureindy.com/",
+          "sourceLabel": "Official Best American Restaurant in Indy | Kulture Bar &amp; Bistro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Kulture Bar & Lounge is Indy's new premier spot for great food, drinks, and music.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://kultureindy.com/",
+          "sourceLabel": "Official Best American Restaurant in Indy | Kulture Bar &amp; Bistro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon-Wednesday (Lunch) 11:00 AM - 2:00 PM (Dinner) 7:00 PM - 12:00 AM Thursday (Lunch) 11:00 AM - 2:00 PM (Dinner) 7:00 PM - 1:00 AM Friday (After Work Rush Hour) 11:00 AM - 2:00 AM Saturday 7:00 PM - 2:00 AM Sunday 4:00PM - 9:00PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://kultureindy.com/",
+          "sourceLabel": "Official Best American Restaurant in Indy | Kulture Bar &amp; Bistro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(317)-222-4964\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://kultureindy.com/",
+          "sourceLabel": "Official Best American Restaurant in Indy | Kulture Bar &amp; Bistro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/103345348258245"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://kultureindy.com/",
+          "sourceLabel": "Official Best American Restaurant in Indy | Kulture Bar &amp; Bistro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/kultureindy"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d143e975-ff13-45c0-9844-9ca143cc206d",
+      "expectedIdentity": {
+        "name": "KURV Architecture D.P.C.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.kurvarchitecture.com/"
+      },
+      "patch": {
+        "description": "Architecture studio offering project development, construction and design consulting, and related services.",
+        "hours": "by appointment only",
+        "phone": "212 203 2644",
+        "tags": [
+          "architecture",
+          "project development",
+          "construction consulting",
+          "design consulting"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kurvarchitecture.com/contact",
+          "sourceLabel": "Official KURV Architecture DPC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Please contact us via this form for investment and equity opportunities, project development, construction and design consulting, press inquiries and employment opportunities."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.kurvarchitecture.com/contact",
+          "sourceLabel": "Official KURV Architecture DPC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Studio 575 Fifth Avenue, FL 14 New York, NY, 10017 by appointment only"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.kurvarchitecture.com/",
+          "sourceLabel": "Official KURV Architecture DPC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: kurv architecture d.p.c. 142 West 57th Street New York, NY, 10019 United States 212 203 2644"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kurvarchitecture.com/contact",
+          "sourceLabel": "Official KURV Architecture DPC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Please contact us via this form for investment and equity opportunities, project development, construction and design consulting, press inquiries and employment opportunities."
+        }
+      ]
+    },
+    {
+      "businessId": "source_37346759-386f-46df-b648-5ebf1d782142",
+      "expectedIdentity": {
+        "name": "Kuumba Juice & Coffee",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://kuumbajuicecoffee.com/"
+      },
+      "patch": {
+        "description": "Kuumba Juice & Coffee",
+        "tags": [
+          "juice",
+          "coffee"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kuumbajuicecoffee.com/",
+          "sourceLabel": "Official Kuumba Juice & Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kuumba Juice & Coffee"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.kuumbajuicecoffee.com/",
+          "sourceLabel": "Official Kuumba Juice & Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Kuumba Juice & Coffee"
+        }
+      ]
+    },
+    {
+      "businessId": "cohort-5d2cb7ed8b562f13df160164",
+      "expectedIdentity": {
+        "name": "La Caleñita Bakery & Café",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.xn--lacaleitabakery-3qb.com/"
+      },
+      "patch": {
+        "phone": "215-455-6808",
+        "hours": "Mon - Fri: 5:00 - 19:00"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.xn--lacaleitabakery-3qb.com/",
+          "sourceLabel": "Official La Cale&ntilde;ita &#8211; Bakery and Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 215-455-6808"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.xn--lacaleitabakery-3qb.com/",
+          "sourceLabel": "Official La Cale&ntilde;ita &#8211; Bakery and Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Mon - Fri: 5:00 - 19:00"
+        }
+      ]
+    },
+    {
+      "businessId": "source_33af03ea-10cf-4df8-a5cd-9ee96f9ac2bc",
+      "expectedIdentity": {
+        "name": "LacedbyFaz",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.lacedbyfaz.com/"
+      },
+      "patch": {
+        "description": "LacedByFaz sells luxury raw human hair extensions, handcrafted wigs, and related hair products.",
+        "hours": "Customer Service Tuesday-Friday 11:00am-4pm",
+        "instagram": "https://www.instagram.com/lacedbyfaz",
+        "facebook": "https://www.facebook.com/Lacedbyfaz/",
+        "youtube": "https://www.youtube.com/@Lacedbyfaz",
+        "pinterest": "https://www.pinterest.com/lacedbyfaz/",
+        "tiktok": "https://www.tiktok.com/@lacedbyfaz0"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "instagram": "fill",
+        "facebook": "fill",
+        "youtube": "fill",
+        "pinterest": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lacedbyfaz.com/",
+          "sourceLabel": "Official Luxury Hair Extensions Custom Wigs and Raw Hair Bundles Laced by Faz &ndash; LacedByFaz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Laced by Faz, luxury should feel effortless. Every piece is thoughtfully crafted to deliver confidence, convenience, and quality. From premium raw extensions to handcrafted glueless wigs, we create elevated hair solutions designed to fit seamlessly into your lifestyle."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.lacedbyfaz.com/pages/about-us",
+          "sourceLabel": "Official Luxury Raw Human Hair Extensions for Empowered Women by Laced By Faz &ndash; LacedByFaz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Customer Service Tuesday-Friday 11:00am-4pm"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lacedbyfaz.com/",
+          "sourceLabel": "Official Luxury Hair Extensions Custom Wigs and Raw Hair Bundles Laced by Faz &ndash; LacedByFaz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/lacedbyfaz"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lacedbyfaz.com/",
+          "sourceLabel": "Official Luxury Hair Extensions Custom Wigs and Raw Hair Bundles Laced by Faz &ndash; LacedByFaz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Lacedbyfaz/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.lacedbyfaz.com/",
+          "sourceLabel": "Official Luxury Hair Extensions Custom Wigs and Raw Hair Bundles Laced by Faz &ndash; LacedByFaz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@Lacedbyfaz"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.lacedbyfaz.com/",
+          "sourceLabel": "Official Luxury Hair Extensions Custom Wigs and Raw Hair Bundles Laced by Faz &ndash; LacedByFaz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/lacedbyfaz/"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.lacedbyfaz.com/",
+          "sourceLabel": "Official Luxury Hair Extensions Custom Wigs and Raw Hair Bundles Laced by Faz &ndash; LacedByFaz page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@lacedbyfaz0"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a05866b1-6de1-4a09-90e8-cc73565e4715",
+      "expectedIdentity": {
+        "name": "Lacy Consulting Services",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.lacyconsultingservices.com/"
+      },
+      "patch": {
+        "description": "Lacy Consulting Services uses applied environmental social science and community engagement to help environmental organizations, agencies, and sustainability-focused businesses reach their community and conservation goals.",
+        "phone": "(970) 213-5849"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lacyconsultingservices.com/",
+          "sourceLabel": "Official Lacy Consulting Services - Stop Assuming. Start Knowing. - Lacy Consulting Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Lacy Consulting Services (LCS), we use applied environmental social science and robust relationship building to better understand communities that are impacted by or can directly impact conservation outcomes. We are committed to helping environmental organizations, agencies, and sustainability-focused businesses reach their community and conservation goals using social science techniques and enhanced community engagement principles.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lacyconsultingservices.com/",
+          "sourceLabel": "Official Lacy Consulting Services - Stop Assuming. Start Knowing. - Lacy Consulting Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Us: (970) 213-5849\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_ce24acc4-e10e-446a-aa0f-acbcab23e609",
+      "expectedIdentity": {
+        "name": "Ladiistouch",
+        "city": "St. Paul",
+        "state": "MN",
+        "website": "https://ladiistouch.com/"
+      },
+      "patch": {
+        "description": "LadiisTouch specializes in providing professional Loc and Braiding services and offers loc maintenance and braiding techniques.",
+        "hours": "(9am - 5pm)",
+        "phone": "763-600-9832",
+        "facebook": "https://www.facebook.com/LadiisTouch",
+        "instagram": "https://www.instagram.com/ladiistouch_locs01",
+        "tiktok": "https://www.tiktok.com/@ladiistouch"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ladiistouch.com/",
+          "sourceLabel": "Official LadiisTouch - Locs, Hair, Hair Salon and Stylist page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LadiisTouch specializes in providing professional Loc and Braiding services that cater to a diverse range of styles & preferences. Focusing on quality & customer satisfaction. Offering expert loc maintenance, intricate braiding techniques."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://ladiistouch.com/contact-us",
+          "sourceLabel": "Official LadiisTouch page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We love our customers, so feel free to visit during normal business hours. (9am - 5pm)"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ladiistouch.com/",
+          "sourceLabel": "Official LadiisTouch - Locs, Hair, Hair Salon and Stylist page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LadiisTouch - Locs, Hair, Hair Salon and Stylist 763-600-9832"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://ladiistouch.com/",
+          "sourceLabel": "Official LadiisTouch - Locs, Hair, Hair Salon and Stylist page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/LadiisTouch"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://ladiistouch.com/",
+          "sourceLabel": "Official LadiisTouch - Locs, Hair, Hair Salon and Stylist page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/ladiistouch_locs01"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://ladiistouch.com/",
+          "sourceLabel": "Official LadiisTouch - Locs, Hair, Hair Salon and Stylist page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@ladiistouch"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5fc188a2-2c0a-424f-b239-d965dc2ff3fa",
+      "expectedIdentity": {
+        "name": "La Diosa Boutique",
+        "city": "Los Angeles",
+        "state": "CA",
+        "website": "http://www.ladiosaa.com/"
+      },
+      "patch": {
+        "description": "La Diosa Boutique",
+        "tags": [
+          "boutique"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ladiosaa.com/",
+          "sourceLabel": "Official La Diosa Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: La Diosa Boutique"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://ladiosaa.com/",
+          "sourceLabel": "Official La Diosa Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: La Diosa Boutique"
+        }
+      ]
+    },
+    {
+      "businessId": "source_da9fe009-0aae-4521-9c41-466dc394611a",
+      "expectedIdentity": {
+        "name": "LaLux Photography",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3vZWhWs"
+      },
+      "patch": {
+        "description": "LaLux Photography is a photographer offering portrait, convention, wedding, engagement, and special event photography.",
+        "tags": [
+          "portraits",
+          "conventions",
+          "weddings",
+          "engagements",
+          "special events",
+          "boudoir",
+          "street",
+          "videos"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://laluxphotography.zenfolio.com/about.html",
+          "sourceLabel": "Official Zenfolio | LaLux Photography | About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: If I had to name a particular style for my photography, I would have to say photojournalistic, shooting anything from wedding photos to fan conventions. Portraits such as senior class and family photos, offer me the chance to interact with my subjects more personally, allowing us to build a rapport and create beautiful art together."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://laluxphotography.zenfolio.com/",
+          "sourceLabel": "Official Zenfolio | LaLux Photography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LaLux Photography Portraits Conventions Weddings Engagements Special Events Good Trouble Videos Boudoir Street"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2b90c8e7-87bc-46d4-9206-451c72adad5f",
+      "expectedIdentity": {
+        "name": "LA Maison in Midtown",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.lamaisonmidtown.com/"
+      },
+      "patch": {
+        "phone": "713-529-3600"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lamaisonmidtown.com/contact-us",
+          "sourceLabel": "Official La Maison in Midtown Bed &amp; Breakfast - Houston's Top-Rated! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 713-529-3600 or 877-529-3999"
+        }
+      ]
+    },
+    {
+      "businessId": "source_681fade8-2d14-4002-a668-e3ace077532d",
+      "expectedIdentity": {
+        "name": "Landing Advisors, LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://landingadvisors.com/"
+      },
+      "patch": {
+        "description": "Landing Advisors is a management consulting firm with a focus on non-profits, government agencies, and growing businesses. We operate at the intersection of strategic planning, policy analysis, and data science.",
+        "phone": "+1 (832) 280-1646",
+        "tags": [
+          "strategic planning",
+          "policy analysis",
+          "data science",
+          "legislative analysis"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.landingadvisors.com/",
+          "sourceLabel": "Official Management Consulting Firm | Landing Advisors | United States page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Landing Advisors is a management consulting firm with a focus on non-profits, government agencies, and growing businesses. We operate at the intersection of strategic planning, policy analysis, and data science; a unique and practical blend of services that leverages regional knowledge."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.landingadvisors.com/",
+          "sourceLabel": "Official Management Consulting Firm | Landing Advisors | United States page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 (832) 280-1646"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.landingadvisors.com/services-4",
+          "sourceLabel": "Official Services | My Site page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: STRATEGIC PLANNING POLICY ANALYSIS DATA SCIENCE LEGISLATIVE ANALYSIS"
+        }
+      ]
+    },
+    {
+      "businessId": "source_82ce2134-2ed4-42cc-b6e7-60d838b1274f",
+      "expectedIdentity": {
+        "name": "LaNoire Bridal",
+        "city": "St. Paul",
+        "state": "MN",
+        "website": "https://www.lanoirebridal.com/"
+      },
+      "patch": {
+        "description": "LaNoire Bridal is a bridal boutique offering private styling appointments, wedding gowns, bridesmaid dresses, mother of the bride styles, and event spaces.",
+        "hours": "By Appointment Only Wednesday - Friday: 11 am - 6 pm Saturday: 10 am - 7 pm Sunday: 11 am - 5 pm Monday - Tuesday: Closed",
+        "phone": "651-369-9874",
+        "tags": [
+          "wedding gowns",
+          "bridesmaid dresses",
+          "private styling",
+          "bridal fittings",
+          "event spaces"
+        ],
+        "instagram": "https://instagram.com/lanoirebridal",
+        "facebook": "https://facebook.com/lanoirebridal"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lanoirebridal.com/about-us/",
+          "sourceLabel": "Official Our Story | LaNoire Bridal — Minnesota&#x27;s First Black-Owned Bridal Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From wedding gowns and bridesmaid dresses to mother of the bride styles and event spaces, we are here for every step of your journey."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.lanoirebridal.com/",
+          "sourceLabel": "Official LaNoire Bridal | Luxury Wedding Boutique St. Paul, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Boutique Hours By Appointment Only Wednesday - Friday: 11 am - 6 pm Saturday: 10 am - 7 pm Sunday: 11 am - 5 pm Monday - Tuesday: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lanoirebridal.com/contact/",
+          "sourceLabel": "Official Contact &amp; Book an Appointment | LaNoire Bridal St. Paul, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 651-369-9874"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.lanoirebridal.com/contact/",
+          "sourceLabel": "Official Contact &amp; Book an Appointment | LaNoire Bridal St. Paul, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Begin your journey in the heart of St. Paul. Whether you have questions about our collections or want to reserve your private fitting, we are here to assist."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lanoirebridal.com/",
+          "sourceLabel": "Official LaNoire Bridal | Luxury Wedding Boutique St. Paul, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/lanoirebridal"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lanoirebridal.com/",
+          "sourceLabel": "Official LaNoire Bridal | Luxury Wedding Boutique St. Paul, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/lanoirebridal"
+        }
+      ]
+    },
+    {
+      "businessId": "source_97216fbc-cf21-4516-9a44-0a609644c91e",
+      "expectedIdentity": {
+        "name": "LAPORTE & COMPANY",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://laporteandcompany.com/"
+      },
+      "patch": {
+        "description": "LaPorte & Co. designs immersive events, hospitality suites, brand activations, retreats, and VIP gatherings with an emphasis on atmosphere and intentionality.",
+        "instagram": "https://www.instagram.com/bennelllaporte/",
+        "pinterest": "https://www.pinterest.com/laporteandcompany/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://laporteandcompany.com/",
+          "sourceLabel": "Official LaPorte & Co. | Immersive Event Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We create immersive experiences across hospitality, brand and destination spaces with an emphasis on atmosphere and intentionality.\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://laporteandcompany.com/",
+          "sourceLabel": "Official LaPorte & Co. | Immersive Event Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/bennelllaporte/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://laporteandcompany.com/",
+          "sourceLabel": "Official LaPorte & Co. | Immersive Event Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/laporteandcompany/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_91516d03-06b9-4eab-8b30-d522744f985f",
+      "expectedIdentity": {
+        "name": "La Posh Salon",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3vWWPfY"
+      },
+      "patch": {
+        "description": "La Posh Salon: goal is to pamper you, give you prompt service, and to bring out your individual natural beauty.",
+        "hours": "Wednesday - Saturday 9am-4pm",
+        "phone": "Tel: 414-264-7674"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.laposhsalonmke.com/about",
+          "sourceLabel": "Official ABOUT | laposhsalon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About Our goal is to pamper you, give you prompt service, and to bring out your individual natural beauty."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.laposhsalonmke.com/about",
+          "sourceLabel": "Official ABOUT | laposhsalon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: BUSINESS HOURS Wednesday - Saturday 9am-4pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.laposhsalonmke.com/about",
+          "sourceLabel": "Official ABOUT | laposhsalon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Please call and book your appointment today! Tel: 414-264-7674"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0c37acfe-9b73-4cad-a70f-21dca6e145b2",
+      "expectedIdentity": {
+        "name": "Larger Than Life Events And Design",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "https://www.largerthanlifeevents.com/"
+      },
+      "patch": {
+        "description": "Floral and event designer in Savannah, GA.",
+        "tags": [
+          "floral design",
+          "event design"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.largerthanlifeevents.com/",
+          "sourceLabel": "Official Savannah GA Floral and Event Designer Larger Than Life Events and Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Savannah GA Floral and Event Designer Larger Than Life Events and Design"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.largerthanlifeevents.com/",
+          "sourceLabel": "Official Savannah GA Floral and Event Designer Larger Than Life Events and Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Savannah GA Floral and Event Designer Larger Than Life Events and Design"
+        }
+      ]
+    },
+    {
+      "businessId": "cohort-5a022643dcae5c361bc5f06f",
+      "expectedIdentity": {
+        "name": "Las Bugambilias",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://lasbugambiliasphilly.com/"
+      },
+      "patch": {
+        "phone": "(267)-239-5673"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://lasbugambiliasphilly.com/",
+          "sourceLabel": "Official Las Bugambilias - Old City, Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(267)-239-5673\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_76b2ec01-8713-4f42-85c3-e602fa581960",
+      "expectedIdentity": {
+        "name": "LasTop Trucking LLC",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://lastoptrucking.blogspot.com/"
+      },
+      "patch": {
+        "description": "LasTop is a dump truck company specializing in hauling of dirt, gravel, rock, sand, spoils and more.",
+        "phone": "Call: 918-853-8364",
+        "tags": [
+          "construction for hire",
+          "hauling",
+          "tulsa metro"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lastoptrucking.blogspot.com/",
+          "sourceLabel": "Official LasTop Trucking - Trucking News page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LasTop is a dump truck company specializing in hauling of dirt, gravel, rock, sand, spoils and more."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lastoptrucking.blogspot.com/2026/01/the-backbone-of-construction-why.html",
+          "sourceLabel": "Official The Backbone of Construction: Why Professional Hauling Services Matter page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: 918-853-8364"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://lastoptrucking.blogspot.com/2026/01/the-backbone-of-construction-why.html",
+          "sourceLabel": "Official The Backbone of Construction: Why Professional Hauling Services Matter page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: construction for hire hauling LasTop Trucking LLC projects Tulsa Metro"
+        }
+      ]
+    },
+    {
+      "businessId": "source_42d8296b-0eb2-4101-a4e6-bde7ebab336a",
+      "expectedIdentity": {
+        "name": "Latha",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://lathaphx.com/"
+      },
+      "patch": {
+        "description": "Contemporary pan-African restaurant and bar celebrating the cuisines of Africa and the African diaspora.",
+        "phone": "(480) 640-6183",
+        "tags": [
+          "contemporary pan-african cuisine",
+          "pan-african restaurant",
+          "bar",
+          "private dining"
+        ],
+        "facebook": "https://www.facebook.com/LATHAPHX/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lathaphx.com/",
+          "sourceLabel": "Official Latha Restaurant and Bar | Discover Pan-African Flavors Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Latha is more than a restaurant and bar; it is an immersive experience where you celebrate and discover Africa and the African diaspora's diverse and delicious flavors with every bite, sip, foot tap, shoulder shimmy, and head bob."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lathaphx.com/",
+          "sourceLabel": "Official Latha Restaurant and Bar | Discover Pan-African Flavors Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (480) 640-6183"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.lathaphx.com/about",
+          "sourceLabel": "Official Our Story | Experience Authentic Flavors &mdash; Latha Restaurant and Bar page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: LATHA, Swahili for flavor, celebrates Africa and the diaspora’s rich and diverse cuisines. The menu honors the interconnected journey of the foodways and culture of Africa, Brazil, the Caribbean, and the Southern US."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lathaphx.com/",
+          "sourceLabel": "Official Latha Restaurant and Bar | Discover Pan-African Flavors Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/LATHAPHX/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_66ddde9b-8d3a-4268-95fe-d7f3fcdcf2d3",
+      "expectedIdentity": {
+        "name": "Latina Hustle, LLC",
+        "city": "Los Angeles",
+        "state": "CA",
+        "website": "http://www.latinahustlestore.com/"
+      },
+      "patch": {
+        "description": "\"Latina Hustle is redefining success for our generation by breaking cycles, healing in community, and building legacy with joy.\"",
+        "tiktok": "https://www.tiktok.com/@latinahustle"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://shoplh.co/",
+          "sourceLabel": "Official Latina Hustle page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Breaking Cycles, Building Legacies. Latina Hustle is redefining success for our generation by breaking cycles, healing in community, and building legacy with joy.\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://shoplh.co/",
+          "sourceLabel": "Official Latina Hustle page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@latinahustle"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4c83b791-d686-42b7-b7fb-f96190516b4a",
+      "expectedIdentity": {
+        "name": "Latina Millionaires Club",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://msha.ke/latinamillionairesclub"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/live/d_lMjxp8omA?si=t0eIQAvX0pVl6oNL"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://msha.ke/latinamillionairesclub",
+          "sourceLabel": "Official @latinamillionairesclub • Milkshake Website Builder page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/live/d_lMjxp8omA?si=t0eIQAvX0pVl6oNL"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f941a2d1-f423-4b33-90af-6ca4266ada7d",
+      "expectedIdentity": {
+        "name": "Latin Home Care",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.latinhomecare.com/"
+      },
+      "patch": {
+        "description": "Latin Home Care provides personalized home care services including companionship and personal care, tailored care plans, and household support services in New York.",
+        "phone": "718-918-1749",
+        "twitter": "https://www.twitter.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.latinhomecare.com/",
+          "sourceLabel": "Official Home Care Services in New York | Latin Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Latin Home Care is dedicated to providing top-quality Home Care Services that respect the diverse cultural backgrounds of our clients.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.latinhomecare.com/",
+          "sourceLabel": "Official Home Care Services in New York | Latin Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 718-918-1749\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.latinhomecare.com/",
+          "sourceLabel": "Official Home Care Services in New York | Latin Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_446d7aab-13e4-497b-bf1b-01b051db7d22",
+      "expectedIdentity": {
+        "name": "LaToya Watson",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://authorlatoyawatson.org/"
+      },
+      "patch": {
+        "description": "Author LaToya Watson is presented as an author with site sections for Events/Awards, Biography, School Appearance, Books/Youth, and other related content.",
+        "phone": "(414) 899-0336",
+        "tags": [
+          "author",
+          "school appearance",
+          "books/ youth"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://authorlatoyawatson.org/",
+          "sourceLabel": "Official Author LaToya Watson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Author LaToya Watson Home Events/Awards Biography School Appearance Books/Youth Shirts Planting Seeds CECDC LLC SSG Langston T. Watson"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://authorlatoyawatson.org/",
+          "sourceLabel": "Official Author LaToya Watson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (414) 899-0336"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://authorlatoyawatson.org/",
+          "sourceLabel": "Official Author LaToya Watson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Author LaToya Watson Home Events/Awards Biography School Appearance Books/Youth Shirts Planting Seeds CECDC LLC SSG Langston T. Watson"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0f196b71-0ee3-491e-86b6-fb6f4322830f",
+      "expectedIdentity": {
+        "name": "Laura Elam Photos",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.lauraelam.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/elamlaura",
+        "facebook": "https://www.facebook.com/lauraelamkeeptimeinplace/",
+        "instagram": "https://www.instagram.com/elamlaura/",
+        "pinterest": "https://www.pinterest.com/ktiplaura/"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/elamlaura"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/lauraelamkeeptimeinplace/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/elamlaura/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/ktiplaura/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fc47ba9e-8d36-4d5d-9ced-e6eca785038c",
+      "expectedIdentity": {
+        "name": "Laura Elam Photos (Keep Time in Place)",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.lauraelam.com/"
+      },
+      "patch": {
+        "description": "I am an Event Photographer. I use high-resolution images for individuals, newspapers, and social media.",
+        "twitter": "https://twitter.com/elamlaura",
+        "facebook": "https://www.facebook.com/lauraelamkeeptimeinplace/",
+        "instagram": "https://www.instagram.com/elamlaura/",
+        "pinterest": "https://www.pinterest.com/ktiplaura/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"I am an Event Photographer. I use high-resolution images for individuals, newspapers, and social media.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/elamlaura"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/lauraelamkeeptimeinplace/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/elamlaura/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.lauraelam.com/",
+          "sourceLabel": "Official Keep Time In Place, with Laura&#39;s / Sponsors My Life Our Life Story Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/ktiplaura/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0ce35a60-f7b9-470f-843d-c564913d92d5",
+      "expectedIdentity": {
+        "name": "LAUREL",
+        "city": "St. Paul",
+        "state": "MN",
+        "website": "https://www.laureldevelops.com/"
+      },
+      "patch": {
+        "description": "LAUREL was founded in 2019 by Shelisa Demuth to structure and deploy communications strategy for institutions that move capital; it is a strategic communications firm for leaders and institutions.",
+        "phone": "+ (1) 612-254-3613",
+        "facebook": "https://www.facebook.com/LaurelDevelops",
+        "instagram": "https://www.instagram.com/laureldevelops/",
+        "twitter": "https://twitter.com/laureldevelops"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.laureldevelops.com/about",
+          "sourceLabel": "Official About &mdash; LAUREL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LAUREL was founded in 2019 by Shelisa Demuth to structure and deploy communications strategy for the institutions that move capital — and the leaders and ventures they back. We are a strategic communications firm built for consequence, not mere publicity: a small, senior practice for people whose judgment moves markets and demands to be understood."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.laureldevelops.com/contact",
+          "sourceLabel": "Official Contact &mdash; LAUREL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +(1) 612-254-3613"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.laureldevelops.com/",
+          "sourceLabel": "Official LAUREL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/LaurelDevelops"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.laureldevelops.com/",
+          "sourceLabel": "Official LAUREL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/laureldevelops/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.laureldevelops.com/",
+          "sourceLabel": "Official LAUREL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/laureldevelops"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4692fc4f-d9eb-4fd0-8644-c7b49b1dcfe0",
+      "expectedIdentity": {
+        "name": "Law Enforcement Support Services",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://less2.com/"
+      },
+      "patch": {
+        "description": "Dedicated to providing highly technical and specialized administrative support to our law enforcement partners.",
+        "phone": "(205) 774-9897"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://less2.com/",
+          "sourceLabel": "Official Law Enforcement Support Services | Local Law Enforcement Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dedicated to providing highly technical and specialized administrative support to our law enforcement partners"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://less2.com/",
+          "sourceLabel": "Official Law Enforcement Support Services | Local Law Enforcement Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office: (205) 774-9897"
+        }
+      ]
+    },
+    {
+      "businessId": "source_487e9511-8dc1-4589-b237-35361045cf3d",
+      "expectedIdentity": {
+        "name": "Law Office of Mark Nicholson",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.marknicholsonlaw.com/"
+      },
+      "patch": {
+        "description": "The Law Office of Mark Nicholson represents people facing criminal charges and also advocates for people harmed by police misconduct, serious negligence, defamation, and the nonconsensual sharing of intimate images.",
+        "phone": "317-669-8972",
+        "tags": [
+          "criminal defense",
+          "personal injury",
+          "civil rights",
+          "revenge porn",
+          "defamation",
+          "family law"
+        ],
+        "pinterest": "https://pinterest.com/",
+        "youtube": "https://www.youtube.com/channel/UCUw-k9mqiblstSL3t9p0ngg/videos",
+        "twitter": "https://twitter.com/MNicholsonlaw"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "pinterest": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.marknicholsonlaw.com/",
+          "sourceLabel": "Official Experienced Indiana Attorney - Law Office of Mark Nicholson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Law Office of Mark Nicholson represents people facing criminal charges in Indianapolis and throughout Indiana. We also advocate for people harmed by police misconduct, serious negligence, defamation, and the nonconsensual sharing of intimate images."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.marknicholsonlaw.com/contact-us",
+          "sourceLabel": "Official Contact | Law Office of Mark Nicholson | Indiana Attorney page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone Direct: 317-669-8972"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.marknicholsonlaw.com/faq",
+          "sourceLabel": "Official FAQ | Law Office of Mark Nicholson | Indiana Attorney page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: FAQ TYPES OF CASES WE TAKE Criminal cases (Battery Cases, Drug Crimes, Drunk Driving, Violent Crimes, Gun Crimes, Sex Cases, etc.) Personal Injury Civil Rights Family Law (Attorney Audrey Lunsford) Post-Conviction Relief (PCR) and Appeals (Attorney Audrey Lunsford) Civil Litigation (Defamation, Revenge Porn, Small Claims etc.)"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.marknicholsonlaw.com/",
+          "sourceLabel": "Official Experienced Indiana Attorney - Law Office of Mark Nicholson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.marknicholsonlaw.com/",
+          "sourceLabel": "Official Experienced Indiana Attorney - Law Office of Mark Nicholson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCUw-k9mqiblstSL3t9p0ngg/videos"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.marknicholsonlaw.com/",
+          "sourceLabel": "Official Experienced Indiana Attorney - Law Office of Mark Nicholson page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/MNicholsonlaw"
+        }
+      ]
+    },
+    {
+      "businessId": "national-0de1b52fcef72a6846ee206c",
+      "expectedIdentity": {
+        "name": "Law Office of Rose C. Briscoe, LLC",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://www.rosebriscoe.com/"
+      },
+      "patch": {
+        "description": "Law Office of Rose C. Briscoe, LLC represents victims of employment discrimination and harassment, discrimination and harassment at school, and individuals suffering serious personal injuries due to negligence."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.rosebriscoe.com/",
+          "sourceLabel": "Official Law Office of Rose C. Briscoe, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Although this firm has served over 2,000 clients in a wide range of practice areas, this firm is now focused primarily on representing victims of employment discrimination and harassment, discrimination and harassment at school, and discrimination and harassment in public places, as well as representing individuals suffering from serious personal injuries due to an individual’s negligence or the negligence of a place of business.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_560a590a-5538-4a9f-af3f-61b092416e6b",
+      "expectedIdentity": {
+        "name": "Lawrence A. Jones & Sons Funeral Chapels",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.lawrenceajones.com/"
+      },
+      "patch": {
+        "description": "Lawrence A. Jones Funeral Homes & Cremation provides funeral and cremation services and related resources.",
+        "phone": "(816) 921-1800"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lawrenceajones.com/",
+          "sourceLabel": "Official Lawrence A. Jones Funeral Homes &amp; Cremation - Kansas City, MO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Lawrence A. Jones Funeral Homes & Cremation - Kansas City, MO"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lawrenceajones.com/",
+          "sourceLabel": "Official Lawrence A. Jones Funeral Homes &amp; Cremation - Kansas City, MO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Missouri: (816) 921-1800"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7c66e02c-fab3-46b3-bbb7-e0fa901341f9",
+      "expectedIdentity": {
+        "name": "Layers The Loft",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://www.crustbymack.com/layers"
+      },
+      "patch": {
+        "instagram": "http://instagram.com/crustbymack"
+      },
+      "fieldModes": {
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.crustbymack.com/layers",
+          "sourceLabel": "Official Layers Loft &mdash; Crust by Mack page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/crustbymack"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ce744545-2871-4d14-a286-7a990f60e301",
+      "expectedIdentity": {
+        "name": "LCD Agency Services",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://lcd-hha.com/"
+      },
+      "patch": {
+        "description": "From hands-on care to professional development, LCD Agency Services provides home care, testing, and training resources designed to help agency owners and care professionals and more thrive.",
+        "phone": "(513) 887-6100"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lcd-hha.com/",
+          "sourceLabel": "Official LCD Agency Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From hands-on care to professional development, LCD Agency Services provides home care, testing, and training resources designed to help agency owners and care professionals and more thrive."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lcd-hha.com/contact",
+          "sourceLabel": "Official LCD Agency Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (513) 887-6100"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f7d2af5b-fd56-49d6-a069-76eee37be76e",
+      "expectedIdentity": {
+        "name": "Learning to Flourish",
+        "city": "New Albany",
+        "state": "OH",
+        "website": "http://www.learning2flourish.com/"
+      },
+      "patch": {
+        "phone": "(614) 245-8403"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.learning2flourish.com/",
+          "sourceLabel": "Official Boutique Preschool in Columbus, OH | Learning to Flourish page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone : (614) 245-8403"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a9563191-784d-4498-b7a3-dba842da3f56",
+      "expectedIdentity": {
+        "name": "LeBrane's Creole Cuisine and Catering",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://lebranescuisine.com/"
+      },
+      "patch": {
+        "description": "LeBrane’s Creole Cuisine consists of a New Orleans born Creole chef offering dine-in and catering services.",
+        "hours": "\"Available for Catering\"",
+        "phone": "504-908-4901",
+        "tags": [
+          "catering",
+          "creole cuisine",
+          "dine-in"
+        ],
+        "facebook": "https://www.facebook.com/atasteofloveineverybite/",
+        "twitter": "https://twitter.com/lebranescuisine",
+        "instagram": "https://www.instagram.com/lebranes/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lebranescuisine.com/",
+          "sourceLabel": "Official LeBrane&#039;s Creole Cuisine - A Taste of Love in Every Bite page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"LeBrane’s Creole Cuisine consists of a true New Orleans born Creole chef that takes great joy in creating flawless meals for you when dining-in or when experiencing our catered service.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://lebranescuisine.com/",
+          "sourceLabel": "Official LeBrane&#039;s Creole Cuisine - A Taste of Love in Every Bite page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"HOURS OF OPERATION Available for Catering\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lebranescuisine.com/",
+          "sourceLabel": "Official LeBrane&#039;s Creole Cuisine - A Taste of Love in Every Bite page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 504-908-4901"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://lebranescuisine.com/",
+          "sourceLabel": "Official LeBrane&#039;s Creole Cuisine - A Taste of Love in Every Bite page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"LeBrane’s Creole Cuisine consists of a true New Orleans born Creole chef that takes great joy in creating flawless meals for you when dining-in or when experiencing our catered service.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://lebranescuisine.com/",
+          "sourceLabel": "Official LeBrane&#039;s Creole Cuisine - A Taste of Love in Every Bite page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/atasteofloveineverybite/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://lebranescuisine.com/",
+          "sourceLabel": "Official LeBrane&#039;s Creole Cuisine - A Taste of Love in Every Bite page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/lebranescuisine"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://lebranescuisine.com/",
+          "sourceLabel": "Official LeBrane&#039;s Creole Cuisine - A Taste of Love in Every Bite page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/lebranes/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d4c1623b-aef7-43cd-b582-332928f3e92b",
+      "expectedIdentity": {
+        "name": "Lee & Associates",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://lee-associates.com/houston"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/leeassociateshouston/",
+        "twitter": "https://twitter.com/LeeAssociateHOU",
+        "facebook": "https://www.facebook.com/LeeAssociatesHouston/"
+      },
+      "fieldModes": {
+        "instagram": "fill",
+        "twitter": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lee-associates.com/houston/",
+          "sourceLabel": "Official Lee &amp; Associates - Houston | Commercial Real Estate page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/leeassociateshouston/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.lee-associates.com/houston/",
+          "sourceLabel": "Official Lee &amp; Associates - Houston | Commercial Real Estate page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/LeeAssociateHOU"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lee-associates.com/houston/",
+          "sourceLabel": "Official Lee &amp; Associates - Houston | Commercial Real Estate page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/LeeAssociatesHouston/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7d3c7e4f-10b5-4b28-bcff-95949af61621",
+      "expectedIdentity": {
+        "name": "Lee, Cossell & Feagley, LLP",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.nleelaw.com/"
+      },
+      "patch": {
+        "hours": "Questions Call us at 855-NATE-LEE (855-628-3533) 24 hours per day, 7 days a week.",
+        "phone": "317-631-5151",
+        "tags": [
+          "personal injury",
+          "medical malpractice",
+          "social security benefits",
+          "dangerous drugs",
+          "defective medical devices",
+          "business law",
+          "workers' compensation",
+          "civil litigation"
+        ],
+        "youtube": "https://www.youtube.com/@legal_issues_of_the_day_wi7795"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.nleelaw.com/directions/",
+          "sourceLabel": "Official Directions - Lee Cossell &amp; Feagley, LLP page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Questions Call us at 855-NATE-LEE (855-628-3533) 24 hours per day, 7 days a week.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.nleelaw.com/contact-us/",
+          "sourceLabel": "Official Contact Us - Lee Cossell &amp; Feagley, LLP - Indiana Attorneys page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 317-631-5151\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.nleelaw.com/directions/",
+          "sourceLabel": "Official Directions - Lee Cossell &amp; Feagley, LLP page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We Focus on the Following Areas Personal Injury Medical Malpractice Social Security Dangerous Drugs Defective Medical Devices Business Law Workers' Compensation Civil Litigation\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.nleelaw.com/",
+          "sourceLabel": "Official Lee Cossell &amp; Feagley, LLP - Indianapolis Attorneys - Injury, Civil Rights, Business page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@legal_issues_of_the_day_wi7795"
+        }
+      ]
+    },
+    {
+      "businessId": "source_eb065922-32f0-4310-a6cc-cc5c78d61e63",
+      "expectedIdentity": {
+        "name": "Le French Restaurant",
+        "city": "Denver",
+        "state": "CO",
+        "website": "https://www.lefrenchdenver.com/"
+      },
+      "patch": {
+        "description": "A gourmet, casual-chic Parisian-style bistro that specializes in French cuisine with global flavors and serves lunch, dinner, and weekend brunch.",
+        "facebook": "https://www.facebook.com/lefrenchbcdenver/",
+        "instagram": "https://www.instagram.com/lefrenchdenver/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lefrenchdenver.com/about/",
+          "sourceLabel": "Official About | Le French in Denver, CO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A gourmet, casual chic, Parisian style bistro that specializes in French cuisine with global flavors, a nod the the sisters' Senegalese heritage. Le French serves lunch and full dinner menu on week days as well as a brunch menu on Friday, Saturday and Sundays."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lefrenchdenver.com/",
+          "sourceLabel": "Official Le French | French Restaurant in Denver, CO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/lefrenchbcdenver/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lefrenchdenver.com/",
+          "sourceLabel": "Official Le French | French Restaurant in Denver, CO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/lefrenchdenver/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bd916132-f0ed-4d03-8e77-233bf643d84e",
+      "expectedIdentity": {
+        "name": "Legacy Community Health",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.legacycommunityhealth.org/"
+      },
+      "patch": {
+        "description": "Legacy Community Health is a full-service health care system offering primary care, pediatrics, OB/GYN, behavioral health, dental, HIV/AIDS care, vision, specialty care, and pharmacy services across over 50 locations in the Texas Gulf Coast region.",
+        "phone": "(832) 548-5000",
+        "youtube": "https://www.youtube.com/watch?v=BSS6apuLcnY",
+        "twitter": "https://www.twitter.com/legacycommunity"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.legacycommunityhealth.org/about-us/",
+          "sourceLabel": "Official About Legacy Community Health | Medical Center TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Legacy Community Health is a full-service health care system comprised of over 50 locations in the Texas Gulf Coast region offering adult and senior primary care, pediatrics, OB/GYN, behavioral health, dental, HIV/AIDS care, vision, specialty care, and pharmacy services.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.legacycommunityhealth.org/",
+          "sourceLabel": "Official Health Clinic in Houston TX | Legacy Community Health page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (832) 548-5000"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.legacycommunityhealth.org/",
+          "sourceLabel": "Official Health Clinic in Houston TX | Legacy Community Health page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=BSS6apuLcnY"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.legacycommunityhealth.org/",
+          "sourceLabel": "Official Health Clinic in Houston TX | Legacy Community Health page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/legacycommunity"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d68bcc15-b848-4c3c-8462-0542904c9303",
+      "expectedIdentity": {
+        "name": "Legacy Heritage",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://www.ourlegacyheritage.com/"
+      },
+      "patch": {
+        "description": "Legacy Heritage is a nonprofit that empowers individuals and communities through education, health initiatives and social programs, and operates community gardens and gardening classes.",
+        "hours": "Beds are Open From March 1st Until October 31st. All beds must be cleared, soil prepared for the next year and all tools returned by November 1",
+        "phone": "1-205-947-7070"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ourlegacyheritage.com/",
+          "sourceLabel": "Official Legacy Heritage - Legacy Heritage: Transforming Lives, Building Futures page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our Mission Empower individuals and communities through education, health initiatives and social programs.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ourlegacyheritage.com/contact-us.html",
+          "sourceLabel": "Official CONTACT US - Legacy Heritage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Beds are Open From March 1st Until October 31st All beds must be cleared, soil prepared for the next year and all tools returned by November 1\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ourlegacyheritage.com/",
+          "sourceLabel": "Official Legacy Heritage - Legacy Heritage: Transforming Lives, Building Futures page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"1-205-947-7070\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9da77c1e-ba2d-4c97-911e-ad96449ad942",
+      "expectedIdentity": {
+        "name": "Le Mandingue African Restaurant",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.lemandinguephilly.com/"
+      },
+      "patch": {
+        "description": "Le Mandingue African Restaurant - 6620 Woodland Avenue, Philadelphia, PA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lemandingue.com/location/le-mandingue-african-restaurant-302089",
+          "sourceLabel": "Official Le Mandingue African Restaurant | 6620 Woodland Avenue Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Le Mandingue African Restaurant - 6620 Woodland Avenue Philadelphia, PA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cabe966d-bf65-472a-8238-8046feb09762",
+      "expectedIdentity": {
+        "name": "Le Mandingue African Restaurant",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.lemandinguephilly.com/"
+      },
+      "patch": {
+        "description": "Le Mandingue African Restaurant - 3300 Fairmount Ave, Philadelphia, PA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lemandingue.com/location/le-mandingue-african-restaurant-27988720",
+          "sourceLabel": "Official Le Mandingue African Restaurant | 3300 Fairmount Ave Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Le Mandingue African Restaurant - 3300 Fairmount Ave, Philadelphia, PA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7c317856-6513-4e79-ab63-b1e99d1b663d",
+      "expectedIdentity": {
+        "name": "LemdaddyZ Kitchen",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://lemdaddyzkitchenllc.godaddysites.com/"
+      },
+      "patch": {
+        "description": "At LemdaddyZ Kitchen LLC, we offer a variety of homemade baked desserts with unique and delicious flavors.",
+        "hours": "Saturdays from 8am to 3pm",
+        "phone": "(615) 480-8419",
+        "tags": [
+          "homemade baked desserts",
+          "bakery",
+          "baked goods",
+          "farmers market vendor"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lemdaddyzkitchenllc.godaddysites.com/",
+          "sourceLabel": "Official LemdaddyZ Kitchen LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About LemdaddyZ Kitchen At LemdaddyZ Kitchen LLC, we offer a variety of homemade baked desserts with unique and delicious flavors that are guaranteed to evoke feelings of nostalgia and childhood memories."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://lemdaddyzkitchenllc.godaddysites.com/",
+          "sourceLabel": "Official LemdaddyZ Kitchen LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Agricenter Farmer's Market - 7856 Smythe Farm Rd, Memphis, TN 38120 (Saturdays from 8am to 3pm)"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lemdaddyzkitchenllc.godaddysites.com/",
+          "sourceLabel": "Official LemdaddyZ Kitchen LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LemdaddyZ Kitchen Memphis, Tennessee, United States (615) 480-8419"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://lemdaddyzkitchenllc.godaddysites.com/",
+          "sourceLabel": "Official LemdaddyZ Kitchen LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: About LemdaddyZ Kitchen At LemdaddyZ Kitchen LLC, we offer a variety of homemade baked desserts with unique and delicious flavors that are guaranteed to evoke feelings of nostalgia and childhood memories."
+        }
+      ]
+    },
+    {
+      "businessId": "source_549b9e2d-5cbf-4614-a02e-0058f52eeb4d",
+      "expectedIdentity": {
+        "name": "Lemond Kitchen",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.lemondkitchen.com/"
+      },
+      "patch": {
+        "phone": "(713) 790-0441"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://lemondkitchen.com/",
+          "sourceLabel": "Official Lemond Events - Caterer, Events, Wedding Catering page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Order your spices now! (713) 790-0441"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b352f849-b2f1-4e6c-aef6-fa09e953ffe3",
+      "expectedIdentity": {
+        "name": "Lemon Squeeze Sugar & Facial Spa",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://lemonsqueezespa.glossgenius.com/"
+      },
+      "patch": {
+        "hours": "Starting September 8th 2025 we will be temporarily closed for a mental health break. Reopening date is TBD. Business Hours Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed Sunday Closed"
+      },
+      "fieldModes": {
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://lemonsqueezespa.glossgenius.com/about",
+          "sourceLabel": "Official About Lemon Squeeze Sugar+Facial Spa | Charlotte, NC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Starting September 8th 2025 we will be temporarily closed for a mental health break. Reopening date is TBD. Thank you for your understanding. Warmly, Lemon Squeeze Team Business Hours Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed Sunday Closed"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fed41015-4ac4-47f5-b6a7-793d0311d99b",
+      "expectedIdentity": {
+        "name": "Leon's Smoke Shack Barbeque",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://leonssmokeshackbarbeque.com/"
+      },
+      "patch": {
+        "tags": [
+          "catering"
+        ]
+      },
+      "fieldModes": {
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://leonssmokeshackbarbeque.com/",
+          "sourceLabel": "Official Home of the Slap | Leon&#x27;s Smoke Shack BBQ page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Thank you for supporting Leon’s Smoke Shack. It has been our pleasure to serve you.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_630708cf-0779-4c37-b69a-c245a932b96b",
+      "expectedIdentity": {
+        "name": "Lest We Forget Museum of Slavery -The Black Holocaust",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://lwfsm.com/"
+      },
+      "patch": {
+        "description": "The Lest We Forget Museum of Slavery provides a historical perspective on slavery and exhibits authentic slavery artifacts and Jim Crow objects.",
+        "hours": "Tuesday 10-4pm by appointment only; Wednesday 10-4pm by appointment only; Thursday 10-4pm by appointment only; Friday 10-4pm by appointment only; Saturday 10-4pm by appointment only; Sunday 12-4pm by appointment only",
+        "facebook": "https://www.facebook.com/LestWeForgetPhila/?fref=ts",
+        "twitter": "https://twitter.com/lestweforgetmus",
+        "youtube": "https://www.youtube.com/watch?v=0oL9wg2yOY4"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lwfsm.com/",
+          "sourceLabel": "Official Lest We Forget Slavery Museum Home - Lest We Forget Slavery Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Lest We Forget Museum of Slavery provides a unique historical perspective into the reality of slavery for Africans brought to America. It is the only museum of its kind in Philadelphia that exhibits authentic slavery artifacts."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://lwfsm.com/index.php/lwfs-museum/",
+          "sourceLabel": "Official Lest We Forget Slavery Museum Visit - Lest We Forget Slavery Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Tuesday 10-4pm by appointment only Wednesday 10-4pm by appointment only Thursday 10-4pm by appointment only Friday 10-4pm by appointment only Saturday 10-4pm by appointment only Sunday 12-4pm by appointment only"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://lwfsm.com/",
+          "sourceLabel": "Official Lest We Forget Slavery Museum Home - Lest We Forget Slavery Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/LestWeForgetPhila/?fref=ts"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://lwfsm.com/",
+          "sourceLabel": "Official Lest We Forget Slavery Museum Home - Lest We Forget Slavery Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/lestweforgetmus"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://lwfsm.com/",
+          "sourceLabel": "Official Lest We Forget Slavery Museum Home - Lest We Forget Slavery Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=0oL9wg2yOY4"
+        }
+      ]
+    },
+    {
+      "businessId": "source_79fe9fc8-d596-4f54-8a2d-41d07ff0b016",
+      "expectedIdentity": {
+        "name": "Let's Be Frank",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "http://www.letsbefrank901.com/"
+      },
+      "patch": {
+        "description": "Let's Be Frank! is updating and maintenance",
+        "twitter": "https://x.com/letsbefrank901"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.letsbefrank901.com/",
+          "sourceLabel": "Official Let&#039;s Be Frank! is updating and maintenance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Let&#039;s Be Frank! is updating and maintenance"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.letsbefrank901.com/",
+          "sourceLabel": "Official Let&#039;s Be Frank! is updating and maintenance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/letsbefrank901"
+        }
+      ]
+    },
+    {
+      "businessId": "source_25816e14-0468-4248-a8bf-b220368ae0aa",
+      "expectedIdentity": {
+        "name": "LetsKeepBuilding",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tUM50l"
+      },
+      "patch": {
+        "description": "LetsKeepBuilding is an AI marketing and automation studio for entrepreneurs and growing businesses. We build brands, automate workflows, and help you grow - people first, AI powered."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.letskeepbuilding.com/",
+          "sourceLabel": "Official LetsKeepBuilding - AI Marketing & Automation Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"LetsKeepBuilding is an AI marketing and automation studio for entrepreneurs and growing businesses. We build brands, automate workflows, and help you grow - people first, AI powered.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_3989c62c-0627-4ab9-a2a6-3e9f74ffd6db",
+      "expectedIdentity": {
+        "name": "LeveledUp Money",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://leveledupmoney.com/"
+      },
+      "patch": {
+        "description": "LeveledUp Money delivers financial wellness programming, economic development initiatives, and business advisory services for organizations and communities.",
+        "phone": "(901) 295-2841"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://leveledupmoney.com/about-leveledup-money/",
+          "sourceLabel": "Official About Us • Experts in Wealth Building &amp; Financial Guidance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Leveled Up Money delivers financial wellness, economic development, and business advisory services for organizations and communities committed to sustainable economic outcomes.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://leveledupmoney.com/about-leveledup-money/",
+          "sourceLabel": "Official About Us • Experts in Wealth Building &amp; Financial Guidance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call us at (901) 295-2841 or fill out our form, and we’ll contact you within one business day.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_06958c30-6953-412b-80c2-c9467a97dde8",
+      "expectedIdentity": {
+        "name": "LevelUp HCS, LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.leveluphcs.com/"
+      },
+      "patch": {
+        "description": "LevelUP HCS provides recruitment process outsourcing, embedded recruitment, contingent workforce management, executive search, and related talent acquisition and HR advisory services.",
+        "phone": "+1 (332) 345 8489",
+        "tags": [
+          "recruitment process outsourcing",
+          "embedded recruitment",
+          "contingent workforce management",
+          "executive search",
+          "hr advisory"
+        ],
+        "youtube": "https://www.youtube.com/channel/UCv9Zs65M4AR2H7CmBiaNAMw",
+        "facebook": "https://www.facebook.com/LevelUPHCS/",
+        "instagram": "https://www.instagram.com/leveluphcs/channel/",
+        "twitter": "https://twitter.com/leveluphcs"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.leveluphcs.com/",
+          "sourceLabel": "Official Talent Acquisition Solutions | LevelUP HCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Recruiting & Workforce Solutions for Real-World Demand Recruitment Process Outsourcing (RPO), Embedded Talent, and Contingent Workforce Solutions for Financial Services, Technology, Healthcare, and other regulated, high-growth industries powered by our AI-enabled LevelUP Hiring Engine™."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.leveluphcs.com/",
+          "sourceLabel": "Official Talent Acquisition Solutions | LevelUP HCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LevelUP Human Capital Solutions 32 Old Slip, 24th Floor New York, NY 10005 +1 (332) 345 8489 information@leveluphcs.com CNESST license # AP-2303855"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.leveluphcs.com/talent-management-services",
+          "sourceLabel": "Official Talent Solution Services | LevelUP HCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Total Talent Solution Recruitment Process Outsourcing (RPO) Project RPO Recruitment on Demand Sourcing as a Service Contingent Workforce Management HR Advisory Executive Search"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.leveluphcs.com/",
+          "sourceLabel": "Official Talent Acquisition Solutions | LevelUP HCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCv9Zs65M4AR2H7CmBiaNAMw"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.leveluphcs.com/",
+          "sourceLabel": "Official Talent Acquisition Solutions | LevelUP HCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/LevelUPHCS/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.leveluphcs.com/",
+          "sourceLabel": "Official Talent Acquisition Solutions | LevelUP HCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/leveluphcs/channel/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.leveluphcs.com/",
+          "sourceLabel": "Official Talent Acquisition Solutions | LevelUP HCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/leveluphcs"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a64c16f7-e2ef-4c85-b14d-3fbb3c09c4d7",
+      "expectedIdentity": {
+        "name": "Levenity",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.levenity.com/"
+      },
+      "patch": {
+        "description": "LEVENITY is a high-end custom fashion business.",
+        "tags": [
+          "high-end custom fashion"
+        ],
+        "twitter": "https://twitter.com/levenity"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.levenity.com/",
+          "sourceLabel": "Official LEVENITY | High-End Custom Fashion | Dallas, TX USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LEVENITY | High-End Custom Fashion | Dallas, TX USA"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.levenity.com/",
+          "sourceLabel": "Official LEVENITY | High-End Custom Fashion | Dallas, TX USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LEVENITY | High-End Custom Fashion | Dallas, TX USA"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.levenity.com/",
+          "sourceLabel": "Official LEVENITY | High-End Custom Fashion | Dallas, TX USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/levenity"
+        }
+      ]
+    },
+    {
+      "businessId": "source_83e1b125-bd8a-4846-a9ea-06ced2c24154",
+      "expectedIdentity": {
+        "name": "Levor",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hpuGdn"
+      },
+      "patch": {
+        "description": "Levor Hair is a third-generation salon offering professional hair services that combine legacy skills with modern techniques.",
+        "hours": "Mon - Sun: 10am - 8pm",
+        "phone": "+6011 1114 9113"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://levorhair.com/",
+          "sourceLabel": "Official Levor &#8211; Beautiful Hair Changes How You Feel. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A Third-Generation Salon, Built on Care Levor Hair is led by a third-generation hairdresser, raised in a family that has spent decades behind the chair. Our name – LEVOR – represents Legacy and Evolution: honouring time-tested skills while evolving them for modern life."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://levorhair.com/",
+          "sourceLabel": "Official Levor &#8211; Beautiful Hair Changes How You Feel. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening Hours: Mon - Sun: 10am - 8pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://levorhair.com/",
+          "sourceLabel": "Official Levor &#8211; Beautiful Hair Changes How You Feel. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: +6011 1114 9113"
+        }
+      ]
+    },
+    {
+      "businessId": "source_740c60ef-e658-4d96-9f4b-c2c71100eaf3",
+      "expectedIdentity": {
+        "name": "Lewis Coaches",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://www.lewiscoach.com/"
+      },
+      "patch": {
+        "description": "Lewis Coaches, Inc. is a transportation company in New Orleans, LA specializing in group charters, escorted group tours, casino services and convention shuttles."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lewiscoach.com/",
+          "sourceLabel": "Official Lewis Coaches Inc. Charter Bus and Tour Bus services in New Orleans page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Welcome to Lewis Coaches, Inc. - a transportation company located in New Orleans, LA specializing in group charters, escorted group tours, casino services and convention shuttles and related services.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_03bb124d-6e0e-486b-8b3d-77c402ac0ddc",
+      "expectedIdentity": {
+        "name": "Lexicon Writing & Consulting",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.lexiconwc.com/"
+      },
+      "patch": {
+        "description": "Lexicon Writing & Consulting provides writing and consulting services."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lexiconwc.com/",
+          "sourceLabel": "Official Lexicon Writing &amp; Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Lexicon Writing & Consulting"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0224d432-b62b-4e07-a64d-22fc6f38ced7",
+      "expectedIdentity": {
+        "name": "Life A-New Life Preparatory Academy",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.lifeanewpreparatoryacademy.net/"
+      },
+      "patch": {
+        "description": "Life A- New Preparatory Academy is a ministry of integrity and excellence; our focus is on a quality preschool and elementary education.",
+        "phone": "(816) 966-8989 X 1004",
+        "tags": [
+          "preschool",
+          "elementary education",
+          "christian education"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lifeanewpreparatoryacademy.net/",
+          "sourceLabel": "Official Life A-New Preparatory Academy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Life A- New Preparatory Academy is a ministry of integrity and excellence, striving to please God in all we do. Our focus is on a quality preschool and elementary education.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lifeanewpreparatoryacademy.net/",
+          "sourceLabel": "Official Life A-New Preparatory Academy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(816) 966-8989 X 1004 (Office)\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.lifeanewpreparatoryacademy.net/about",
+          "sourceLabel": "Official Life A-New Preparatory Academy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our focus is on a quality preschool and elementary education.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_43ab218a-243a-4e06-aa9b-3f096dd770b7",
+      "expectedIdentity": {
+        "name": "Life Empowered Consulting Services",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uOj5s7"
+      },
+      "patch": {
+        "description": "Life Empowered Consulting Services provides professional development and coaching services including corporate training, executive coaching, strategic planning, and motivational speaking.",
+        "tags": [
+          "corporate training",
+          "executive coaching",
+          "strategic planning",
+          "motivational speaking",
+          "leadership development",
+          "emotional intelligence",
+          "disc"
+        ],
+        "youtube": "https://www.youtube.com/@lecsembraceempowerelevate"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.celestecuffie.com/",
+          "sourceLabel": "Official LIFE EMPOWERED CONSULTING SERVICES - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Offerings include: Professional skills education such as DISC and Emotional Intelligence Personal and Professional Coaching and Consulting Motivational speaking And more!"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.celestecuffie.com/services.html",
+          "sourceLabel": "Official Services - LIFE EMPOWERED CONSULTING SERVICES page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Some of the tools and areas of focus are: Leadership Development Organizational Development Change Management DiSC Emotional Intelligence Diversity, Equity, & Inclusion Five Behaviors John Maxwell Leadership"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.celestecuffie.com/",
+          "sourceLabel": "Official LIFE EMPOWERED CONSULTING SERVICES - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@lecsembraceempowerelevate"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5f17dd92-04b7-48a8-bdc3-bd99c665599a",
+      "expectedIdentity": {
+        "name": "Life Love Incorporated",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3QVBYEM"
+      },
+      "patch": {
+        "description": "An apparel and products brand offering items such as canvasses, hoodies, sweatsuits, t‑shirts, bundles, hats, crewnecks, jackets, bags, and shorts."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lifeloveincorporated.com/",
+          "sourceLabel": "Official Life Love Incorporated Brand page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Products All Products new Canvasses Hoodies Sweatsuits T-Shirts Bundles Hats Crewnecks Jackets Bags Shorts"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fcd34449-1a81-4a62-a5dc-a499d3154380",
+      "expectedIdentity": {
+        "name": "Life Of An Empath",
+        "city": "Portland",
+        "state": "OR",
+        "website": "https://www.lifeofanempath.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/lifeofanempath"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.lifeofanempath.com/",
+          "sourceLabel": "Official Life of an Empath page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/lifeofanempath"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b46349e9-1706-4a7e-864b-3057f99443d1",
+      "expectedIdentity": {
+        "name": "Life’s Natural Roots LLC",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://linktr.ee/gnaturalroots"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/live/YaDdKBRYHpQ?si=TIhbSdsP9v950pog"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://linktr.ee/gnaturalroots",
+          "sourceLabel": "Official LIFE’S NATURAL ROOTS Official: TikTok, Instagram, Facebook | Linktree page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/live/YaDdKBRYHpQ?si=TIhbSdsP9v950pog"
+        }
+      ]
+    },
+    {
+      "businessId": "source_213a7fcc-7061-48ae-bc83-5569c8cc0f48",
+      "expectedIdentity": {
+        "name": "LiftOff Creamery",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.liftoffcreamery.com/"
+      },
+      "patch": {
+        "description": "LiftOff Creamery is an ice cream shop in Indianapolis.",
+        "tags": [
+          "ice cream shop"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.liftoffcreamery.com/",
+          "sourceLabel": "Official LiftOff Creamery | Ice Cream Shop | Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LiftOff Creamery | Ice Cream Shop | Indianapolis"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.liftoffcreamery.com/",
+          "sourceLabel": "Official LiftOff Creamery | Ice Cream Shop | Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LiftOff Creamery | Ice Cream Shop | Indianapolis"
+        }
+      ]
+    },
+    {
+      "businessId": "source_faf10f31-e670-4d32-9f88-0f705da11b7a",
+      "expectedIdentity": {
+        "name": "Light Of Entertainment",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://lightofentertainment.com/"
+      },
+      "patch": {
+        "description": "Light Of Entertainment LLC provides entertainment services including live music, DJ services, event planning, and themed tribute/variety shows."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lightofentertainment.com/",
+          "sourceLabel": "Official Top Party Entertainment Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Services We offer a wide range of entertainment services, including live music, DJ services, event planning, and more."
+        }
+      ]
+    },
+    {
+      "businessId": "source_d27d940e-e88e-4525-8e49-c4ea11d3025f",
+      "expectedIdentity": {
+        "name": "Lightwire Electric Corp.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.lightwireelectric.com/"
+      },
+      "patch": {
+        "description": "Lightwire Electric is a licensed electrical contracting company providing a range of electrical installations across New York City and New Jersey.",
+        "phone": "718-865-7953",
+        "instagram": "https://www.instagram.com/lightwireelectric/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lightwireelectric.com/",
+          "sourceLabel": "Official Lightwire Electric | Electrical Contractors | New York City | Corporate &amp; Commercial page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Lightwire Electric is a premier licensed electrical contracting company providing a range of electrical installations all across New York City and New Jersey."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lightwireelectric.com/",
+          "sourceLabel": "Official Lightwire Electric | Electrical Contractors | New York City | Corporate &amp; Commercial page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 718-865-7953"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lightwireelectric.com/",
+          "sourceLabel": "Official Lightwire Electric | Electrical Contractors | New York City | Corporate &amp; Commercial page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/lightwireelectric/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f588555c-1b56-4a62-99db-fd7cd57515ea",
+      "expectedIdentity": {
+        "name": "Lilac Impact Services",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.lilacimpactservices.com/"
+      },
+      "patch": {
+        "description": "Lilac Impact Services, LLC is a boutique social impact consultancy helping organizations cultivate meaningful change. Specializing in community engagement, strategy, project management, and facilitation."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lilacimpactservices.com/",
+          "sourceLabel": "Official Lilac Impact Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Lilac Impact Services, LLC is a boutique social impact consultancy helping organizations cultivate meaningful change. Specializing in community engagement, strategy, project management, and facilitation, we are committed to approaches that are measurable and community-centric.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8013a906-45d9-437e-81bf-7dc1ad54146a",
+      "expectedIdentity": {
+        "name": "Lilac Tattoo Studio",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.lilactattoo.com/"
+      },
+      "patch": {
+        "hours": "Sunday - 12 - 6pm; Monday - CLOSED; Tuesday - 12- 6pm; Wednesday - 12 - 8pm; Thursday - 12 - 8pm; Friday - 12 - 8pm; Saturday - 12 - 8pm",
+        "phone": "(214) 272-3009",
+        "twitter": "http://twitter.com/lilactattoostudio",
+        "youtube": "https://www.youtube.com/channel/UCTtfbMDb_ZudY1cYIWXzoWA"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.lilactattoo.com/location",
+          "sourceLabel": "Official LOCATION &mdash; Lilac Tattoo Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOURS Sunday - 12 - 6pm Monday - CLOSED Tuesday - 12- 6pm Wednesday - 12 - 8pm Thursday - 12 - 8pm Friday - 12 - 8pm Saturday - 12 - 8pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lilactattoo.com/location",
+          "sourceLabel": "Official LOCATION &mdash; Lilac Tattoo Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: DALLAS STUDIO 4409 Belmont Ave. Dallas, TX 75204 PHONE (214) 272-3009"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.lilactattoo.com/",
+          "sourceLabel": "Official Lilac Tattoo Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://twitter.com/lilactattoostudio"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.lilactattoo.com/",
+          "sourceLabel": "Official Lilac Tattoo Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCTtfbMDb_ZudY1cYIWXzoWA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_139e1313-3edd-41d4-a711-4870d9ae74c0",
+      "expectedIdentity": {
+        "name": "Lillie Carroll Jackson Civil Rights Museum",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://www.lilliecarrolljacksonmuseum.org/"
+      },
+      "patch": {
+        "description": "The Lillie Carroll Jackson Civil Rights Museum preserves and shares the civil rights history of Baltimore and the legacy of Lillie Carroll Jackson.",
+        "hours": "Wednesdays: 11:00 AM - 3:00 PM; Fridays: 11:00 AM - 3:00 PM; Saturdays: 11:00 AM - 3:00 PM",
+        "phone": "443-885-5300",
+        "tags": [
+          "civil rights museum",
+          "museum tours",
+          "virtual tours"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lilliecarrolljacksonmuseum.org/about-us",
+          "sourceLabel": "Official About Us | Lillie Carroll Jackson Civil Rights Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Lillie Carroll Jackson Civil Rights Museum is now included in Morgan State University's Office of Museums."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.lilliecarrolljacksonmuseum.org/",
+          "sourceLabel": "Official Home | Baltimore | Lillie Carroll Jackson Civil Rights Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Open Hours Wednesdays: 11:00 AM - 3:00 PM Fridays: 11:00 AM - 3:00 PM Saturdays: 11:00 AM - 3:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lilliecarrolljacksonmuseum.org/",
+          "sourceLabel": "Official Home | Baltimore | Lillie Carroll Jackson Civil Rights Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 443-885-5300"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.lilliecarrolljacksonmuseum.org/visit",
+          "sourceLabel": "Official Visit | Lillie Carroll Jackson Civil Rights Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Now offering Virtual Tours : LCJM has developed a virtual tour experience for visitors who are unable to travel to the museum."
+        }
+      ]
+    },
+    {
+      "businessId": "source_d590b030-a3ae-4165-9c7f-0b56128069e1",
+      "expectedIdentity": {
+        "name": "Lily of the Valley Cupcakery and Cafe",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.lilyofthevalleycupcakery.com/"
+      },
+      "patch": {
+        "description": "Greet your taste buds with a delightful selection of homemade cupcakes, cakes and more made from scratch with love",
+        "hours": "Wednesday - Friday 11am-5pm Saturday 9am-3pm",
+        "phone": "267-437-4176",
+        "tags": [
+          "gourmet cupcakes",
+          "specialty coffee",
+          "event space rental",
+          "custom cakes"
+        ],
+        "instagram": "https://instagram.com/lilyofthevalleycupcakery"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lilyofthevalleycupcakery.com/",
+          "sourceLabel": "Official Lily of the Valley Cupcakery &amp; Cafe&#39; page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Greet your taste buds with a delightful selection of homemade cupcakes, cakes and more made from scratch with love"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.lilyofthevalleycupcakery.com/",
+          "sourceLabel": "Official Lily of the Valley Cupcakery &amp; Cafe&#39; page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Wednesday - Friday 11am-5pm Saturday 9am-3pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lilyofthevalleycupcakery.com/",
+          "sourceLabel": "Official Lily of the Valley Cupcakery &amp; Cafe&#39; page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 267-437-4176"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.lilyofthevalleycupcakery.com/",
+          "sourceLabel": "Official Lily of the Valley Cupcakery &amp; Cafe&#39; page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Combining gourmet cupcakes, specialty coffee and an interactive bloom bar."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lilyofthevalleycupcakery.com/",
+          "sourceLabel": "Official Lily of the Valley Cupcakery &amp; Cafe&#39; page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/lilyofthevalleycupcakery"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cdaa3bb1-501f-4e42-8b13-9d392526357b",
+      "expectedIdentity": {
+        "name": "Lima Contractors Corp.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://limacontractor.com/"
+      },
+      "patch": {
+        "description": "Specializing in commercial and residential construction, including new construction, renovations, and additions.",
+        "phone": "(718) 694-8328"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://limacontractor.com/",
+          "sourceLabel": "Official Lima Contractors CORP. Construction And Renovations - Lima Contractors Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Specializing in Commercial and Residential Construction. From new construction to renovations, to additions, we have the expertise to bring your vision to life.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://limacontractor.com/",
+          "sourceLabel": "Official Lima Contractors CORP. Construction And Renovations - Lima Contractors Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(718) 694-8328 agonzalez@limacontractor.com 77 Sackett St , Brooklyn , NY , 11231\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_3597461f-5151-4f6f-be1b-54b586a7d910",
+      "expectedIdentity": {
+        "name": "Limitless Elements",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://limitlesselements.com/"
+      },
+      "patch": {
+        "description": "Limitless Elements is a marketing agency that combines strategy, creative, data, and execution into a repeatable formula to scale brands.",
+        "phone": "(956) 929-4747",
+        "tags": [
+          "marketing agency",
+          "branding",
+          "web development",
+          "digital media",
+          "social media",
+          "public relations",
+          "traditional media"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.limitlesselementsllc.com/",
+          "sourceLabel": "Official Limitless Elements | Marketing Agency, Branding, Design, SEO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Limitless Elements is a marketing agency built on the science of growth. We combine strategy, creative, data, and execution into a repeatable formula that scales brands."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.limitlesselementsllc.com/about",
+          "sourceLabel": "Official About | Grow Your Brand Now &mdash; Limitless Elements page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (956) 929-4747"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.limitlesselementsllc.com/all-services",
+          "sourceLabel": "Official All Elements | Boost Your Brand Today &mdash; Limitless Elements page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Social Media Branding Digital Media Website Development Traditional Media Public Relations"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c1f5fb20-4880-49d4-be04-d061edf57d08",
+      "expectedIdentity": {
+        "name": "Lindenwood Christian Church",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.lindenwoodcc.org/"
+      },
+      "patch": {
+        "hours": "Sundays at 9:30 & 11:00am; WOW Worship - 9:30am; Sanctuary Worship - 11am",
+        "phone": "901.458.8506",
+        "youtube": "https://www.youtube.com/channel/UCbLpJ7gTfxEnEX_uB6pUC0g/live"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.lindenwoodcc.org/",
+          "sourceLabel": "Official Lindenwood Christian Church - Midtown Memphis, Tennessee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Join us in person or online, Sundays at 9:30 & 11:00am"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lindenwoodcc.org/",
+          "sourceLabel": "Official Lindenwood Christian Church - Midtown Memphis, Tennessee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 901.458.8506"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.lindenwoodcc.org/",
+          "sourceLabel": "Official Lindenwood Christian Church - Midtown Memphis, Tennessee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCbLpJ7gTfxEnEX_uB6pUC0g/live"
+        }
+      ]
+    },
+    {
+      "businessId": "source_27686e28-3a44-43cd-bd8d-48f363d11e70",
+      "expectedIdentity": {
+        "name": "Lini Victoria LLC",
+        "city": "Los Angeles",
+        "state": "CA",
+        "website": "http://www.linivictoria.com/"
+      },
+      "patch": {
+        "phone": "(954)547-0548",
+        "pinterest": "http://pinterest.com/linivictoria"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.linivictoria.com/",
+          "sourceLabel": "Official lini victoria page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (954)547-0548"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.linivictoria.com/",
+          "sourceLabel": "Official lini victoria page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: http://pinterest.com/linivictoria"
+        }
+      ]
+    },
+    {
+      "businessId": "source_32a97422-948c-40ed-a6f9-48fb488949b5",
+      "expectedIdentity": {
+        "name": "Lions Gym & Wellness Center",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.lionsgym.com/"
+      },
+      "patch": {
+        "description": "Lions Gym & Wellness Center offers a range of health and wellness services including group and one-on-one personal training, general membership, massage, acupuncture, chiropractic care, physiotherapy and nutritional consulting.",
+        "hours": "Monday - Friday: 6am - 9pm Saturday: 7am - 5pm Sunday: 12pm - 5pm",
+        "phone": "(763) 535-0700",
+        "tags": [
+          "personal training",
+          "small group training",
+          "online training",
+          "chiropractic care",
+          "physiotherapy",
+          "massage",
+          "acupuncture",
+          "nutritional consulting",
+          "general membership"
+        ],
+        "facebook": "https://www.facebook.com/lionsgymandwellnesscenter",
+        "instagram": "https://www.instagram.com/lionsgymandwellnesscenter/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lionsgym.com/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Lions offers group and one-on-one personal training, general membership, massage, acupuncture, chiropractic care, physiotherapy and nutritional consulting.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.lionsgym.com/",
+          "sourceLabel": "Official Lions Gym and Wellness Center - Robbinsdale and Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours of Operation: Monday - Friday: 6am - 9pm Saturday: 7am - 5pm Sunday: 12pm - 5pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.lionsgym.com/",
+          "sourceLabel": "Official Lions Gym and Wellness Center - Robbinsdale and Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(763) 535-0700\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.lionsgym.com/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Lions offers group and one-on-one personal training, general membership, massage, acupuncture, chiropractic care, physiotherapy and nutritional consulting.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.lionsgym.com/",
+          "sourceLabel": "Official Lions Gym and Wellness Center - Robbinsdale and Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/lionsgymandwellnesscenter"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.lionsgym.com/",
+          "sourceLabel": "Official Lions Gym and Wellness Center - Robbinsdale and Minneapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/lionsgymandwellnesscenter/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b8e5bc85-e021-41b9-9154-b2bdce144c7d",
+      "expectedIdentity": {
+        "name": "Liriano & Associates Engineering, Consulting Services PLLC",
+        "city": "Long Island City",
+        "state": "NY",
+        "website": "https://www.lirianoengineering.com/"
+      },
+      "patch": {
+        "description": "Liriano & Associates Engineering, Consulting Services PLLC provides engineering solutions, consulting services, and construction management including resident engineer services, inspections, construction management, and general civil engineering.",
+        "hours": "Open today 09:00 am – 05:00 pm",
+        "phone": "917-887-1631",
+        "tags": [
+          "construction management",
+          "resident engineer services",
+          "inspections",
+          "civil engineering",
+          "transportation engineering",
+          "geotechnical engineering",
+          "environmental engineering",
+          "construction claims evaluation",
+          "drafting and as-built drawing"
+        ],
+        "facebook": "https://www.facebook.com/LirianoEngineering",
+        "instagram": "https://www.instagram.com/lirianoengineering/",
+        "twitter": "https://www.x.com/lirianoengineer",
+        "youtube": "https://www.youtube.com/@LirianoEngineering"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lirianoengineering.com/",
+          "sourceLabel": "Official Construction Management Jobs - Engineering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to our firm. Providing Engineering Solutions, Consulting Services, and Construction Management is our goal"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://lirianoengineering.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Open today 09:00 am – 05:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lirianoengineering.com/",
+          "sourceLabel": "Official Construction Management Jobs - Engineering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact us: 917-887-1631 & 718-425-4327"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://lirianoengineering.com/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We offer Resident Engineer Services, Inspections, Construction Management, and General Civil Engineering."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://lirianoengineering.com/",
+          "sourceLabel": "Official Construction Management Jobs - Engineering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/LirianoEngineering"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://lirianoengineering.com/",
+          "sourceLabel": "Official Construction Management Jobs - Engineering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/lirianoengineering/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://lirianoengineering.com/",
+          "sourceLabel": "Official Construction Management Jobs - Engineering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.x.com/lirianoengineer"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://lirianoengineering.com/",
+          "sourceLabel": "Official Construction Management Jobs - Engineering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@LirianoEngineering"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f194e222-4718-4a10-9993-0c955c8000d0",
+      "expectedIdentity": {
+        "name": "Little Birdies Mobile Golf Academy",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.littlebirdiesgolf.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/lilbirdiesgolf"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.littlebirdiesgolf.com/",
+          "sourceLabel": "Official Little Birdies Mobile Golf - HOME page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/lilbirdiesgolf"
+        }
+      ]
+    },
+    {
+      "businessId": "source_284e71f4-cb44-48b5-8470-0bba9fd623d6",
+      "expectedIdentity": {
+        "name": "Little Black Box",
+        "city": "Jacksonville",
+        "state": "FL",
+        "website": "https://www.littleblackboxbakedgoods.com/"
+      },
+      "patch": {
+        "description": "Little Black Box handcrafts small-batch jams, preserves, and baked goods in Jacksonville, Florida, using local ingredients when possible.",
+        "tiktok": "https://www.tiktok.com/@little.black.box.bg",
+        "pinterest": "https://www.pinterest.com/blackboxbakedgoods"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tiktok": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.littleblackboxbakedgoods.com/",
+          "sourceLabel": "Official Little Black Box Small Batch Artisan Preserves &amp; Baked Goods page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Little Black Box is an endeavor of love. We handcraft all of our jams in small batches in our Jacksonville, Florida kitchen. Our preserves and baked goods are made by artisans with a focus on local ingredients whenever possible."
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.littleblackboxbakedgoods.com/",
+          "sourceLabel": "Official Little Black Box Small Batch Artisan Preserves &amp; Baked Goods page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@little.black.box.bg"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.littleblackboxbakedgoods.com/",
+          "sourceLabel": "Official Little Black Box Small Batch Artisan Preserves &amp; Baked Goods page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/blackboxbakedgoods"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cd22041c-691f-408c-8883-6843ad5738e3",
+      "expectedIdentity": {
+        "name": "Little Buns Ultrasound & Baby Boutique",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://littlebunsaz.com/"
+      },
+      "patch": {
+        "description": "Little Buns is a boutique elective ultrasound studio that offers prenatal ultrasound sessions and a baby boutique with curated gender reveal and baby items.",
+        "hours": "Monday: 12:00 PM- 6:00 PM Tuesday: Closed Wednesday - Friday: 10:00 AM-6:30 PM Saturday & Sunday: 10:00 AM - 4:00 PM WALK INS BETWEEN 12pm-4pm",
+        "phone": "(480) 470-3191",
+        "tags": [
+          "3d ultrasounds",
+          "4d ultrasounds",
+          "5d hd live ultrasound",
+          "early gender determination",
+          "gender reveal ultrasounds",
+          "heartbeat ultrasounds",
+          "first trimester ultrasounds"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://littlebunsaz.com/",
+          "sourceLabel": "Official 3D/4D/5D Ultrasounds Prenatal Ultrasounds &amp; Baby Boutique | Chandler AZ | Celebrate Every Stage of Pregnancy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Located in Chandler, Arizona, Little Buns is a boutique elective ultrasound studio designed for families who want a warm, cozy, unforgettable bonding experience."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://littlebunsaz.com/",
+          "sourceLabel": "Official 3D/4D/5D Ultrasounds Prenatal Ultrasounds &amp; Baby Boutique | Chandler AZ | Celebrate Every Stage of Pregnancy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday: 12:00 PM- 6:00 PM Tuesday: Closed Wednesday - Friday: 10:00 AM-6:30 PM Saturday & Sunday: 10:00 AM - 4:00 PM WALK INS BETWEEN 12pm-4pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://littlebunsaz.com/about",
+          "sourceLabel": "Official Why Choose Us | Boutique Ultrasounds in Ahwatukee | Cozy, Elective Scans for Expecting AZ Families &mdash;2D, 3D, 4D &amp; 5D Ultrasounds | Chandler AZ | Bonding Scans &amp; Gender Reveal in a Cozy Boutique 3D/4D/5D Ultrasounds page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (480) 470-3191 Call or Text"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://littlebunsaz.com/",
+          "sourceLabel": "Official 3D/4D/5D Ultrasounds Prenatal Ultrasounds &amp; Baby Boutique | Chandler AZ | Celebrate Every Stage of Pregnancy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our services include: 2D Ultrasound - 3D Ultrasound - 4D Ultrasound - 5D HD Live Ultrasound Early Gender Determination Gender Reveal Ultrasounds First Trimester Ultrasounds and Beyond Heartbeat Ultrasounds"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fb38debb-18be-493b-921e-4e598a55410e",
+      "expectedIdentity": {
+        "name": "Little Daydreamers Learning Center 2",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.littledaydreamersdaycare.com/"
+      },
+      "patch": {
+        "description": "Child care learning center in New York."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.littledaydreamersdaycare.com/",
+          "sourceLabel": "Official Little Daydreamers Learning Center | Child Care | New York page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Little Daydreamers Learning Center | Child Care | New York"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7222132c-1e01-471c-a7c7-1494ef473581",
+      "expectedIdentity": {
+        "name": "little Lola & tots LLC",
+        "city": "BROOKLYN",
+        "state": "NY",
+        "website": "https://www.lolatots.com/"
+      },
+      "patch": {
+        "description": "Lola & Kids (Lola & Tots) provides after-school program management services and summer camp programming for New York schools, handling staffing, curriculum, enrichment, and operations.",
+        "hours": "Our hours vary by school and are tailored to meet each community’s needs. Please check your school’s program listing for specific times.",
+        "phone": "718-885-7745",
+        "instagram": "https://www.instagram.com/lolaandtots/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lolatots.com/",
+          "sourceLabel": "Official After School Program Management Service NY | Lola &amp; Kids page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Lola & Kids provides schools with fully managed after-school programs. We handle staffing, scheduling, and day-to-day operations so schools can deliver high-quality enrichment without administrative burden."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://lolatots.com/",
+          "sourceLabel": "Official After School Program Management Service NY | Lola &amp; Kids page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our hours vary by school and are tailored to meet each community’s needs. Please check your school’s program listing for specific times."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lolatots.com/about-us/",
+          "sourceLabel": "Official About Us | Lola &amp; Tots page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 718-885-7745"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://lolatots.com/",
+          "sourceLabel": "Official After School Program Management Service NY | Lola &amp; Kids page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/lolaandtots/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1b0ba675-7dd6-4a72-af06-b963398f087c",
+      "expectedIdentity": {
+        "name": "LIXO 360 (Trash, Recycling Service)",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.lixokc.com/"
+      },
+      "patch": {
+        "description": "LIXO360 provides door-to-door trash, recycling, and glass service to multifamily/loft communities in Kansas City, MO.",
+        "tags": [
+          "door-to-door trash service",
+          "glass recycling",
+          "multifamily trash service",
+          "bulk service"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.lixokc.com/",
+          "sourceLabel": "Official LIXO - Multifamily Luxury Trash, Recycling, Bulk, &amp; Glass Service - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"LIXO360 is an INDEPENDENTLY owned and operated organization here in Kansas City, MO where we provide door-to-door trash, recycling, and glass service to multifamily/loft communities.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.lixokc.com/",
+          "sourceLabel": "Official LIXO - Multifamily Luxury Trash, Recycling, Bulk, &amp; Glass Service - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"we provide door-to-door trash, recycling, and glass service to multifamily/loft communities.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_dba22876-c3a6-48ae-8be6-5ae9fa0bd0d0",
+      "expectedIdentity": {
+        "name": "L.K.J Towing Corp.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "http://www.lkjtowing.com/"
+      },
+      "patch": {
+        "description": "We specialize in providing reliable, efficient, and affordable towing services to our community.",
+        "phone": "(718) 218 - 7373",
+        "tags": [
+          "towing service",
+          "roadside assistance"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lkjtowing.com/",
+          "sourceLabel": "Official 30+ years of reliable, affordable towing service across New York City page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We specialize in providing reliable, efficient, and affordable towing services to our community."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lkjtowing.com/",
+          "sourceLabel": "Official 30+ years of reliable, affordable towing service across New York City page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call Us! (718) 218 - 7373"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://lkjtowing.com/services",
+          "sourceLabel": "Official Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: You have arrived with the experts in reliable towing and roadside assistance"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7243e6cb-9626-4224-86f4-527e64b180bb",
+      "expectedIdentity": {
+        "name": "LLT Enterprises Inc",
+        "city": "BRONX",
+        "state": "NY",
+        "website": "https://www.lltent.net/"
+      },
+      "patch": {
+        "phone": "347-454-1845",
+        "description": "Provides sidewalk shed and pipe scaffolding services.",
+        "tags": [
+          "sidewalk shed",
+          "pipe scaffolding"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://lltent.net/",
+          "sourceLabel": "Official LLT Ent page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LLT Ent Phone Number 347-454-1845 Phone Number 347-454-1845"
+        },
+        {
+          "field": "description",
+          "sourceUrl": "https://lltent.net/",
+          "sourceLabel": "Official LLT Ent page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Sidewalk Shed & Pipe Scaffolding"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://lltent.net/",
+          "sourceLabel": "Official LLT Ent page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Sidewalk Shed & Pipe Scaffolding"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bd81ffff-55f5-4739-9f21-0d0ac39f3ba1",
+      "expectedIdentity": {
+        "name": "LL&V INDUSTRIES, LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.llvindustries.com/"
+      },
+      "patch": {
+        "hours": "Monday — Friday 9:00am — 5:00 pm",
+        "phone": "(908) 731-1622"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.llvindustries.com/services",
+          "sourceLabel": "Official Services &mdash; LL&amp;V Industries, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday — Friday 9:00am — 5:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.llvindustries.com/services",
+          "sourceLabel": "Official Services &mdash; LL&amp;V Industries, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (908) 731-1622"
+        }
+      ]
+    },
+    {
+      "businessId": "source_92f10e0a-65ed-499a-aee9-0e4f37b292be",
+      "expectedIdentity": {
+        "name": "LMB Virtual Locks",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://lmbvirtuallocks.com/"
+      },
+      "patch": {
+        "description": "Specializing in Sisterlocks™, the original micro interlocking system for tightly textured hair.",
+        "hours": "Monday: 5:00pm - 9:00 pm; Friday: 5:00pm - 9:00 pm; Saturday: 9 am-2 pm; Sunday: 1:30 pm-5 pm",
+        "phone": "(615) 944-0180",
+        "tags": [
+          "sisterlocks",
+          "retightening",
+          "grooming",
+          "repair"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://lmbvirtuallocks.com/",
+          "sourceLabel": "Official Sisterlocks, Interlock - LMB Virtual Locks - Nashville, Tennessee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Specializing in Sisterlocks™, the original micro interlocking system for tightly textured hair."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://lmbvirtuallocks.com/",
+          "sourceLabel": "Official Sisterlocks, Interlock - LMB Virtual Locks - Nashville, Tennessee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday: 5:00pm - 9:00 pm Friday: 5:00pm - 9:00 pm Saturday: 9 am-2 pm Sunday: 1:30 pm-5 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://lmbvirtuallocks.com/",
+          "sourceLabel": "Official Sisterlocks, Interlock - LMB Virtual Locks - Nashville, Tennessee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Book an Appointment (615) 944-0180"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://lmbvirtuallocks.com/",
+          "sourceLabel": "Official Sisterlocks, Interlock - LMB Virtual Locks - Nashville, Tennessee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services Sisterlocks™ is offered as a 3-visit package"
+        }
+      ]
+    },
+    {
+      "businessId": "source_20b04b2a-dc99-4204-96f2-a0b2c368295b",
+      "expectedIdentity": {
+        "name": "LOA Beauty",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.vagaro.com/loabeauty"
+      },
+      "patch": {
+        "twitter": "https://x.com/Vagaro",
+        "pinterest": "https://www.pinterest.com/VagaroPins/",
+        "youtube": "https://www.youtube.com/user/VagaroSupport"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.vagaro.com/loabeauty",
+          "sourceLabel": "Official LOA Beauty - Phoenix AZ | Vagaro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/Vagaro"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.vagaro.com/loabeauty",
+          "sourceLabel": "Official LOA Beauty - Phoenix AZ | Vagaro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/VagaroPins/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.vagaro.com/loabeauty",
+          "sourceLabel": "Official LOA Beauty - Phoenix AZ | Vagaro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/VagaroSupport"
+        }
+      ]
+    },
+    {
+      "businessId": "source_da7b9bfc-14f7-4ace-baed-f977868ab400",
+      "expectedIdentity": {
+        "name": "Lobo Ley Abogados de Accidentes Crim & Villalpando",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://loboley.com/"
+      },
+      "patch": {
+        "description": "Firma de lesiones personales con sede en Houston, Texas que ayuda a víctimas de colisiones de vehículos y otras lesiones causadas por la negligencia de otra persona.",
+        "hours": "Disponibles las 24 horas del día, los siete días de la semana.",
+        "phone": "713-481-0072",
+        "instagram": "https://www.instagram.com/c_v_law/?hl=en"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.loboley.com/",
+          "sourceLabel": "Official Abogado de lesiones personales en Texas | Abogados de lesiones en Houston TX | Lobo Ley page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: En Lobo Ley, también conocidos como Crim & Villalpando, PC, somos una firma de lesiones personales con sede en Houston, Texas, sirviendo a clientes en todo el estado. Ayudamos a víctimas y familias perjudicadas por colisiones de vehículos y lesiones graves causadas por otros tipos de accidentes a reconstruir sus vidas tras el daño causado por la negligencia de otra persona."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.loboley.com/",
+          "sourceLabel": "Official Abogado de lesiones personales en Texas | Abogados de lesiones en Houston TX | Lobo Ley page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Estamos disponibles las 24 horas del día, los siete días de la semana."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.loboley.com/",
+          "sourceLabel": "Official Abogado de lesiones personales en Texas | Abogados de lesiones en Houston TX | Lobo Ley page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Consulta Confidencial Gratuita 24/7 713-481-0072 713-481-0072"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.loboley.com/",
+          "sourceLabel": "Official Abogado de lesiones personales en Texas | Abogados de lesiones en Houston TX | Lobo Ley page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/c_v_law/?hl=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3fb9bf1f-adc5-4ffe-a7f9-c4dc6db43581",
+      "expectedIdentity": {
+        "name": "Local Office Landscape And Urban Design",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.localdesign.com/"
+      },
+      "patch": {
+        "description": "Local is a research-based design firm building innovative, resilient, and environmentally just landscapes.",
+        "phone": "+1 (718) 788-1987",
+        "instagram": "https://www.instagram.com/localofficelandscape/",
+        "facebook": "https://www.facebook.com/lolandscape"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://localdesign.com/about",
+          "sourceLabel": "Official Local – About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Local is a research-based design firm building innovative, resilient, and environmentally just landscapes."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://localdesign.com/",
+          "sourceLabel": "Official Local – Landscape, Urban Design &amp; Environmental Science page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 (718) 788-1987"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://localdesign.com/",
+          "sourceLabel": "Official Local – Landscape, Urban Design &amp; Environmental Science page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/localofficelandscape/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://localdesign.com/",
+          "sourceLabel": "Official Local – Landscape, Urban Design &amp; Environmental Science page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/lolandscape"
+        }
+      ]
+    },
+    {
+      "businessId": "source_49d50f12-4e96-4468-8c03-d3b47cfa2c1b",
+      "expectedIdentity": {
+        "name": "Loc’d by E",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://locdbye.glossgenius.com/"
+      },
+      "patch": {
+        "description": "Provides microloc install, retie, wash, style, touch up, and haircut/trim services; requires consultations for microloc installs.",
+        "hours": "Monday Closed Tuesday 9 AM - 6 PM Wednesday 10 AM - 6 PM Thursday 10 AM - 6 PM Friday 10 AM - 6 PM Saturday 8 AM - 6 PM Sunday Closed"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://locdbye.glossgenius.com/about",
+          "sourceLabel": "Official About Loc’d By E | Health &amp; Beauty in Indianapolis, IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Located in Indianapolis,IN CONSULTATIONS: All microloc installs require a consultation."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://locdbye.glossgenius.com/about",
+          "sourceLabel": "Official About Loc’d By E | Health &amp; Beauty in Indianapolis, IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Monday Closed Tuesday 9 AM - 6 PM Wednesday 10 AM - 6 PM Thursday 10 AM - 6 PM Friday 10 AM - 6 PM Saturday 8 AM - 6 PM Sunday Closed"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a3fd0d81-20d0-4e68-a070-54553c05f0d6",
+      "expectedIdentity": {
+        "name": "Locksmith 4 Less",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://locksmith4less.com/"
+      },
+      "patch": {
+        "description": "Local locksmith services in Memphis, TN."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://locksmith4less.com/",
+          "sourceLabel": "Official Locksmith 4 Less of Memphis | Local Locksmith Memphis, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Locksmith 4 Less of Memphis | Local Locksmith Memphis, TN"
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "e483ed38c42901ef1ded6eb4eeef6f88879519a34c6325614a70b767021b7cf1"
+}

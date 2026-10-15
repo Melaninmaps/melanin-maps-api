@@ -131,17 +131,6 @@ function sourceSnapshotValue(snapshot, field) {
   return candidates.map((key) => String(snapshot?.[key] ?? "").trim()).find(Boolean) ?? "";
 }
 
-function genericDirectoryDescription(value) {
-  const normalized = String(value ?? "").trim().toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, " ").trim();
-  return new Set([
-    "business", "barber", "barbershop", "hair salon", "restaurant",
-    "beauty hair", "beauty personal care", "food drink", "food beverage",
-    "health wellness", "professional services", "arts culture", "retail shopping",
-    "faith community", "home trades", "childcare education", "fashion", "retail",
-    "store", "shop", "not provided", "not available", "n a", "tbd", "coming soon",
-  ]).has(normalized);
-}
-
 /**
  * Converts a validated extraction and its matching website packet to a bounded
  * manifest candidate. Social URLs come only from an anchor on the verified
@@ -169,9 +158,13 @@ export function candidateFromProposal(proposal, pagePacket) {
     const value = validFieldValue(field, accepted?.value);
     if (!sourceUrl || !value || !strictText(accepted?.evidenceQuote, 600) || !["high", "medium"].includes(accepted?.confidence)) continue;
     patch[field] = value;
+    // The verified source packet does not include every stored profile
+    // description. The server freshly checks the current value and only
+    // replaces its closed list of generic directory labels; all substantive
+    // descriptions remain untouched.
     fieldModes[field] = field === "tags"
       ? "append"
-      : field === "description" && accepted.confidence === "high" && genericDirectoryDescription(proposal.sourceSnapshot?.Description)
+      : field === "description" && accepted.confidence === "high"
         ? "replace_generic_directory"
         : "fill";
     receipts.push(receiptFor(field, accepted, page, observedAt, sourceUrl));

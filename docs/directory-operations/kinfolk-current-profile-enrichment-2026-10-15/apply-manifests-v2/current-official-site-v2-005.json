@@ -1,0 +1,4170 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-005",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_cb898e32-2f02-43cd-b9dd-335d480aa361",
+      "expectedIdentity": {
+        "name": "Chase My Creations",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/33JxRES"
+      },
+      "patch": {
+        "pinterest": "https://www.pinterest.com/ChaseMyCreations/"
+      },
+      "fieldModes": {
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://chasemycreations.com/",
+          "sourceLabel": "Official Chase My Creations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/ChaseMyCreations/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1c8d22d7-6529-446b-8f3d-a00e70d1865d",
+      "expectedIdentity": {
+        "name": "Cherryl Pigues Crite & Company",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://cherrylcrite.com/"
+      },
+      "patch": {
+        "phone": "615.856.7033",
+        "tags": [
+          "workshops",
+          "volunteer opportunities",
+          "community programs"
+        ],
+        "twitter": "https://www.x.com/iamsistagirl",
+        "youtube": "https://www.youtube.com/@cherrylpiguescrite3557"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://cherrylcrite.com/contact-us",
+          "sourceLabel": "Official oneSistaGirlcan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"615.856.7033\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://cherrylcrite.com/",
+          "sourceLabel": "Official Cherryl Crite &amp; Company, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We host interactive experiences through various programs and resources designed to foster growth and resilience. We offer workshops, and volunteer opportunities to engage with persons in meaningful ways.\","
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://cherrylcrite.com/",
+          "sourceLabel": "Official Cherryl Crite &amp; Company, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.x.com/iamsistagirl"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://cherrylcrite.com/",
+          "sourceLabel": "Official Cherryl Crite &amp; Company, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@cherrylpiguescrite3557"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a4e7672e-e3f6-4823-9e0e-8771569c4a82",
+      "expectedIdentity": {
+        "name": "Chicago French Press",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://chicagofrenchpress.com/"
+      },
+      "patch": {
+        "description": "Chicago French Press is a Chicago-based beverage enterprise specializing in premium freshly roasted coffee and loose leaf wellness teas.",
+        "twitter": "https://twitter.com/ChiFrenchPress",
+        "youtube": "https://www.youtube.com/@chicagofrenchpress"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://chicagofrenchpress.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; Chicago French Press page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Chicago French Press® (CFP) is a Chicago-based beverage enterprise specializing in premium freshly roasted coffee and loose leaf wellness teas.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://chicagofrenchpress.com/",
+          "sourceLabel": "Official Chicago French Press page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ChiFrenchPress"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://chicagofrenchpress.com/",
+          "sourceLabel": "Official Chicago French Press page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@chicagofrenchpress"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e5fe4c59-83ed-42f0-8907-ffd30748bad4",
+      "expectedIdentity": {
+        "name": "Chilam Balam",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "http://www.chilambalamchicago.com/"
+      },
+      "patch": {
+        "description": "Chilam Balam is a sustainably minded BYOB restaurant serving Mexican shared plates with a farm fresh twist.",
+        "hours": "Monday - Closed Tuesday - 5:00PM - 9:00PM Wednesday - 5:00PM - 9:00PM Thursday - 5:00PM - 9:00PM Friday - 5:00PM - 10:00PM Saturday - 5:00PM - 10:00PM Sunday - Closed",
+        "phone": "773.296.6901",
+        "tags": [
+          "mexican shared plates",
+          "byob",
+          "sustainably minded"
+        ],
+        "twitter": "https://twitter.com/chilambalamchi?lang=en"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://chilambalamchicago.com/about-us/",
+          "sourceLabel": "Official About Us &#8211; Chilam Balam Chicago page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Chilam Balam is a sustainably minded BYOB restaurant serving Mexican shared plates with a farm fresh twist."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://chilambalamchicago.com/",
+          "sourceLabel": "Official Chilam Balam Chicago &#8211; Modern Mexican Food page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday - Closed Tuesday - 5:00PM - 9:00PM Wednesday - 5:00PM - 9:00PM Thursday - 5:00PM - 9:00PM Friday - 5:00PM - 10:00PM Saturday - 5:00PM - 10:00PM Sunday - Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://chilambalamchicago.com/",
+          "sourceLabel": "Official Chilam Balam Chicago &#8211; Modern Mexican Food page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 773.296.6901"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://chilambalamchicago.com/about-us/",
+          "sourceLabel": "Official About Us &#8211; Chilam Balam Chicago page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Chilam Balam is a sustainably minded BYOB restaurant serving Mexican shared plates with a farm fresh twist."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://chilambalamchicago.com/",
+          "sourceLabel": "Official Chilam Balam Chicago &#8211; Modern Mexican Food page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/chilambalamchi?lang=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6e841aa7-6889-4ba0-b949-391e6145eabe",
+      "expectedIdentity": {
+        "name": "Chocobar Cortes NYC, LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://chocobarcortes.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/ChocobarCortes/",
+        "instagram": "https://www.instagram.com/chocobarcortes/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.chocobarcortes.com/",
+          "sourceLabel": "Official Chocobar Cortés - Chocolate Cortés' Restaurant in San Juan and the Bronx page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/ChocobarCortes/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.chocobarcortes.com/",
+          "sourceLabel": "Official Chocobar Cortés - Chocolate Cortés' Restaurant in San Juan and the Bronx page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/chocobarcortes/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0f7cd4b9-621c-4e1c-993e-3beb18b8832c",
+      "expectedIdentity": {
+        "name": "Christal Clear Vision",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tMrQBV"
+      },
+      "patch": {
+        "description": "A life coaching website, helping women rediscover the gift called, \"Me!\"",
+        "tags": [
+          "life coaching",
+          "women's coaching"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://christalclearvision.com/?v=781becdf4698",
+          "sourceLabel": "Official Christal Clear Vision &mdash; Coming Soon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Christal Clear Vision — A life coaching website, helping women rediscover the gift called, \"Me!\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://christalclearvision.com/?v=781becdf4698",
+          "sourceLabel": "Official Christal Clear Vision &mdash; Coming Soon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Christal Clear Vision — A life coaching website, helping women rediscover the gift called, \"Me!\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f836fd5f-b6bb-4cab-a732-2a758d0c98e0",
+      "expectedIdentity": {
+        "name": "Christina Daycare Inc",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.blakeandmilforddaycare.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/",
+        "twitter": "https://www.twitter.com/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.blakeandmilforddaycare.com/",
+          "sourceLabel": "Official Child Care in Brooklyn, New York page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.blakeandmilforddaycare.com/",
+          "sourceLabel": "Official Child Care in Brooklyn, New York page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b6c08a01-1df4-4feb-9d5b-a0f811b64ed3",
+      "expectedIdentity": {
+        "name": "Christ the King Lutheran Church",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://ctkmemphis.com/"
+      },
+      "patch": {
+        "description": "Christ The King Lutheran Church is a congregation that grows in faith through Word and Sacrament and shares the Gospel of Jesus Christ.",
+        "phone": "901-682-8404"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ctkmemphis.com/about",
+          "sourceLabel": "Official Get to Know Us | Christ The King Lutheran Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"As God's forgiven family, we grow in faith through Word and Sacrament to share the Gospel of Jesus Christ.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ctkmemphis.com/",
+          "sourceLabel": "Official Christ The King Lutheran Church | Growing in Faith in Memphis TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact Us 901-682-8404\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_017217c7-304c-42f7-b085-fceebc3d11e7",
+      "expectedIdentity": {
+        "name": "CHR Solutions",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://chrsolutions.com/"
+      },
+      "patch": {
+        "description": "CHR Solutions provides telecom-focused services including fiber engineering, OSS/BSS software, cybersecurity, and managed IT services for broadband and communications providers.",
+        "phone": "+1 713 351 5111",
+        "twitter": "https://twitter.com/CHRSolutions",
+        "youtube": "https://www.youtube.com/@CHRSolutions"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://chrsolutions.com/",
+          "sourceLabel": "Official Telecom Software Solutions &amp; Engineering Services | CHR Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CHR Solutions empowers communications providers with end-to-end capabilities: expert fiber engineering services , scalable OSS/BSS software , cybersecurity, and managed IT services for telecom ."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://chrsolutions.com/cybersecurity/",
+          "sourceLabel": "Official Managed Cybersecurity Services | 24/7 Protection | CHR Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone +1 713 351 5111"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://chrsolutions.com/",
+          "sourceLabel": "Official Telecom Software Solutions &amp; Engineering Services | CHR Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/CHRSolutions"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://chrsolutions.com/",
+          "sourceLabel": "Official Telecom Software Solutions &amp; Engineering Services | CHR Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@CHRSolutions"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a96c9654-81f5-4013-8dd0-9a938cccc00c",
+      "expectedIdentity": {
+        "name": "Cicely Ryan LLC.",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://www.cicelyryan.com/"
+      },
+      "patch": {
+        "description": "Cicely Ryan reimagines existing materials and craftsmanship through deconstruction and intentional design; the brand states sustainability is a responsibility."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.cicelyryan.com/pages/about",
+          "sourceLabel": "Official About &ndash; Cicely Ryan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We believe clothing should evolve, not expire. Our work honors what already exists-materials, craftsmanship, and stories-by reimagining them through deconstruction and intentional design. Sustainability is not a trend for us; it is a responsibility.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_c03948e4-ff54-4d36-9014-8697e5a97c80",
+      "expectedIdentity": {
+        "name": "Cies Treats LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://ciestreatsllc.godaddysites.com/"
+      },
+      "patch": {
+        "description": "Cies Treats LLC is a decadent sweet shop that creates exquisite desserts for any occasion.",
+        "hours": "Monday: Closed Tuesday-Friday 11:00AM-5:30PM Saturday: 11:00AM - 4:00PM Sunday: Closed",
+        "phone": "317-664-2609"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ciestreatsllc.godaddysites.com/",
+          "sourceLabel": "Official Cies Treats LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Cies Treats LLC is a decadent sweet shop that creates exquisite desserts for any occasion."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://ciestreatsllc.godaddysites.com/contact-us",
+          "sourceLabel": "Official Cies Treats LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday: Closed Tuesday-Friday 11:00AM-5:30PM Saturday: 11:00AM - 4:00PM Sunday: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ciestreatsllc.godaddysites.com/contact-us",
+          "sourceLabel": "Official Cies Treats LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 317-664-2609"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4a6a2cd9-361f-4e88-b347-5bd5fbeb0709",
+      "expectedIdentity": {
+        "name": "Cinco Foods LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.cincofoods.com/"
+      },
+      "patch": {
+        "description": "Online retailer of spices, dried chiles, and related Mexican cooking ingredients."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.cincofoods.com/",
+          "sourceLabel": "Official Cinco Foods page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Spices and dried chiles for real Mexican cooking"
+        }
+      ]
+    },
+    {
+      "businessId": "source_772701d2-9f93-41dd-b5b6-b1232f9df6bc",
+      "expectedIdentity": {
+        "name": "Cinsei Manga + Match Café",
+        "city": "Cincinnati",
+        "state": "OH",
+        "website": "https://www.cinsei.com/"
+      },
+      "patch": {
+        "description": "A manga-focused matcha café described as a \"third space for readers, sippers, and collectors.\"",
+        "hours": "Mon: Closed; Tue: 10–3; Wed: 10–3; Thu: 10–3; Fri: 10–5; Sat: 10–6; Sun: 12–4"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cinsei.com/",
+          "sourceLabel": "Official Cinsei | Manga Matcha Cafe in Cincinnati page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A third space for readers, sippers, and collectors."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://cinsei.com/",
+          "sourceLabel": "Official Cinsei | Manga Matcha Cafe in Cincinnati page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Mon: Closed Tue: 10–3 Wed: 10–3 Thu: 10–3 Fri: 10–5 Sat: 10–6 Sun: 12–4"
+        }
+      ]
+    },
+    {
+      "businessId": "source_97e80126-e83c-4381-b8b0-09a86ff950d3",
+      "expectedIdentity": {
+        "name": "Citizens Savings Bank - Clarksville Highway Branch",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.bankcbn.com/"
+      },
+      "patch": {
+        "description": "Community-focused bank offering personal, business, and mortgage banking services and digital banking tools.",
+        "hours": "Corporate Headquarters Hours: M-F 8:30am-4:30pm; Main Office Hours: M-Th 8:30am-4:00pm Fri 8:30am-5:00pm",
+        "phone": "(615) 327-9787"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.bankcbn.com/about-us/",
+          "sourceLabel": "Official About Citizens Savings Bank &amp; Trust | Nashville &amp; Memphis TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: As a CDFI, Citizens Bank puts its communities first and values local economic growth. It does so by investing in areas underserved by the traditional banking sector, engaging in lending that supports affordable housing, small businesses and community facilities, and providing technical financial assistance to its customers."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.bankcbn.com/",
+          "sourceLabel": "Official Citizens Bank | Personal &amp; Business Banking | Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Corporate Headquarters 1917 Heiman Street Nashville, TN 37208 Phone: (615) 327-9787 Hours: M-F 8:30am-4:30pm Main Office 2013 Jefferson Street Nashville, TN 37208 Hours: M-Th 8:30am-4:00pm Fri 8:30am-5:00pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.bankcbn.com/",
+          "sourceLabel": "Official Citizens Bank | Personal &amp; Business Banking | Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Corporate Headquarters 1917 Heiman Street Nashville, TN 37208 Phone: (615) 327-9787"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0b791a1a-6ff8-465f-a0b8-4d31d42502e4",
+      "expectedIdentity": {
+        "name": "Citrus Argentina Corp.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.citrusargentina.com/"
+      },
+      "patch": {
+        "description": "Based in Argentina and the Southern Cone, Citrus Argentina represents producers of citrus ingredients and has experience cultivating and sourcing citrus products.",
+        "phone": "646.242.0474",
+        "tags": [
+          "citrus ingredients",
+          "lemon growers",
+          "sourcing citrus products"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://citrusargentina.com/",
+          "sourceLabel": "Official Who We Are - Citrus Argentina page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Based in Argentina and the Southern Cone, Citrus Argentina represents some of the world’s top producers of citrus ingredients."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://citrusargentina.com/contact/",
+          "sourceLabel": "Official Contact - Citrus Argentina page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: New York Office 646.242.0474"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://citrusargentina.com/",
+          "sourceLabel": "Official Who We Are - Citrus Argentina page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: As third-generation lemon growers, we have deep-rooted expertise in cultivating and sourcing the highest quality citrus products."
+        }
+      ]
+    },
+    {
+      "businessId": "source_bad10c1d-28db-44ea-9a62-a86d3d393985",
+      "expectedIdentity": {
+        "name": "CITY CENTRE INSURANCE",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.citycentreinsurance.com/courtney-burth"
+      },
+      "patch": {
+        "description": "Insurance agency offering auto, home, commercial, life, and group health insurance and online quote comparison.",
+        "phone": "832-465-0651",
+        "tags": [
+          "auto insurance",
+          "home insurance",
+          "commercial insurance",
+          "life insurance",
+          "group health insurance",
+          "insurance quotes"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.citycentreinsurance.com/courtney-burth/",
+          "sourceLabel": "Official Insurance Quotes | City Centre Insurance Agency, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Auto Insurance Home Insurance Commercial Insurance Life Insurance Group Health Insurance"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.citycentreinsurance.com/courtney-burth/",
+          "sourceLabel": "Official Insurance Quotes | City Centre Insurance Agency, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone : 832-465-0651"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.citycentreinsurance.com/courtney-burth/",
+          "sourceLabel": "Official Insurance Quotes | City Centre Insurance Agency, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Auto Insurance Home Insurance Commercial Insurance Life Insurance Group Health Insurance"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dad1d9ca-b601-4359-8938-f9738f3c2e85",
+      "expectedIdentity": {
+        "name": "City Market",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "https://savannahcitymarket.com/"
+      },
+      "patch": {
+        "description": "Savannah City Market is a historic public market and downtown hub that hosts restaurants, bars, shops, galleries, and artist studios.",
+        "phone": "912-232-4903",
+        "tags": [
+          "restaurants",
+          "bars",
+          "shops",
+          "artist studios",
+          "historic market"
+        ],
+        "twitter": "https://twitter.com/SavCityMarket",
+        "pinterest": "https://www.pinterest.com/savcitymarket/_created/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://savannahcitymarket.com/about/",
+          "sourceLabel": "Official About - Savannah City Market page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Presently, this tradition endures as both locals and visitors convene at City Market to enjoy its array of restaurants, bars, shops, and studios."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://savannahcitymarket.com/contact/",
+          "sourceLabel": "Official Contact - Savannah City Market - Savannah, GA - Savannah Market page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 912-232-4903"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://savannahcitymarket.com/about/",
+          "sourceLabel": "Official About - Savannah City Market page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Presently, this tradition endures as both locals and visitors convene at City Market to enjoy its array of restaurants, bars, shops, and studios."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://savannahcitymarket.com/",
+          "sourceLabel": "Official Home - City Market Savannah - Savannah City Market page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/SavCityMarket"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://savannahcitymarket.com/",
+          "sourceLabel": "Official Home - City Market Savannah - Savannah City Market page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/savcitymarket/_created/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d13ad2cb-ee55-41cd-a268-2b15fd857f44",
+      "expectedIdentity": {
+        "name": "City of Houston Mayor's Office of Business Opportunity",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.houstontx.gov/obo"
+      },
+      "patch": {
+        "description": "The Office of Business Opportunity (OBO) supports small businesses by offering guidance, certification programs, capacity-building support, and connections to contracting opportunities."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.houstontx.gov/obo/",
+          "sourceLabel": "Official City of Houston eGovernment Center - Office of Business Opportunity page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Whether you are just beginning your business journey or scaling to new heights, our mission is to open doors, remove barriers, and provide the resources you need to thrive.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_25042157-4413-4cc4-aaa4-dd47b4abc11a",
+      "expectedIdentity": {
+        "name": "City Tasting Box",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://citytastingbox.com/"
+      },
+      "patch": {
+        "description": "City Tasting Box is a boutique e-commerce shop that curates a blend of packaged goods from famed Memphis restaurants and chefs, up-and-coming local food artisans, and other Memphis inspired crafts all packaged in a well-designed mailer box."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://citytastingbox.com/pages/about",
+          "sourceLabel": "Official About Us &ndash; City Tasting Box page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"City Tasting Box is a boutique e-commerce shop that curates a blend of packaged goods from famed Memphis restaurants and chefs, up-and-coming local food artisans, and other Memphis inspired crafts all packaged in a well-designed mailer box.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_212d852e-533d-44fe-8c18-a69cf608c7a1",
+      "expectedIdentity": {
+        "name": "Civic Hacker",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://civichacker.com/"
+      },
+      "patch": {
+        "description": "Civic Hacker provides technology services using software, policy, and data to empower activists and support social impact.",
+        "twitter": "https://twitter.com/civichackercom"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://civichacker.com/about/",
+          "sourceLabel": "Official About Civic Hacker | Civic Hacker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Civic Hacker LLC provides technology services to organizations and individuals desiring to make a positive social impact locally and more broadly.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://civichacker.com/",
+          "sourceLabel": "Official Build things that matter™ | Civic Hacker page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/civichackercom"
+        }
+      ]
+    },
+    {
+      "businessId": "source_187ed14f-e9ef-4aba-86ac-de25901ff79a",
+      "expectedIdentity": {
+        "name": "Clara's Groovy Deliciousness",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "http://www.groovydeliciousness.com/"
+      },
+      "patch": {
+        "description": "Bakes and sells cakes, pies, brownies, cookies, cinnamon rolls, and other baked goods."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.groovydeliciousness.com/",
+          "sourceLabel": "Official Clara&#39;s Groovy Deliciousness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Cakes, Pies, Brownies, & So Much More Goodness!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5ce7bb02-bffb-4b30-9d38-67fdfd292b6a",
+      "expectedIdentity": {
+        "name": "Classico Building Maintenance Inc.",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.classicobmi.com/"
+      },
+      "patch": {
+        "description": "Classico Building Maintenance, Inc. provides building maintenance and construction-related cleaning services.",
+        "phone": "718-881-5551"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.classicobmi.com/",
+          "sourceLabel": "Official Classico &#8211; Building Maintenance, Inc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Classico Building Maintenance, Inc. Has Been Providing Comprehensive Building Maintenance And Construction Related Cleaning Services To The Bronx Community And The Five Boroughs Of NYC For More Than 40 Years.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.classicobmi.com/",
+          "sourceLabel": "Official Classico &#8211; Building Maintenance, Inc page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Bronx Office 697 Bridge Street Bronx, NY 10464 718-881-5551\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_218c4415-65b1-44ac-9a32-d715f482339e",
+      "expectedIdentity": {
+        "name": "Claudia Giselle Design LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.claudiagiselle.com/"
+      },
+      "patch": {
+        "description": "Full-service interior design studio offering luxury residential, commercial, and virtual interior design services across New York City, Westchester, the Hamptons, and Hudson Valley.",
+        "phone": "718-255-5949"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://claudiagiselle.com/",
+          "sourceLabel": "Official Claudia Giselle | Luxury Interior Designer New York page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Full-service interior design for luxury renovations and new builds across New York City, Westchester, the Hamptons, Hudson Valley and beyond.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://claudiagiselle.com/contact",
+          "sourceLabel": "Official Contact Claudia Giselle Design | Contact Brooklyn Designer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"718-255-5949\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_12f0f4ab-f4f2-4262-8034-e9a25de1fef0",
+      "expectedIdentity": {
+        "name": "Clean Habitat Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.clean-habitat.com/"
+      },
+      "patch": {
+        "description": "Clean Habitat provides ongoing property maintenance, porter and common-area care, handyman repairs, painting and special projects for residential buildings throughout Manhattan.",
+        "phone": "646.369.3637"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.clean-habitat.com/",
+          "sourceLabel": "Official NYC Property Maintenance &#038; Building Services | Clean Habitat page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Ongoing property maintenance, porter and common-area care, handyman repairs, painting and special projects for residential buildings throughout Manhattan.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.clean-habitat.com/",
+          "sourceLabel": "Official NYC Property Maintenance &#038; Building Services | Clean Habitat page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 646.369.3637"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f4860239-5cfc-49be-8d70-0159e138a55b",
+      "expectedIdentity": {
+        "name": "CLTphotoboothMagik",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://www.cltphotoboothmagik.com/"
+      },
+      "patch": {
+        "description": "CLT photo booth Magik offers photo booth rentals in Charlotte for weddings, private parties, corporate events and more.",
+        "phone": "+1 (984)-329-2593",
+        "tags": [
+          "photo booth rentals",
+          "weddings",
+          "private parties",
+          "corporate events",
+          "360 photo booths",
+          "event attendants",
+          "props provided"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.cltphotoboothmagik.com/contact",
+          "sourceLabel": "Official Contact CLT Photo Booth Magik | CLT Photo Booth Magik page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CLT photo booth Magik offers photo booth rentals in Charlotte for weddings, private parties, corporate events and more!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.cltphotoboothmagik.com/contact",
+          "sourceLabel": "Official Contact CLT Photo Booth Magik | CLT Photo Booth Magik page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: If you’d like to speak about our photo booth and services, call us directly at +1 (984)-329-2593"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.cltphotoboothmagik.com/faqs",
+          "sourceLabel": "Official Photo Booth Rental FAQs in Charlotte, NC | CLT Photo Booth Magik page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: We service Charlotte, NC and surrounding areas like Gastonia, Concord , Pineville , Ballantyne , Matthews, Mooresville, Huntersville, Lake Norman, Weddington, Waxhaw, Steel Creek, Fort Mill and Rock Hill."
+        }
+      ]
+    },
+    {
+      "businessId": "source_5a86c1d6-a8f9-4513-b774-9d68d6460cde",
+      "expectedIdentity": {
+        "name": "C Luxe Spa",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://cluxespa.com/"
+      },
+      "patch": {
+        "description": "Body sculpting and skincare services in Birmingham, AL.",
+        "tags": [
+          "body sculpting",
+          "skincare"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cluxespa.com/",
+          "sourceLabel": "Official C-Luxe Spa | Body Sculpting &amp; Skincare in Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: C-Luxe Spa | Body Sculpting & Skincare in Birmingham, AL"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://cluxespa.com/",
+          "sourceLabel": "Official C-Luxe Spa | Body Sculpting &amp; Skincare in Birmingham, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: C-Luxe Spa | Body Sculpting & Skincare in Birmingham, AL"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b878eeb4-39d4-4b0e-9df1-6f2de738c5d0",
+      "expectedIdentity": {
+        "name": "CNS Construction, Inc.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.cnsconstructionny.com/"
+      },
+      "patch": {
+        "description": "CNS Construction Inc. is a New York based corporation that develops projects in all types of home renovations."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cnsconstructionny.com/home-style-3/about/",
+          "sourceLabel": "Official About Us - CNS Construction INC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Formed in 2010 by Silvio Lazo, CNS Construction Inc is a New York based Corporation that develops projects in all types of home renovations.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f4526e3b-4e8c-46aa-b572-f24d86f04260",
+      "expectedIdentity": {
+        "name": "Cocoa Spaces",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.cocoaspaces.com/"
+      },
+      "patch": {
+        "description": "Cocoa Spaces LLC"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cocoaspaces.com/",
+          "sourceLabel": "Official Cocoa Spaces LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Cocoa Spaces LLC"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4abd015c-93f0-4488-a581-2b8ebf19ae56",
+      "expectedIdentity": {
+        "name": "Cocoa Spaces- Micro Event Space",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.cocoaspaces.com/"
+      },
+      "patch": {
+        "description": "Micro event space in Kansas City, MO."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cocoaspaces.com/",
+          "sourceLabel": "Official Cocoa Spaces LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Cocoa Spaces LLC"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f2b93007-64ba-4672-8bf6-330ee5d87112",
+      "expectedIdentity": {
+        "name": "Coconut Bowl",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3COZnQe"
+      },
+      "patch": {
+        "description": "Coconut Bowl offers bowling and authentic Jamaican food; it also mentions events and league bowling.",
+        "hours": "Monday: 5:30PM – 11PM; Tuesday: 5:30PM – 11PM; Wednesday: 5:30PM – 11PM; Thursday: 10:00AM – 2PM; Friday: 6:00PM – 2AM; Saturday: 12:00PM – 2AM; Sunday: Call for hours",
+        "phone": "(414) 206-0119"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://coconutbowl414.com/",
+          "sourceLabel": "Official Coconut Bowl &#8211; coconutbowl414.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Coconut Bowl is where good times become great, and great times become legendary. We offer cool vibes and authentic Jamaican food served daily."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://coconutbowl414.com/",
+          "sourceLabel": "Official Coconut Bowl &#8211; coconutbowl414.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours of Operation Monday: 5:30PM – 11PM Tuesday: 5:30PM – 11PM Wednesday: 5:30PM – 11PM Thursday: 10:00AM – 2PM Friday: 6:00PM – 2AM Saturday: 12:00PM – 2AM Sunday: Call for hours"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://coconutbowl414.com/",
+          "sourceLabel": "Official Coconut Bowl &#8211; coconutbowl414.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: please call (414) 206-0119 to verify availability prior to arriving."
+        }
+      ]
+    },
+    {
+      "businessId": "source_f7ed715e-e7df-4357-9655-bb0167bfab58",
+      "expectedIdentity": {
+        "name": "ColdSolutions",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.coldsolutionshvac.com/"
+      },
+      "patch": {
+        "description": "Commercial & residential HVAC and commercial refrigeration services, including repairs, maintenance, and installations."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.coldsolutionshvac.com/",
+          "sourceLabel": "Official #1 HVAC & Refrigeration Services in Houston & Corpus Christi, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Commercial & Residential HVAC and Refrigeration Proudly Serving Corpus Christi & Houston, TX"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3b08454e-4f6f-494e-92af-beb37052bf6e",
+      "expectedIdentity": {
+        "name": "Coldwell Banker COLUMBUS - Michael Jones",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.coldwellbankercolumbus.com/"
+      },
+      "patch": {
+        "description": "Real estate agent affiliated with Coldwell Banker Realty; provides residential real estate services including property search, active listings, sold listings, and buying & selling guidance."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://coldwellbankercolumbus.com/",
+          "sourceLabel": "Official Home - Michael Jones page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Home - Michael Jones Coldwell Banker Realty Home Residential Real Estate Properties Property Search My Active Listings My Sold Listings Buying & Selling Move Meter What is My Home Worth? Buying & Selling Tips Residential Real Estate Coldwell Banker Global Luxury About Me My Bio Contact Me\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_bcbf6ae0-4f62-4b56-b7f2-096a6fdb990b",
+      "expectedIdentity": {
+        "name": "Coldwell Banker Universal",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.cbure.com/"
+      },
+      "patch": {
+        "phone": "(832) 760-1733",
+        "facebook": "https://www.facebook.com/ColdwellBankerUniversal",
+        "instagram": "https://www.instagram.com/coldwell_banker_universal/?hl=en"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "http://www.cbure.com/",
+          "sourceLabel": "Official Houston Real Estate - Coldwell Banker Universal page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Coldwell Banker Universal | (832) 760-1733\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "http://www.cbure.com/",
+          "sourceLabel": "Official Houston Real Estate - Coldwell Banker Universal page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/ColdwellBankerUniversal"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "http://www.cbure.com/",
+          "sourceLabel": "Official Houston Real Estate - Coldwell Banker Universal page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/coldwell_banker_universal/?hl=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_305cea4c-ab35-4941-9b2f-f047073a23eb",
+      "expectedIdentity": {
+        "name": "Colin’s Seafood and Grill",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://colinsseafoodandgrill.com/"
+      },
+      "patch": {
+        "hours": "Kitchen Hours: Everyday 11 a.m. - 9:30 p.m.",
+        "phone": "Phone (443)708-1680",
+        "tags": [
+          "seafood",
+          "banquets",
+          "private events",
+          "catering"
+        ]
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://colinsseafoodandgrill.com/",
+          "sourceLabel": "Official COLIN&#x27;S SEAFOOD page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Kitchen Hours: Everyday 11 a.m. - 9:30 p.m."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://colinsseafoodandgrill.com/",
+          "sourceLabel": "Official COLIN&#x27;S SEAFOOD page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone (443)708-1680"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://colinsseafoodandgrill.com/banquet-menus",
+          "sourceLabel": "Official Banquet Menus page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Banquet menus include a non-alcoholic beverage"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4722a9a3-88bb-48a1-bbf7-9e2f69cbe21a",
+      "expectedIdentity": {
+        "name": "College Crib, Inc.",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.collegecrib.com/"
+      },
+      "patch": {
+        "hours": "TSU Homecoming Week Hours Thurs - Friday: 10am - 7pm Saturday: 7am - 8pm Sunday: 9am - 3pm CST",
+        "phone": "615.329.3885",
+        "twitter": "https://twitter.com/collegecrib",
+        "pinterest": "https://www.pinterest.com/collegecrib/"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.collegecrib.com/",
+          "sourceLabel": "Official College Crib - One of the World's Largest Divine 9 Sorority and Fraternity retail stores - The College Crib page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"TSU Homecoming Week Hours Thurs - Friday: 10am - 7pm Saturday: 7am - 8pm Sunday: 9am - 3pm CST\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.collegecrib.com/contact-us/",
+          "sourceLabel": "Official Contact Us - The College Crib page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Telephone: 615-329-3885\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.collegecrib.com/",
+          "sourceLabel": "Official College Crib - One of the World's Largest Divine 9 Sorority and Fraternity retail stores - The College Crib page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/collegecrib"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.collegecrib.com/",
+          "sourceLabel": "Official College Crib - One of the World's Largest Divine 9 Sorority and Fraternity retail stores - The College Crib page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/collegecrib/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ae4045d8-de86-4c42-b287-fc878c469a2e",
+      "expectedIdentity": {
+        "name": "Collegiate School",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.collegiate-va.org/"
+      },
+      "patch": {
+        "description": "Private JK-12 day school offering academic programs and extracurricular activities across Lower, Middle, and Upper School divisions.",
+        "youtube": "https://youtu.be/_DWor-d5ov8"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.collegiaterva.org/",
+          "sourceLabel": "Official Home | Collegiate School, Private JK-12 Day School in Richmond, VA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Home | Collegiate School, Private JK-12 Day School in Richmond, VA"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.collegiaterva.org/",
+          "sourceLabel": "Official Home | Collegiate School, Private JK-12 Day School in Richmond, VA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtu.be/_DWor-d5ov8"
+        }
+      ]
+    },
+    {
+      "businessId": "cohort-25d7fee5dbd96fc6729db3ed",
+      "expectedIdentity": {
+        "name": "ColonialWebb",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.colonialwebb.com/"
+      },
+      "patch": {
+        "phone": "(804) 916-1400",
+        "youtube": "https://www.youtube.com/channel/UCPmGz8Tybp8Mbm0pwnky3nw"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://colonialwebb.com/",
+          "sourceLabel": "Official ColonialWebb page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Richmond, VA (HQ) 1920 E Parham Road Richmond, VA 23228 (804) 916-1400\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://colonialwebb.com/",
+          "sourceLabel": "Official ColonialWebb page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCPmGz8Tybp8Mbm0pwnky3nw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8d997024-5a84-406b-9487-756b78369b13",
+      "expectedIdentity": {
+        "name": "ColorRush Print Shop",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://colorrushprintshop.com/"
+      },
+      "patch": {
+        "description": "ColorRush Print Shop is a local, family-owned, small business located in Indianapolis, IN."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://colorrushprintshop.com/pages/about",
+          "sourceLabel": "Official About &ndash; ColorRush Print Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"About ColorRush Print Shop is a local, family-owned, small business located in Indianapolis, IN.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_487b4658-3cd1-4f49-a7e3-0266a0db1139",
+      "expectedIdentity": {
+        "name": "Columbia Consulting Engineers, PLLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.ccengrs.com/"
+      },
+      "patch": {
+        "description": "Columbia Consulting Engineers, PLLC provides professional engineering and construction management services for infrastructure projects in New York City.",
+        "hours": "Monday to Friday 9 AM – 5 PM",
+        "phone": "(646) 993-7215",
+        "twitter": "https://twitter.com/ccengrs"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ccengrs.com/",
+          "sourceLabel": "Official Home - Columbia Consulting Engineers, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Columbia Consulting Engineers, PLLC provides professional engineering and construction management services for infrastructure projects in New York City.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://ccengrs.com/contact-us/",
+          "sourceLabel": "Official Contact Us - Columbia Consulting Engineers, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We are open: Monday to Friday 9 AM – 5 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ccengrs.com/contact-us/",
+          "sourceLabel": "Official Contact Us - Columbia Consulting Engineers, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone number: (646) 993-7215\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://ccengrs.com/",
+          "sourceLabel": "Official Home - Columbia Consulting Engineers, PLLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ccengrs"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a3fe211f-3311-4735-9f7e-66c99af59611",
+      "expectedIdentity": {
+        "name": "Columbia Savings & Loan Association",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3bsO8Cl"
+      },
+      "patch": {
+        "description": "Columbia Savings & Loan Association provides financial services focused on community empowerment, including mortgage and savings solutions.",
+        "hours": "Monday-Thursday, 9 a.m.-5 p.m. Friday, 9 a.m.-6 p.m. Saturday-Sunday, Closed",
+        "phone": "Phone: 414-374-0486",
+        "tags": [
+          "home mortgages",
+          "commercial property financing",
+          "savings accounts"
+        ],
+        "facebook": "https://www.facebook.com/sharer/sharer.php?u=https://columbiasavingsandloans.com/mortgages/",
+        "twitter": "https://twitter.com/intent/tweet?url=https://columbiasavingsandloans.com/mortgages/&"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://columbiasavingsandloans.com/",
+          "sourceLabel": "Official Inclusive Services | Columbia Savings &amp; Loan Association page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Buy a Home Explore the path to homeownership with CSLA, where our commitment to community empowerment meets personalized mortgage solutions."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://columbiasavingsandloans.com/contact-us/",
+          "sourceLabel": "Official Take the First Step | Columbia Savings &amp; Loan Association page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours: Monday-Thursday, 9 a.m.-5 p.m. Friday, 9 a.m.-6 p.m. Saturday-Sunday, Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://columbiasavingsandloans.com/contact-us/",
+          "sourceLabel": "Official Take the First Step | Columbia Savings &amp; Loan Association page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 414-374-0486"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://columbiasavingsandloans.com/",
+          "sourceLabel": "Official Inclusive Services | Columbia Savings &amp; Loan Association page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Buy a Home Buy a Commercial Property Save for Your Future"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://columbiasavingsandloans.com/",
+          "sourceLabel": "Official Inclusive Services | Columbia Savings &amp; Loan Association page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/sharer/sharer.php?u=https://columbiasavingsandloans.com/mortgages/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://columbiasavingsandloans.com/",
+          "sourceLabel": "Official Inclusive Services | Columbia Savings &amp; Loan Association page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/intent/tweet?url=https://columbiasavingsandloans.com/mortgages/&"
+        }
+      ]
+    },
+    {
+      "businessId": "source_24b282e1-6569-42c0-ac5c-df9c11741953",
+      "expectedIdentity": {
+        "name": "Columbus Archery",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.columbusarchery614.com/"
+      },
+      "patch": {
+        "description": "Columbus Archery is redefining what it means to take aim, providing a welcoming space where archery meets mindfulness and cultivating patience, focus, and self-confidence."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.columbusarchery614.com/",
+          "sourceLabel": "Official Columbus Archery page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Columbus Archery is redefining what it means to take aim. As the first Black and Queer -owned archery studio in Columbus, we provide a welcoming space where archery meets mindfulness. Our offerings don’t just teach precision; they cultivate patience , focus , and self-confidence .\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_39439a01-77ba-4a5c-b1ef-bcad757b73da",
+      "expectedIdentity": {
+        "name": "Columbus Center of Entrepreneurial Development",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.coedworldwide.com/"
+      },
+      "patch": {
+        "description": "COED provides support to minority and underserved entrepreneurs by facilitating access to education, capital, and resources to help create and grow scalable, profitable and sustainable business ventures.",
+        "phone": "(614) 309-3273"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.coedworldwide.com/",
+          "sourceLabel": "Official COED &#8211; Center of Entrepreneurial Development page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our mission is to provide impactful support to minority and underserved entrepreneurs that wish to create and grow scalable, profitable and sustainable business ventures by facilitating greater access to education, capital and viable resources.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.coedworldwide.com/",
+          "sourceLabel": "Official COED &#8211; Center of Entrepreneurial Development page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(614) 309-3273\",\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_e4adc0e2-49ba-46e3-89f2-e1567c309162",
+      "expectedIdentity": {
+        "name": "Columbus Fashion Alliance",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.columbusfashion.org/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/channel/UC-MTLYgBU62agHYTQ2i28sA"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://columbusfashion.org/",
+          "sourceLabel": "Official Columbus Fashion Alliance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UC-MTLYgBU62agHYTQ2i28sA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cd452e5b-80d3-4177-83d8-b64afc6b7978",
+      "expectedIdentity": {
+        "name": "Commonwealth National Bank",
+        "city": "Mobile",
+        "state": "AL",
+        "website": "https://www.ecommonwealthbank.com/"
+      },
+      "patch": {
+        "phone": "251-476-5938"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ecommonwealthbank.com/",
+          "sourceLabel": "Official Business and Personal Banking on the Gulf Coast | Commonwealth National Bank | Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Insights About Locations 251-476-5938 Call Us"
+        }
+      ]
+    },
+    {
+      "businessId": "source_88c9e7e6-3e6d-4ba5-afbe-748c8c16c628",
+      "expectedIdentity": {
+        "name": "Commonwealth National Bank - Crichton Branch",
+        "city": "Mobile",
+        "state": "AL",
+        "website": "https://www.ecommonwealthbank.com/"
+      },
+      "patch": {
+        "description": "Commonwealth National Bank provides personal and business banking products and loan services in Mobile, AL.",
+        "hours": "Main Office Lobby Hours Monday – Thursday: 9:00 am – 5:00 pm Friday: 9:00 am – 6:00 pm Saturday: 9:00 am – 12:00 pm",
+        "phone": "251-476-5938"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ecommonwealthbank.com/",
+          "sourceLabel": "Official Business and Personal Banking on the Gulf Coast | Commonwealth National Bank | Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business and Personal Banking on the Gulf Coast | Commonwealth National Bank | Mobile, AL"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ecommonwealthbank.com/about/convenient-locations/",
+          "sourceLabel": "Official Bank &amp; ATM Locations | Commonwealth National Bank | Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Main Office Branch 2214 St. Stephens Road Mobile, AL 36617 251-476-5938 FAX: 251-476-5946 Lobby Hours Monday – Thursday: 9:00 am &#8211; 5:00 pm Friday: 9:00 am &#8211; 6:00 pm Saturday: 9:00 am &#8211; 12:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ecommonwealthbank.com/",
+          "sourceLabel": "Official Business and Personal Banking on the Gulf Coast | Commonwealth National Bank | Mobile, AL page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Insights About Locations 251-476-5938 Call Us"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c1d1b419-224b-466a-96ec-ce9b904cd04e",
+      "expectedIdentity": {
+        "name": "Communion Restaurant & Bar",
+        "city": "Seattle",
+        "state": "WA",
+        "website": "https://www.communionseattle.com/"
+      },
+      "patch": {
+        "description": "COMMUNION Restaurant & Bar is an award-winning Black-owned restaurant in Seattle’s historic Central District that serves Southern-rooted, Pacific Northwest–inspired cuisine, craft cocktails, brunch, and dinner.",
+        "hours": "Monday & Tuesday | Closed Wednesday & Thursday | 4pm til’ 9pm Friday & Saturday | 4pm til’ 10:30pm Sunday Brunch | 10am til’ 3pm Sunday Dinner | 4pm til’ 9pm",
+        "phone": "206.806.1916"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.communionseattle.com/",
+          "sourceLabel": "Official COMMUNION Restaurant &amp; Bar | Seattle, WA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"COMMUNION Restaurant & Bar is an award-winning Black-owned restaurant in Seattle’s historic Central District. Founded by James Beard–nominated Chef Kristi Brown, we serve Southern-rooted, Pacific Northwest–inspired cuisine, craft cocktails, brunch, and dinner in a vibrant space where food, culture, and community come together.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.communionseattle.com/",
+          "sourceLabel": "Official COMMUNION Restaurant &amp; Bar | Seattle, WA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Monday & Tuesday | Closed Wednesday & Thursday | 4pm til’ 9pm Friday & Saturday | 4pm til’ 10:30pm + Sunday Brunch | 10am til’ 3pm + Sunday Dinner | 4pm til’ 9pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.communionseattle.com/",
+          "sourceLabel": "Official COMMUNION Restaurant &amp; Bar | Seattle, WA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"206.806.1916\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8252c25d-9e39-4ab1-a2ee-b2cd92d582ab",
+      "expectedIdentity": {
+        "name": "Community Warehouse Building Materials",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3bpakgH"
+      },
+      "patch": {
+        "description": "Community Warehouse is a faith-based organization that provides reentry services, job training, and employment support for people impacted by incarceration.",
+        "facebook": "https://www.facebook.com/thecommunitywarehouse.org",
+        "instagram": "https://www.instagram.com/the.community.warehouse/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thecommunitywarehouse.org/",
+          "sourceLabel": "Official The Community Warehouse and Partners In Hope- Milwaukee WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Community Warehouse (CW) is a faith-based organization passionately dedicated to helping willing men and women, and their families impacted by incarceration overcome social, economic, and criminal justice system barriers."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://thecommunitywarehouse.org/",
+          "sourceLabel": "Official The Community Warehouse and Partners In Hope- Milwaukee WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/thecommunitywarehouse.org"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://thecommunitywarehouse.org/",
+          "sourceLabel": "Official The Community Warehouse and Partners In Hope- Milwaukee WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/the.community.warehouse/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d94bc16b-5542-4c80-92ef-31f32c1aa133",
+      "expectedIdentity": {
+        "name": "Compass Nutrition LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.compassnutrition.com/"
+      },
+      "patch": {
+        "description": "Compass Nutrition provides personalized virtual medical nutrition therapy and counseling with registered dietitians for weight management, GLP-1 medication support, digestive health, food sensitivities, and cardiometabolic conditions.",
+        "hours": "\"Monday-Friday: By appointment only\"",
+        "phone": "\"Phone: (212) 419-0399\"",
+        "twitter": "https://x.com/CompassRDN",
+        "instagram": "https://www.instagram.com/compassnutrition/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.compassnutrition.com/",
+          "sourceLabel": "Official Online Registered Dietitians &amp; Nutrition Counseling | Compass Nutrition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Through personalized virtual nutrition counseling, we help you understand your body's needs, manage symptoms, and develop sustainable eating habits that support your health.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.compassnutrition.com/",
+          "sourceLabel": "Official Online Registered Dietitians &amp; Nutrition Counseling | Compass Nutrition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Monday-Friday: By appointment only\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.compassnutrition.com/",
+          "sourceLabel": "Official Online Registered Dietitians &amp; Nutrition Counseling | Compass Nutrition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: (212) 419-0399\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.compassnutrition.com/",
+          "sourceLabel": "Official Online Registered Dietitians &amp; Nutrition Counseling | Compass Nutrition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/CompassRDN"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.compassnutrition.com/",
+          "sourceLabel": "Official Online Registered Dietitians &amp; Nutrition Counseling | Compass Nutrition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/compassnutrition/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a5319db4-1718-4051-9079-6ef8f936ab78",
+      "expectedIdentity": {
+        "name": "Comply Building Group",
+        "city": "New York",
+        "state": "NY",
+        "website": "http://complybuilding.com/"
+      },
+      "patch": {
+        "description": "Comply Building Group is a registered Special Inspection Agency (SIA) that provides a broad range of Class 2 inspection services.",
+        "twitter": "https://twitter.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://complybuilding.com/",
+          "sourceLabel": "Official Comply Building Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Comply Building Group is a registered Special Inspection Agency (SIA) that provides a broad range of Class 2 inspection services"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "http://complybuilding.com/",
+          "sourceLabel": "Official Comply Building Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_30440b3f-0f56-4ca3-bce7-86b95e1f0c4a",
+      "expectedIdentity": {
+        "name": "Compulink Technologies, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "http://www.compu-link.com/"
+      },
+      "patch": {
+        "description": "Compulink Technologies delivers end-to-end IT infrastructure, cybersecurity, cloud services, procurement, and digital transformation for public sector, education, healthcare, transportation, and nonprofit organizations.",
+        "phone": "+1 (212) 695-5465",
+        "facebook": "https://www.facebook.com/Compulinktechnologiesinc",
+        "instagram": "https://www.instagram.com/compulink_nyc/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.compu-link.com/about-us",
+          "sourceLabel": "Official About Us | Compulink Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Compulink Technologies has been the trusted technology partner for public sector agencies, educational institutions, healthcare organizations, transportation authorities, and nonprofits. We deliver comprehensive, end-to-end IT solutions spanning critical infrastructure, cybersecurity, cloud services, software and hardware procurement, and digital transformation"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.compu-link.com/",
+          "sourceLabel": "Official Home | Compulink Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Schedule a Consultation +1 (212) 695-5465 · sales@compu-link.com"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.compu-link.com/",
+          "sourceLabel": "Official Home | Compulink Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Compulinktechnologiesinc"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.compu-link.com/",
+          "sourceLabel": "Official Home | Compulink Technologies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/compulink_nyc/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fb42f67a-c4c7-465d-baec-a256094f6ec7",
+      "expectedIdentity": {
+        "name": "ConBody Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://conbody.com/"
+      },
+      "patch": {
+        "hours": "Mon–Fri 6am–9pm · Sat 9am–5pm · Sun 10am–1pm",
+        "phone": "347-251-0423",
+        "instagram": "https://www.instagram.com/conbody/",
+        "facebook": "https://www.facebook.com/conbody",
+        "twitter": "https://twitter.com/conbodynyc"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://conbody.com/",
+          "sourceLabel": "Official Prison-Style Fitness Classes, Lower East Side NYC | CONBODY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Mon–Fri 6am–9pm · Sat 9am–5pm · Sun 10am–1pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://conbody.com/",
+          "sourceLabel": "Official Prison-Style Fitness Classes, Lower East Side NYC | CONBODY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 347-251-0423"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://conbody.com/",
+          "sourceLabel": "Official Prison-Style Fitness Classes, Lower East Side NYC | CONBODY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/conbody/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://conbody.com/",
+          "sourceLabel": "Official Prison-Style Fitness Classes, Lower East Side NYC | CONBODY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/conbody"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://conbody.com/",
+          "sourceLabel": "Official Prison-Style Fitness Classes, Lower East Side NYC | CONBODY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/conbodynyc"
+        }
+      ]
+    },
+    {
+      "businessId": "dir-ab9a41dfb9346d0dc3dde59a",
+      "expectedIdentity": {
+        "name": "Condesa & El Techo",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.condesaphilly.com/"
+      },
+      "patch": {
+        "description": "Condesa is a modern Mexican restaurant and El Techo is a rooftop taqueria and bar in the heart of Rittenhouse, Philadelphia.",
+        "hours": "Condesa Happy Hour Monday - Friday : 4pm - 7pm"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.condesaphilly.com/",
+          "sourceLabel": "Official Condesa & El Techo | Mexican Restaurants in Philadelphia page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Condesa is a modern Mexican restaurant and El Techo is a rooftop taqueria and bar in the heart of Rittenhouse, Philadelphia, opened in October 2019 by the award-winning team at Defined Hospitality .\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.condesaphilly.com/location/condesa/",
+          "sourceLabel": "Official Condesa | Hours + Location | Condesa & El Techo | Mexican Restaurants in Philadelphia page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Condesa Happy Hour Monday - Friday : 4pm - 7pm\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_73f3db4a-4b89-49ef-bd92-ab2fb959239b",
+      "expectedIdentity": {
+        "name": "Coneheads",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.coneheadscw.com/"
+      },
+      "patch": {
+        "description": "Coneheads is a family-owned, Black-owned Nashville food truck and restaurant serving a twist on classic comfort food, including chicken and waffles in a waffle cone, made-from-scratch dishes, homemade sauces, and savory sides.",
+        "hours": "Tuesday–Thursday: 5 PM–10 PM Friday–Saturday: 5 PM–12 AM Sunday–Monday: Closed",
+        "phone": "(555) 555-5555",
+        "tags": [
+          "chicken and waffles",
+          "food truck",
+          "comfort food",
+          "homemade sauces"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.coneheadscw.com/",
+          "sourceLabel": "Official CONEHEADS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Coneheads is a family-owned, Black-owned Nashville food truck serving an elevated twist on classic comfort food since 2019. From our signature chicken and waffles in a waffle cone to homemade sauces and savory sides, everything is made with flavor, creativity, and community in mind."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.coneheadscw.com/",
+          "sourceLabel": "Official CONEHEADS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Find us at 1315 Dickerson Pike, Nashville, TN 37207. Tuesday–Thursday: 5 PM–10 PM Friday–Saturday: 5 PM–12 AM Sunday–Monday: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.coneheadscw.com/",
+          "sourceLabel": "Official CONEHEADS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (555) 555-5555"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.coneheadscw.com/",
+          "sourceLabel": "Official CONEHEADS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our signature chicken-in-a-waffle-cone combines crispy chicken, homemade sauces, and savory sides in one unforgettable meal."
+        }
+      ]
+    },
+    {
+      "businessId": "source_fb0b2b8f-276e-42e8-adfa-efebaa573254",
+      "expectedIdentity": {
+        "name": "Conscious Consulting",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.considercoco.com/"
+      },
+      "patch": {
+        "description": "Thoughtful public relations and communications strategy for innovative, mission-driven brands."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.considercoco.com/",
+          "sourceLabel": "Official Conscious Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Thoughtful public relations and communications strategy for innovative, mission-driven brands."
+        }
+      ]
+    },
+    {
+      "businessId": "source_be3e235e-4b60-477b-a4a6-9bfa008d71c3",
+      "expectedIdentity": {
+        "name": "Consistent Care Transit LLC DBA Just Like Home for Elders and Young Adults LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.consistentcaretransit.com/"
+      },
+      "patch": {
+        "description": "We offer a wrap around of services dedicated to ''Helping those who once helped us''. A Certified Minority Woman Owned Business located in Indianapolis, Indiana."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.consistentcaretransit.com/",
+          "sourceLabel": "Official Consistent Care Transit LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We offer a wrap around of services dedicated to ''Helping those who once helped us''. A Certified Minority Woman Owned Business located in Indianapolis, Indiana."
+        }
+      ]
+    },
+    {
+      "businessId": "source_fbfc3152-3079-42b5-9b9b-b71fa72e642e",
+      "expectedIdentity": {
+        "name": "Con-Tax Services",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "http://www.con-taxservices.com/"
+      },
+      "patch": {
+        "phone": "(602) 433-0066",
+        "hours": "Open today 09:00 am – 05:00 pm",
+        "facebook": "https://www.facebook.com/contaxservices"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "hours": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://con-taxservices.com/",
+          "sourceLabel": "Official Con-Tax Services, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Con-Tax Services, Inc. (602) 433-0066 (602) 433-0066"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://con-taxservices.com/",
+          "sourceLabel": "Official Con-Tax Services, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours of Operation Open today 09:00 am – 05:00 pm"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://con-taxservices.com/",
+          "sourceLabel": "Official Con-Tax Services, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/contaxservices"
+        }
+      ]
+    },
+    {
+      "businessId": "source_55b1f0aa-e20f-4c08-853b-9d0a68a53f01",
+      "expectedIdentity": {
+        "name": "Control Electropolishing Corp",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "http://www.controlelectropolishing.com/"
+      },
+      "patch": {
+        "description": "Electropolishing, passivating, and pickling services for metal parts, including stainless steel and some other alloys.",
+        "phone": "(718) 858-6634",
+        "facebook": "https://www.facebook.com/controlelectropolish/",
+        "twitter": "https://twitter.com/Controlelectrop"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://controlelectropolishing.com/services/electropolishing/",
+          "sourceLabel": "Official Electropolishing - Control Electropolishing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Electropolishing, also known as electrochemical polishing or electrolytic polishing (especially in the metallography field), is an electrochemical process that removes material from a metallic workpiece. It is used to polish, passivate, and deburr metal parts."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://controlelectropolishing.com/",
+          "sourceLabel": "Official Home - Control Electropolishing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 109-11 Walworth St Brooklyn, NY 11205 (718) 858-6634"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://controlelectropolishing.com/",
+          "sourceLabel": "Official Home - Control Electropolishing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/controlelectropolish/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://controlelectropolishing.com/",
+          "sourceLabel": "Official Home - Control Electropolishing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/Controlelectrop"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f790102e-3985-4bf5-b826-7cd64743babf",
+      "expectedIdentity": {
+        "name": "Convergence Memphis",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://convergencememphis.org/"
+      },
+      "patch": {
+        "description": "Convergence Memphis is a partnership created to advance the mission of increasing Black and minority homeownership in the Memphis area; it promotes affordable housing, hosts homebuyer fairs, offers financial education courses, and provides tools for affordable housing practitioners."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://convergencememphis.org/",
+          "sourceLabel": "Official Convergence Memphis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"CONVERGENCE Memphis is a partnership with the Mortgage Bankers Association and the Tennessee Housing Development Agency, which was created to advance the mission of increasing Black and minority homeownership in the Memphis area. CONVERGENCE Memphis aims to promote affordable housing and increase Black and minority homeownership by hosting homebuyer fairs, offering financial education courses, and providing affordable housing practitioners the tools they need to improve their outreach strategies.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9b96eba0-a4d2-4840-80d8-f5b781a5dcef",
+      "expectedIdentity": {
+        "name": "COO Creative Co.",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.coocreative.co/"
+      },
+      "patch": {
+        "description": "Branding designer based in Memphis that aims to enhance brands and build meaningful connections with consumers.",
+        "phone": "901-409-2190",
+        "tags": [
+          "branding",
+          "branding designer"
+        ]
+      },
+      "fieldModes": {
+        "description": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.coocreative.co/",
+          "sourceLabel": "Official Memphis Branding Designer I COO Creative Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: ENHANCE YOUR BRAND Build a meaningful connection and silently demand the eyes of consumers while driving profits."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.coocreative.co/contact",
+          "sourceLabel": "Official Contact | COO Creative Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact 901-409-2190 info@coocreative.co"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.coocreative.co/",
+          "sourceLabel": "Official Memphis Branding Designer I COO Creative Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: ENHANCE YOUR BRAND Build a meaningful connection and silently demand the eyes of consumers while driving profits."
+        }
+      ]
+    },
+    {
+      "businessId": "source_1ce55921-a95f-4621-a5e2-0665184131c0",
+      "expectedIdentity": {
+        "name": "Cooper Law, LLC",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://www.cooperlawmn.com/"
+      },
+      "patch": {
+        "description": "Cooper Law, LLC provides family law and social security disability representation, including sliding fee rates and limited scope options.",
+        "phone": "(612) 568-4529",
+        "twitter": "https://twitter.com/CooperLawMN"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cooperlawmn.com/",
+          "sourceLabel": "Official Home - Cooper Law, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Cooper Law, we believe everyone deserves access to quality legal help, regardless of economic status. Sliding fee rates designed based on income for family law representation Limited scope options to help you handle as much as possible on your own Cooper Law also represents individuals seeking social security disability , with many clients qualifying for services free-of-charge."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://cooperlawmn.com/",
+          "sourceLabel": "Official Home - Cooper Law, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (612) 568-4529"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://cooperlawmn.com/",
+          "sourceLabel": "Official Home - Cooper Law, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/CooperLawMN"
+        }
+      ]
+    },
+    {
+      "businessId": "national-7bcea188d49c5f96c239b5a1",
+      "expectedIdentity": {
+        "name": "Coppin State University",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://www.coppin.edu/"
+      },
+      "patch": {
+        "description": "Coppin State University is a university that offers academic programs, admissions information, student life resources, and campus services.",
+        "hours": "Office of Admissions Mon-Thu: 8:00 am - 5:00 pm Fri: 8:00 am - 3:00 pm",
+        "twitter": "https://twitter.com/CoppinStateUniv",
+        "youtube": "https://www.youtube.com/user/CoppinStateTube"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.coppin.edu/",
+          "sourceLabel": "Official Homepage | Coppin State University page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Homepage | Coppin State University"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.coppin.edu/admissions/military-service-members-and-veterans-admissions",
+          "sourceLabel": "Official Military Service Members and Veterans Admissions | Coppin State University page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (410) 951-3600 Mon-Thu: 8:00 am - 5:00 pm Fri: 8:00 am - 3:00 pm"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.coppin.edu/",
+          "sourceLabel": "Official Homepage | Coppin State University page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/CoppinStateUniv"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.coppin.edu/",
+          "sourceLabel": "Official Homepage | Coppin State University page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/CoppinStateTube"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c28c2dee-6e9a-4889-b9f4-13c2153b9778",
+      "expectedIdentity": {
+        "name": "Core Design Impact LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.coredesignimpact.com/"
+      },
+      "patch": {
+        "description": "Core Design Impact provides architecture, design, engineering, and project management services.",
+        "phone": "+1 (713) 447-2065"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://coredesignimpact.com/",
+          "sourceLabel": "Official Core Design Impact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Discover the services, and markets that make Core Design Impact a top-tier global design and delivery firm. Management Project Management Design Interior Design Architecture Design Photorealistic Renderings Engineering Civil Engineering Structural Engineering Electrical Engineering Mechanical Engineering Plumbing Engineering Low Voltage Telecom Design Electronic Security Audio/Visual Design Acoustics Design"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://coredesignimpact.com/",
+          "sourceLabel": "Official Core Design Impact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us +1 (713) 447-2065 info@coredesignimpact.com 5718 Westheimer, Suite 1000. Houston, TX 77057"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4faf50fb-c453-4547-9342-39a21b00c905",
+      "expectedIdentity": {
+        "name": "Cork + Knife Communications, LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.corkknife.com/"
+      },
+      "patch": {
+        "instagram": "http://instagram.com/corkknife"
+      },
+      "fieldModes": {
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.corkknife.com/",
+          "sourceLabel": "Official Cork + Knife Communications page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/corkknife"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e743fa6c-c773-4456-b3b7-224e1b6e9636",
+      "expectedIdentity": {
+        "name": "Courageous Healing PC",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://www.courage2heal.org/"
+      },
+      "patch": {
+        "description": "Courageous Healing PC is a virtual therapy practice offering psychotherapy for women navigating life transitions, grief, loss, and identity changes, and immigration psychological evaluations for legal immigration matters.",
+        "hours": "Monday – Thursday 7am - 3pm EST",
+        "tags": [
+          "virtual psychotherapy",
+          "life transitions therapy",
+          "grief and loss therapy",
+          "immigration psychological evaluations"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://courage2heal.org/services",
+          "sourceLabel": "Official online therapy for professionals in transition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Courageous Healing offers virtual psychotherapy for women navigating life transitions, grief, loss, and identity changes."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://courage2heal.org/services",
+          "sourceLabel": "Official online therapy for professionals in transition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Monday – Thursday 7am - 3pm EST"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://courage2heal.org/services",
+          "sourceLabel": "Official online therapy for professionals in transition page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Courageous Healing PC offers two distinct services: virtual psychotherapy for women moving through life transitions, grief, loss, and identity changes, and immigration psychological evaluations for legal immigration matters."
+        }
+      ]
+    },
+    {
+      "businessId": "source_7383e073-4297-4fab-8d1d-3eb84051cd44",
+      "expectedIdentity": {
+        "name": "CPLC Texas",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://cplc.org/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/WeAreCPLC/",
+        "instagram": "https://www.instagram.com/wearecplc/",
+        "twitter": "https://twitter.com/wearecplc"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://cplc.org/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/WeAreCPLC/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://cplc.org/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/wearecplc/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://cplc.org/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/wearecplc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8e8b4dad-1eb7-4b67-8ea5-ae81b3b068e1",
+      "expectedIdentity": {
+        "name": "Crafty Technologies, Inc",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.craftytech.com/"
+      },
+      "patch": {
+        "description": "Crafty Technologies provides senior-level cloud architecture and DevOps engineering, focused on Kubernetes platform engineering and cloud & Kubernetes security for organizations running on AWS."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.craftytech.com/",
+          "sourceLabel": "Official Crafty Technologies® — Cloud &amp; DevOps Consulting, NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Production-grade cloud infrastructure, seamless systems integration, and senior technical leadership — delivered exclusively by principal-level operators from New York City.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_dcd00638-99b2-4b33-abf9-af7eb1916cfb",
+      "expectedIdentity": {
+        "name": "Crash Course Driver Education Center",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hpD78H"
+      },
+      "patch": {
+        "hours": "Office Hours Mon-Fri: 9:00 AM - 6:00 PM Saturday: Closed Sunday: Closed",
+        "phone": "(414) 255-8700"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.crashcoursewi.com/about",
+          "sourceLabel": "Official About CrashCourse WI | Teen Driver Education in Wisconsin Since 2014 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Office Hours Mon-Fri: 9:00 AM - 6:00 PM Saturday: Closed Sunday: Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.crashcoursewi.com/",
+          "sourceLabel": "Official Teen Driver&#039;s Ed in Milwaukee &amp; SE Wisconsin | CrashCourse WI — From $75 Down page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(414) 255-8700\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f861a311-dbf7-4c37-beb6-d8f2a350f744",
+      "expectedIdentity": {
+        "name": "Crazy Plant Bae",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://crazyplantbae.com/"
+      },
+      "patch": {
+        "description": "We are a one stop shop for all your plant needs and offer in-store repotting, custom curated plants and pots, plant rentals, plant design and consultations, private events and workshops, photoshoots, and nationwide shipping/local delivery.",
+        "hours": "Lakeview - Tuesday-Friday 11a-6p & Sat-Sun 9a-6p; Treme - Tuesday - Sunday 11a-6p",
+        "phone": "504.315.5116"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.crazyplantbae.com/pages/services",
+          "sourceLabel": "Official Services &ndash; Crazy Plant Bae page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a one stop shop for all your plant needs. We offer: *in store repotting. We are happy to repot any plants that you have purchased from us as well as repot support for any existing plants in your collection *custom curated plants and pots *plant rentals *plant design and consultations *private events and workshops *photoshoots *nationwide shipping, local delivery & delivery on UberEATS, Door Dash & Grubhub AND MORE!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.crazyplantbae.com/",
+          "sourceLabel": "Official Crazy Plant Bae page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Store Hours: Lakeview - Tuesday-Friday 11a-6p & Sat-Sun 9a-6p Treme - Tuesday - Sunday 11a-6p"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.crazyplantbae.com/",
+          "sourceLabel": "Official Crazy Plant Bae page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call or Text: 504.315.5116"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9a0803f6-75ab-48fc-ab58-14e32df0cc51",
+      "expectedIdentity": {
+        "name": "Create Connect Collab",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.createconnectcollab.com/"
+      },
+      "patch": {
+        "description": "Create. Connect. Collab. is a hybrid online and in-person community for women business owners and offers professional development, accountability, and networking to achieve their business and personal aspirations."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.createconnectcollab.com/",
+          "sourceLabel": "Official create. connect. collab. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Create. Connect. Collab. is a hybrid online and in-person community for women business owners and offers professional development, accountability, and networking to achieve their business and personal aspirations.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_97158639-d25b-49d2-b855-c1331a0ee422",
+      "expectedIdentity": {
+        "name": "Created By Carla LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.carlamejia.com/"
+      },
+      "patch": {
+        "instagram": "http://www.instagram.com/carlamejiadp"
+      },
+      "fieldModes": {
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.carlamejia.com/",
+          "sourceLabel": "Official CARLA MEJIA | Elevate Your Visuals – Get Creative page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://www.instagram.com/carlamejiadp"
+        }
+      ]
+    },
+    {
+      "businessId": "source_101c4ada-f682-4fea-8569-7bd048c036a2",
+      "expectedIdentity": {
+        "name": "Credit Lift Inc",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.yourcreditlift.com/"
+      },
+      "patch": {
+        "description": "Credit Lift Inc is a company that specializes in consumer credit restoration, credit building, and credit education.",
+        "hours": "Mon: By Appointment; Tue: 09:00 am – 05:00 pm; Wed: 09:00 am – 05:00 pm; Thu: 09:00 am – 05:00 pm; Fri: By Appointment; Sat: Closed; Sun: Closed",
+        "tags": [
+          "credit restoration",
+          "credit building",
+          "credit education",
+          "credit monitoring"
+        ],
+        "youtube": "https://www.youtube.com/channel/UCu-IfVTgHACfl23vwwF8PEA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yourcreditlift.com/about-us/",
+          "sourceLabel": "Official Credit Lift | Top Rated Credit Repair &amp; Restoration in Texas - About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Credit Lift Inc™ has been in business since 2015. We are a trusted company based out of Houston, Texas that specializes in consumer credit restoration, credit building, and credit education.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://yourcreditlift.com/contact/",
+          "sourceLabel": "Official Credit Lift | Best Credit Repair in Houston Texas, Contact Us Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours of Operation Mon By Appointment Tue 09:00 am – 05:00 pm Wed 09:00 am – 05:00 pm Thu 09:00 am – 05:00 pm Fri By Appointment Sat Closed Sun Closed\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://yourcreditlift.com/",
+          "sourceLabel": "Official Credit Lift | Trusted Texas Credit Repair &amp; Credit Restoration Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"Credit Lift™ has a highly successful track record in removing: -> Charge offs -> Collections -> Medical bills -> Inaccurate information -> Erroneous accounts -> Outdated accounts -> Unauthorized inquires -> Late payments -> Evictions And More!\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://yourcreditlift.com/",
+          "sourceLabel": "Official Credit Lift | Trusted Texas Credit Repair &amp; Credit Restoration Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCu-IfVTgHACfl23vwwF8PEA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_962bbfe0-47c9-4bbe-bb6e-4aea4f6a223b",
+      "expectedIdentity": {
+        "name": "CREMA SHOP LLC",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://www.shopcrema.com/"
+      },
+      "patch": {
+        "hours": "Monday-Friday 7AM to 5PM and Weekends 8AM to 5PM",
+        "phone": "(773) 944-0109",
+        "instagram": "https://www.instagram.com/shop.crema",
+        "facebook": "https://www.facebook.com/shop.crema"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://shopcrema.com/",
+          "sourceLabel": "Official CREMA SHOP &ndash; Crema Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Café Hours: Monday-Friday 7AM to 5PM and Weekends 8AM to 5PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://shopcrema.com/",
+          "sourceLabel": "Official CREMA SHOP &ndash; Crema Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: (773) 944-0109\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://shopcrema.com/",
+          "sourceLabel": "Official CREMA SHOP &ndash; Crema Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/shop.crema"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://shopcrema.com/",
+          "sourceLabel": "Official CREMA SHOP &ndash; Crema Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/shop.crema"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f1a9126b-2b31-4d1d-a59e-f81b80df7baf",
+      "expectedIdentity": {
+        "name": "Creme De La Lash, LLC",
+        "city": "Chicago",
+        "state": "IL",
+        "website": "https://cremedelalash.glossgenius.com/"
+      },
+      "patch": {
+        "description": "Eyelash extension and related lash services provider in Chicago, IL."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cremedelalash.glossgenius.com/services",
+          "sourceLabel": "Official Health &amp; Beauty Services in Chicago, IL | Creme De La Lash page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Master Lash Artist will provide a consultation, cleanse natural lashes, apply customized 2D/3D Volume and Classic extensions and provide cleansing kit for proper lash maintenance."
+        }
+      ]
+    },
+    {
+      "businessId": "source_1bbc8f99-0681-45d9-bd7c-32290652cb25",
+      "expectedIdentity": {
+        "name": "Creole Soul Restaurant",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://creolesoulrestaurant.com/"
+      },
+      "patch": {
+        "description": "Creole Soul Restaurant offers Creole and soul food dishes and is available for private events such as weddings, business lunches, dinners, and cocktail receptions.",
+        "phone": "(443) 681-1904",
+        "tags": [
+          "creole food",
+          "soul food",
+          "private events",
+          "catering"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://creolesoulrestaurant.com/about-us",
+          "sourceLabel": "Official Meet the Team | Our Creole Story &amp; Soulful page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our restaurant is available for private events: weddings, business lunches, dinners, cocktail receptions, and more.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://creolesoulrestaurant.com/",
+          "sourceLabel": "Official Experience Soulful Dining at Creole Soul Restaurant page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (443) 681-1904"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://creolesoulrestaurant.com/about-us",
+          "sourceLabel": "Official Meet the Team | Our Creole Story &amp; Soulful page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"With roots in the heart of Atlanta and ventures in the Bayous of New Orleans, Neal has created the perfect fusion between the deep south and rich creole authentic dishes.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f5ff6349-1255-4f32-b1a0-a250d1aa1f9f",
+      "expectedIdentity": {
+        "name": "Crescent City Conjure",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://crescentcityconjure.us/"
+      },
+      "patch": {
+        "description": "Sen Elias's Crescent City Conjure offers spiritual tools and wide-ranging magical consultations; it is a full-service conjure shop that provides spiritual products, consultations, tarot readings, and a variety of other services.",
+        "hours": "Mon - Fri, 10am - 9pm Saturday, 11am - 9pm Sunday, 11am - 5pm",
+        "phone": "504-421-3189",
+        "tags": [
+          "spiritual consultations",
+          "tarot readings",
+          "candle burning services",
+          "spell casting"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.crescentcityconjure.us/",
+          "sourceLabel": "Official Hoodoo &amp; Witchcraft &ndash; Crescent City Conjure page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Sen Elias's Crescent City Conjure offers spiritual tools and wide-ranging magical consultations that can bring the potential of authentic conjuring into your life."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.crescentcityconjure.us/pages/contact-us",
+          "sourceLabel": "Official Contact Us &ndash; Crescent City Conjure page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Mon - Fri, 10am - 9pm Saturday, 11am - 9pm Sunday, 11am - 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.crescentcityconjure.us/pages/spiritual-services",
+          "sourceLabel": "Official Spiritual Services &ndash; Crescent City Conjure page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 504-421-3189"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.crescentcityconjure.us/pages/spiritual-services",
+          "sourceLabel": "Official Spiritual Services &ndash; Crescent City Conjure page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our experts can provide wide-ranging support, including but not limited to: Tarot Readings Candle Burning Services Personalized rituals, and follow-up instructions Spell casting Spiritual consultations"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6ccffc82-1dc2-486b-ba3f-27677045eff7",
+      "expectedIdentity": {
+        "name": "Cretia Cakes",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://cretiacakes.com/"
+      },
+      "patch": {
+        "description": "A bake shop offering custom cakes and Southern-style baked goods, including wedding cakes, cookies, pies, and cupcakes.",
+        "hours": "SUN-MON: CLOSED TUES.-WED. BY APPOINTMENT THURS. - FRI. 11-5pm SAT. 10-2PM",
+        "phone": "317-929-1560",
+        "twitter": "https://twitter.com/cretiacakes",
+        "pinterest": "https://www.pinterest.com/cretiacakes/",
+        "youtube": "https://www.youtube.com/user/CretiaCakes"
+      },
+      "fieldModes": {
+        "description": "fill",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cretiacakes.com/pages/about-us",
+          "sourceLabel": "Official About Cretia Cakes &ndash; Cretia Cakes Bake Shop page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: At Cretia Cakes, every creation is a perfect blend of Southern soul and creative spirit. Whether you're planning a wedding, celebrating a special moment, or just craving an authentic taste of Southern sweetness, we pour our hearts into every recipe."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://cretiacakes.com/",
+          "sourceLabel": "Official Cretia Cakes Bake Shop - Indianapolis, IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: SUN-MON: CLOSED TUES.-WED. BY APPOINTMENT THURS. - FRI. 11-5pm SAT. 10-2PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://cretiacakes.com/",
+          "sourceLabel": "Official Cretia Cakes Bake Shop - Indianapolis, IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 317-929-1560"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://cretiacakes.com/",
+          "sourceLabel": "Official Cretia Cakes Bake Shop - Indianapolis, IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/cretiacakes"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://cretiacakes.com/",
+          "sourceLabel": "Official Cretia Cakes Bake Shop - Indianapolis, IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/cretiacakes/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://cretiacakes.com/",
+          "sourceLabel": "Official Cretia Cakes Bake Shop - Indianapolis, IN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/CretiaCakes"
+        }
+      ]
+    },
+    {
+      "businessId": "source_df5555d0-4238-4d93-a7c1-c8a614077f7c",
+      "expectedIdentity": {
+        "name": "Cristo Rey",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.cristoreyrichmond.org/"
+      },
+      "patch": {
+        "description": "Cristo Rey Richmond High School is a Catholic learning community that combines a college preparatory curriculum with an integrated corporate work study experience for students from families of limited economic means.",
+        "hours": "\"Students work from 8:30 a.m. to 3:30 p.m. from September to May.\"",
+        "phone": "(804) 447-4704",
+        "tags": [
+          "\"corporate work study program\"",
+          "\"college preparatory education\"",
+          "\"student employment\""
+        ],
+        "youtube": "https://www.youtube.com/channel/UCG23BQU6utg8rUEqfVEgXKw"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cristoreyrichmond.org/",
+          "sourceLabel": "Official Cristo Rey Richmond High School | Academics &amp; Corporate Work Study page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Cristo Rey Richmond High School is a Catholic learning community that educates young people of limited economic means to become men and women of faith, purpose and service. Through a rigorous college preparatory curriculum, integrated with a relevant work study experience, students graduate ready to succeed in college and in life.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://cristoreyrichmond.org/faqs/",
+          "sourceLabel": "Official Frequently Asked Questions - Cristo Rey Richmond High School page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Students work from 8:30 a.m. to 3:30 p.m. from September to May.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://cristoreyrichmond.org/",
+          "sourceLabel": "Official Cristo Rey Richmond High School | Academics &amp; Corporate Work Study page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: (804) 447-4704\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://cristoreyrichmond.org/about-cristo-rey/",
+          "sourceLabel": "Official About Cristo Rey - Cristo Rey Richmond High School page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"By providing students an extraordinary college preparatory education and a unique four year, integrated corporate work study experience, we seek to Transform Richmond One Student at a Time.\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://cristoreyrichmond.org/",
+          "sourceLabel": "Official Cristo Rey Richmond High School | Academics &amp; Corporate Work Study page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCG23BQU6utg8rUEqfVEgXKw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4400349b-a877-44c7-910e-656519e0cea9",
+      "expectedIdentity": {
+        "name": "C & R Movers LLC",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://www.crmoversal.com/"
+      },
+      "patch": {
+        "phone": "(334) 233-6766",
+        "twitter": "https://twitter.com/moverscr",
+        "youtube": "https://www.youtube.com/watch?v=glIs0aqNRFQ"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://crmoversal.com/",
+          "sourceLabel": "Official Home - C &amp; R Movers, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call Now (334) 233-6766"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://crmoversal.com/",
+          "sourceLabel": "Official Home - C &amp; R Movers, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/moverscr"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://crmoversal.com/",
+          "sourceLabel": "Official Home - C &amp; R Movers, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=glIs0aqNRFQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5c729433-7aba-4468-a595-a75309fbe894",
+      "expectedIdentity": {
+        "name": "Crone + Forest Flowers",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://www.croneplusforest.com/"
+      },
+      "patch": {
+        "description": "crone + forest is a black owned flower farming cooperative. During the covid-19 quarantine, planting was a silver lining that brightened our worst days. We created crone + forest flowers to share that glimmer with others."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.croneplusforest.com/about/",
+          "sourceLabel": "Official about &#8211; crone + forest flowers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"crone + forest is a black owned flower farming cooperative. During the covid-19 quarantine, planting was a silver lining that brightened our worst days. We created crone + forest flowers to share that glimmer with others.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_fbabe255-8f56-4bf9-9445-aebb1d9f3279",
+      "expectedIdentity": {
+        "name": "Cross Brothers Electric LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://crossbrothers-electric.com/"
+      },
+      "patch": {
+        "description": "Cross Brothers Electric LLC is an electrical business providing a full range of commercial and residential electrical services, specializing in Building Management Systems (BMS) installation and wiring.",
+        "hours": "Open today 07:00 am – 05:00 pm",
+        "phone": "(718)-381 2345",
+        "tags": [
+          "electrical repairs",
+          "panel upgrades",
+          "new installation",
+          "building management systems (bms)",
+          "maintenance"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://crossbrothers-electric.com/",
+          "sourceLabel": "Official Cross Brothers Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Though we provide a full range of both residential and commercial electrical services, we specialize in BMS installation and wiring.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://crossbrothers-electric.com/",
+          "sourceLabel": "Official Cross Brothers Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Open today 07:00 am – 05:00 pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://crossbrothers-electric.com/",
+          "sourceLabel": "Official Cross Brothers Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(718)-381 2345\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://crossbrothers-electric.com/",
+          "sourceLabel": "Official Cross Brothers Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We offer a full range of commercial and residential electrical services, including electrical repairs, panel upgrades, new installation, Building Management Systems (BMS) and maintenance.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_426a8f4d-6067-4bc9-a642-e93ae1ce2f7d",
+      "expectedIdentity": {
+        "name": "Crossroads Baptist Church Arlington",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://crbchurch.org/"
+      },
+      "patch": {
+        "hours": "Sunday Mornings 9:30 am - Connection Classes; 10:30 am - Worship Service; Wednesday Evenings 5:00 pm - Fellowship Meal; 6:00 pm - Classes for all Ages",
+        "phone": "901.873.3204"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://crbchurch.org/",
+          "sourceLabel": "Official Your Business page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Come worship with us! Sunday Mornings 9:30 am - Connection Classes 10:30 am - Worship Service Wednesday Evenings 5:00 pm - Fellowship Meal 6:00 pm - Classes for all Ages Nursery is available for all services"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://crbchurch.org/",
+          "sourceLabel": "Official Your Business page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Crossroads Baptist Church 6601 Austin Peay Highway, Arlington, TN, 38002 USA 901.873.3204"
+        }
+      ]
+    },
+    {
+      "businessId": "source_60f0a465-baea-403f-8c5f-5c71da7490a9",
+      "expectedIdentity": {
+        "name": "Crush Sweets",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.crushsweets.com/"
+      },
+      "patch": {
+        "description": "Crush Sweets is a Dallas, TX - based custom cookie business, specializing in custom artisan decorated sugar cookies for events and retail.",
+        "phone": "214.597.1834",
+        "tags": [
+          "custom artisan decorated sugar cookies",
+          "event cookies",
+          "corporate gifts",
+          "wholesale retail sales",
+          "virtual cooking classes"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.crushsweets.com/",
+          "sourceLabel": "Official Crush Sweets | Custom Sugar Cookies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Crush Sweets is a Dallas, TX - based custom cookie business, specializing in custom artisan decorated sugar cookies for events and retail."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.crushsweets.com/",
+          "sourceLabel": "Official Crush Sweets | Custom Sugar Cookies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Crush Sweets samara@crushsweets.com | 214.597.1834"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.crushsweets.com/",
+          "sourceLabel": "Official Crush Sweets | Custom Sugar Cookies page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From event cookies, corporate gifts, and wholesale retail sales, Crush Sweets is here to serve !"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6e7b374f-ec01-4844-ba15-7fe7c81c5be5",
+      "expectedIdentity": {
+        "name": "CSC Coliving LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.cscre.us/about"
+      },
+      "patch": {
+        "description": "At CSC, we specialize in value-driven real estate strategies that unlock potential and deliver strong, risk-adjusted returns across urban markets.",
+        "phone": "(212) 419-3149",
+        "twitter": "https://twitter.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.cscre.us/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At CSC, we specialize in value-driven real estate strategies that unlock potential and deliver strong, risk-adjusted returns across urban markets.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.cscre.us/old-pages/contact-us",
+          "sourceLabel": "Official Contact CSC Real Estate | Partner with Our Team page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Us (212) 419-3149\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.cscre.us/old-pages/about",
+          "sourceLabel": "Official CSC Real Estate | Opportunistic Investment &amp; Urban Redevelopment page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_883852ab-084f-488a-bef6-16f5a918c444",
+      "expectedIdentity": {
+        "name": "CSI Techs Inc.",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://csitechs.com/"
+      },
+      "patch": {
+        "description": "CSI TECHS provides business technology and security services including access control, surveillance, networking, phones, office installs, and ongoing IT support.",
+        "hours": "24/7 availability",
+        "phone": "(210) 875-7978",
+        "tags": [
+          "access control",
+          "security cameras",
+          "network installation",
+          "wireless networking",
+          "firewall installation",
+          "voip & phone systems",
+          "pos systems",
+          "pc repair",
+          "managed it support",
+          "structured cabling"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://csitechs.com/services.html",
+          "sourceLabel": "Official CSI TECHS | Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"CSI TECHS provides a full business technology stack, from surveillance and access control to networking, phones, office installs, and ongoing support.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://csitechs.com/contact.html",
+          "sourceLabel": "Official CSI TECHS | Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call (210) 875-7978 24/7 availability\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://csitechs.com/contact.html",
+          "sourceLabel": "Official CSI TECHS | Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call (210) 875-7978 24/7 availability\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://csitechs.com/",
+          "sourceLabel": "Official CSI TECHS | Business IT, Surveillance, Access Control, and Infrastructure page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Access control, Security cameras, Network installs, Wireless networking, VoIP and phone systems, POS systems\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8361c4e5-0aef-4be2-9a70-a51ae52bfffd",
+      "expectedIdentity": {
+        "name": "CSL Plasma",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.cslplasma.com/center/524"
+      },
+      "patch": {
+        "description": "CSL Plasma operates a plasma donation center.",
+        "hours": "Mon - 7:00am - 7:00pm // Tue - 7:00am - 7:00pm // Wed - 7:00am - 7:00pm // Thu - 7:00am - 7:00pm // Fri - 7:00am - 7:00pm // Sat - 7:00am - 3:00pm // Sun - Closed",
+        "phone": "804-806-3628",
+        "tags": [
+          "plasma donation",
+          "taking new donors",
+          "free parking"
+        ],
+        "youtube": "https://www.youtube.com/user/CSLPlasma",
+        "instagram": "https://www.instagram.com/cslplasma_us/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.cslplasma.com/center/524",
+          "sourceLabel": "Official Plasma Donation Center in Richmond, VA | CSL Plasma page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Richmond, VA Plasma Donation 5724 Hopkins Rd Suite 6A Richmond, VA 23234"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.cslplasma.com/center/524",
+          "sourceLabel": "Official Plasma Donation Center in Richmond, VA | CSL Plasma page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: P: 804-806-3628 // Mon - 7:00am - 7:00pm // Tue - 7:00am - 7:00pm // Wed - 7:00am - 7:00pm // Thu - 7:00am - 7:00pm // Fri - 7:00am - 7:00pm // Sat - 7:00am - 3:00pm // Sun - Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.cslplasma.com/center/524",
+          "sourceLabel": "Official Plasma Donation Center in Richmond, VA | CSL Plasma page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: P: 804-806-3628 // Mon - 7:00am - 7:00pm"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.cslplasma.com/center/524",
+          "sourceLabel": "Official Plasma Donation Center in Richmond, VA | CSL Plasma page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services Taking New Donors Free Parking"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.cslplasma.com/center/524",
+          "sourceLabel": "Official Plasma Donation Center in Richmond, VA | CSL Plasma page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/CSLPlasma"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.cslplasma.com/center/524",
+          "sourceLabel": "Official Plasma Donation Center in Richmond, VA | CSL Plasma page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/cslplasma_us/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_98a38ae3-b0ba-40be-bff6-892a7a3e2e33",
+      "expectedIdentity": {
+        "name": "Culinary & Co. LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://culinaryandco.wixsite.com/mysite"
+      },
+      "patch": {
+        "description": "Culinary & Co. is A Creative Scratch Kitchen. Changing HOW You Eat with WHAT You Eat, One Transition at a time!"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://culinaryandco.wixsite.com/mysite",
+          "sourceLabel": "Official Culinary Scratch Kitchen | Culinary &amp; Co. llc | Indianapolis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Culinary & Co. is A Creative Scratch Kitchen.\" \" Changing HOW You Eat with WHAT You Eat, One Transition at a time!\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_45b99909-7400-448f-b269-e6807b85f096",
+      "expectedIdentity": {
+        "name": "Cultured Books",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://www.culturedbooks.org/"
+      },
+      "patch": {
+        "description": "Cultured Books Literacy Foundation produces year-round literary arts programs for children, youth, and families and is building toward a permanent children’s literary arts museum."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.culturedbooks.org/",
+          "sourceLabel": "Official Cultured Books Literary Foundation | South St. Pete page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Cultured Books Literacy Foundation produces year-round literary arts programs for children, youth, and families. Through public programming and community participation, we strengthen reading culture. We are building toward a permanent children’s literary arts museum.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_eca17eab-d712-4fc1-bf05-3b691c839060",
+      "expectedIdentity": {
+        "name": "Culture ED",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.cultureed.co/"
+      },
+      "patch": {
+        "description": "Cultivating excellence & centering humanity."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://cultureed.co/",
+          "sourceLabel": "Official Culture ED™ &mdash; Coming Soon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Culture ED™ — Cultivating excellence & centering humanity."
+        }
+      ]
+    },
+    {
+      "businessId": "source_2628499a-85e5-4c6c-8635-af78ba84f1f9",
+      "expectedIdentity": {
+        "name": "Cupcake Connection Bakery and Decor",
+        "city": "Jacksonville",
+        "state": "FL",
+        "website": "http://www.yourcupcakelady.com/"
+      },
+      "patch": {
+        "description": "Cupcake Connection is a bakery that specializes in homemade desserts.",
+        "hours": "Hours are Tues-Fri 1pm-7pm Sat 1pm-7pm",
+        "tags": [
+          "homemade desserts",
+          "customize desserts"
+        ],
+        "facebook": "https://www.facebook.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.yourcupcakelady.com/",
+          "sourceLabel": "Official Cupcake Connection Bakery - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Cupcake Connection is a bakery that specializes in homemade desserts."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.yourcupcakelady.com/",
+          "sourceLabel": "Official Cupcake Connection Bakery - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours are Tues-Fri 1pm-7pm Sat 1pm-7pm"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.yourcupcakelady.com/about_us",
+          "sourceLabel": "Official Cupcake Connection Bakery - About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Business Cupcake Connection is a bakery that specializes in homemade and customize desserts."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.yourcupcakelady.com/",
+          "sourceLabel": "Official Cupcake Connection Bakery - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_477b9714-2762-44b0-bfd0-780e821d7265",
+      "expectedIdentity": {
+        "name": "Curl Alchemist",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.curlalchemist.com/"
+      },
+      "patch": {
+        "description": "Specialty curly haircuts, color, and treatments with personalized care and curl-focused services.",
+        "phone": "(419)516-9586"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.curlalchemist.com/",
+          "sourceLabel": "Official Specialty Curly Haircuts, Color &amp; Treatments | Curl Alchemist Columbus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Specialty Curly Haircuts, Color & Treatments | Curl Alchemist Columbus"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.curlalchemist.com/",
+          "sourceLabel": "Official Specialty Curly Haircuts, Color &amp; Treatments | Curl Alchemist Columbus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (419)516-9586"
+        }
+      ]
+    },
+    {
+      "businessId": "source_31be3682-f064-450b-8c9a-3ccfdd5cf557",
+      "expectedIdentity": {
+        "name": "Curls",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://curls.biz/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/user/mdellinger2"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://curls.com/",
+          "sourceLabel": "Official CURLS - You Deserve the Best Products for Your Curly Hair page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/mdellinger2"
+        }
+      ]
+    },
+    {
+      "businessId": "source_517b37dd-5697-47f6-9e02-93d7d3843e16",
+      "expectedIdentity": {
+        "name": "Cushion Employer Services Corp",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.cushioncorp.com/"
+      },
+      "patch": {
+        "hours": "Mon 8am to 5pm Tue 8am to 5pm Wed 8am to 5pm Thu 8am to 5pm Fri 8am to 5pm",
+        "phone": "1-866-218-0614"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.cushioncorp.com/contact-us",
+          "sourceLabel": "Official Contact &mdash; Cushion page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon 8am to 5pm Tue 8am to 5pm Wed 8am to 5pm Thu 8am to 5pm Fri 8am to 5pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.cushioncorp.com/contact-us",
+          "sourceLabel": "Official Contact &mdash; Cushion page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"1-866-218-0614\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_2547feff-ffda-41c4-99a1-7830d5c638eb",
+      "expectedIdentity": {
+        "name": "Cushion Employer Services Corporation",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.cushioncorp.com/"
+      },
+      "patch": {
+        "hours": "Mon 8am to 5pm Tue 8am to 5pm Wed 8am to 5pm Thu 8am to 5pm Fri 8am to 5pm",
+        "phone": "1-866-218-0614"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.cushioncorp.com/",
+          "sourceLabel": "Official Cushion page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 8am to 5pm Tue 8am to 5pm Wed 8am to 5pm Thu 8am to 5pm Fri 8am to 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.cushioncorp.com/contact-us",
+          "sourceLabel": "Official Contact &mdash; Cushion page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 1-866-218-0614"
+        }
+      ]
+    },
+    {
+      "businessId": "source_eed74b9b-4d6c-4121-b665-557cb5ccee2c",
+      "expectedIdentity": {
+        "name": "Custodio Consulting LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.custodioconsulting.com/"
+      },
+      "patch": {
+        "hours": "\"Monday - Friday 8:30 AM - 5:00 PM\"",
+        "phone": "\"(212) 683-6170\"",
+        "tags": [
+          "building code consultation",
+          "architectural design",
+          "mep design",
+          "fire alarm systems",
+          "sprinkler/standpipe systems",
+          "fire protection",
+          "emergency action plans",
+          "places of assembly",
+          "special inspections",
+          "municipal filings & permitting"
+        ]
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.custodioconsulting.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours of Operation Monday - Friday 8:30 AM - 5:00 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.custodioconsulting.com/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact (212) 683-6170\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.custodioconsulting.com/list-of-services/",
+          "sourceLabel": "Official website page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Code Consulting NYC Building Code NYC Fire Prevention Code NYC Zoning Resolution\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_ebdd8197-8649-4c38-b0b0-c5708f486b1a",
+      "expectedIdentity": {
+        "name": "Custom Design Innovations LLC",
+        "city": "Jamaica",
+        "state": "NY",
+        "website": "https://www.cdi-nyc.com/"
+      },
+      "patch": {
+        "description": "Full-service carpentry and drywall contractor offering drywall and metal framing, acoustical ceilings, doors/frames/hardware installation, taping and finishing, specialty ceilings, rough carpentry, light gauge metal framing, acoustical plaster finishes, millwork installation, light general contracting, 3D scanning and modeling, take-off and estimating, and project management.",
+        "hours": "Monday to Friday : 8am – 4pm",
+        "phone": "718 635 9070"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cdi-nyc.com/",
+          "sourceLabel": "Official Custom Design Innovations - Full-Service Carpentry &amp; Drywall Contractor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Custom Design Innovations - Full-Service Carpentry & Drywall Contractor"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://cdi-nyc.com/who-we-are/",
+          "sourceLabel": "Official Who We Are - Custom Design Innovations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us for inquiry : Monday to Friday : 8am – 4pm (718) 635 9070"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://cdi-nyc.com/",
+          "sourceLabel": "Official Custom Design Innovations - Full-Service Carpentry &amp; Drywall Contractor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 718 635 9070"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b81d95fa-b46b-4394-9c1a-0fc764f86563",
+      "expectedIdentity": {
+        "name": "Custom Design Shop",
+        "city": "Brooklyn Center",
+        "state": "MN",
+        "website": "https://www.customdesignshops.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/people/CustomDesigns-PrintShop/100084667606116/?ref=xav_ig_profile_web",
+        "instagram": "https://www.instagram.com/customdesignshops/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.customdesignshops.com/",
+          "sourceLabel": "Official CustomDesigns page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/people/CustomDesigns-PrintShop/100084667606116/?ref=xav_ig_profile_web"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.customdesignshops.com/",
+          "sourceLabel": "Official CustomDesigns page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/customdesignshops/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_385400c7-7207-422e-b691-45c325bbb9ce",
+      "expectedIdentity": {
+        "name": "Cut Therapy Barbershop Nashville",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://cuttherapy.glossgenius.com/"
+      },
+      "patch": {
+        "description": "Cut Therapy is a place where you will be respected. We care about your time and energy. We are a safe place for people to relax, have a good time, and even talk about their life experiences in a safe and positive environment, while also being pampered and shaped into the best version of you.",
+        "hours": "Monday 1 PM - 6 PM; Tuesday 1 PM - 6 PM; Wednesday 12 PM - 6 PM; Thursday 11 AM - 7 PM; Friday 11 AM - 7 PM; Saturday 10 AM - 5 PM; Sunday Closed"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cuttherapy.glossgenius.com/about",
+          "sourceLabel": "Official About Cut Therapy Barbershop Nashville | Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: About Cut Therapy is a place where you will be respected . We care about your time and energy! We are A safe place for people to relax, ￼have a good time, and even talk about their life experiences in a safe and positive environment. While also being pampered and shaped into the best version of you!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://cuttherapy.glossgenius.com/about",
+          "sourceLabel": "Official About Cut Therapy Barbershop Nashville | Nashville, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Monday 1 PM - 6 PM Tuesday 1 PM - 6 PM Wednesday 12 PM - 6 PM Thursday 11 AM - 7 PM Friday 11 AM - 7 PM Saturday 10 AM - 5 PM Sunday Closed"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e5b217e5-b81d-4861-b114-75d4d0a5fe85",
+      "expectedIdentity": {
+        "name": "Cxffee Black",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://cxffeeblack.com/"
+      },
+      "patch": {
+        "description": "Cxffeeblack is presented on its website as a coffee brand and shop offering products, subscriptions, and apparel."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cxffeeblack.com/",
+          "sourceLabel": "Official Cxffeeblack page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOME SHOP SHOP Friday Drops: HQ Celebration COFFEE SUBSCRIPTION BOX BEST-SELLERS GOLDBREW APPAREL DRINKWARE ALL PRODUCTS"
+        }
+      ]
+    },
+    {
+      "businessId": "source_79db2493-e383-4a9d-a147-6e7cf978a293",
+      "expectedIdentity": {
+        "name": "Cy-Fair Federal Credit Union",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.cyfairfcu.org/"
+      },
+      "patch": {
+        "hours": "Call Center Hours Mon - Fri 9 am to 5 pm Saturday 9 am to 1 pm; Lobby Hours Mon - Fri 9 am to 5 pm Saturday 9 am to 1 pm; Drive-thru Hours Mon - Fri 8:30 am to 6 pm Saturday 9 am to 2 pm; PVFCU Lobby Hours Mon - Fri 9 am - 5 pm Saturday Closed",
+        "facebook": "https://www.facebook.com/cyfairfcu/",
+        "twitter": "https://x.com/CyFairFCU",
+        "instagram": "https://www.instagram.com/cyfairfcu/",
+        "youtube": "https://www.youtube.com/channel/UCsYyOIgQyeEo5lPAs4WURzA"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.cyfairfcu.org/locations-hours",
+          "sourceLabel": "Official Cy-Fair Federal Credit Union Near Me | Locations - Hours &mdash; Cy-Fair FCU page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOURS OF OPERATION Call Center Hours Mon - Fri 9 am to 5 pm Saturday 9 am to 1 pm Lobby Hours Mon - Fri 9 am to 5 pm Saturday 9 am to 1 pm Drive-thru Hours Mon - Fri 8:30 am to 6 pm Saturday 9 am to 2 pm PVFCU Lobby Hours Mon - Fri 9 am - 5 pm Saturday Closed"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.cyfairfcu.org/",
+          "sourceLabel": "Official Cy-Fair FCU page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/cyfairfcu/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.cyfairfcu.org/",
+          "sourceLabel": "Official Cy-Fair FCU page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/CyFairFCU"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.cyfairfcu.org/",
+          "sourceLabel": "Official Cy-Fair FCU page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/cyfairfcu/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.cyfairfcu.org/",
+          "sourceLabel": "Official Cy-Fair FCU page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCsYyOIgQyeEo5lPAs4WURzA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9cd6c62a-6872-4272-b602-bfbf8cdb1e05",
+      "expectedIdentity": {
+        "name": "Cynthia Amoah LLC",
+        "city": "Reynoldsburg",
+        "state": "OH",
+        "website": "http://www.cynthiaamoah.com/"
+      },
+      "patch": {
+        "description": "Ghanaian-American poet, national speaker, and teaching artist who facilitates workshops in poetry, positive-thinking, confidence-building, and using voice for social change.",
+        "twitter": "https://twitter.com/poetesscynthia?lang=en",
+        "youtube": "https://www.youtube.com/PoetessCity"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://cynthiaamoah.com/",
+          "sourceLabel": "Official Cynthia Amoah &#8211; Poet &#8211; Writer &#8211; Performer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Cynthia Amoah is a Ghanaian-American poet, national speaker, and teaching artist."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://cynthiaamoah.com/",
+          "sourceLabel": "Official Cynthia Amoah &#8211; Poet &#8211; Writer &#8211; Performer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/poetesscynthia?lang=en"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://cynthiaamoah.com/",
+          "sourceLabel": "Official Cynthia Amoah &#8211; Poet &#8211; Writer &#8211; Performer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/PoetessCity"
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "55029e31233efe1e4f045a1ddae6e8ccba680e2e3b5e4e53ffe3b4c226dd64fd"
+}

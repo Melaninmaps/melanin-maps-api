@@ -1,0 +1,4588 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-015",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_84a560d3-52a7-46ba-b84a-31405b17ae9d",
+      "expectedIdentity": {
+        "name": "Nature's Care Lawn and Landscaping Service",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3w7C1ma"
+      },
+      "patch": {
+        "description": "Nature's Care Lawn and Landscaping Service"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.facebook.com/NaturesCare17/",
+          "sourceLabel": "Official Nature&#039;s Care Lawn and Landscaping Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Nature&#039;s Care Lawn and Landscaping Service"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ff6475e7-3f0d-49d8-a616-c05eb89fe9fe",
+      "expectedIdentity": {
+        "name": "Nature's Syrup",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.naturessyrup.com/"
+      },
+      "patch": {
+        "description": "Plant-based hair and skincare brand offering products formulated for kinky, coily and curly hair.",
+        "facebook": "https://www.facebook.com/naturessyrupbeauty",
+        "instagram": "https://www.instagram.com/naturessyrup/?hl=en"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.naturessyrupbeauty.com/pages/about",
+          "sourceLabel": "Official About page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: De'Vonna Pittman is the founder of Nature's Syrup Beauty, a plant-based hair and skincare brand built to reconnect people with the healing power of the earth through ancestral wisdom"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.naturessyrupbeauty.com/",
+          "sourceLabel": "Official Shop Natural Hair &amp; Body Care Products | Nature&#39;s Syrup Beauty page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/naturessyrupbeauty"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.naturessyrupbeauty.com/",
+          "sourceLabel": "Official Shop Natural Hair &amp; Body Care Products | Nature&#39;s Syrup Beauty page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/naturessyrup/?hl=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a70ae5d4-09c0-4557-b164-ee135669c2e6",
+      "expectedIdentity": {
+        "name": "Naughty But Nice Kettle Corn",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://nbnkettlecorn.com/"
+      },
+      "patch": {
+        "description": "Naughty But Nice Kettle Corn Co. is an artisan kettle corn company that makes unique sweet and salty kettle corn blends and offers in-store, online, and mobile (food truck) sales.",
+        "hours": "Store Only Hours: Tuesday 10:30 am to 2:30 pm; Wednesday 10:30 am to 2:30 pm; Thursday 10:30 am to 2:30 pm; Friday Appointment only (days for pre-orders). Phone Support Monday – Friday 9:00am to 6:00pm.",
+        "twitter": "https://twitter.com/naughtynicekc",
+        "youtube": "https://www.youtube.com/channel/UCVWhoLv80ypyGf0_nIMDneQ"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nbnkettlecorn.com/our-story/",
+          "sourceLabel": "Official Our Story - Naughty But Nice Kettle Corn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"NBNKC is a leading artisan kettle corn company making the world a sweeter place by providing our Popheads with exceptional service, experiences, elevating communities and unique kettle corn blends.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nbnkettlecorn.com/",
+          "sourceLabel": "Official Home - Naughty But Nice Kettle Corn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Store Only Hours Tuesday 10:30 am to 2:30 pm Wednesday 10:30 am to 2:30 pm Thursday 10:30 am to 2:30 pm Friday Appointment only Days for pre-orders. Call Us! Monday – Friday 9:00am to 6:00pm\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://nbnkettlecorn.com/",
+          "sourceLabel": "Official Home - Naughty But Nice Kettle Corn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/naughtynicekc"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://nbnkettlecorn.com/",
+          "sourceLabel": "Official Home - Naughty But Nice Kettle Corn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCVWhoLv80ypyGf0_nIMDneQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e2070761-41f4-454b-bbe0-f2d19672b335",
+      "expectedIdentity": {
+        "name": "Navarro Insurance Group",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.navarroig.com/"
+      },
+      "patch": {
+        "description": "Navarro Insurance Group is a reputable life & health insurance consulting firm that specializes in executive/employee health and welfare benefits programs.",
+        "phone": "713-463-8880",
+        "tags": [
+          "employee benefits",
+          "medical insurance",
+          "life & accidental death and dismemberment insurance",
+          "short and long - term disability income replacement",
+          "dental & vision insurance",
+          "voluntary products",
+          "commercial general liability",
+          "workers comp",
+          "umbrella/excess",
+          "commercial property",
+          "commercial bonding"
+        ],
+        "facebook": "https://www.facebook.com/pages/Navarro-Insurance-Group/178270325573580"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://navarroig.com/",
+          "sourceLabel": "Official Home - Navarro Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Navarro Insurance Group is a reputable life & health insurance consulting firm that specializes in executive/employee health and welfare benefits programs.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://navarroig.com/contact/",
+          "sourceLabel": "Official Contact - Navarro Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone 713-463-8880\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://navarroig.com/",
+          "sourceLabel": "Official Home - Navarro Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Benefits Medical Insurance Life & Accidental Death and Dismemberment Insurance Short and Long - Term Disability Income Replacement Dental & Vision Insurance Voluntary Products Commercial General Liability Workers Comp Umbrella/Excess Commercial Property Commercial Bonding and more\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://navarroig.com/",
+          "sourceLabel": "Official Home - Navarro Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/pages/Navarro-Insurance-Group/178270325573580"
+        }
+      ]
+    },
+    {
+      "businessId": "source_78583929-9b52-42de-ac61-606801865ca6",
+      "expectedIdentity": {
+        "name": "Nawi Films LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.nawifilms.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/nawifilms.tv/?__mref=message",
+        "instagram": "https://www.instagram.com/nawifilms/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.nawifilms.com/en/",
+          "sourceLabel": "Official NAWI FILMS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/nawifilms.tv/?__mref=message"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.nawifilms.com/en/",
+          "sourceLabel": "Official NAWI FILMS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/nawifilms/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6ec2c398-b490-45d5-bb3b-2f912dad9f7a",
+      "expectedIdentity": {
+        "name": "NBA All-Star Game 2027",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.nba.com/allstar"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/nbastore",
+        "twitter": "https://x.com/NBAallstar"
+      },
+      "fieldModes": {
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.nba.com/allstar/2026",
+          "sourceLabel": "Official 2026 NBA All-Star page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/nbastore"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.nba.com/allstar/2026",
+          "sourceLabel": "Official 2026 NBA All-Star page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/NBAallstar"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b1e6befa-3d88-4b7d-a1ed-c7fd430edac8",
+      "expectedIdentity": {
+        "name": "N.B. GOODS",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.shopnbgoods.com/"
+      },
+      "patch": {
+        "description": "N.B. GOODS is a gender-neutral, nostalgia-driven brand specializing in vintage & original accessories, apparel, and gifts in Nashville, TN."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://shopnbgoods.com/pages/about-us",
+          "sourceLabel": "Official ABOUT US &ndash; N. B. GOODS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"N.B. GOODS is a gender-neutral, nostalgia-driven brand specializing in vintage & original accessories, apparel, and gifts in Nashville, TN.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9668d7b1-a553-4045-a0d8-b1157d2f0bf1",
+      "expectedIdentity": {
+        "name": "NCMPRBL",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://ncmprbl.com/"
+      },
+      "patch": {
+        "description": "NCMPRBL Timepieces & Eyewear sells watches and eyewear.",
+        "tags": [
+          "watches",
+          "eyewear"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://incmprbl.com/",
+          "sourceLabel": "Official NCMPRBL Timepieces &amp; Eyewear page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NCMPRBL Timepieces & Eyewear"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://incmprbl.com/",
+          "sourceLabel": "Official NCMPRBL Timepieces &amp; Eyewear page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NCMPRBL Timepieces & Eyewear"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d26ce9e3-5d06-450c-94be-376538188a94",
+      "expectedIdentity": {
+        "name": "Nearby Nature Milwaukee",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3w7d0Kp"
+      },
+      "patch": {
+        "description": "Nearby Nature Milwaukee is an environmental justice and equity initiative to build healthier and more resilient communities."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nearbynaturemke.org/",
+          "sourceLabel": "Official Nearby Nature Milwaukee &#8211; Building Healthier, More Resilient Communities page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Nearby Nature Milwaukee is an environmental justice and equity initiative to build healthier and more resilient communities.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_0926b5ce-fe01-48c8-9d1a-c27894231fa4",
+      "expectedIdentity": {
+        "name": "Neighborhood Recovery Community Developm",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.nrcdc.org/"
+      },
+      "patch": {
+        "description": "A Houston-based Community Development organization providing empowerment tools and resources to expand the local economy and improve the quality of life for the community.",
+        "hours": "Mon - Fri 8:30am - 5pm",
+        "phone": "(713) 520-5232",
+        "twitter": "https://twitter.com/nrcdchouston",
+        "youtube": "https://www.youtube.com/@NrcdcHouston/videos"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nrcdc.org/",
+          "sourceLabel": "Official NRCDC Houston &#8211; Neighborhood Recovery Community Development Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We are a Houston-based Community Development organization providing empowerment tools and resources to expand our local economy and improve the quality of life for our community.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nrcdc.org/",
+          "sourceLabel": "Official NRCDC Houston &#8211; Neighborhood Recovery Community Development Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Office Hours: Mon - Fri 8:30am - 5pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nrcdc.org/",
+          "sourceLabel": "Official NRCDC Houston &#8211; Neighborhood Recovery Community Development Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(713)520-5232\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://nrcdc.org/",
+          "sourceLabel": "Official NRCDC Houston &#8211; Neighborhood Recovery Community Development Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/nrcdchouston"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://nrcdc.org/",
+          "sourceLabel": "Official NRCDC Houston &#8211; Neighborhood Recovery Community Development Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@NrcdcHouston/videos"
+        }
+      ]
+    },
+    {
+      "businessId": "source_18cc643c-d9ef-46e5-92e2-293f5a85d0e6",
+      "expectedIdentity": {
+        "name": "Neka's Funeral & Cremation Services",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://nekasfuneralhome.com/"
+      },
+      "patch": {
+        "hours": "Office Hours Monday Mon 09:00 AM – 05:00 PM; Tuesday Tue 09:00 AM – 05:00 PM; Wednesday Wed 09:00 AM – 05:00 PM; Thursday Thu 09:00 AM – 05:00 PM; Friday Fri 09:00 AM – 05:00 PM; 24 Hours We Are Here To Serve You Day or Night!",
+        "phone": "414-414-NEKA (6352)"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://nekasfuneralhome.com/",
+          "sourceLabel": "Official Honoring Lives: Neka’s Funeral Services in Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"414-414-NEKA (6352) 24 Hours We Are Here To Serve You Day or Night! Office Hours Monday Mon 09:00 AM – 05:00 PM Open now Tuesday Tue 09:00 AM – 05:00 PM Open now Wednesday Wed 09:00 AM – 05:00 PM Open now Thursday Thu 09:00 AM – 05:00 PM Open now Friday Fri 09:00 AM – 05:00 PM Open now\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nekasfuneralhome.com/",
+          "sourceLabel": "Official Honoring Lives: Neka’s Funeral Services in Milwaukee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"414-414-NEKA (6352)\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_cfc4638f-90af-4c02-9cd6-c44a860c05dd",
+      "expectedIdentity": {
+        "name": "Nelson & Co",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3bbWXDg"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/channel/UC0GzByezmZcE-58A6O-4tvw"
+      },
+      "fieldModes": {
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://nelsoncolab.com/",
+          "sourceLabel": "Official Nelson &amp; Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UC0GzByezmZcE-58A6O-4tvw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_78cad846-82cb-4d93-9a93-48e416446f74",
+      "expectedIdentity": {
+        "name": "Neo Soul Productions",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://neosoulproductions.com/"
+      },
+      "patch": {
+        "description": "Neo Soul Productions is a creative multi-media production company based in Wauwatosa, WI.",
+        "twitter": "https://twitter.com/nsp1436",
+        "youtube": "https://www.youtube.com/channel/UCeiKxac0qfDMHlONq5JMp0g"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://neosoulproductions.com/",
+          "sourceLabel": "Official HOME - Neo Soul Productions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Neo Soul Productions is a creative multi-media production company based in Wauwatosa, WI.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://neosoulproductions.com/",
+          "sourceLabel": "Official HOME - Neo Soul Productions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/nsp1436"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://neosoulproductions.com/",
+          "sourceLabel": "Official HOME - Neo Soul Productions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCeiKxac0qfDMHlONq5JMp0g"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6733fbe3-57e6-413a-b035-8b0560f94c84",
+      "expectedIdentity": {
+        "name": "Neta's Natural Hair and Body Care Products",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.netasnatural.com/"
+      },
+      "patch": {
+        "description": "Sells natural hair and skin care products; the site describes products for skin and hair and a founder-created Healing Moisture Body Butter.",
+        "twitter": "https://twitter.com/netasnaturalproducts",
+        "pinterest": "https://pinterest.com/netasnaturalproducts",
+        "tiktok": "https://tiktok.com/@netasnaturalproducts",
+        "youtube": "https://youtube.com/@netasnaturalproducts"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "pinterest": "fill",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://netasnatural.com/",
+          "sourceLabel": "Official Neta&#39;s Natural — Natural Hair &amp; Skin Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Neta's Natural — Natural Hair & Skin Care Products"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://netasnatural.com/",
+          "sourceLabel": "Official Neta&#39;s Natural — Natural Hair &amp; Skin Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/netasnaturalproducts"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://netasnatural.com/",
+          "sourceLabel": "Official Neta&#39;s Natural — Natural Hair &amp; Skin Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/netasnaturalproducts"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://netasnatural.com/",
+          "sourceLabel": "Official Neta&#39;s Natural — Natural Hair &amp; Skin Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://tiktok.com/@netasnaturalproducts"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://netasnatural.com/",
+          "sourceLabel": "Official Neta&#39;s Natural — Natural Hair &amp; Skin Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/@netasnaturalproducts"
+        }
+      ]
+    },
+    {
+      "businessId": "national-db689f155fa964f60b972ef1",
+      "expectedIdentity": {
+        "name": "New Beginning Financial Group, LLC",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://www.nbfinancialgroup.com/"
+      },
+      "patch": {
+        "description": "New Beginning Financial Group, LLC provides financial planning, wealth management, and tax advisory services.",
+        "youtube": "https://www.youtube.com/@nbfinancialgroup"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.nbfinancialgroup.com/",
+          "sourceLabel": "Official New Beginning Financial Group, LLC | Financial Planning &amp; Wealth Management Company specializing in Tax Advisory Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: New Beginning Financial Group, LLC | Financial Planning & Wealth Management Company specializing in Tax Advisory Services"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.nbfinancialgroup.com/",
+          "sourceLabel": "Official New Beginning Financial Group, LLC | Financial Planning &amp; Wealth Management Company specializing in Tax Advisory Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@nbfinancialgroup"
+        }
+      ]
+    },
+    {
+      "businessId": "source_33f7b23d-61dc-4047-bb85-2e65a13cde04",
+      "expectedIdentity": {
+        "name": "New Boots Line Dancing",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.newbootslinedancing.com/"
+      },
+      "patch": {
+        "description": "New Boots Line Dancing offers private and offsite line dancing lessons and event lessons for groups, including corporate events, bachelorette parties, birthday parties, and large parties.",
+        "hours": "Available 7 Days a Week by Appointment only",
+        "phone": "(629) 777-6086",
+        "tiktok": "https://www.tiktok.com/@newbootslinedancing",
+        "youtube": "https://www.youtube.com/@NewBootsLineDancing",
+        "pinterest": "https://www.pinterest.com/newbootslinedancing/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tiktok": "fill",
+        "youtube": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.newbootslinedancing.com/",
+          "sourceLabel": "Official Line Dancing Nashville, Tennessee - New Boots page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"New Boots Line Dancing is Nashville & New York’s original Private Line Dance Lesson service offering authentic, beginner friendly, lessons perfect for bachelorette parties, birthday parties, team building, corporate events & more!\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.newbootslinedancing.com/contact",
+          "sourceLabel": "Official Contact &mdash; New Boots Line Dancing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Available 7 Days a Week by Appointment only\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.newbootslinedancing.com/contact",
+          "sourceLabel": "Official Contact &mdash; New Boots Line Dancing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(629) 777-6086\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.newbootslinedancing.com/",
+          "sourceLabel": "Official Line Dancing Nashville, Tennessee - New Boots page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@newbootslinedancing"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.newbootslinedancing.com/",
+          "sourceLabel": "Official Line Dancing Nashville, Tennessee - New Boots page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@NewBootsLineDancing"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.newbootslinedancing.com/",
+          "sourceLabel": "Official Line Dancing Nashville, Tennessee - New Boots page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/newbootslinedancing/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_eb25a070-e7e5-4bdb-9345-aaeead84f5bd",
+      "expectedIdentity": {
+        "name": "New City Development",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://ncdpartners.com/"
+      },
+      "patch": {
+        "description": "New City Development is a commercial real estate firm that specializes in experience-driven development that places people at the center of design."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ncdpartners.com/",
+          "sourceLabel": "Official New City Development &#8211; Commercial Real Estate page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"New City Development is a commercial real estate firm that specializes in experience-driven development that places people at the center of design.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_38a5f44b-bdfa-4987-a20f-2ca921fa91c5",
+      "expectedIdentity": {
+        "name": "New Gen Home Pros LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.newgenhomepros.com/"
+      },
+      "patch": {
+        "description": "General contracting services for residential, commercial, and FHA 203(k) renovation projects, including scope definition, coordination of trades, and project closeout.",
+        "instagram": "https://www.instagram.com/newgenhomepros/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.newgenhomepros.com/",
+          "sourceLabel": "Official New Gen Home Pros | NYC General Contractor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Construction you don’t have to chase. New Gen clearly defines the scope, coordinates the right trades, and keeps residential, commercial, and FHA 203(k) projects moving from planning through closeout.\","
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.newgenhomepros.com/",
+          "sourceLabel": "Official New Gen Home Pros | NYC General Contractor page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/newgenhomepros/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_12150d25-f0c1-4594-ba9d-485e8a3a90ba",
+      "expectedIdentity": {
+        "name": "New Growth Tree Care",
+        "city": "St. Paul",
+        "state": "MN",
+        "website": "https://newgrowthtreecarellc.com/"
+      },
+      "patch": {
+        "description": "\"New Growth Tree Care LLC is the Residential and Commercial Tree Service Company of choice for homeowners and businesses in the St. Paul, Minnesota area.\"",
+        "phone": "\"(612) 208-4375\"",
+        "facebook": "https://www.facebook.com/",
+        "twitter": "https://twitter.com/",
+        "youtube": "https://www.youtube.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://newgrowthtreecarellc.com/about-us/",
+          "sourceLabel": "Official About Us - New Growth Tree Care LLC | St Paul, MN Tree Service Company | Tree Trimming, Pruning, Dangerous Tree Removal, Stump Grinding, Shaping, Topping, Lot &amp; Land Clearing, Emergency Storm Damage Brush Clean Up, Diseased Diagnostics, Cabli",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"New Growth Tree Care LLC is the Residential and Commercial Tree Service Company of choice for homeowners and businesses in the St. Paul, Minnesota area.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://newgrowthtreecarellc.com/",
+          "sourceLabel": "Official New Growth Tree Care LLC | St Paul, MN Tree Service Company | Tree Trimming, Pruning, Dangerous Tree Removal, Stump Grinding, Shaping, Topping, Lot &amp; Land Clearing, Emergency Storm Damage Brush Clean Up, Diseased Diagnostics, Cabling &amp; Br",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact Us Today! (612) 208-4375\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://newgrowthtreecarellc.com/",
+          "sourceLabel": "Official New Growth Tree Care LLC | St Paul, MN Tree Service Company | Tree Trimming, Pruning, Dangerous Tree Removal, Stump Grinding, Shaping, Topping, Lot &amp; Land Clearing, Emergency Storm Damage Brush Clean Up, Diseased Diagnostics, Cabling &amp; Br",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://newgrowthtreecarellc.com/",
+          "sourceLabel": "Official New Growth Tree Care LLC | St Paul, MN Tree Service Company | Tree Trimming, Pruning, Dangerous Tree Removal, Stump Grinding, Shaping, Topping, Lot &amp; Land Clearing, Emergency Storm Damage Brush Clean Up, Diseased Diagnostics, Cabling &amp; Br",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://newgrowthtreecarellc.com/",
+          "sourceLabel": "Official New Growth Tree Care LLC | St Paul, MN Tree Service Company | Tree Trimming, Pruning, Dangerous Tree Removal, Stump Grinding, Shaping, Topping, Lot &amp; Land Clearing, Emergency Storm Damage Brush Clean Up, Diseased Diagnostics, Cabling &amp; Br",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c936ae84-cdcc-4181-b5af-296c04b0991c",
+      "expectedIdentity": {
+        "name": "New Orleans Car Service, LLC",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://neworleanscarservice.com/"
+      },
+      "patch": {
+        "description": "Founded in 2002, New Orleans Car Service is a locally owned limousine company that provides luxury chauffeur driven car service to clients in Southern Louisiana and surrounding areas, including the Gulf Coast region.",
+        "phone": "504.374.9911",
+        "facebook": "https://facebook.com/",
+        "twitter": "https://twitter.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://neworleanscarservice.com/",
+          "sourceLabel": "Official New Orleans Car Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Founded in 2002, New Orleans Car Service is a locally owned limousine company that provides luxury chauffeur driven car service to clients in Southern Louisiana and surrounding areas, including the Gulf Coast region."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://neworleanscarservice.com/",
+          "sourceLabel": "Official New Orleans Car Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: 504.374.9911"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://neworleanscarservice.com/",
+          "sourceLabel": "Official New Orleans Car Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://neworleanscarservice.com/",
+          "sourceLabel": "Official New Orleans Car Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cb1c9b89-0d55-45e7-9400-25b94ebc7147",
+      "expectedIdentity": {
+        "name": "New Salem Missionary Baptist",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "http://www.newsalembaptist.com/"
+      },
+      "patch": {
+        "description": "New Salem Baptist Church is a church organization that holds worship services and Bible study.",
+        "hours": "Monday 8 a.m. - 5 p.m.; Tues - Thurs 8 a.m. - 8 p.m.; Saturday 8 a.m. - 1 p.m.; Sunday Morning Worship: 7 a.m. & 9:30 a.m.; Tuesday Bible Study: 7 p.m.",
+        "phone": "(901) 452-7265",
+        "tags": [
+          "church services",
+          "worship services",
+          "bible study"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.newsalembaptist.com/church-services",
+          "sourceLabel": "Official New Salem Baptist Church | Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Service Times Sunday 7:00 a.m. - Traditional 9:30 a.m. - Full Band Tuesday 7:00 p.m. - Bible Study"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.newsalembaptist.com/",
+          "sourceLabel": "Official New Salem Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Sunday Morning Worship: 7 a.m. &bull; 9:30 a.m. Christian Academy: 8:15 a.m. Tuesday Bible Study: 7 p.m. LOCATION 2237 South Parkway East Memphis, TN 38114 Maps & Directions CONTACT Monday 8 a.m. - 5 p.m. Tues - Thurs 8 a.m. - 8 p.m. Saturday 8 a.m. - 1 p.m."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.newsalembaptist.com/contact",
+          "sourceLabel": "Official New Salem Baptist Church | Contact page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tel: (901) 452-7265"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.newsalembaptist.com/church-services",
+          "sourceLabel": "Official New Salem Baptist Church | Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Service Times Sunday 7:00 a.m. - Traditional 9:30 a.m. - Full Band Tuesday 7:00 p.m. - Bible Study"
+        }
+      ]
+    },
+    {
+      "businessId": "source_42ce68b8-ed27-46af-a303-64c0c75a6d9c",
+      "expectedIdentity": {
+        "name": "New Star Contracting Inc.",
+        "city": "Maspeth",
+        "state": "NY",
+        "website": "https://www.newstarcontractinginc.com/"
+      },
+      "patch": {
+        "description": "New Star Contracting Inc. provides commercial and residential construction services across New York City’s five boroughs, including masonry restoration, waterproofing, facade restoration, property maintenance, concrete sidewalk repair, patios, and building renovation.",
+        "hours": "Mon–Fri, 9am–5pm",
+        "phone": "347-617-1470",
+        "tags": [
+          "masonry restoration",
+          "waterproofing",
+          "facade restoration",
+          "property maintenance",
+          "concrete sidewalk repair",
+          "patio construction & design",
+          "building renovation"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.newstarcontractinginc.com/",
+          "sourceLabel": "Official New Star Contracting Inc. | Commercial Construction — NYC 5 Boroughs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"New Star Contracting Inc. has been delivering reliable commercial and residential construction services across all five boroughs since 2020.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.newstarcontractinginc.com/contact",
+          "sourceLabel": "Official Contact Us | New Star Contracting Inc. — NYC Construction Estimates page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our team is available Monday through Friday, 9am–5pm.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.newstarcontractinginc.com/",
+          "sourceLabel": "Official New Star Contracting Inc. | Commercial Construction — NYC 5 Boroughs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact Phone 347-617-1470\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.newstarcontractinginc.com/services",
+          "sourceLabel": "Official Construction Services | New Star Contracting Inc. — NYC 5 Boroughs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"OUR SERVICES Full-spectrum construction services for commercial and residential properties across the 5 boroughs.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_ed16937a-06ee-403e-818b-ef55b67b1b01",
+      "expectedIdentity": {
+        "name": "New Visions TEchnical Solutions",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://newvisionsts.com/"
+      },
+      "patch": {
+        "description": "New Visions Technical Solutions provides design, photography, branded products, websites, and eLearning solutions for schools, organizations, and businesses.",
+        "phone": "(901) 210-9103",
+        "tags": [
+          "design",
+          "professional photography",
+          "branded products",
+          "web design",
+          "elearning development"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://newvisionsts.com/about-us/",
+          "sourceLabel": "Official About Us - New Visions Technical Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From designing bold graphics and crafting impactful websites to developing engaging eLearning solutions and capturing your brand’s essence through professional photography, we’re here to tell your story."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://newvisionsts.com/about-us/",
+          "sourceLabel": "Official About Us - New Visions Technical Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (901) 210-9103"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://newvisionsts.com/about-us/",
+          "sourceLabel": "Official About Us - New Visions Technical Solutions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From designing bold graphics and crafting impactful websites to developing engaging eLearning solutions and capturing your brand’s essence through professional photography, we’re here to tell your story."
+        }
+      ]
+    },
+    {
+      "businessId": "source_03c6b635-61a5-47c6-ba52-49197efe806c",
+      "expectedIdentity": {
+        "name": "New Voices Fund",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://www.newvoicesfund.com/"
+      },
+      "patch": {
+        "description": "NVF Capital is a thesis-driven venture capital firm that invests in consumer brands, services, and commerce infrastructure and provides capital and operational support to portfolio companies."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.newvoicesfund.com/",
+          "sourceLabel": "Official New Voices Fund — Venture Capital for the New General Market page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"NVF Capital is a thesis-driven venture capital firm, comprised of career investors and former founders and operators. We go beyond providing capital by leveraging our capabilities and ecosystem to increase the likelihood of success\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_99d798ab-1568-48d6-9288-5032f9ecae28",
+      "expectedIdentity": {
+        "name": "New York Geomatics Inc.",
+        "city": "Sunnyside",
+        "state": "NY",
+        "website": "https://www.newyorkgeomatics.com/"
+      },
+      "patch": {
+        "description": "New York Geomatics is a specialty surveying firm with a focus on precise, specialized surveying techniques for projects requiring the highest precision.",
+        "phone": "(929) 328-0243",
+        "tags": [
+          "hydrographic / sub marine layout",
+          "underwater surveying",
+          "industrial surveying",
+          "3d laser scanning",
+          "topographic surveying",
+          "subterranean surveying",
+          "tunneling construction"
+        ],
+        "facebook": "https://www.facebook.com/New-York-Geomatics-Inc-1425279207698985/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://newyorkgeomatics.com/",
+          "sourceLabel": "Official New York Geomatics | Positioning for the Future page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: New York Geomatics is a specialty surveying firm with a focus on precise, specialized surveying techniques for projects requiring the highest precision."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://newyorkgeomatics.com/",
+          "sourceLabel": "Official New York Geomatics | Positioning for the Future page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Ph: (929) 328-0243"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://newyorkgeomatics.com/",
+          "sourceLabel": "Official New York Geomatics | Positioning for the Future page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our focuses include: Hydrographic / Sub Marine layout (Underwater Surveying), Industrial Surveying within Plants (including 3D laser scanning of complicated piping networks), and specialty topographic and subterranean surveying techniques used in Tunneling Construction."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://newyorkgeomatics.com/",
+          "sourceLabel": "Official New York Geomatics | Positioning for the Future page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/New-York-Geomatics-Inc-1425279207698985/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b4d1b490-7dd7-48f7-bb4b-d35c42f18e3b",
+      "expectedIdentity": {
+        "name": "New York Life",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.newyorklife.com/"
+      },
+      "patch": {
+        "description": "New York Life provides life insurance, investments, retirement, and advisory services.",
+        "twitter": "https://twitter.com/NewYorkLife",
+        "youtube": "https://www.youtube.com/user/newyorklife"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.newyorklife.com/",
+          "sourceLabel": "Official Trusted Guidance and Protection | New York Life Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: LIFE INSURANCE • INVESTMENTS • RETIREMENT • ADVISORY"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.newyorklife.com/",
+          "sourceLabel": "Official Trusted Guidance and Protection | New York Life Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/NewYorkLife"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.newyorklife.com/",
+          "sourceLabel": "Official Trusted Guidance and Protection | New York Life Insurance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/newyorklife"
+        }
+      ]
+    },
+    {
+      "businessId": "source_059737ea-6257-4179-ba9a-ab5f980fb41a",
+      "expectedIdentity": {
+        "name": "New York Tech Industries, Inc.",
+        "city": "Queens Village",
+        "state": "NY",
+        "website": "https://www.nytechind.com/"
+      },
+      "patch": {
+        "description": "New York Tech Industries is a full-service elevator company specializing in residential and commercial elevators 30 stories and below, providing construction, modernization, repairs, maintenance, and violation removal & testing.",
+        "phone": "718-464-1761",
+        "tags": [
+          "routine elevator maintenance",
+          "elevator modernization",
+          "elevator construction & installation",
+          "elevator repairs",
+          "violation removal & testing"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nytechind.com/",
+          "sourceLabel": "Official New York Tech Industries, Inc. | Elevator Services in NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"New York Tech Industries is a full-service elevator company serving Manhattan, Brooklyn, Queens, and The Bronx. We are a family-owned and operated business specializing in residential and commercial elevators 30 stories and below.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nytechind.com/",
+          "sourceLabel": "Official New York Tech Industries, Inc. | Elevator Services in NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: 718-464-1761\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://nytechind.com/",
+          "sourceLabel": "Official New York Tech Industries, Inc. | Elevator Services in NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our Services Affordable elevator services in New York City Routine elevator maintenance Elevator modernization Elevator construction & installation Elevator repairs Violation removal & testing\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_17eeb426-a996-4e61-a4ab-d4f3b6b2b863",
+      "expectedIdentity": {
+        "name": "NextGen Tax Services PLLC",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://www.nextgenempires.com/"
+      },
+      "patch": {
+        "phone": "918-600-2299",
+        "instagram": "https://www.instagram.com/nextgen.tax/",
+        "facebook": "https://www.facebook.com/nextgentaxservices"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://nextgenempires.com/contact/",
+          "sourceLabel": "Official Contact &#8211; NextGen Empires page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: info@nextgen.tax 918-600-2299"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://nextgenempires.com/",
+          "sourceLabel": "Official NextGen Empires page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/nextgen.tax/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://nextgenempires.com/",
+          "sourceLabel": "Official NextGen Empires page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/nextgentaxservices"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d2f243ed-696e-4619-897f-e1f2fe73da88",
+      "expectedIdentity": {
+        "name": "Next Level Group NYC Corp",
+        "city": "Long Island City",
+        "state": "NY",
+        "website": "https://www.nextlevelgroupnyc.com/"
+      },
+      "patch": {
+        "description": "Next Level Group provides consulting, training, coaching, administrative services, branding and marketing, and programs such as CIMA for parents.",
+        "phone": "+1 917-754-2086",
+        "instagram": "https://www.instagram.com/",
+        "twitter": "https://www.twitter.com/",
+        "facebook": "https://www.facebook.com/",
+        "pinterest": "https://www.pinterest.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "instagram": "fill",
+        "twitter": "fill",
+        "facebook": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nextlevelgroupnyc.com/",
+          "sourceLabel": "Official Next Level Group - Your business at another level! | page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Necesitas un asesor estratégico en tu negocio o emprendimiento? Nosotros nos convertimos en tus aliados para lograr un buen crecimiento y desarrollo de tu empresa."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nextlevelgroupnyc.com/",
+          "sourceLabel": "Official Next Level Group - Your business at another level! | page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Soporte +1 917-754-2086"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://nextlevelgroupnyc.com/",
+          "sourceLabel": "Official Next Level Group - Your business at another level! | page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://nextlevelgroupnyc.com/",
+          "sourceLabel": "Official Next Level Group - Your business at another level! | page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://nextlevelgroupnyc.com/",
+          "sourceLabel": "Official Next Level Group - Your business at another level! | page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://nextlevelgroupnyc.com/",
+          "sourceLabel": "Official Next Level Group - Your business at another level! | page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2d216827-e5e7-4bcb-9830-42231678040a",
+      "expectedIdentity": {
+        "name": "Next Move Nation Consulting",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.mynextmovenation.com/"
+      },
+      "patch": {
+        "description": "We partner with schools, organizations, and agencies to deliver leadership training, workforce systems, culture transformation, management development, and youth development.",
+        "youtube": "https://www.youtube.com/@NeXTMoveNationDocSavage",
+        "tiktok": "https://www.tiktok.com/@docsavagemynextmovenatio"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.mynextmovenation.com/",
+          "sourceLabel": "Official HOME | My Next Move Nation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Consulting & Training We partner with schools, organizations, and agencies to deliver: ​ Leadership Trainin g Workforce Systems Culture Transformation Management Development Youth Development\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.mynextmovenation.com/",
+          "sourceLabel": "Official HOME | My Next Move Nation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@NeXTMoveNationDocSavage"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.mynextmovenation.com/",
+          "sourceLabel": "Official HOME | My Next Move Nation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@docsavagemynextmovenatio"
+        }
+      ]
+    },
+    {
+      "businessId": "source_66baee6e-3055-4136-9a4e-d984f7dd59de",
+      "expectedIdentity": {
+        "name": "NICCK Townsend Eyebrow & Make-up Artistry",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://niccktownsend.com/"
+      },
+      "patch": {
+        "hours": "(by appointment only) Monday - Wednesday: 10 am – 6 pm; Thursday & Friday: 10 am – 7 pm; Saturday: 9 am – 4 pm; Sunday: 9 am – 1:30 pm",
+        "phone": "267-368-0070",
+        "facebook": "https://www.facebook.com/niccktownsendsalon/",
+        "instagram": "https://instagram.com/niccktownsendsalon"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.niccktownsend.com/",
+          "sourceLabel": "Official Best Brow Shaping Bar in Philadelphia-niccktownsend page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: niccktownsend Salon Hours: Address: 3510 Scotts Lane / Building #30 / Philadelphia, PA 19129 Hours: (by appointment only) Monday - Wednesday: 10 am – 6 pm Thursday & Friday: 10 am – 7 pm Saturday: 9 am – 4 pm Sunday: 9 am – 1:30 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.niccktownsend.com/",
+          "sourceLabel": "Official Best Brow Shaping Bar in Philadelphia-niccktownsend page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: 267-368-0070"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.niccktownsend.com/",
+          "sourceLabel": "Official Best Brow Shaping Bar in Philadelphia-niccktownsend page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/niccktownsendsalon/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.niccktownsend.com/",
+          "sourceLabel": "Official Best Brow Shaping Bar in Philadelphia-niccktownsend page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/niccktownsendsalon"
+        }
+      ]
+    },
+    {
+      "businessId": "source_72f75610-9b4a-4755-9ca5-0ed83b80601a",
+      "expectedIdentity": {
+        "name": "Niecie’s",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.nieciesrestaurant.com/"
+      },
+      "patch": {
+        "hours": "M-Th 5:30a–7p F-Sa 5:30a–7p Su 5:30a–7p",
+        "phone": "(816) 444-6006",
+        "youtube": "https://www.youtube.com/channel/UC43qhnaTIaX0RMYTtTdwPqg"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.nieciesrestaurant.com/",
+          "sourceLabel": "Official Niecie&#39;s Restaurant page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours M-Th 5:30a–7p F-Sa 5:30a–7p Su 5:30a–7p"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.nieciesrestaurant.com/",
+          "sourceLabel": "Official Niecie&#39;s Restaurant page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone Call (816) 444-6006"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.nieciesrestaurant.com/",
+          "sourceLabel": "Official Niecie&#39;s Restaurant page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UC43qhnaTIaX0RMYTtTdwPqg"
+        }
+      ]
+    },
+    {
+      "businessId": "source_17685147-9654-4b94-b4a5-826597d4cef9",
+      "expectedIdentity": {
+        "name": "Night Owl Vegan",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://nightowlvegan.com/"
+      },
+      "patch": {
+        "description": "Night Owl Vegan"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nightowlvegan.com/",
+          "sourceLabel": "Official Night Owl Vegan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Night Owl Vegan"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c315a73d-3920-4484-b931-36af62c85324",
+      "expectedIdentity": {
+        "name": "Nikavonnis",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.nikavonnis.com/"
+      },
+      "patch": {
+        "tags": [
+          "men's shoes",
+          "loafers",
+          "slip-ons",
+          "oxfords",
+          "monkstrap",
+          "suits",
+          "blazers",
+          "shirt & tie sets",
+          "hats"
+        ]
+      },
+      "fieldModes": {
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.nikavonnis.com/",
+          "sourceLabel": "Official Nikavonnis | Men&#039;s Shoes and Apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Product Categories Browse Blazers Browse Slip-Ons Browse Loafers Featured Hats Browse Shirt & Tie Sets Browse Hats Featured Shoes Browse Loafers Featured Blazers\""
+        }
+      ]
+    },
+    {
+      "businessId": "national-31a5511f9fec545e2f501425",
+      "expectedIdentity": {
+        "name": "Nilan Johnson Lewis, PA",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://nilanjohnson.com/"
+      },
+      "patch": {
+        "description": "Nilan Johnson Lewis PA is a law firm offering services in areas including product liability and complex torts, labor and employment, business litigation, health care, and corporate and nonprofit matters.",
+        "phone": "612.305.7500"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nilanjohnson.com/",
+          "sourceLabel": "Official Nilan Johnson Lewis | Law Firm, Minneapolis, MN Nilan Johnson Lewis PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Practice Areas Product Liability and Complex Torts Labor and Employment Business Litigation Health Care Corporate and Nonprofit"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nilanjohnson.com/",
+          "sourceLabel": "Official Nilan Johnson Lewis | Law Firm, Minneapolis, MN Nilan Johnson Lewis PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office: 612.305.7500"
+        }
+      ]
+    },
+    {
+      "businessId": "source_31d307c2-9cf1-4604-a0e9-ae7ccfb1699e",
+      "expectedIdentity": {
+        "name": "NINO Web Services",
+        "city": "Roseville",
+        "state": "MN",
+        "website": "https://yapnino.com/"
+      },
+      "patch": {
+        "description": "AI-powered web design and digital marketing; professional websites for $35/month.",
+        "tags": [
+          "ai-powered web design",
+          "digital marketing",
+          "professional websites"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yapnino.com/",
+          "sourceLabel": "Official NINO Web Services - AI-Powered Web Design & Digital Marketing | Professional Websites $35/month page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NINO Web Services - AI-Powered Web Design & Digital Marketing | Professional Websites $35/month"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://yapnino.com/",
+          "sourceLabel": "Official NINO Web Services - AI-Powered Web Design & Digital Marketing | Professional Websites $35/month page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NINO Web Services - AI-Powered Web Design & Digital Marketing | Professional Websites $35/month"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b229a2f9-181d-4d56-bcc6-7fa6e8adb3a1",
+      "expectedIdentity": {
+        "name": "Nitram Partnering Group",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.nitrampartnering.com/"
+      },
+      "patch": {
+        "description": "Educating small business owners on best business practices, and building strong relationships between corporate partners and clients.",
+        "hours": "Open today 09:00 am – 05:00 pm"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nitrampartnering.com/",
+          "sourceLabel": "Official Nitram Partnering Group LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Educating small business owners on best business practices, and building strong relationships between corporate partners and clients.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nitrampartnering.com/",
+          "sourceLabel": "Official Nitram Partnering Group LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Open today 09:00 am – 05:00 pm\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f88a16fd-a4b8-47e7-ba70-a15b0d149353",
+      "expectedIdentity": {
+        "name": "NiZa Works of Architecture, PLLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.nizaworks.com/"
+      },
+      "patch": {
+        "description": "NiZa Works is a full service architectural and construction management firm specializing in existing, restoration and new construction residential and commercial projects in the New York City and the Tri-State area.",
+        "phone": "646.490.3033",
+        "tags": [
+          "architectural services",
+          "construction management",
+          "historic restoration",
+          "waterproofing",
+          "sustainability"
+        ],
+        "facebook": "https://www.facebook.com/nizaworks",
+        "instagram": "https://www.instagram.com/nizaworks",
+        "twitter": "https://www.twitter.com/nizaworks"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.nizaworks.com/about/",
+          "sourceLabel": "Official NiZa Works | About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"NiZa Works is a full service architectural and construction management firm specializing in existing, restoration and new construction residential and commercial projects in the New York City and the Tri-State area.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.nizaworks.com/contact/",
+          "sourceLabel": "Official NiZa Works | Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"p: 646.490.3033\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.nizaworks.com/about/",
+          "sourceLabel": "Official NiZa Works | About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Please take a look at the services we provide below: Architectural Services Construction Management Historic Restoration Waterproofing Sustainability\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.nizaworks.com/",
+          "sourceLabel": "Official NiZa Works | Architecture and Construction Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/nizaworks"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.nizaworks.com/",
+          "sourceLabel": "Official NiZa Works | Architecture and Construction Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/nizaworks"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.nizaworks.com/",
+          "sourceLabel": "Official NiZa Works | Architecture and Construction Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/nizaworks"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6ff1b8e3-3839-4320-a943-fdff21b52f2d",
+      "expectedIdentity": {
+        "name": "NL Suits",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3eJ2FeX"
+      },
+      "patch": {
+        "description": "NL Suits makes custom suits, tuxedos, sport coats, dress shirts, and trousers with made-to-measure garments and personal style consultations.",
+        "hours": "Tue-Sat: 10-6, Sunday: 12-4 Monday: Closed",
+        "phone": "414.312.8665"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.nlsuits.com/about-us/",
+          "sourceLabel": "Official About Us | NL Suits page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Here at NL Suits, our personal style consultants take your lifestyle, wishes, and vision seriously when advising and fitting you for your fully custom, made-to-measure garment; whether you want a suit, a tuxedo, sport coat, dress shirt, or pair of trousers, a perfect fit and your satisfaction is our mission.\","
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.nlsuits.com/",
+          "sourceLabel": "Official Be Well Suited | NL Suits page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Working Hours Tue-Sat: 10-6, Sunday: 12-4 Monday: Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.nlsuits.com/",
+          "sourceLabel": "Official Be Well Suited | NL Suits page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact Us 414.312.8665 info@nlsuits.com\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_245d6dbe-6687-41cd-bbba-5491c658af2a",
+      "expectedIdentity": {
+        "name": "Noble Point Management & Accounting",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.noblepointmgmt.com/"
+      },
+      "patch": {
+        "description": "Noble Point Management & Accounting provides comprehensive financial strategy, bookkeeping, and business management services for companies ready to scale.",
+        "hours": "Mon - Fri 8:00am - 5:00pm",
+        "phone": "901-443-0336",
+        "tiktok": "http://tiktok.com/@noblepointmgmt"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://noblepointmgmt.com/",
+          "sourceLabel": "Official Home - Noble Point - Accountant &amp; Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Noble Point Management & Accounting provides comprehensive financial strategy, bookkeeping, and business management services for companies ready to scale.\","
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://noblepointmgmt.com/",
+          "sourceLabel": "Official Home - Noble Point - Accountant &amp; Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Office Hours Mon - Fri 8:00am - 5:00pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://noblepointmgmt.com/",
+          "sourceLabel": "Official Home - Noble Point - Accountant &amp; Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone 901-443-0336\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://noblepointmgmt.com/",
+          "sourceLabel": "Official Home - Noble Point - Accountant &amp; Management page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: http://tiktok.com/@noblepointmgmt"
+        }
+      ]
+    },
+    {
+      "businessId": "source_acdbbf16-3114-40f7-b218-3b0136243438",
+      "expectedIdentity": {
+        "name": "Nocturnal Affairs Pest Control Inc.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://thepestcreepers.com/"
+      },
+      "patch": {
+        "description": "Nocturnal Affairs Pest Control provides pest control services including commercial and residential pest control and bed bug services.",
+        "hours": "Mon 9am - 5pm; Tue 9am - 5pm; Wed 9am - 5pm; Thu 9am - 5pm; Fri 9am - 5pm; Sat 10am - 2pm",
+        "phone": "718-963-0631",
+        "tags": [
+          "commercial pest control",
+          "residential pest control",
+          "bed bug service"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://thepestcreepers.com/",
+          "sourceLabel": "Official Nocturnal Affairs Pest Control page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: SERVICES Commercial Pest Control Residential Pest Control BED BUGS Bed Bug Basics Bed Bug Service"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://thepestcreepers.com/",
+          "sourceLabel": "Official Nocturnal Affairs Pest Control page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 9am - 5pm Tue 9am - 5pm Wed 9am - 5pm Thu 9am - 5pm Fri 9am - 5pm Sat 10am - 2pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://thepestcreepers.com/",
+          "sourceLabel": "Official Nocturnal Affairs Pest Control page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NAPC, Inc. Brooklyn, USA 718-963-0631"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://thepestcreepers.com/",
+          "sourceLabel": "Official Nocturnal Affairs Pest Control page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: SERVICES Commercial Pest Control Residential Pest Control BED BUGS Bed Bug Basics Bed Bug Service"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b61aad28-b9fc-4f67-9803-0a2778369b24",
+      "expectedIdentity": {
+        "name": "Noels Express Auto Service",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.noelexpressservices.com/"
+      },
+      "patch": {
+        "hours": "Mon - Fri 8:00 am - 5:00 pm; Saturday 8:00 am - 2:00 pm; Sunday Closed",
+        "phone": "602-621-2260",
+        "facebook": "https://www.facebook.com/Noels-Express-Service-and-Auto-Body-105031717539981"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.noelexpressservices.com/",
+          "sourceLabel": "Official Noels Express Services &amp; Auto Body page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening Hours Business Hours Mon - Fri 8:00 am - 5:00 pm Saturday 8:00 am - 2:00 pm Sunday Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.noelexpressservices.com/",
+          "sourceLabel": "Official Noels Express Services &amp; Auto Body page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 602-621-2260"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.noelexpressservices.com/",
+          "sourceLabel": "Official Noels Express Services &amp; Auto Body page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Noels-Express-Service-and-Auto-Body-105031717539981"
+        }
+      ]
+    },
+    {
+      "businessId": "source_80e7db4c-0410-4b72-bb7d-17b51a3c5259",
+      "expectedIdentity": {
+        "name": "Noir Lounge LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.noircolumbus.com/"
+      },
+      "patch": {
+        "description": "Noir is a sophisticated lounge bringing Columbus, Ohio the same vibes and feels of fast paced larger cities; Noir brings an elegant atmosphere for patrons to relax with specialty cocktails and drinks.",
+        "phone": "614.362.9833"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.noircolumbus.com/",
+          "sourceLabel": "Official Noir Lounge - The New Standard page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Noir is a sophisticated lounge bringing Columbus, Ohio the same vibes and feels of fast paced larger cities like L.A., New York & Miami. Noir brings an elegant atmosphere for patrons to relax with specialty cocktails and drinks all in the comfort of their own space.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.noircolumbus.com/vip-service.html",
+          "sourceLabel": "Official VIP Service - Noir Lounge page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"For Bottle Service Reservations please call or text 614.362.9833\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_e1309f07-2407-4dba-83c9-a22bdb539547",
+      "expectedIdentity": {
+        "name": "Noise Moguls LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.noise.com/"
+      },
+      "patch": {
+        "instagram": "https://www.instagram.com/noise/",
+        "twitter": "https://twitter.com/wecreatenoise",
+        "tiktok": "https://www.tiktok.com/@noise?_t=8Y9Q1WQRN3G&_r=1"
+      },
+      "fieldModes": {
+        "instagram": "fill",
+        "twitter": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.noise.com/",
+          "sourceLabel": "Official NOISE: A Creative Company From New York City page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/noise/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.noise.com/",
+          "sourceLabel": "Official NOISE: A Creative Company From New York City page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/wecreatenoise"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.noise.com/",
+          "sourceLabel": "Official NOISE: A Creative Company From New York City page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@noise?_t=8Y9Q1WQRN3G&_r=1"
+        }
+      ]
+    },
+    {
+      "businessId": "source_71af66f3-4671-46c9-b26d-9b50045b8c6b",
+      "expectedIdentity": {
+        "name": "Nola Construction Inc.",
+        "city": "Rosedale",
+        "state": "NY",
+        "website": "https://www.nolaconstructioninc.com/"
+      },
+      "patch": {
+        "phone": "718-322-8690"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://nolaconstructioninc.com/",
+          "sourceLabel": "Official Nola Construction page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 718-322-8690"
+        }
+      ]
+    },
+    {
+      "businessId": "source_197fc9ea-d42c-4470-ae22-b093994cd93d",
+      "expectedIdentity": {
+        "name": "NOLIA KITCHEN",
+        "city": "Cincinnati",
+        "state": "OH",
+        "website": "https://noliakitchen.com/"
+      },
+      "patch": {
+        "description": "Nolia is serving both classic southern flavors as well as imaginative and unconventional twists on familiar staples. Chef Jeff Harris’ menu is inspired by his upbringing in New Orleans.",
+        "hours": "Tuesday to Thursday: 5pm—9pm Friday to Saturday: 5pm—10pm Closed Sunday & Monday",
+        "phone": "(513) 384-3597"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://noliakitchen.com/",
+          "sourceLabel": "Official Nolia Kitchen | Discover Southern Flavors – Reserve Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Nolia is serving both classic southern flavors as well as imaginative and unconventional twists on familiar staples. Chef Jeff Harris’ menu is inspired by his upbringing in New Orleans.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://noliakitchen.com/",
+          "sourceLabel": "Official Nolia Kitchen | Discover Southern Flavors – Reserve Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Tuesday to Thursday: 5pm—9pm Friday to Saturday: 5pm—10pm Closed Sunday & Monday\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://noliakitchen.com/",
+          "sourceLabel": "Official Nolia Kitchen | Discover Southern Flavors – Reserve Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(513) 384-3597\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7cd7b2f3-7d2f-4c5b-a624-f5c5ef379b97",
+      "expectedIdentity": {
+        "name": "Nome’s Catering and Event Planning Services",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://nomecateringsa.com/"
+      },
+      "patch": {
+        "phone": "(210-570-2035",
+        "instagram": "https://www.instagram.com/nomescatering/"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://nomecateringsa.com/",
+          "sourceLabel": "Official Home - Nome&#039;s Catering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact the Nome Catering team today at (210-570-2035) to request a custom quote\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://nomecateringsa.com/",
+          "sourceLabel": "Official Home - Nome&#039;s Catering Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/nomescatering/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e95f8e17-0a18-4182-8ecc-77263337cdd8",
+      "expectedIdentity": {
+        "name": "Non-Corporate Girls",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.noncorporategirls.com/"
+      },
+      "patch": {
+        "description": "A podcast and lifestyle media platform focused on professional and entrepreneurial wellness, offering content, advice, and resources.",
+        "twitter": "https://twitter.com/NonCorpGirls",
+        "youtube": "https://www.youtube.com/channel/UCaoVuKSwCHG7ipTHX439KkA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.noncorporategirls.com/",
+          "sourceLabel": "Official Non-Corporate Girls page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A podcast and lifestyle media platform built with your professional and entrepreneurial wellness in mind."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.noncorporategirls.com/",
+          "sourceLabel": "Official Non-Corporate Girls page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/NonCorpGirls"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.noncorporategirls.com/",
+          "sourceLabel": "Official Non-Corporate Girls page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCaoVuKSwCHG7ipTHX439KkA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3287c67e-d758-4e83-87bd-8178adee6d32",
+      "expectedIdentity": {
+        "name": "No Place Like Home Supportive Home Care Agency,",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.noplacelikehomesupportivehomecareagency.com/"
+      },
+      "patch": {
+        "description": "At No Place Like Home Supportive Home Care Agency, we are dedicated to providing high-quality non-medical care services to individuals in the comfort of their own homes.",
+        "phone": "414- 501-9017",
+        "tags": [
+          "personal care assistance",
+          "companionship services",
+          "meal preparation",
+          "respite care",
+          "light house cleaning",
+          "companionship"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.noplacelikehomesupportivehomecareagency.com/",
+          "sourceLabel": "Official No Place Like Home Supportive Home Care Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Welcome to No Place Like Home Supportive Home Care Agency At No Place Like Home Supportive Home Care Agency, we are dedicated to providing high-quality non-medical care services to individuals in the comfort of their own homes.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.noplacelikehomesupportivehomecareagency.com/contact",
+          "sourceLabel": "Official Contact | No Place Like Home Supportive Home Care Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone Number 414- 501-9017\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.noplacelikehomesupportivehomecareagency.com/",
+          "sourceLabel": "Official No Place Like Home Supportive Home Care Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We offer a range of non-medical care services including personal care assistance, companionship services, respite care, and meal preparation.\""
+        }
+      ]
+    },
+    {
+      "businessId": "national-c99d7ecc31ae1bc276df4f1c",
+      "expectedIdentity": {
+        "name": "Northeast Fitness",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://ne.fitness/"
+      },
+      "patch": {
+        "description": "Northeast Fitness"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ne.fitness/",
+          "sourceLabel": "Official Northeast Fitness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Northeast Fitness"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0a3f1ba1-fafc-455e-9329-18dc8968492d",
+      "expectedIdentity": {
+        "name": "Northwest African American Museum (NAAM)",
+        "city": "Seattle",
+        "state": "WA",
+        "website": "https://www.naamnw.org/"
+      },
+      "patch": {
+        "hours": "Monday - Closed Tuesday - Closed Wednesday - 10am to 5pm Thursday - 10am to 5pm Friday - 10am to 5pm Saturday - 10am to 5pm Sundays - 10am to 5pm",
+        "phone": "(206) 518-6000",
+        "tags": [
+          "museum",
+          "black history",
+          "exhibitions",
+          "educational programs"
+        ],
+        "facebook": "http://facebook.com/naamnw",
+        "instagram": "http://instagram.com/naamnw/",
+        "youtube": "https://www.youtube.com/user/naamnw",
+        "twitter": "http://x.com/naamnw"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.naamnw.org/location-admission",
+          "sourceLabel": "Official NAAM | Contact 2 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours 2026 Monday - Closed Tuesday - Closed Wednesday - 10am to 5pm Thursday - 10am to 5pm Friday - 10am to 5pm Saturday - 10am to 5pm Sundays - 10am to 5pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.naamnw.org/location-admission",
+          "sourceLabel": "Official NAAM | Contact 2 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"info@naamnw.org (206) 518-6000 2300 South Massachusetts Street Seattle, WA 98144\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.naamnw.org/mission",
+          "sourceLabel": "Official NAAM | Mission &amp; Vision page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"To tell this ever-unfolding story, the Museum’s exhibitions and programs feature the visual arts, music, crafts, literature, and history of African Americans in the Northwest.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.naamnw.org/",
+          "sourceLabel": "Official Northwest African American Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: http://facebook.com/naamnw"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.naamnw.org/",
+          "sourceLabel": "Official Northwest African American Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/naamnw/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.naamnw.org/",
+          "sourceLabel": "Official Northwest African American Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/naamnw"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.naamnw.org/",
+          "sourceLabel": "Official Northwest African American Museum page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: http://x.com/naamnw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f6443530-76b9-4f02-a1a2-6556e27686bb",
+      "expectedIdentity": {
+        "name": "Northwest Funeral Home",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3og9IyV"
+      },
+      "patch": {
+        "description": "Funeral chapel providing funeral services, grief support, planning, and related resources.",
+        "phone": "(414) 462-6020"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.northwestfuneralchapel.com/",
+          "sourceLabel": "Official Northwest Funeral Chapel Inc - Milwaukee, WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Explore our Services We are here to help you Our Event Center Learn More Grief & Healing Learn More Honoring Life Learn More Planning Ahead View Detail"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.northwestfuneralchapel.com/",
+          "sourceLabel": "Official Northwest Funeral Chapel Inc - Milwaukee, WI page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call Us (414) 462-6020"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d727965f-5edd-4fb7-8efc-4c89eb4d5534",
+      "expectedIdentity": {
+        "name": "Northwood Films",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://northwoodfilms.com/"
+      },
+      "patch": {
+        "description": "Northwood Films creates wedding films."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://northwoodfilms.com/",
+          "sourceLabel": "Official Northwood Films - Authentic Wedding Films with Artistic Elegance page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Northwood Films - Authentic Wedding Films with Artistic Elegance"
+        }
+      ]
+    },
+    {
+      "businessId": "source_eaaaeaef-ed1a-4a98-bbe1-2c662f4e140e",
+      "expectedIdentity": {
+        "name": "Novel Strand Brewing",
+        "city": "Denver",
+        "state": "CO",
+        "website": "https://www.novelstrand.com/"
+      },
+      "patch": {
+        "description": "Neighborhood brewery and coffee shop."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.novelstrand.com/",
+          "sourceLabel": "Official Your Neighborhood Brewery & Coffee Shop | Novel Strand Brewing Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Your Neighborhood Brewery & Coffee Shop | Novel Strand Brewing Company"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ed446ae5-b2a3-44b6-af9a-28157612a146",
+      "expectedIdentity": {
+        "name": "NPower",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://npower.org/"
+      },
+      "patch": {
+        "description": "NPower is a 501(c)(3) non-profit that provides free tech training, certifications, career coaching, and job placement assistance to help job seekers become tech professionals.",
+        "tags": [
+          "tech training",
+          "career coaching",
+          "job placement",
+          "cybersecurity training"
+        ],
+        "youtube": "https://www.youtube.com/user/NPowerOrg"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.npower.org/",
+          "sourceLabel": "Official Creating a new pipeline to the digital workforce – NPower page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NPower transforms job seekers into employed tech professionals who, in turn, contribute to the innovation and growth of the tech industry."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.npower.org/skillbridge/",
+          "sourceLabel": "Official SkillBridge: Cybersecurity | NPower page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"This course is cybersecurity training. CompTIA Sec+, Linux+, and Splunk Core Certified User.\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.npower.org/",
+          "sourceLabel": "Official Creating a new pipeline to the digital workforce – NPower page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/NPowerOrg"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1d55c72c-df64-413b-9473-82e9d47c0774",
+      "expectedIdentity": {
+        "name": "NRG FREIGHT & LOGISTICS",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.nrg-freight.com/"
+      },
+      "patch": {
+        "description": "At NRG Freight & Logistics, we are a small, family-owned transport business supporting industrial and commercial construction projects with hauling, earthworks, excavation, and site preparation services."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nrg-freight.com/",
+          "sourceLabel": "Official NRG page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At NRG Freight & Logistics, we are a small, family- owned transport business proudly supporting industrial and commercial construction projects throughout the Greater Houston area and surrounding counties. With a dedicated fleet of well-maintained dump trucks and experienced operators, we specialize in hauling, earthworks, excavation, and site preparation services for heavy civil construction, infrastructure, and more.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_a9f42387-7b7e-47a6-85d6-f0a8359419b9",
+      "expectedIdentity": {
+        "name": "NspiredHairDzns by Carla V.",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.carlavthestylist.com/"
+      },
+      "patch": {
+        "description": "NspiredHairDzns by Carla V. is a short hair specialist and professional cosmetologist offering styling and consultation services for professional women, including haircutting, deep conditioning, dandruff treatment, color, and natural and chemical straightening.",
+        "hours": "Tues, Wed, Thurs, Fri 9:00 AM to 8:00 PM; Sat 9:00 AM to 5:00 PM",
+        "phone": "6155948732",
+        "tags": [
+          "short hair specialist",
+          "haircutting",
+          "deep conditioning",
+          "dandruff treatment",
+          "color",
+          "natural straightening",
+          "chemical straightening"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://www.carlavthestylist.com/about-carla-v.",
+          "sourceLabel": "Official About Carla V. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NspiredHairDzns by Carla V. is located in Nashville, TN, within K Taylor Hair Extension Salon, offering a range of services such as haircutting, deep conditioning, dandruff treatment, color, and natural and chemical straightening."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "http://www.carlavthestylist.com/",
+          "sourceLabel": "Official NspiredHairDzns by Carla V. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tues, Wed, Thurs, Fri 9:00 AM to 8:00 PM Sat 9:00 AM to 5:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "http://www.carlavthestylist.com/",
+          "sourceLabel": "Official NspiredHairDzns by Carla V. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 6155948732 | Info@carlavthestylist.com"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "http://www.carlavthestylist.com/about-carla-v.",
+          "sourceLabel": "Official About Carla V. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NspiredHairDzns by Carla V. is located in Nashville, TN, within K Taylor Hair Extension Salon, offering a range of services such as haircutting, deep conditioning, dandruff treatment, color, and natural and chemical straightening."
+        }
+      ]
+    },
+    {
+      "businessId": "source_1764f77b-ad35-4f31-aa81-d91e0e6b0611",
+      "expectedIdentity": {
+        "name": "Nth Consulting Group LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.nthcg.com/"
+      },
+      "patch": {
+        "description": "Founded in 2020, Nth Consulting Group is a business management consulting firm that advises and partners with industry leaders to deliver comprehensive services and solutions to the engineering and construction communities."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.nthcg.com/",
+          "sourceLabel": "Official Nth Consulting Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Founded in 2020, Nth Consulting Group® is a business management consulting firm that advises and partners with industry leaders to deliver comprehensive services and solutions to the engineering and construction communities."
+        }
+      ]
+    },
+    {
+      "businessId": "source_6720c8ca-dc04-4b21-bba3-6947146baa8f",
+      "expectedIdentity": {
+        "name": "Nuanced Interpretation LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://nuancedinterpretation.com/"
+      },
+      "patch": {
+        "description": "We provide ASL interpretation, spoken interpretation in all languages, and translation services, onsite, remotely (video or telephone) or in writing for NYC, the US and beyond.",
+        "hours": "24/7",
+        "phone": "646-593-1632"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nuancedinterpretation.com/",
+          "sourceLabel": "Official Nuanced Interpretation | ASL Interpreter Services | NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We provide ASL interpretation, spoken interpretation in all languages, translation, and much more.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nuancedinterpretation.com/about/",
+          "sourceLabel": "Official About | Nuanced Interpretation | ASL Interpreter | NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our hours of operation are 24/7, which means you can count on us in case of an emergency.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nuancedinterpretation.com/contact/",
+          "sourceLabel": "Official Contact | Nuanced Interpretation | ASL Interpreter | NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"send us an email to scheduling@nuancedinterpretation.com or call 646-593-1632 .\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_1040d92a-28fc-42d3-b3ae-77c5874e14e2",
+      "expectedIdentity": {
+        "name": "NuLanguage",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://nulanguagecaps.bigcartel.com/"
+      },
+      "patch": {
+        "description": "NuLanguage is an innovative apparel brand dedicated to redefining self-expression through thoughtfully designed clothing and accessories.",
+        "hours": "Our boutique hours vary. PLEASE CHECK OUR INSTAGRAM PAGE OR GOOGLE MAPS FOR THE SCHEDULE WE ARE OPEN WEDNESDAY-SATURDAY",
+        "tags": [
+          "apparel",
+          "headwear",
+          "caps",
+          "clothing",
+          "accessories"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nulanguagecaps.bigcartel.com/about-nulanguage",
+          "sourceLabel": "Official About NuLanguage | NuLanguage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"NuLanguage is an innovative apparel brand dedicated to redefining self-expression through thoughtfully designed clothing and accessories.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nulanguagecaps.bigcartel.com/upcoming-events",
+          "sourceLabel": "Official Store Location | NuLanguage page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"OUR BOUTIQUE HOURS VARY. PLEASE CHECK OUR INSTAGRAM PAGE OR GOOGLE MAPS FOR THE SCHEDULE WE ARE OPEN WEDNESDAY-SATURDAY\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://nulanguagecaps.bigcartel.com/about-nulanguage",
+          "sourceLabel": "Official About NuLanguage | NuLanguage page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"From garments to finely detailed headwear, NuLanguage introduces a systematic approach to communication...\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_49f26a28-7ee5-4752-8b2f-8bb59513bfe9",
+      "expectedIdentity": {
+        "name": "Numbers Don’t Lie- Tax Prep & Financial Services",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.numbersdontliekc.com/"
+      },
+      "patch": {
+        "description": "Numbers Don't Lie Tax Prep & Financial Services, Inc. provides tax preparation, accounting, tax resolution, notary signing, credit consulting, and related financial services.",
+        "hours": "In Peak Hours: Monday thru Friday 7AM-7PM Saturday 10AM - 3PM Off Peak Hours: By appointment only",
+        "phone": "(816) 886-9031"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.numbersdontliekc.com/",
+          "sourceLabel": "Official Numbers Don't Lie Tax Prep &amp; Financial Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: NUMBERS DON'T LIE TAX PREP & FINANCIAL SERVICES, INC. Tax & Financial Services All In One Place! WE OFFER TAX & BUSINESS SOLUTIONS FOR PERSONAL & BUSINESS ENTITIES!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.numbersdontliekc.com/",
+          "sourceLabel": "Official Numbers Don't Lie Tax Prep &amp; Financial Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: In Peak Hours: Monday thru Friday 7AM-7PM Saturday 10AM - 3PM Off Peak Hours: By appointment only"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.numbersdontliekc.com/",
+          "sourceLabel": "Official Numbers Don't Lie Tax Prep &amp; Financial Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (816) 886-9031"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0b7f2198-fa6a-44af-bd02-5317c5a43abc",
+      "expectedIdentity": {
+        "name": "NuMonet.com",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://numonet.com/"
+      },
+      "patch": {
+        "description": "Numonet is an online shop that creates made-to-order clothing and embroidered items for events and celebrations.",
+        "tags": [
+          "made-to-order clothing",
+          "embroidered items",
+          "event outfits"
+        ],
+        "facebook": "https://www.facebook.com/numonetstore",
+        "pinterest": "https://www.pinterest.com/numonet/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://numonet.com/",
+          "sourceLabel": "Official numonet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: YOUR EVENT, YOUR STYLE Each outfit is made to order - to match your special event. Whether you're celebrating a birthday, holiday or family event we can bring your idea to life."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://numonet.com/",
+          "sourceLabel": "Official numonet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: YOUR EVENT, YOUR STYLE Each outfit is made to order - to match your special event. Whether you're celebrating a birthday, holiday or family event we can bring your idea to life."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://numonet.com/",
+          "sourceLabel": "Official numonet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/numonetstore"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://numonet.com/",
+          "sourceLabel": "Official numonet page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/numonet/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1857aa1a-d5f0-4b6b-b7da-2e5c4cbb4cc7",
+      "expectedIdentity": {
+        "name": "NuPlug",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://nuplugapparel.com/"
+      },
+      "patch": {
+        "description": "Nuplug is a clothing brand that combines fashion with messages of positivity, accountability, self-love, and growth.",
+        "youtube": "https://www.youtube.com/@nuplugapparel",
+        "tiktok": "https://www.tiktok.com/@nuplugapparel"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nuplugapparel.com/pages/about-nuplug",
+          "sourceLabel": "Official About Nuplug &ndash; nuplug-apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Nuplug is the renewing of the mind, the death of old habits and the birth of a Nu You. It’s where Fashion intertwines with Positivity, Accountability, Self-Love and Growth.\","
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://nuplugapparel.com/",
+          "sourceLabel": "Official Nuplug Apparel - Positivity, Accountability, Self-Love and Growth &ndash; nuplug-apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@nuplugapparel"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://nuplugapparel.com/",
+          "sourceLabel": "Official Nuplug Apparel - Positivity, Accountability, Self-Love and Growth &ndash; nuplug-apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@nuplugapparel"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3a181864-4a5f-48ad-9edd-8a8d0196ff37",
+      "expectedIdentity": {
+        "name": "NuPlug",
+        "city": "Tampa Bay",
+        "state": "FL",
+        "website": "https://nuplugapparel.com/"
+      },
+      "patch": {
+        "description": "Nuplug is the renewing of the mind; a fashion brand that intertwines fashion with positivity, accountability, self-love and growth.",
+        "tags": [
+          "fashion",
+          "apparel",
+          "clothing"
+        ],
+        "youtube": "https://www.youtube.com/@nuplugapparel"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nuplugapparel.com/pages/about-nuplug",
+          "sourceLabel": "Official About Nuplug &ndash; nuplug-apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Nuplug is the renewing of the mind, the death of old habits and the birth of a Nu You. It’s where Fashion intertwines with Positivity, Accountability, Self-Love and Growth.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://nuplugapparel.com/",
+          "sourceLabel": "Official Nuplug Apparel - Positivity, Accountability, Self-Love and Growth &ndash; nuplug-apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"SHOP T-Shirts Unisex Tees Women Tops Hoodies Jackets Short Sets Accessories\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://nuplugapparel.com/",
+          "sourceLabel": "Official Nuplug Apparel - Positivity, Accountability, Self-Love and Growth &ndash; nuplug-apparel page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@nuplugapparel"
+        }
+      ]
+    },
+    {
+      "businessId": "source_50aa52c2-7922-4dfb-a3a6-81eaa13fa30a",
+      "expectedIdentity": {
+        "name": "NV My Eyewear Optical",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://nvmyeyewear.com/"
+      },
+      "patch": {
+        "description": "We offer everything from bifocals to prescription sunglasses.",
+        "hours": "MONDAY -THUR 10AM -6PM FRI & SAT 10-3PM"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nvmyeyewear.com/",
+          "sourceLabel": "Official NV MY EYEWEAR - Designer Eyewear, Eyewear Frames page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We offer everything from bifocals to prescription sunglasses.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nvmyeyewear.com/",
+          "sourceLabel": "Official NV MY EYEWEAR - Designer Eyewear, Eyewear Frames page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"MONDAY -THUR 10AM -6PM FRI & SAT 10-3PM\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_79cdf869-dc2f-4dc3-8722-2895c6f89851",
+      "expectedIdentity": {
+        "name": "N V Salon & Kloset",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "http://www.nvsalonandkloset.com/"
+      },
+      "patch": {
+        "description": "NV Salon & Kloset provides beauty services including hair, nail, and skincare.",
+        "hours": "Tue – Fri : 10:00 am to 6:00 pm; Sat : 8:00 am to 3:00 pm; Sun & Mon : Closed",
+        "phone": "615-291-9555"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nvsalonandkloset.com/",
+          "sourceLabel": "Official Home - NV Salon &amp; Kloset page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our Stylist are experienced experts in the areas of Hair, Nail, and Skincare.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nvsalonandkloset.com/",
+          "sourceLabel": "Official Home - NV Salon &amp; Kloset page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Working Hours Tue &#8211; Fri : 10:00 am to 6:00 pm Sat : 8:00 am to 3:00 pm Sun & Mon : Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nvsalonandkloset.com/",
+          "sourceLabel": "Official Home - NV Salon &amp; Kloset page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"615-291-9555\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8f4f63dd-ad90-4a56-9352-0c1d2e0ad03e",
+      "expectedIdentity": {
+        "name": "NY Advocates 4 Kids, Inc",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.nyadvocates4kids.com/"
+      },
+      "patch": {
+        "description": "Provides educational advocacy, consulting, and family support for children with special needs, learning differences, and complex educational profiles; partners with families, schools, attorneys, and community agencies to support informed decision-making and protect student rights.",
+        "phone": "212-457-1635"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nyadvocates4kids.com/",
+          "sourceLabel": "Official NY Advocates 4 Kids page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We provide educational consulting, special education advocacy, parent engagement, training, and program support. We provide educational advocacy and family support for children with special needs, learning differences, and complex educational profiles whether in public, private, parochial or homeschooled.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nyadvocates4kids.com/",
+          "sourceLabel": "Official NY Advocates 4 Kids page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 212-457-1635"
+        }
+      ]
+    },
+    {
+      "businessId": "source_54ecbb7e-4998-4c63-8147-1c0dfda60825",
+      "expectedIdentity": {
+        "name": "NYC Design Group, Inc.",
+        "city": "Fresh Meadows",
+        "state": "NY",
+        "website": "https://www.nycdesigngroup.com/"
+      },
+      "patch": {
+        "description": "NYC Design Group is a full-service construction firm specializing in design, project development, and construction completion for residential and commercial construction.",
+        "phone": "(646) 533-3301"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nycdesigngroup.com/about/",
+          "sourceLabel": "Official About Us &#8211; NYC Design Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"NYC Design Group is a full-service construction firm, specializing in design, project development, and construction completion. For over 20 years, we have handled jobs of all sizes and levels of complexity, including residential and commercial construction.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nycdesigngroup.com/contact/",
+          "sourceLabel": "Official Contact &#8211; NYC Design Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"PHONE NUMBER (646) 533-3301\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_338de8a3-d8b2-4e98-a515-0153cb0c05f2",
+      "expectedIdentity": {
+        "name": "NY Empire Enterprises Corp.",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://nyemp.com/"
+      },
+      "patch": {
+        "description": "New York Empire Enterprises is a full-service construction firm and real estate developer delivering residential renovations, commercial build-outs, and ground-up construction across all five boroughs.",
+        "hours": "Mon — Fri · 7 AM – 6 PM; Sat by appointment",
+        "phone": "(212) 951-0233",
+        "instagram": "https://instagram.com/",
+        "facebook": "https://facebook.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://nyemp.com/",
+          "sourceLabel": "Official New York Empire Enterprises | NYC General Contractor &amp; Developer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"New York Empire Enterprises is a minority-owned general contractor and real estate developer delivering residential renovations, commercial build-outs, and ground-up construction across all five boroughs.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://nyemp.com/contact/",
+          "sourceLabel": "Official Contact | New York Empire Enterprises page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon — Fri · 7 AM – 6 PM Sat by appointment\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://nyemp.com/",
+          "sourceLabel": "Official New York Empire Enterprises | NYC General Contractor &amp; Developer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(212) 951-0233\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://nyemp.com/",
+          "sourceLabel": "Official New York Empire Enterprises | NYC General Contractor &amp; Developer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://nyemp.com/",
+          "sourceLabel": "Official New York Empire Enterprises | NYC General Contractor &amp; Developer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_78366bbf-a3e4-4012-a7cb-a1c2f5415d20",
+      "expectedIdentity": {
+        "name": "Oak Cliff Christian Credit Union",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "http://occfcu.org/wordpress1/"
+      },
+      "patch": {
+        "hours": "Mon: Closed; Tues - Thurs: 10:00 AM – 4:00 PM; Friday: 10:00 AM – 5:00 PM; Saturday: 10:00 AM – 1:00 PM",
+        "phone": "(214) 672-9180"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.occfcu.org/home",
+          "sourceLabel": "Official Home Page - Oak Cliff Christian Federal Credit Union page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"HOURS Mon: Closed Tues - Thurs 10:00 AM &ndash; 4:00 PM Friday: 10:00 AM &ndash; 5:00 PM Saturday: 10:00 AM &ndash; 1:00 PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.occfcu.org/home",
+          "sourceLabel": "Official Home Page - Oak Cliff Christian Federal Credit Union page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: (214) 672-9180\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_e0e31318-07f3-465b-b9ee-f0f871334630",
+      "expectedIdentity": {
+        "name": "Oasis of Hope Counseling, LLC",
+        "city": "Staten Island",
+        "state": "NY",
+        "website": "https://oasisofhopecounseling.com/"
+      },
+      "patch": {
+        "description": "At Oasis Of Hope Counseling Services, we walk alongside individuals and families, guiding them through emotional challenges with expert, scientifically-grounded therapeutic approaches.",
+        "phone": "929-679-7415"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.oasisofhopecounseling.com/",
+          "sourceLabel": "Official Home | Oasis of Hope page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Oasis Of Hope Counseling Services, we believe in the transformative power of compassionate mental health care. We walk alongside individuals and families, guiding them through emotional challenges with expert, scientifically-grounded therapeutic approaches."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.oasisofhopecounseling.com/",
+          "sourceLabel": "Official Home | Oasis of Hope page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone Number: 929-679-7415"
+        }
+      ]
+    },
+    {
+      "businessId": "source_56c48f05-0435-4bd3-b3d0-af58ee10efcd",
+      "expectedIdentity": {
+        "name": "OBR Consultants LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://obrconsultants.com/"
+      },
+      "patch": {
+        "description": "OBR Consultants, LLC is a technology consulting firm dedicated to helping mission-driven organizations, non-profits, and small-to-midsize enterprises optimize their IT operations, streamline service delivery, and drive digital transformation."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://obrconsultants.com/",
+          "sourceLabel": "Official Home - OBR Consultants, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"OBR Consultants, LLC is a black-women owned technology consulting firm dedicated to helping mission-driven organizations, non-profits, and small-to-midsize enterprises optimize their IT operations, streamline service delivery, and drive digital transformation.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_bbfe4b46-20bc-4094-9280-c5be8ceb3010",
+      "expectedIdentity": {
+        "name": "Occasio Capital LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.occasiolending.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/p/Occasio-Capital-61561167414739/",
+        "instagram": "https://www.instagram.com/occasio_capital_re/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://occasiolending.com/",
+          "sourceLabel": "Official Occasio Lending &#8211; A creative financing partner page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/p/Occasio-Capital-61561167414739/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://occasiolending.com/",
+          "sourceLabel": "Official Occasio Lending &#8211; A creative financing partner page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/occasio_capital_re/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6118a938-c14b-499e-8886-350bb4530f1e",
+      "expectedIdentity": {
+        "name": "Ocho Rios Jerk Spot",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.ochoriosjerkspot.com/"
+      },
+      "patch": {
+        "tiktok": "https://www.tiktok.com/@ochoriosjerkspotphx",
+        "youtube": "https://www.youtube.com/channel/UCrpbNmJLkZUSQsa2qXWPSxA"
+      },
+      "fieldModes": {
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.ochoriosjerkspot.com/",
+          "sourceLabel": "Official Jamaican Restaurant in Phoenix Arizona | Ocho Rios Jerk Spot page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@ochoriosjerkspotphx"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.ochoriosjerkspot.com/",
+          "sourceLabel": "Official Jamaican Restaurant in Phoenix Arizona | Ocho Rios Jerk Spot page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCrpbNmJLkZUSQsa2qXWPSxA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_1c1fafa0-ef14-42d8-b49f-cc831e23c4cd",
+      "expectedIdentity": {
+        "name": "Octavio Miles OnLine Shopping Greek Apparel Fraternity/ Sorority Apparel & Accessories",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.greekcertiphied.com/"
+      },
+      "patch": {
+        "facebook": "https://facebook.com/shopify",
+        "instagram": "https://www.instagram.com/greekcertiphied/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.greekcertiphied.com/",
+          "sourceLabel": "Official Fraternity and Sorority apparel, accessories &amp; promotional products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/shopify"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.greekcertiphied.com/",
+          "sourceLabel": "Official Fraternity and Sorority apparel, accessories &amp; promotional products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/greekcertiphied/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_211d74de-7c3e-4680-9bcb-183ccdae3dab",
+      "expectedIdentity": {
+        "name": "October Gallery",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "http://octobergallery.com/"
+      },
+      "patch": {
+        "description": "October Gallery Museum installs and places art, prints and posters in schools, recreation/cultural centers, business offices, universities, grocery stores and more within the community.",
+        "phone": "215-352-3114",
+        "twitter": "https://twitter.com/octobergallery",
+        "youtube": "https://www.youtube.com/user/october102"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://octobergallery.com/",
+          "sourceLabel": "Official October Gallery Museum &#8211; Connecting People with Art since 1985 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"October Gallery Museum installs and places art, prints and posters in schools, recreation/cultural centers, business offices, universities, grocery stores and more within the community.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://octobergallery.com/",
+          "sourceLabel": "Official October Gallery Museum &#8211; Connecting People with Art since 1985 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"215-352-3114\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://octobergallery.com/",
+          "sourceLabel": "Official October Gallery Museum &#8211; Connecting People with Art since 1985 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/octobergallery"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://octobergallery.com/",
+          "sourceLabel": "Official October Gallery Museum &#8211; Connecting People with Art since 1985 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/october102"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3310821c-bf29-4004-a5a2-819fe0d629e3",
+      "expectedIdentity": {
+        "name": "Odyssey Wellness, LLC- Natural Nail Salon",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "http://www.odysseywellnessllc.org/"
+      },
+      "patch": {
+        "description": "Natural nail and skin care salon providing one-on-one natural nail care and basic facial services and treatments.",
+        "hours": "Tuesday - Saturday: 9:00 AM - 3:00 PM ( By appointment); Sunday - Monday: Closed",
+        "phone": "(334) 245 - 0868",
+        "tags": [
+          "natural nail care",
+          "facials",
+          "non-toxic nail products",
+          "vegan nail products"
+        ],
+        "facebook": "https://www.facebook.com/107186692064778",
+        "instagram": "https://www.instagram.com/odysseywellnessllc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://odysseywellnessllc.org/about-us-1",
+          "sourceLabel": "Official Odyssey Wellness, LLC - Natural Nail Care - Natural Nails, Manicure Treatment, Non-Toxic Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: we are here to make you Relax, Refresh, and Re-imagine as we focus on providing one-on-one natural nail care and basic facial services and treatments."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://odysseywellnessllc.org/contact-us",
+          "sourceLabel": "Official Odyssey Wellness, LLC - Natural Nail &amp; Skin Care Salon - Black &amp; Woman Owned, No E-File/Drill, Natural Nails page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Business Hours Tuesday - Saturday: 9:00 AM - 3:00 PM ( By appointment) Sunday - Monday: Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://odysseywellnessllc.org/contact-us",
+          "sourceLabel": "Official Odyssey Wellness, LLC - Natural Nail &amp; Skin Care Salon - Black &amp; Woman Owned, No E-File/Drill, Natural Nails page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (334) 245 - 0868"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://odysseywellnessllc.org/about-us-1",
+          "sourceLabel": "Official Odyssey Wellness, LLC - Natural Nail Care - Natural Nails, Manicure Treatment, Non-Toxic Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: we focus on providing one-on-one natural nail care and basic facial services and treatments."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://odysseywellnessllc.org/",
+          "sourceLabel": "Official Odyssey Wellness, LLC - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/107186692064778"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://odysseywellnessllc.org/",
+          "sourceLabel": "Official Odyssey Wellness, LLC - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/odysseywellnessllc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9e6bb162-bd9d-4238-b677-69e8b19c0a8a",
+      "expectedIdentity": {
+        "name": "Office Pride of The Woodlands- Spring",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.officepride.com/0354"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/OfficePride"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://officepride.com/the-woodlands-conroe/",
+          "sourceLabel": "Official Commercial Cleaning Services in The Woodlands-Conroe | Office Pride page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/OfficePride"
+        }
+      ]
+    },
+    {
+      "businessId": "source_56c25c8d-e8bf-4096-a13d-0f29dc48f351",
+      "expectedIdentity": {
+        "name": "OG The Braider",
+        "city": "Atlanta",
+        "state": "GA",
+        "website": "https://glamedbyog.com/"
+      },
+      "patch": {
+        "phone": "7067079155",
+        "tags": [
+          "knotless braids",
+          "box braids",
+          "kid's braids",
+          "men's braids",
+          "locs",
+          "twists",
+          "crochet locs",
+          "ponytails"
+        ],
+        "facebook": "https://web.facebook.com/oghosa.emofonmwan.9"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://glamedbyog.com/",
+          "sourceLabel": "Official OG The Braider &#8211; Hi!! I am Oghosa Emofonmwan. I am located in Atlanta, Ga. I do offer house calls around neighbouring areas. Thank you so much for your interest. I look forward in serving you page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"7067079155\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://glamedbyog.com/",
+          "sourceLabel": "Official OG The Braider &#8211; Hi!! I am Oghosa Emofonmwan. I am located in Atlanta, Ga. I do offer house calls around neighbouring areas. Thank you so much for your interest. I look forward in serving you page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Knotless Braids Twists Box Braids Kid’s Braids Locs Men’s Braids Crochet Locs Other Braids Body Sculpting Ponytails\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://glamedbyog.com/",
+          "sourceLabel": "Official OG The Braider &#8211; Hi!! I am Oghosa Emofonmwan. I am located in Atlanta, Ga. I do offer house calls around neighbouring areas. Thank you so much for your interest. I look forward in serving you page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://web.facebook.com/oghosa.emofonmwan.9"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3bfd5197-49fe-4f0a-867f-8c3cccbb5e4f",
+      "expectedIdentity": {
+        "name": "Ohio Primary Care Clinic",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://ohioprimarycare.org/"
+      },
+      "patch": {
+        "description": "Primary care clinic offering a range of medical services including primary care, lab services, health education & counseling, chronic disease management, and DOT physicals.",
+        "phone": "614-826-7445",
+        "tags": [
+          "primary care services",
+          "lab services",
+          "health education & counseling",
+          "chronic disease management",
+          "dot physicals",
+          "annual wellness visits",
+          "diabetes care services",
+          "family medicine",
+          "vaccinations & immunizations",
+          "internal medicine"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ohioprimarycare.org/about-us/",
+          "sourceLabel": "Official About Us | Ohio Primary Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Comprehensive Healthcare in Ohio At Ohio Primary Care, find a full range of medical services in Columbus designed to keep you and your family well. We offer: Primary Care Services Lab Services Health Education & Counseling Chronic Disease Management DOT Physicals\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ohioprimarycare.org/",
+          "sourceLabel": "Official Trusted Primary Care Clinic in Ohio | Walk-In &amp; Preventive Care Available - Ohio Primary Care Clinic page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"614-826-7445\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://ohioprimarycare.org/",
+          "sourceLabel": "Official Trusted Primary Care Clinic in Ohio | Walk-In &amp; Preventive Care Available - Ohio Primary Care Clinic page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our Services Care for everyone at every stage. Primary Care Services Family Medicine Annual Wellness Visits Diabetes Care Services Chronic Disease Management Lab Services & Screenings Immunizations & Vaccines Internal Medicine\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_cb987c72-7957-4109-afe5-759665682b7b",
+      "expectedIdentity": {
+        "name": "Oh My! Events",
+        "city": "Dublin",
+        "state": "OH",
+        "website": "http://ohmyeventsllc.com/"
+      },
+      "patch": {
+        "description": "Oh My! Events is a full service event planning and design company.",
+        "hours": "Monday - Friday 9am-5pm EST",
+        "phone": "614-916-OhMy (6469)",
+        "tags": [
+          "event planning & design",
+          "floral design",
+          "mixology & mobile bartending",
+          "day-of coordination"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ohmyeventsllc.com/",
+          "sourceLabel": "Official Oh My! Events LLC | event planning | Ohio, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Oh My! Events is a full service event planning and design company.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ohmyeventsllc.com/",
+          "sourceLabel": "Official Oh My! Events LLC | event planning | Ohio, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"HOURS - Monday - Friday 9am -5pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ohmyeventsllc.com/contact-us",
+          "sourceLabel": "Official CONTACT US | Oh My! Events page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"OhMyEvents@gmail.com 614-916-OhMy (6469)\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.ohmyeventsllc.com/",
+          "sourceLabel": "Official Oh My! Events LLC | event planning | Ohio, USA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our Services We Offer: Event Planning & Design Floral Design Mixology & Mobile Bartending Day-Of Coordination\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_630a8691-cbfa-42b4-ac22-3af435dbf7e5",
+      "expectedIdentity": {
+        "name": "OLA Landscape Architecture PLLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.olalandscape.com/"
+      },
+      "patch": {
+        "description": "OLA is a landscape architecture and urban design studio based in New York City and Miami.",
+        "phone": "+1 917 383 1174",
+        "tags": [
+          "landscape architecture",
+          "urban design",
+          "private residences",
+          "hospitality environments",
+          "rooftops",
+          "waterfronts",
+          "streetscapes",
+          "parks",
+          "masterplans"
+        ],
+        "instagram": "https://www.instagram.com/ola_landscape_architecture/?next=%2F"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.olalandscape.com/about",
+          "sourceLabel": "Official ABOUT | OLA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"OLA is a landscape architecture and urban design studio based in New York City and Miami.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.olalandscape.com/contact",
+          "sourceLabel": "Official CONTACT | OLA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone +1 917 383 1174\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.olalandscape.com/about",
+          "sourceLabel": "Official ABOUT | OLA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our work spans private residences, hospitality environments, rooftops, waterfronts, streetscapes, parks, and large-scale masterplans across North America, South America, the Caribbean, Europe, and Asia.\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.olalandscape.com/",
+          "sourceLabel": "Official OLA Landscape Architecture | New York &amp; Miami page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/ola_landscape_architecture/?next=%2F"
+        }
+      ]
+    },
+    {
+      "businessId": "national-d2004ba2ef84ceb0df2ad123",
+      "expectedIdentity": {
+        "name": "Omega Optical",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.omegaoptical.net/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/omegaoptical",
+        "twitter": "https://twitter.com/OmegaOptical",
+        "instagram": "https://www.instagram.com/omegaoptical/"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://omegaoptical.net/",
+          "sourceLabel": "Official Omega Optical: Optometrists: Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/omegaoptical"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://omegaoptical.net/",
+          "sourceLabel": "Official Omega Optical: Optometrists: Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/OmegaOptical"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://omegaoptical.net/",
+          "sourceLabel": "Official Omega Optical: Optometrists: Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/omegaoptical/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0cd44ff4-40e6-4469-af8a-4feb9a44b6eb",
+      "expectedIdentity": {
+        "name": "Omega Optical (2 locations)",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.omegaoptical.net/"
+      },
+      "patch": {
+        "description": "Omega Optical provides optometric services, eye exams, contact lens exams/custom fittings, and offers eyewear and sunglasses.",
+        "facebook": "https://www.facebook.com/omegaoptical",
+        "twitter": "https://twitter.com/OmegaOptical",
+        "instagram": "https://www.instagram.com/omegaoptical/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://omegaoptical.net/meet/",
+          "sourceLabel": "Official About &#8211; Omega Optical: Optometrists: Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Since 2000, Omega optical has been a leader and preferred provider of quality vision care, products and personalized optometric services to our patients in Philadelphia and the surrounding areas."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://omegaoptical.net/",
+          "sourceLabel": "Official Omega Optical: Optometrists: Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/omegaoptical"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://omegaoptical.net/",
+          "sourceLabel": "Official Omega Optical: Optometrists: Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/OmegaOptical"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://omegaoptical.net/",
+          "sourceLabel": "Official Omega Optical: Optometrists: Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/omegaoptical/"
+        }
+      ]
+    },
+    {
+      "businessId": "national-b71b39feee5ba44ef2d47617",
+      "expectedIdentity": {
+        "name": "OmegaStar Consulting Services",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://omegastarlabcollection.com/"
+      },
+      "patch": {
+        "description": "Minneapolis-based lab collection and fingerprinting company providing drug testing, DNA analysis, fingerprinting, and CPR training to individuals, employers, and organizations.",
+        "phone": "612-314-9611"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://omegastarlabcollection.com/about",
+          "sourceLabel": "Official About Us – OmegaStar Lab Collection | Minneapolis, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"OmegaStar Consulting Services LLC is a Minneapolis-based lab collection and fingerprinting company committed to providing accurate, confidential, and professional services to individuals, employers, and organizations throughout the Twin Cities area.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://omegastarlabcollection.com/",
+          "sourceLabel": "Official OmegaStar Lab Collection – Drug Testing, DNA, Fingerprinting &amp; Notary | Minneapolis, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"612-314-9611\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7afaff95-e234-477e-a1a4-acf9dba0909a",
+      "expectedIdentity": {
+        "name": "On Call & Mobile - Notary & Loan Signing Services",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3AUikDy"
+      },
+      "patch": {
+        "description": "Provides mobile and online notary, loan signing, and apostille services in Wisconsin.",
+        "hours": "On-call notary services 24/7, including evenings, weekends, and holidays.",
+        "tags": [
+          "mobile notary",
+          "online notary",
+          "loan signing",
+          "apostille"
+        ]
+      },
+      "fieldModes": {
+        "description": "fill",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://oncallandmobile.com/",
+          "sourceLabel": "Official Wisconsin Mobile &amp; Online Notary, Apostille &amp; Loan Signing page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: At On Call & Mobile certified notaries, we understand the importance of these events and are here to ensure the process is smooth, professional, and stress-free."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://oncallandmobile.com/notary-faq/",
+          "sourceLabel": "Official Notary FAQ - On Call &amp; Mobile Notary page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Absolutely. We offer on-call notary services 24/7, including evenings, weekends, and holidays."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://oncallandmobile.com/",
+          "sourceLabel": "Official Wisconsin Mobile &amp; Online Notary, Apostille &amp; Loan Signing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: On Call & Mobile Notary - Loan Signing & Apostille Services"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0019b70e-ac9b-422d-b285-8f6c5cb78c2d",
+      "expectedIdentity": {
+        "name": "Oncology Consultants",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://oncologyconsultants.com/"
+      },
+      "patch": {
+        "description": "Oncology Consultants is an independent community oncology practice that provides cancer treatment and related services.",
+        "phone": "1-855-827-9525",
+        "tags": [
+          "infusion therapy",
+          "radiotherapy",
+          "diagnostic imaging",
+          "pharmacy services",
+          "clinical trials",
+          "genetic testing",
+          "telemedicine"
+        ],
+        "youtube": "https://www.youtube.com/@OncologyConsultants/videos",
+        "twitter": "https://twitter.com/houstononcology?lang=en"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.oncologyconsultants.com/about-us",
+          "sourceLabel": "Official About Us | Oncology Consultants page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Oncology Consultants (OC) is the largest independent community oncology practice in Houston. Since 1982, we’ve been committed to delivering cutting-edge cancer treatment in a caring environment."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.oncologyconsultants.com/about-us",
+          "sourceLabel": "Official About Us | Oncology Consultants page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: New Patient Call 1-855-827-9525"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.oncologyconsultants.com/about-us",
+          "sourceLabel": "Official About Us | Oncology Consultants page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: With locations throughout South Texas, we offer a comprehensive range of services and treatments, including infusion therapy, radiotherapy, diagnostic imaging, pharmacy services, clinical trials, genetic testing, telemedicine, and more."
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.oncologyconsultants.com/",
+          "sourceLabel": "Official Overcoming Cancer | Oncology Consultants page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@OncologyConsultants/videos"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.oncologyconsultants.com/",
+          "sourceLabel": "Official Overcoming Cancer | Oncology Consultants page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/houstononcology?lang=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_27215235-42ea-4404-842c-d1ebb75b2ddf",
+      "expectedIdentity": {
+        "name": "One 5 Olive",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3hqfVHh"
+      },
+      "patch": {
+        "description": "One 5 Olive is a Milwaukee-based real estate and construction management firm. We work alongside municipalities, contractors, and community organizations to solve complex housing challenges."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://one5olive.com/",
+          "sourceLabel": "Official One 5 Olive page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"One 5 Olive is a Milwaukee-based real estate and construction management firm. We work alongside municipalities, contractors, and community organizations to solve complex housing challenges.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_a7a523fc-6f88-44ff-b8c5-07ca754718c8",
+      "expectedIdentity": {
+        "name": "One Family Care",
+        "city": "Roseville",
+        "state": "MN",
+        "website": "https://onefamilycaremn.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/OneFamilyCareMN/",
+        "instagram": "https://instagram.com/onefamilycare"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://onefamilycaremn.com/",
+          "sourceLabel": "Official One Family Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/OneFamilyCareMN/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://onefamilycaremn.com/",
+          "sourceLabel": "Official One Family Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/onefamilycare"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8553be45-63a4-4641-a17e-233719b4d58e",
+      "expectedIdentity": {
+        "name": "One Source Electrical Installations LLC",
+        "city": "Long Island City",
+        "state": "NY",
+        "website": "https://www.onesourceelectricalinstallations.com/"
+      },
+      "patch": {
+        "description": "One Source Electric provides full-service electrical solutions for residential, commercial, and industrial clients in New York City.",
+        "hours": "Monday-Friday: 7:00am-8:00pm; Saturday: 7:00am-12:30pm",
+        "phone": "(718) 912-0599"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.onesourceelectricalinstallations.com/services",
+          "sourceLabel": "Official Electrical Services in New York City: BMS Wiring, Data Cabling &amp; Power Systems in NYC &mdash; One Source Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: One Source Electric delivers full-service electrical solutions for Residential, Commercial and Industrial clients across all five boroughs of NYC."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.onesourceelectricalinstallations.com/about",
+          "sourceLabel": "Official Licensed OSHA-certified Electricians in New York City &mdash; One Source Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours: Monday-Friday: 7:00am-8:00pm Saturday: 7:00am-12:30pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.onesourceelectricalinstallations.com/about",
+          "sourceLabel": "Official Licensed OSHA-certified Electricians in New York City &mdash; One Source Electric page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call or Text: (718) 912-0599"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b715baba-b02e-456d-9f62-5479c0b8457e",
+      "expectedIdentity": {
+        "name": "One World Strategy Group",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://oneworldstrong.com/"
+      },
+      "patch": {
+        "description": "One World provides state and local government relations representation and offers government relations, media communications, issues management and public engagement services.",
+        "phone": "In the lab: 832.626.2883",
+        "tags": [
+          "state and local government relations",
+          "government relations",
+          "media communications",
+          "issues management",
+          "public engagement"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.oneworldstrong.com/",
+          "sourceLabel": "Official oneworldstrong.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our objective is to work with you to provide policy and factual information to constituents, and lobby issues that impact the community and support policy through the use of government relations, media communications, issues management and social responsibility. One World provides state and local government relations representation."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.oneworldstrong.com/",
+          "sourceLabel": "Official oneworldstrong.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: In the lab: 832.626.2883"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.oneworldstrong.com/",
+          "sourceLabel": "Official oneworldstrong.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our objective is to work with you to provide policy and factual information to constituents, and lobby issues that impact the community and support policy through the use of government relations, media communications, issues management and social responsibility. One World provides state and local government relations representation."
+        }
+      ]
+    },
+    {
+      "businessId": "source_7ef85964-bdca-4639-9737-81b97b1ec609",
+      "expectedIdentity": {
+        "name": "OnPointe Care",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.onpointecare.com/"
+      },
+      "patch": {
+        "description": "Physician-led urgent care and primary care clinic providing primary care, urgent care, occupational health, and related health services.",
+        "hours": "Mon–Fri 8am–6pm; Sat 9am–3pm; Sun Closed",
+        "phone": "(901) 779-8657"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.onpointecare.com/",
+          "sourceLabel": "Official OnPointe Care | Primary &amp; Urgent Care Clinic in Bartlett, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Physician-led healthcare for individuals and families across Bartlett, Memphis, Cordova, and nearby communities.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.onpointecare.com/locations",
+          "sourceLabel": "Official Locations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon–Fri 8am–6pm Sat 9am–3pm Sun Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.onpointecare.com/locations",
+          "sourceLabel": "Official Locations page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"P: (901) 779-8657\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_b573ec44-45bf-4815-ad92-73effcb85713",
+      "expectedIdentity": {
+        "name": "Onpoint Roofing",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://onpointroofingtx.com/"
+      },
+      "patch": {
+        "description": "OnPoint Roofing provides roofing services including insurance restoration, roof repair, roof installation, and emergency roof repair.",
+        "phone": "(713) 907-0141",
+        "tags": [
+          "roof installation",
+          "roof repair",
+          "roof replacement",
+          "roof inspection",
+          "storm damage",
+          "insurance restoration",
+          "emergency roof repair",
+          "siding",
+          "windows",
+          "gutter installation"
+        ],
+        "twitter": "https://x.com/onpointrfg"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://onpointroofingtx.com/",
+          "sourceLabel": "Official Roofing Contractor in Houston, TX | Onpoint Roofing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At OnPoint Roofing, we specialize in insurance restoration, roof repair, roof installation and even emergency roof repair after a big storm.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://onpointroofingtx.com/",
+          "sourceLabel": "Official Roofing Contractor in Houston, TX | Onpoint Roofing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"CALL (713) 907-0141\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://onpointroofingtx.com/roofing-services/",
+          "sourceLabel": "Official Roofing Services - OnPoint Roofing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Roof Installation Roof Leaks Roof Replacement Roof Repair Roof Inspection Siding Windows Gutter Installation Barrier Installation Outdoor Patio Emergency Roofing Storm Damage Trusted Insurance Restoration Roofing Company Hail Damage Roof Repair Wind Damage Tornado Damage Experienced Roof Insurance Claims Assistance for Fair Settlements\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://onpointroofingtx.com/",
+          "sourceLabel": "Official Roofing Contractor in Houston, TX | Onpoint Roofing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/onpointrfg"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e946005e-07e0-450e-96a0-a7786cbfb088",
+      "expectedIdentity": {
+        "name": "On Stage Cuts & Styles",
+        "city": "Denver",
+        "state": "CO",
+        "website": "http://onstagecutsandstyles.com/"
+      },
+      "patch": {
+        "description": "On Stage Cuts & Styles provides haircuts, loc services, braiding services, and related hair treatments.",
+        "hours": "Tuesday - Saturday 10am to 5pm; We are open 24/7, however costs will vary outside of business hours.",
+        "phone": "(720) 307-2749"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.onstagecutsandstyles.com/about",
+          "sourceLabel": "Official About &mdash; On Stage Cuts &amp; Styles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Experience the peaceful energy we exude through our cuts, loc services, and braiding services."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.onstagecutsandstyles.com/",
+          "sourceLabel": "Official On Stage Cuts &amp; Styles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tuesday - Saturday 10am to 5pm are regular business hours. We are open 24/7, however costs will vary outside of business hours."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.onstagecutsandstyles.com/",
+          "sourceLabel": "Official On Stage Cuts &amp; Styles page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: (720) 307-2749"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f3dd2609-1ced-4b23-8e3a-4ee1ec830c6e",
+      "expectedIdentity": {
+        "name": "Onward Health and Wellness",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://onwardhw.com/"
+      },
+      "patch": {
+        "description": "Concierge psychiatry offering telehealth psychiatric care for adults in Arizona, including evaluations, medication management, and support for ADHD, anxiety, and burnout.",
+        "phone": "(480) 331-6391"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://onwardhw.com/",
+          "sourceLabel": "Official Onward Health and Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Board-certified psychiatric care, delivered by telehealth for Arizona professionals."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://onwardhw.com/booking",
+          "sourceLabel": "Official Booking | Onward Health and Wellness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us hello@onwardhw.com (480) 331-6391 Virtual"
+        }
+      ]
+    },
+    {
+      "businessId": "source_96cdaa4c-344f-4a1c-a569-89619222605c",
+      "expectedIdentity": {
+        "name": "O.R.B. Printing Corporation",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.orbprinting.com/"
+      },
+      "patch": {
+        "description": "ORB Printing specializes in offset printing and promotional products.",
+        "phone": "(212) 567-0394",
+        "tags": [
+          "offset printing",
+          "promotional products",
+          "carbonless invoices",
+          "menus",
+          "invoices",
+          "letterheads",
+          "custom envelopes",
+          "flyers",
+          "business cards"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.orbprinting.com/AboutUs/?referrerPage=Home&refPgId=528058192&PCUrl=1",
+          "sourceLabel": "Official About Us - Orb Printing, New York, NY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We specialize in Offset Printing & Promotional Products"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.orbprinting.com/",
+          "sourceLabel": "Official Home - Orb Printing, New York, NY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: (212) 567-0394"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.orbprinting.com/ContactUs/?referrerPage=Home&refPgId=528058192&PCUrl=1",
+          "sourceLabel": "Official Contact Us - Orb Printing, New York, NY page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Carbonless Invoices - Newsletters - Menus - Calendars - Flyers - Magazines - Memo Pads - Political Mailers - Booklets - etc\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_eede3877-1369-4747-8df2-02c3e907be34",
+      "expectedIdentity": {
+        "name": "Orchid House Cleaning Inc.",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.orchidhousecleaning.com/"
+      },
+      "patch": {
+        "description": "We provide professional residential and commercial cleaning services, including home cleaning, office cleaning, HVAC & handyman, carpet and upholstery cleaning, and related home care services.",
+        "hours": "Open Monday to Sunday",
+        "phone": "+1 347 260 4723",
+        "tags": [
+          "home cleaning",
+          "office cleaning",
+          "hvac & handyman",
+          "carpet and upholstery cleaning",
+          "watering plants",
+          "lockbox services",
+          "bringing in mail & packages",
+          "home check-ins"
+        ],
+        "instagram": "https://www.instagram.com/orchidhousecleaning"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://orchidhousecleaning.com/",
+          "sourceLabel": "Official House &amp; Office Cleaning NYC | Orchid House Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We provide professional, residential and commercial cleaning services."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://orchidhousecleaning.com/",
+          "sourceLabel": "Official House &amp; Office Cleaning NYC | Orchid House Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Open Monday to Sunday"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://orchidhousecleaning.com/",
+          "sourceLabel": "Official House &amp; Office Cleaning NYC | Orchid House Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 347 260 4723"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://orchidhousecleaning.com/all-services/",
+          "sourceLabel": "Official ALL SERVICES - Orchid page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Select from our full range of services , from home and office cleaning to plant care, package pickup, and home check-ins."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://orchidhousecleaning.com/",
+          "sourceLabel": "Official House &amp; Office Cleaning NYC | Orchid House Cleaning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/orchidhousecleaning"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fe85a214-f506-4fc5-8a15-7ca003eaeeed",
+      "expectedIdentity": {
+        "name": "Oregon Black Pioneers",
+        "city": "Portland",
+        "state": "OR",
+        "website": "https://oregonblackpioneers.org/"
+      },
+      "patch": {
+        "description": "Oregon Black Pioneers is Oregon’s only historical society dedicated to preserving and presenting the experiences of African Americans statewide.",
+        "phone": "(503) 420-7728",
+        "youtube": "https://www.youtube.com/watch?v=Y6h3vzKJ1-I"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://oregonblackpioneers.org/about-us/",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Oregon Black Pioneers is Oregon’s only historical society dedicated to preserving and presenting the experiences of African Americans statewide.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://oregonblackpioneers.org/",
+          "sourceLabel": "Official Oregon Black Pioneers - Oregon&#039;s Black History Begins Here page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (503) 420-7728"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://oregonblackpioneers.org/",
+          "sourceLabel": "Official Oregon Black Pioneers - Oregon&#039;s Black History Begins Here page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=Y6h3vzKJ1-I"
+        }
+      ]
+    },
+    {
+      "businessId": "source_93a96936-24a1-41f5-b158-f65b2d27b3e5",
+      "expectedIdentity": {
+        "name": "Oregon Historical Society Museum",
+        "city": "Portland",
+        "state": "OR",
+        "website": "https://ohs.org/"
+      },
+      "patch": {
+        "description": "The Oregon Historical Society preserves our state’s history and makes it accessible to everyone in ways that advance knowledge and inspire curiosity about all the people, places, and events that have shaped Oregon.",
+        "hours": "Visit the Museum Monday – Saturday: 10am – 5pm Sunday: 12pm – 5pm",
+        "phone": "503.222.1741",
+        "facebook": "https://www.facebook.com/oregonhistory",
+        "instagram": "https://www.instagram.com/oregonhistoricalsociety/?hl=en",
+        "youtube": "http://www.youtube.com/channel/UCeCtHcPsdEys360N-qyPUPA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ohs.org/",
+          "sourceLabel": "Official Oregon Historical Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Oregon Historical Society preserves our state’s history and makes it accessible to everyone in ways that advance knowledge and inspire curiosity about all the people, places, and events that have shaped Oregon."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ohs.org/",
+          "sourceLabel": "Official Oregon Historical Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Visit the Museum Monday – Saturday: 10am – 5pm Sunday: 12pm – 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ohs.org/",
+          "sourceLabel": "Official Oregon Historical Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 503.222.1741"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.ohs.org/",
+          "sourceLabel": "Official Oregon Historical Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/oregonhistory"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.ohs.org/",
+          "sourceLabel": "Official Oregon Historical Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/oregonhistoricalsociety/?hl=en"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.ohs.org/",
+          "sourceLabel": "Official Oregon Historical Society page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: http://www.youtube.com/channel/UCeCtHcPsdEys360N-qyPUPA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0339c417-0b9d-4cd7-9b9b-35d2b55a2603",
+      "expectedIdentity": {
+        "name": "Organized by Kendra",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.organizedbykendra.com/"
+      },
+      "patch": {
+        "tiktok": "https://www.tiktok.com/@organizedbykendra?_r=1&_t=ZP-92bufuE3Wda"
+      },
+      "fieldModes": {
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.organizedbykendra.com/",
+          "sourceLabel": "Official Home Organizer in Southaven &amp; Memphis | Organized by Kendra page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@organizedbykendra?_r=1&_t=ZP-92bufuE3Wda"
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "fdbc0e28ecfaa20e797cdeaec8841e91b179a9b9c14514f0bbfde56764fb569c"
+}

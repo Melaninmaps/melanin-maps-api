@@ -4566,6 +4566,10 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
           fillOnlyPatch.description = proposedText;
           continue;
         }
+        // A generic-replacement proposal never replaces substantive text. It is
+        // skipped field-by-field so independently empty fields in this same
+        // first-party packet can still be safely enriched.
+        if (field === "description" && mode === "replace_generic_directory") continue;
         conflictField = field;
         break;
       }

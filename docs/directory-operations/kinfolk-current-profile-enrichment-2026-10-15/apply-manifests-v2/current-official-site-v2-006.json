@@ -1,0 +1,4496 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-006",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_e122ec1e-41f6-42f2-81fe-6ff01cb47e97",
+      "expectedIdentity": {
+        "name": "DAE Management Services LLC",
+        "city": "Staten Island",
+        "state": "NY",
+        "website": "https://www.daemgtservices.com/"
+      },
+      "patch": {
+        "description": "DAE Management Services is a property management company that also specializes in janitorial services tailored to B2B, city, state, and federal agencies.",
+        "hours": "Monday — Friday 9:00am — 5:00pm; Saturday — Sunday 9:00am — 1:00pm",
+        "phone": "(917) 280-5466",
+        "tags": [
+          "property management",
+          "janitorial services",
+          "mopping",
+          "vacuuming",
+          "disinfecting surfaces",
+          "removal of trash and recyclables"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.daemgtservices.com/about",
+          "sourceLabel": "Official About | Get Expert Property &amp; Janitorial Solutions &mdash; DAE Management Services LLC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: DAE Management Services is a property management company that also specializes in janitorial services tailored to B2B, city, state, and federal agencies."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.daemgtservices.com/services",
+          "sourceLabel": "Official Services | Discover Reliable Property &amp; Janitorial Services &mdash; DAE Management Services LLC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday — Friday 9:00am — 5:00pm Saturday — Sunday 9:00am — 1:00pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.daemgtservices.com/services",
+          "sourceLabel": "Official Services | Discover Reliable Property &amp; Janitorial Services &mdash; DAE Management Services LLC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (917) 280-5466"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.daemgtservices.com/",
+          "sourceLabel": "Official DAE Management Services LLC. | Enhance Your Property Today page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our services include mopping, vacuuming, disinfecting surfaces, and removal of trash and recyclables."
+        }
+      ]
+    },
+    {
+      "businessId": "source_07552eec-3783-4908-8b2d-60e2380d93b2",
+      "expectedIdentity": {
+        "name": "Dai In & Dai Out Productions",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://daiinanddaiout.squarespace.com/"
+      },
+      "patch": {
+        "description": "Professional lifestyle portrait photographer and cinematographer offering photography and videography services.",
+        "phone": "(317) 560-6206",
+        "tags": [
+          "portraits",
+          "social media content",
+          "head shots",
+          "business ads",
+          "events",
+          "podcast brand content",
+          "weddings/engagements",
+          "senior portraits",
+          "highlight reels",
+          "real estate",
+          "family portraits",
+          "beauty shots"
+        ],
+        "youtube": "https://www.youtube.com/channel/UCZSnaBPCUkwG7SZAXe9R7Dg?view_as=subscriber"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://daiinanddaiout.squarespace.com/about",
+          "sourceLabel": "Official About &mdash; DaiIn&amp;DaiOutProductions.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hello, my name is Daiyawn Smith. I am a Professional Lifestyle Portrait Photographer and Cinematographer."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://daiinanddaiout.squarespace.com/",
+          "sourceLabel": "Official Dai in &amp; Dai Out Productions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (317) 560-6206"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://daiinanddaiout.squarespace.com/about",
+          "sourceLabel": "Official About &mdash; DaiIn&amp;DaiOutProductions.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: What I Shoot… Portraits Social Media Content Head shots Business Ads. Events Podcast Brand Content Weddings/Engagements Senior Portriats Highlight Reels Real Estate Family Portraits Beauty Shots"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://daiinanddaiout.squarespace.com/",
+          "sourceLabel": "Official Dai in &amp; Dai Out Productions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCZSnaBPCUkwG7SZAXe9R7Dg?view_as=subscriber"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fb0425fe-e3bf-4875-9ba3-eefbe1649c79",
+      "expectedIdentity": {
+        "name": "Daisy Almaguer",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.har.com/daisy-almaguer/agent_DAAlmaguer"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/harmembers",
+        "youtube": "https://www.youtube.com/user/hartv"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.har.com/daisy-almaguer/agent_DAAlmaguer",
+          "sourceLabel": "Official Daisy Almaguer - Houston TX REALTOR® - HAR.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/harmembers"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.har.com/daisy-almaguer/agent_DAAlmaguer",
+          "sourceLabel": "Official Daisy Almaguer - Houston TX REALTOR® - HAR.com page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/hartv"
+        }
+      ]
+    },
+    {
+      "businessId": "source_11387642-3641-4e86-8d4f-227eb80463a5",
+      "expectedIdentity": {
+        "name": "Daisy Diaz Security Consulting Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://centersecuritytraining.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/CSTSchool/",
+        "twitter": "https://twitter.com/Center_Security"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://centersecuritytraining.com/",
+          "sourceLabel": "Official Center Security Training | Train Today. Work Tomorrow. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/CSTSchool/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://centersecuritytraining.com/",
+          "sourceLabel": "Official Center Security Training | Train Today. Work Tomorrow. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/Center_Security"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fea29b89-9927-4209-8426-c95e17fd67cd",
+      "expectedIdentity": {
+        "name": "DALWADI Hospitality Management LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.dalwadi.com/"
+      },
+      "patch": {
+        "description": "Dalwadi Hospitality Management, LLC is an experienced hotel management company offering comprehensive solutions for developing quality hospitality properties from start to finish."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dalwadi.com/",
+          "sourceLabel": "Official Dalwadi Hospitality Management™ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Dalwadi Hospitality Management, LLC is an experienced hotel management company offering comprehensive solutions for developing quality hospitality properties from start to finish.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_02a4708f-9ced-4a28-8d91-cf29eb915e86",
+      "expectedIdentity": {
+        "name": "Damaste Inc.",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://damastecorp.com/"
+      },
+      "patch": {
+        "description": "Damaste Inc. is an architectural metal fabricator with over 25 years of experience in all phases of the manufacturing process, meeting all drawing specifications.",
+        "phone": "(347) 513 8096",
+        "tags": [
+          "architectural metal fabrication",
+          "ornamental metal fabrication",
+          "cladding",
+          "wall/soffit/ceiling panels",
+          "railings (hand-cane)",
+          "wet paint",
+          "powder coating",
+          "patinas",
+          "polishing"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://damastecorp.com/",
+          "sourceLabel": "Official Damaste page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Damaste Inc. is an architectural metal fabricator with over 25 years of experience in all phases of the manufacturing process, meeting all drawing specifications."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://damastecorp.com/",
+          "sourceLabel": "Official Damaste page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (347) 513 8096"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://damastecorp.com/",
+          "sourceLabel": "Official Damaste page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We provide a variety of services in ornamental and architectural metal fabrication that include but not limited to cladding, wall/soffit/ceiling panels, railings (hand-cane), wet paint, powder coating, patinas, polishing, etc.."
+        }
+      ]
+    },
+    {
+      "businessId": "source_cc0ecdcc-6934-4733-9a14-2cc57e9133c3",
+      "expectedIdentity": {
+        "name": "Dardee Deals LLC",
+        "city": "Tulsa",
+        "state": "OK",
+        "website": "https://dardeedeals.com/"
+      },
+      "patch": {
+        "description": "Customer retention through email."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dardeedeals.com/",
+          "sourceLabel": "Official Dardee Deals | Customer Retention Through Email page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dardee Deals | Customer Retention Through Email"
+        }
+      ]
+    },
+    {
+      "businessId": "source_959bc8fc-122e-4e79-a1f2-9e773625ee4b",
+      "expectedIdentity": {
+        "name": "Darick Books",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tOhKlV"
+      },
+      "patch": {
+        "description": "Darick Books is a Milwaukee community organization and bookstore that provides creative works and support in writing, publishing, entrepreneurship, and arts-related services.",
+        "phone": "414-988-4946",
+        "tags": [
+          "book writing services",
+          "editing",
+          "translations",
+          "ghostwriting",
+          "mixing and mastering",
+          "sound design",
+          "photography",
+          "logo creation",
+          "documentary making",
+          "business plan writing",
+          "business registration",
+          "consultation (business)"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://darickbooks.com/pages/about",
+          "sourceLabel": "Official Company Profile &ndash; DarickBooks page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"His bookstore and creative space in Milwaukee, Wisconsin, Darick Books; The first bookstore of its kind, is a testament to his expertise in creativity, which he is now using to assist others in developing their work through many facets of entrepreneurship, writing, publishing, coaching, and more.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://darickbooks.com/pages/services",
+          "sourceLabel": "Official Services - Darick Books &ndash; DarickBooks page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"For Inquiries Email: darick@ddsmediaworks.com or Call 414-988-4946\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://darickbooks.com/pages/services",
+          "sourceLabel": "Official Services - Darick Books &ndash; DarickBooks page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"With a specialty in professional writing, publishing, business/entrepreneurship development, music production, audio engineering, and filmmaking; Darick offers many services. Book Writing Services - Editing-Translations Ghostwriting Mixing and Mastering Sound Design Photography Logo Creation Documentary Making Services Business Plan Writing -Business Registration-Consultation Copyright Music & Film Business Consultation A One-Stop Shop Catalogue of Sample-Free Music for Films, Commercials, Trailers. Song Writing\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9f129560-34e0-437b-880e-8894f0800e68",
+      "expectedIdentity": {
+        "name": "Dark Mode",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://darkmode.framer.website/"
+      },
+      "patch": {
+        "tiktok": "https://www.tiktok.com/@darkmode.zip"
+      },
+      "fieldModes": {
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://darkmode.framer.website/",
+          "sourceLabel": "Official Dark Mode page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@darkmode.zip"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fc985493-f796-4d66-b898-78b5ee2ed662",
+      "expectedIdentity": {
+        "name": "Data Pluzz LLC",
+        "city": "Grove City",
+        "state": "OH",
+        "website": "https://www.datapluzz.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/DataPluzzLLC"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.datapluzz.com/",
+          "sourceLabel": "Official DataPluzz&reg; | Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/DataPluzzLLC"
+        }
+      ]
+    },
+    {
+      "businessId": "source_194d9d54-dd25-493f-a52c-01ede3a63999",
+      "expectedIdentity": {
+        "name": "Davenport Event Management",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://davenporteventmgmt.com/"
+      },
+      "patch": {
+        "description": "Davenport Event Management, LLC (DEM) is a professional & experienced company dedicated to providing event planning & venue management services.",
+        "phone": "803-627-8132",
+        "tags": [
+          "event planning",
+          "venue management",
+          "event logistics",
+          "bookings",
+          "tours",
+          "security",
+          "janitorial services"
+        ],
+        "facebook": "https://www.facebook.com/102582572879977",
+        "instagram": "https://www.instagram.com/davenporteventmgmt"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://davenporteventmgmt.com/about-us",
+          "sourceLabel": "Official About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Davenport Event Management, LLC (DEM) is a professional & experienced company dedicated to providing top-notch event planning & venue management services."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://davenporteventmgmt.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 803-627-8132"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://davenporteventmgmt.com/services",
+          "sourceLabel": "Official Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We manage bookings, tours, security, janitorial services, and other aspects of events to ensure the calendar is booked, properties maintain their value, and owners receive a return on their investment."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://davenporteventmgmt.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/102582572879977"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://davenporteventmgmt.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/davenporteventmgmt"
+        }
+      ]
+    },
+    {
+      "businessId": "source_387fcfa0-f2d7-406a-b82d-135552d95e54",
+      "expectedIdentity": {
+        "name": "Davis Cohen Art, Consulting & Appraisal",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.daviscohenart.com/"
+      },
+      "patch": {
+        "description": "At Davis Cohen Art, we bridge top-tier expertise and approachability, supporting artists and clients alike through unwavering respect, fostering a thriving artistic community.",
+        "phone": "713.614.8806",
+        "tags": [
+          "art consulting",
+          "art projects",
+          "art appraisal"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://daviscohenart.com/",
+          "sourceLabel": "Official Home - Davis Cohen Art : Davis Cohen Art page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Davis Cohen Art, we bridge top-tier expertise and approachability, supporting artists and clients alike through unwavering respect, fostering a thriving artistic community."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://daviscohenart.com/contact/",
+          "sourceLabel": "Official Contact - Davis Cohen Art : Davis Cohen Art page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: info@daviscohenart.com 713.614.8806"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://daviscohenart.com/",
+          "sourceLabel": "Official Home - Davis Cohen Art : Davis Cohen Art page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Projects Firm Contact"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3c40a0ed-9106-4aac-a675-69ac12e1d999",
+      "expectedIdentity": {
+        "name": "Davis Davis & Harmon LLC- Sales Tax Experts",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://ddhtax.com/"
+      },
+      "patch": {
+        "description": "Davis Davis & Harmon (DDH) is an award-winning multi-state sales tax consulting firm that advises on sales/use tax law, audit defense, nexus analysis, refund recovery, legal research and compliance services.",
+        "phone": "(972) 488-5000",
+        "facebook": "https://www.facebook.com/SalesTaxHelp/",
+        "twitter": "https://twitter.com/salestaxhelp"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://ddhtax.com/",
+          "sourceLabel": "Official Sales Tax Consulting Firm | Davis Davis &amp; Harmon LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Davis Davis & Harmon (DDH) is an award-winning multi-state sales tax firm. We know nationwide sales tax laws, how to interpret them, and how to advocate for our clients."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://ddhtax.com/aboutus/",
+          "sourceLabel": "Official Sales Tax Specialists | Highly Experienced | Davis Davis &amp; Harmon LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call Today: (972) 488-5000"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://ddhtax.com/",
+          "sourceLabel": "Official Sales Tax Consulting Firm | Davis Davis &amp; Harmon LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/SalesTaxHelp/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://ddhtax.com/",
+          "sourceLabel": "Official Sales Tax Consulting Firm | Davis Davis &amp; Harmon LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/salestaxhelp"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c9b26705-e0d7-4b02-b03d-5108bd60b615",
+      "expectedIdentity": {
+        "name": "Davis Healthcare Facility",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://www.davishcf.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/DavisFacility"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.davishcf.com/",
+          "sourceLabel": "Official Davis Healthcare Facility, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/DavisFacility"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dbe4e5e6-fe88-4173-8144-9046082a1d8e",
+      "expectedIdentity": {
+        "name": "Day 28 Wellness",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.day28wellness.com/"
+      },
+      "patch": {
+        "description": "Online store selling sea moss gels, elderberry syrup, herbal tea blends and other herb-based wellness products."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://day28wellness.com/",
+          "sourceLabel": "Official Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Sea Moss Gels, Elderberry Syrup, Herbal Tea Blends and More\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_8087459f-0f6d-470d-ae48-a64521a382fe",
+      "expectedIdentity": {
+        "name": "DBISP, LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.dbispllc.com/"
+      },
+      "patch": {
+        "description": "A certified minority-owned small business headquartered in Indianapolis that provides products and services for government agencies, K-12 schools and universities, and commercial businesses.",
+        "phone": "317-222-1671",
+        "twitter": "https://x.com/dbispllc/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dbispllc.com/about/",
+          "sourceLabel": "Official About &#8211; DBISP CORP SITE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"As a certified minority-owned small business headquartered in Indianapolis, DBISP provides simple, affordable and reliable products and services for federal/state/local government agencies, k-12 schools and universities, and commercial business.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dbispllc.com/contact/",
+          "sourceLabel": "Official Contact &#8211; DBISP CORP SITE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Direct Lines 317-222-1671 513-299-7864\",\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.dbispllc.com/",
+          "sourceLabel": "Official DBISP CORP SITE &#8211; Small Business BIG Results page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/dbispllc/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b530d94f-17be-4eb1-8e4c-940ecd3452d2",
+      "expectedIdentity": {
+        "name": "DBK Studios",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://dbkvoices.com/"
+      },
+      "patch": {
+        "phone": "9015011090",
+        "tags": [
+          "voiceover",
+          "audiobook narration",
+          "documentary voiceover",
+          "commercial voiceovers",
+          "youtube narration",
+          "corporate videos",
+          "e-learning",
+          "promos",
+          "character work"
+        ],
+        "youtube": "https://www.youtube.com/@dbkstoryvoice"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://dbkvoices.com/",
+          "sourceLabel": "Official Voice for Audiobooks, Documentaries, PSA&#039;s &amp; Stories page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"9015011090\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dbkvoices.com/",
+          "sourceLabel": "Official Voice for Audiobooks, Documentaries, PSA&#039;s &amp; Stories page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Specializing in narration, documentary voiceover, commercial voiceovers, audiobooks, YouTube narration, corporate videos, e-learning, promos, and character work\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://dbkvoices.com/",
+          "sourceLabel": "Official Voice for Audiobooks, Documentaries, PSA&#039;s &amp; Stories page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@dbkstoryvoice"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d91f988e-7b0d-442e-853b-67d2e4bbf03c",
+      "expectedIdentity": {
+        "name": "D'bo's Elvis Presley",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://dboswings.com/elvispresley/"
+      },
+      "patch": {
+        "description": "D’bo’s Wings offers chicken wings, seafood, frozen daiquiris, burgers, and veggie wings.",
+        "phone": "901-345-9464",
+        "tags": [
+          "wings",
+          "seafood",
+          "frozen daiquiris",
+          "burgers",
+          "veggie wings"
+        ],
+        "twitter": "https://twitter.com/dboswings"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dboswings.com/elvispresley/",
+          "sourceLabel": "Official Elvis Presley Blvd - D&#039;Bos Hot Wings &amp; More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"D’bo’s Wings is known as the Godfather of Hot Wings because we originated the Memphis Styled Hot Wings 35+ years ago! We offer the Best Chicken Wings in Memphis, the Best Seafood (Boiled Crab Legs, Boiled Shrimp, and Boiled Lobster Tails), the Best Frozen Daiquiris, the Best Burgers as well as the Best Veggie Wings!\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dboswings.com/elvispresley/",
+          "sourceLabel": "Official Elvis Presley Blvd - D&#039;Bos Hot Wings &amp; More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"4407 Elvis Presley Memphis, TN 38116 901-345-9464\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dboswings.com/elvispresley/",
+          "sourceLabel": "Official Elvis Presley Blvd - D&#039;Bos Hot Wings &amp; More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We offer the Best Chicken Wings in Memphis, the Best Seafood (Boiled Crab Legs, Boiled Shrimp, and Boiled Lobster Tails), the Best Frozen Daiquiris, the Best Burgers as well as the Best Veggie Wings!\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://dboswings.com/elvispresley/",
+          "sourceLabel": "Official Elvis Presley Blvd - D&#039;Bos Hot Wings &amp; More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/dboswings"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dc4b608e-4779-4e14-bcbf-1b1c0ac5a0a6",
+      "expectedIdentity": {
+        "name": "DD&G Electrical Corp",
+        "city": "Long Island City",
+        "state": "NY",
+        "website": "https://ddgelectric.net/"
+      },
+      "patch": {
+        "description": "Electrical contracting business; Disabled-Owned Veteran Business.",
+        "hours": "Mon 9am - 5pm; Tue 9am - 5pm; Wed 9am - 5pm; Thu 9am - 5pm; Fri 9am - 5pm",
+        "phone": "(347) 654-1209",
+        "tags": [
+          "disabled-owned business",
+          "veteran-owned",
+          "electrical"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ddgelectric.net/",
+          "sourceLabel": "Official DD&amp;G Electrical Corp page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At DD&G Electrical Corp, we take immense pride in being a Disabled-Owned Veteran Business."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.ddgelectric.net/",
+          "sourceLabel": "Official DD&amp;G Electrical Corp page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 9am - 5pm Tue 9am - 5pm Wed 9am - 5pm Thu 9am - 5pm Fri 9am - 5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.ddgelectric.net/",
+          "sourceLabel": "Official DD&amp;G Electrical Corp page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (347) 654-1209"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.ddgelectric.net/",
+          "sourceLabel": "Official DD&amp;G Electrical Corp page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: At DD&G Electrical Corp, we take immense pride in being a Disabled-Owned Veteran Business."
+        }
+      ]
+    },
+    {
+      "businessId": "cohort-513ae9942420b020060ec207",
+      "expectedIdentity": {
+        "name": "Deadstock Coffee Roasters",
+        "city": "Portland",
+        "state": "OR",
+        "website": "https://www.deadstockcoffee.com/"
+      },
+      "patch": {
+        "description": "Deadstock roasts its own coffee and operates cafes; it also sells coffee and merch.",
+        "hours": "7a-3p everyday",
+        "tags": [
+          "wholesale",
+          "catering",
+          "mobile latte service"
+        ],
+        "twitter": "https://twitter.com/DeadstockPDX",
+        "tiktok": "https://www.tiktok.com/@deadstockcoffee",
+        "youtube": "https://www.youtube.com/@deadstockcoffee1644"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://deadstockcoffee.com/pages/about",
+          "sourceLabel": "Official About &ndash; Deadstock Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Deadstock stands up for all things premium, and we’ve been roasting our own coffee since 2017."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://deadstockcoffee.com/",
+          "sourceLabel": "Official Deadstock Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours 7a-3p everyday"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://deadstockcoffee.com/",
+          "sourceLabel": "Official Deadstock Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We roast our own coffee and sell to offices, restaurants, bars — whoever’s thirsty. Catering Mobile latte service and coffee catering (pickup + delivery) in Portland’s metro area."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://deadstockcoffee.com/",
+          "sourceLabel": "Official Deadstock Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/DeadstockPDX"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://deadstockcoffee.com/",
+          "sourceLabel": "Official Deadstock Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@deadstockcoffee"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://deadstockcoffee.com/",
+          "sourceLabel": "Official Deadstock Coffee page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@deadstockcoffee1644"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5860ffb3-8767-440f-97c4-87de2461a51c",
+      "expectedIdentity": {
+        "name": "Dean’s Beauty Salon and Barber Shop",
+        "city": "Portland",
+        "state": "OR",
+        "website": "https://deansbeautysalon.com/"
+      },
+      "patch": {
+        "description": "Dean's Beauty Salon and Barber Shop specializes in African American hair and can accommodate any hair type; they offer men's cuts, women's cuts, natural hair services including braids, twists, blow-outs, and dreadlocks.",
+        "hours": "Monday Closed; Tue - Fri 9:00 am - 6:00 pm; Saturday 8:00 am - 6:00 pm; Sunday Closed",
+        "tags": [
+          "natural hair",
+          "braids",
+          "twists",
+          "blow-outs",
+          "dreadlocks",
+          "men's cuts",
+          "women's cuts",
+          "african american hair"
+        ],
+        "facebook": "https://facebook.com/Deans215hancock",
+        "twitter": "https://twitter.com/kimmykim60"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.deansbeautysalon.com/",
+          "sourceLabel": "Official Dean's Beauty Salon &amp; Barber Shop - hair Portland, OR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Styling all hair types No matter what type of hair you have, we can accommodate you. Our specialists can do men's cuts, women's cuts, natural hair, or any other hair texture.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.deansbeautysalon.com/contact/3346581",
+          "sourceLabel": "Official Dean's Beauty Salon and Barber Shop - Portland, OR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours: Monday Closed Tue - Fri 9:00 am - 6:00 pm Saturday 8:00 am - 6:00 pm Sunday Closed\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.deansbeautysalon.com/",
+          "sourceLabel": "Official Dean's Beauty Salon &amp; Barber Shop - hair Portland, OR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Natural hair care While we do all hair, we specialize in natural hair. Whether you want braids, twists, blow-outs, or dreadlocks, we have a specialist for you.\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.deansbeautysalon.com/",
+          "sourceLabel": "Official Dean's Beauty Salon &amp; Barber Shop - hair Portland, OR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/Deans215hancock"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.deansbeautysalon.com/",
+          "sourceLabel": "Official Dean's Beauty Salon &amp; Barber Shop - hair Portland, OR page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/kimmykim60"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3839007b-af2f-4a2c-8f26-50c5fdb7c1ab",
+      "expectedIdentity": {
+        "name": "Dear Prudence",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://www.dearprudence.com/"
+      },
+      "patch": {
+        "pinterest": "https://www.pinterest.com/dearprudenceshops/"
+      },
+      "fieldModes": {
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.dearprudence.com/",
+          "sourceLabel": "Official Dear Prudence Shops- Women&#039;s Clothing Boutique featuring trendy &amp; classic clothing, shoes &amp; more! - Dear Prudence Shops page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/dearprudenceshops/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2bf6bc83-3363-4648-8ef7-3f272f3daa35",
+      "expectedIdentity": {
+        "name": "Deddle’s Donuts",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://deddlesdonuts.com/"
+      },
+      "patch": {
+        "hours": "Mon-Sat 10am-5pm",
+        "phone": "(443) 738-4844",
+        "twitter": "https://x.com/deddles_donuts"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://deddlesdonuts.com/",
+          "sourceLabel": "Official Deddle&#039;s Donut - Baltimore Food Truck page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: stop by our location at the New Lexington Market 112 N. Eutaw St. Baltimore MD. 21201 Mon-Sat 10am-5pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://deddlesdonuts.com/",
+          "sourceLabel": "Official Deddle&#039;s Donut - Baltimore Food Truck page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: For Catering, please call: (443) 738-4844"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://deddlesdonuts.com/",
+          "sourceLabel": "Official Deddle&#039;s Donut - Baltimore Food Truck page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/deddles_donuts"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7bb5a3c8-48f2-45d5-9d9b-45076e0cc5b0",
+      "expectedIdentity": {
+        "name": "Dedicated Senior Medical Centers",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://chenmed.com/"
+      },
+      "patch": {
+        "youtube": "https://www.youtube.com/watch?v=MHaqjzfdEzI",
+        "facebook": "https://www.facebook.com/ChenMedFamily",
+        "twitter": "https://twitter.com/ChenMed"
+      },
+      "fieldModes": {
+        "youtube": "fill",
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.chenmed.com/",
+          "sourceLabel": "Official Primary Care Medical Centers for Seniors | ChenMed page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=MHaqjzfdEzI"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.chenmed.com/",
+          "sourceLabel": "Official Primary Care Medical Centers for Seniors | ChenMed page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/ChenMedFamily"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.chenmed.com/",
+          "sourceLabel": "Official Primary Care Medical Centers for Seniors | ChenMed page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ChenMed"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b1d2840f-da99-49ec-91a8-b2558f3b1c9f",
+      "expectedIdentity": {
+        "name": "Deeply Rooted Hair Salon",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://www.deeplyrootedaz.com/"
+      },
+      "patch": {
+        "description": "A full service salon specializing in locs and natural styles.",
+        "hours": "Tuesday - Friday: 10am - 6pm"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.deeplyrootedaz.com/",
+          "sourceLabel": "Official Home | Deeply Rooted AZ Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Deeply Rooted AZ Hair Salon A full service salon specializing in locs and natural styles Home: Welcome"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.deeplyrootedaz.com/",
+          "sourceLabel": "Official Home | Deeply Rooted AZ Hair Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Doors Are Open We’re waiting for you! Tuesday - Friday: 10am - 6pm By appointment only."
+        }
+      ]
+    },
+    {
+      "businessId": "source_551f9479-38b3-481b-be6c-20b6add22593",
+      "expectedIdentity": {
+        "name": "Deep Sea Vegan",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://deepseavegan.com/"
+      },
+      "patch": {
+        "description": "We are a mobile food truck and brand in Nashville, TN that will be transitioing to bricks and mortars.",
+        "phone": "629 255 7372",
+        "tags": [
+          "vegan",
+          "plant-based",
+          "seafood-themed menu",
+          "mobile food truck",
+          "pop-up"
+        ],
+        "youtube": "https://www.youtube.com/Deepseavegan"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://deepseavegan.com/",
+          "sourceLabel": "Official DeepSeaVegan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a mobile food truck and brand in Nashville, TN that will be transitioing to bricks and mortars."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://deepseavegan.com/",
+          "sourceLabel": "Official DeepSeaVegan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 629 255 7372 - (e) deepseavegan@gmail.com"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://deepseavegan.com/",
+          "sourceLabel": "Official DeepSeaVegan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our story revolves around our mission to provide extremely delicious plant-based, vegan versions of seafood and other comfort foods."
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://deepseavegan.com/",
+          "sourceLabel": "Official DeepSeaVegan page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/Deepseavegan"
+        }
+      ]
+    },
+    {
+      "businessId": "source_436c0d27-7b23-42b4-be56-83e5ac46cfb4",
+      "expectedIdentity": {
+        "name": "Defense Consulting Services",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "http://www.defenseconsultingservice.com/"
+      },
+      "patch": {
+        "description": "Defense Consulting Services provides multi-disciplined security, force protection, anti-terrorism, and consulting services to the U.S. Government and the Private Sector.",
+        "twitter": "https://x.com/DCSLEOSA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.defenseconsultingservices.com/about",
+          "sourceLabel": "Official ABOUT - Defense Consulting Services - SDVOSB Approved / BBB Accredited San Antonio, Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Defense Consulting Services provides multi-disciplined security, force protection, anti-terrorism, and consulting services to the U.S. Government and the Private Sector.\","
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.defenseconsultingservices.com/",
+          "sourceLabel": "Official Defense Consulting Services - SDVOSB Approved / BBB Accredited San Antonio, Texas page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/DCSLEOSA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f8498e96-a0ad-4d2b-95ae-3941cd7f2607",
+      "expectedIdentity": {
+        "name": "Defined Boutique",
+        "city": "Cincinnati",
+        "state": "OH",
+        "website": "https://www.shopdefinedbtq.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/sincerely__maya?s=11&t=NIXWO6tJDEhskNk3OJz1JQ"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.shopdefinedbtq.com/",
+          "sourceLabel": "Official Clothing Boutique &ndash; Defined Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/sincerely__maya?s=11&t=NIXWO6tJDEhskNk3OJz1JQ"
+        }
+      ]
+    },
+    {
+      "businessId": "national-d2ec4e94e116965791003c12",
+      "expectedIdentity": {
+        "name": "Deja Hodges Photography",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://www.dejahodges.com/"
+      },
+      "patch": {
+        "description": "Deja Hodges Photography"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dejahodges.com/",
+          "sourceLabel": "Official Deja Hodges Photography | Black Woman-Owned Photographer page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Deja Hodges Photography | Black Woman-Owned Photographer"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dd67a833-b746-4433-b322-7ba4078e3497",
+      "expectedIdentity": {
+        "name": "Deja Nicole Designs, Inc.",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://dejanicoledesigns.shop/"
+      },
+      "patch": {
+        "description": "Designs and creates hand-crafted, customizable wearable art and jewelry.",
+        "tags": [
+          "hand-crafted jewelry",
+          "customizable jewelry",
+          "wearable art"
+        ],
+        "facebook": "https://www.facebook.com/dejanicoledesigns",
+        "youtube": "https://www.youtube.com/@dejanicoledesigns",
+        "pinterest": "https://pinterest.com/dejanicoledesigns",
+        "instagram": "https://instagram.com/dejanicoledesigns"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "youtube": "fill",
+        "pinterest": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dejanicoledesigns.com/pages/meet-the-designer",
+          "sourceLabel": "Official About Me &ndash; Deja Nicole Designs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I’m passionate about helping individuals just like you, find that missing element of uniqueness, by designing and creating hand-crafted, customizable wearable art, that is designed to help impact and bring life to any outfit, while enhancing your individual style and personality."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.dejanicoledesigns.com/pages/meet-the-designer",
+          "sourceLabel": "Official About Me &ndash; Deja Nicole Designs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I’m passionate about helping individuals just like you, find that missing element of uniqueness, by designing and creating hand-crafted, customizable wearable art, that is designed to help impact and bring life to any outfit, while enhancing your individual style and personality."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.dejanicoledesigns.com/",
+          "sourceLabel": "Official Unique Handcrafted Wearable-Art That Empowers &ndash; Deja Nicole Designs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/dejanicoledesigns"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.dejanicoledesigns.com/",
+          "sourceLabel": "Official Unique Handcrafted Wearable-Art That Empowers &ndash; Deja Nicole Designs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@dejanicoledesigns"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.dejanicoledesigns.com/",
+          "sourceLabel": "Official Unique Handcrafted Wearable-Art That Empowers &ndash; Deja Nicole Designs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/dejanicoledesigns"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.dejanicoledesigns.com/",
+          "sourceLabel": "Official Unique Handcrafted Wearable-Art That Empowers &ndash; Deja Nicole Designs page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://instagram.com/dejanicoledesigns"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a9d4bd0c-059a-4ef3-b0cc-8a4c5acf3832",
+      "expectedIdentity": {
+        "name": "DeKelis Art Studio",
+        "city": "Tampa",
+        "state": "FL",
+        "website": "https://www.dekelisartstudio.com/"
+      },
+      "patch": {
+        "description": "DeKelis Art Studio is a Christian faith-based business creating meaningful, uplifting art, prints, and giftable items.",
+        "youtube": "http://youtube.com/@desiraeofori"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dekelisartstudio.com/",
+          "sourceLabel": "Official DeKelis Art Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"As a Christian faith-based business, DeKelis Art Studio is dedicated to creating meaningful, uplifting art, prints, and giftable items that serve as a daily blessing in your life and home.\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.dekelisartstudio.com/",
+          "sourceLabel": "Official DeKelis Art Studio page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: http://youtube.com/@desiraeofori"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4a4d07ce-f663-4d57-80df-b6133e9f7326",
+      "expectedIdentity": {
+        "name": "Delgado Creative Group LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.delgadocreativegroup.com/"
+      },
+      "patch": {
+        "description": "Delgado Creative Group develops brand strategy, visual identity, digital experience, ecommerce, packaging, and marketing strategies to connect creative decisions to customer behavior and drive revenue.",
+        "instagram": "https://www.instagram.com/delgadocreativegroup?igsh=Yjdwdzhsa3Q1Z20z",
+        "facebook": "https://www.facebook.com/profile.php?id=61573007504557"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://delgadocreativegroup.com/",
+          "sourceLabel": "Official Delgado Creative Group | Brand Strategy Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: From brand strategy to digital experiences, we connect creative and customer behavior to drive conversions and revenue."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://delgadocreativegroup.com/",
+          "sourceLabel": "Official Delgado Creative Group | Brand Strategy Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/delgadocreativegroup?igsh=Yjdwdzhsa3Q1Z20z"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://delgadocreativegroup.com/",
+          "sourceLabel": "Official Delgado Creative Group | Brand Strategy Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/profile.php?id=61573007504557"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ee620384-13d6-4c8d-b83b-0e70986827e9",
+      "expectedIdentity": {
+        "name": "Dementia Care and Education Campus",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://dementiacampus.org/"
+      },
+      "patch": {
+        "description": "An innovative campus providing compassionate care, education and support for people living with dementia and their families.",
+        "phone": "(602) 767-8300",
+        "tags": [
+          "adult day club",
+          "assisted living",
+          "memory cafe",
+          "caregiver education",
+          "support groups",
+          "supportive care for dementia",
+          "dementia hospice care",
+          "respite care"
+        ],
+        "youtube": "https://www.youtube.com/user/hospiceofvalleyaz"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dementiacampus.org/",
+          "sourceLabel": "Official Dementia Care and Education Campus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: An innovative campus where families find exceptional care, education and resources."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dementiacampus.org/",
+          "sourceLabel": "Official Dementia Care and Education Campus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dementia Care and Education Campus (602) 767-8300"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dementiacampus.org/why-us/faq/",
+          "sourceLabel": "Official FAQ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services include: Adult Day Club Assisted Living Memory Café Caregiver education Community classes Professional training Supportive Care for Dementia Hospice care for dementia Respite Care"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://dementiacampus.org/",
+          "sourceLabel": "Official Dementia Care and Education Campus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/user/hospiceofvalleyaz"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9a93640a-50e5-47ae-91d9-c4078696aa37",
+      "expectedIdentity": {
+        "name": "Dentistry For Children",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://chew-chewtrain.com/"
+      },
+      "patch": {
+        "hours": "Monday – Thursday 7:30 a.m. – 4:30 p.m. Lunch – 11:30 a.m. – 1:00 p.m.",
+        "phone": "(334) 277-6830"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.chew-chewtrain.com/services",
+          "sourceLabel": "Official Pediatric Dental Services in Montgomery, AL &mdash; Dentistry for Children page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Monday – Thursday 7:30 a.m. – 4:30 p.m. Lunch – 11:30 a.m. – 1:00 p.m."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.chew-chewtrain.com/services",
+          "sourceLabel": "Official Pediatric Dental Services in Montgomery, AL &mdash; Dentistry for Children page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Phone: (334) 277-6830"
+        }
+      ]
+    },
+    {
+      "businessId": "source_047289df-596c-4aae-9a36-8bf1d8f0d88e",
+      "expectedIdentity": {
+        "name": "Design Garage MKE",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3ya5DAS"
+      },
+      "patch": {
+        "description": "DesignGarage MKE is primarily design and illustration; it describes a hands-on, do-it-yourself philosophy to study, shape an idea and make it reality for clients."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.designgaragemke.com/",
+          "sourceLabel": "Official Design Garage, MKE &mdash; Hello... page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"DesignGarage MKE is primarily design and illustration. But it’s more than an experiment in creativity, it’s my hands-on, do-it-yourself philosophy: study, shape an idea and make it reality, whether digital or physical.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_14d57f9b-357f-4db6-89b6-62d9b88d96a5",
+      "expectedIdentity": {
+        "name": "Designs Around You",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/2QhWRjn"
+      },
+      "patch": {
+        "description": "Designs Around You, Inc. provides web site services, desktop publishing, and multimedia and graphic design services.",
+        "phone": "(414) 355-0559"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://www.designsaroundyou.com/index.html",
+          "sourceLabel": "Official Welcome to Designs Around You page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: DAY has offered its services domestically and internationally in the areas of web site services, desktop publishing (DTP), and multimedia design."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "http://www.designsaroundyou.com/services.html",
+          "sourceLabel": "Official Graphic Design Service Offerings page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Tel: (414) 355-0559"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fe27e13a-c97f-448f-b9b8-d31033b6d4ab",
+      "expectedIdentity": {
+        "name": "Designs By Chimere",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.designsbychimere.com/"
+      },
+      "patch": {
+        "description": "Brand strategy, design, and marketing for businesses."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.designsbychimere.com/",
+          "sourceLabel": "Official Designs By Chimere | Built for your next chapter. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Brand strategy, design, and marketing for businesses ready to become everything they have the potential to be."
+        }
+      ]
+    },
+    {
+      "businessId": "source_49236f5d-dc91-4f13-9e8f-6892d49d5951",
+      "expectedIdentity": {
+        "name": "Designs by Sharon B",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3fbMPss"
+      },
+      "patch": {
+        "description": "Designs by SharonB"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.facebook.com/DesignsbySharonB",
+          "sourceLabel": "Official Designs by SharonB page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Designs by SharonB"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f81d9f3e-ee62-488b-913f-fcd4bbf8a8df",
+      "expectedIdentity": {
+        "name": "Design Stage",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uO1DEi"
+      },
+      "patch": {
+        "description": "A design and staging firm for homeowners, realtors, investors, and commercial businesses that provides custom space solutions and offers services beginning with a consultation.",
+        "phone": "414.460.1189",
+        "facebook": "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdesignstagesolutions.com",
+        "instagram": "https://www.instagram.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://designstagesolutions.com/",
+          "sourceLabel": "Official Design Stage Solutions | Design with character. Staged with results page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: A design and staging firm for homeowners, realtors, investors, and commercial businesses. Our goal is to provide custom space solutions at any level and for varying budgets. Whether you need design assistance to improve the aesthetic and functionality of your current space, or want to stage your property for a quick and profitable sale, Design Stage can help!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://designstagesolutions.com/",
+          "sourceLabel": "Official Design Stage Solutions | Design with character. Staged with results page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence:  414.460.1189"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://designstagesolutions.com/",
+          "sourceLabel": "Official Design Stage Solutions | Design with character. Staged with results page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdesignstagesolutions.com"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://designstagesolutions.com/",
+          "sourceLabel": "Official Design Stage Solutions | Design with character. Staged with results page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_02de0c3c-bf59-48c8-885c-e3326a210557",
+      "expectedIdentity": {
+        "name": "Desir Holistic Therapy",
+        "city": "St. Paul",
+        "state": "MN",
+        "website": "https://expertbodyhealer.com/"
+      },
+      "patch": {
+        "description": "Mobile massage and holistic bodywork practitioner offering mobile luxury wellness and doula support in Saint Paul, Minnesota.",
+        "hours": "Tuesday – Friday 9:45 am – 4:00 pm; Saturday 12:30 pm – 4:00 pm",
+        "phone": "612-405-5876",
+        "tags": [
+          "mobile massage",
+          "sports massage",
+          "swedish massage",
+          "shiatsu bodywork",
+          "reiki sessions",
+          "doula support",
+          "accident recovery",
+          "cupping therapy",
+          "hot stone massage"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://expertbodyhealer.com/",
+          "sourceLabel": "Official Expert Body Healer | Desir Holistic Therapy | Twin Cities, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Mobile Massage & Holistic Bodywork in Saint Paul, MN We bring the luxury spa to you — expert holistic bodywork in the comfort of your home, tailored to your body, your schedule, your life."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://expertbodyhealer.com/",
+          "sourceLabel": "Official Expert Body Healer | Desir Holistic Therapy | Twin Cities, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Tuesday – Friday 9:45 am – 4:00 pm Saturday 12:30 pm – 4:00 pm"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://expertbodyhealer.com/",
+          "sourceLabel": "Official Expert Body Healer | Desir Holistic Therapy | Twin Cities, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact 612-405-5876 widlyne@expertbodyhealer.com"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://expertbodyhealer.com/massage-services",
+          "sourceLabel": "Official Massage Services | Desir Holistic Therapy page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services Sports Massage Swedish Massage Shiatsu Bodywork Reiki Sessions Doula Packages Natural Ointments"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d4884712-9f62-4dec-85a9-ae4d448c2724",
+      "expectedIdentity": {
+        "name": "d expósito & Partners, LLC",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.newamericanagency.com/"
+      },
+      "patch": {
+        "phone": "646-747-8814",
+        "tags": [
+          "advertising",
+          "media agency",
+          "public relations",
+          "digital marketing",
+          "strategy planning"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://dexposito.com/",
+          "sourceLabel": "Official dexpósito &amp; partners | New American Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: d expósito and Partners 400 Madison Avenue New York, NY 10017 646-747-8814"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dexposito.com/",
+          "sourceLabel": "Official dexpósito &amp; partners | New American Agency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Read Strategy / Planning / Advertising / Digital / Full Media / Social / PR / Direct"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2cf10a47-e7f0-440a-ba0f-801865a3df41",
+      "expectedIdentity": {
+        "name": "Dexter Avenue King Memorial Baptist Church",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://www.dexterkingmemorial.org/"
+      },
+      "patch": {
+        "description": "Dexter Avenue King Memorial Baptist Church is a thriving presence in Montgomery, with Sunday Worship service, Bible Study, and a full calendar of ministries and activities throughout the year.",
+        "phone": "(334) 263-3970",
+        "facebook": "https://www.facebook.com/share/1A7CgHMLjW/?mibextid=wwXIfr",
+        "instagram": "https://www.instagram.com/dexterlovesdexterserves/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dexterkingmemorial.org/about/",
+          "sourceLabel": "Official About | Dexter Avenue King Memorial Baptist Church page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Dexter Avenue King Memorial Baptist Church is a thriving presence in Montgomery, with Sunday Worship service, Bible Study, and a full calendar of ministries and activities throughout the year.\","
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dexterkingmemorial.org/",
+          "sourceLabel": "Official Dexter Avenue King Memorial Baptist Church | Where Love Lives! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(334) 263-3970\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://dexterkingmemorial.org/",
+          "sourceLabel": "Official Dexter Avenue King Memorial Baptist Church | Where Love Lives! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/share/1A7CgHMLjW/?mibextid=wwXIfr"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://dexterkingmemorial.org/",
+          "sourceLabel": "Official Dexter Avenue King Memorial Baptist Church | Where Love Lives! page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/dexterlovesdexterserves/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7a43c16f-44b6-4a76-ace4-526265329d83",
+      "expectedIdentity": {
+        "name": "Dezynr",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "https://dezynr.shop/"
+      },
+      "patch": {
+        "description": "Dezynr is a handmade polymer clay accessories brand creating colorful, lightweight accessories such as jewelry, stickers, keychains, and hair clips.",
+        "pinterest": "https://www.pinterest.com/dezynrshop/_shop/",
+        "youtube": "https://youtube.com/channel/UCeewgNrH7WLFT7h6ALpBbYQ"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dezynr.shop/",
+          "sourceLabel": "Official Handmade Polymer Clay by Dezynr &ndash; DEZYNR_ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Dezynr, you can find colorful, vibrant, unique, and lightweight accessories such as jewelry, stickers, keychains, hair clips, and more."
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://dezynr.shop/",
+          "sourceLabel": "Official Handmade Polymer Clay by Dezynr &ndash; DEZYNR_ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/dezynrshop/_shop/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://dezynr.shop/",
+          "sourceLabel": "Official Handmade Polymer Clay by Dezynr &ndash; DEZYNR_ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/channel/UCeewgNrH7WLFT7h6ALpBbYQ"
+        }
+      ]
+    },
+    {
+      "businessId": "source_30bbbf68-c2f7-4714-b1c3-9e83a4af07b9",
+      "expectedIdentity": {
+        "name": "Dgass Photography & Wedding Videography",
+        "city": "Denver",
+        "state": "CO",
+        "website": "https://dgassphotography.com/"
+      },
+      "patch": {
+        "description": "Natural, candid images & documentary style films; wedding photography and videography services.",
+        "facebook": "https://www.facebook.com/DgassPhotography/",
+        "instagram": "https://www.instagram.com/dgass_photography/",
+        "youtube": "https://www.youtube.com/channel/UC6v1-okT6mq1TMYTa0YdqvA"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dgassphotography.com/",
+          "sourceLabel": "Official Denver Wedding Photography & Videography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Natural, candid images & documentary style films"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://dgassphotography.com/",
+          "sourceLabel": "Official Denver Wedding Photography & Videography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/DgassPhotography/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://dgassphotography.com/",
+          "sourceLabel": "Official Denver Wedding Photography & Videography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/dgass_photography/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://dgassphotography.com/",
+          "sourceLabel": "Official Denver Wedding Photography & Videography page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UC6v1-okT6mq1TMYTa0YdqvA"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dff413b3-5c56-4162-9e81-e6b918e5fb01",
+      "expectedIdentity": {
+        "name": "Diamond Kolour Styles & Extenstions Collection LLC",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "https://diamondkolourcollection.as.me/"
+      },
+      "patch": {
+        "description": "Appointment scheduling page for Diamond Kolour Styles & Extentsions LLC."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://diamondkolourcollection.as.me/schedule/bc26037b",
+          "sourceLabel": "Official Schedule Appointment with Diamond Kolour Styles &amp; Extentsions LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Schedule Appointment with Diamond Kolour Styles & Extentsions LLC"
+        }
+      ]
+    },
+    {
+      "businessId": "source_017d04f1-e08b-44b8-8ce1-f67c60729d22",
+      "expectedIdentity": {
+        "name": "Diaspora Marketplace",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "http://www.diasporamarketplc.com/"
+      },
+      "patch": {
+        "description": "Specializing in imports from the African Diaspora; offers art pieces, crafts, and products sourced directly from artisans in Ghana and other parts of the African Diaspora.",
+        "hours": "We are open Monday to Saturday from 10:00 AM to 6:00 PM",
+        "phone": "+1 (912) 232-2626",
+        "tags": [
+          "african art",
+          "handcrafted vases",
+          "drums",
+          "clothing",
+          "books",
+          "musical instruments",
+          "home goods",
+          "fabric",
+          "masks",
+          "carvings"
+        ],
+        "twitter": "https://twitter.com/share?text=Hand%20Crafted%20Ghanaian%20Clay%20Vase&url=https://diasporamarketplc.com/products/vase",
+        "pinterest": "https://pinterest.com/pin/create/button/?url=https://diasporamarketplc.com/products/vase&media=//diasporamarketplc.com/cdn/shop/files/Big_Vase_1_1024x1024.png?v=1724880148&description=Hand%20Crafted%20Ghanaian%20Clay%20Vase"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://diasporamarketplc.com/",
+          "sourceLabel": "Official Diaspora Marketplace page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Diaspora Marketplace Specializing in imports from the African Diaspora. Africans were displaced, during the slave trade to North and South America and throughout the Caribbean , forming the African Diaspora. Experience the rich, beautiful, cultural heritage of Africa and the Diaspora."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://diasporamarketplc.com/pages/contact-us",
+          "sourceLabel": "Official Contact Us &ndash; Diaspora Marketplace page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are open Monday to Saturday from 10:00 AM to 6:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://diasporamarketplc.com/pages/contact-us",
+          "sourceLabel": "Official Contact Us &ndash; Diaspora Marketplace page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Give us a call at +1 (912) 232-2626"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://diasporamarketplc.com/",
+          "sourceLabel": "Official Diaspora Marketplace page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Catalog Clothes Carvings Musical Instruments Home Goods Fabric Masks All Items"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://diasporamarketplc.com/",
+          "sourceLabel": "Official Diaspora Marketplace page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/share?text=Hand%20Crafted%20Ghanaian%20Clay%20Vase&url=https://diasporamarketplc.com/products/vase"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://diasporamarketplc.com/",
+          "sourceLabel": "Official Diaspora Marketplace page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/pin/create/button/?url=https://diasporamarketplc.com/products/vase&media=//diasporamarketplc.com/cdn/shop/files/Big_Vase_1_1024x1024.png?v=1724880148&description=Hand%20Crafted%20Ghanaian%20Clay%20Vase"
+        }
+      ]
+    },
+    {
+      "businessId": "source_43844fff-f793-4e7b-aafd-ffff6da64467",
+      "expectedIdentity": {
+        "name": "Dibbs BBQ",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.dibbsbbq.com/"
+      },
+      "patch": {
+        "description": "Slow-cooked barbecue restaurant that smokes meats and prepares homemade sides; offers catering and special events.",
+        "hours": "Thursdays from 12:01PM to 7:01 PM; Fridays from 12:01PM to 7:01 PM; Saturdays from 12:01PM to 7:01 PM; Sundays from 12:01 PM to 4:01PM (or until SOLD OUT).",
+        "phone": "(215) 876-6500",
+        "tags": [
+          "barbecue",
+          "catering",
+          "special events"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dibbsbbq.com/",
+          "sourceLabel": "Official Dibbs BBQ - Call (215) 876-6500 &#8212; Located at 5617 Lancaster Ave., Philadelphia PA 19131 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Slow-Cooked Authentic Barbecue Smoking Meats the old fashioned way and preparing fresh homemade sides. We do catering, special events and family reunions using quality meats and fresh ingredients!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.dibbsbbq.com/hours/",
+          "sourceLabel": "Official Hours - Dibbs BBQ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: DIBBS BBQ HOURS: Thursdays from 12:01PM to 7:01 PM Fridays from 12:01PM to 7:01 PM Saturdays from 12:01PM to 7:01 PM And Sundays from 12:01 PM to 4:01PM (or until SOLD OUT)."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dibbsbbq.com/",
+          "sourceLabel": "Official Dibbs BBQ - Call (215) 876-6500 &#8212; Located at 5617 Lancaster Ave., Philadelphia PA 19131 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us! You can call DIBBS BBQ at (215) 876-6500."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.dibbsbbq.com/",
+          "sourceLabel": "Official Dibbs BBQ - Call (215) 876-6500 &#8212; Located at 5617 Lancaster Ave., Philadelphia PA 19131 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Slow-Cooked Authentic Barbecue Smoking Meats the old fashioned way and preparing fresh homemade sides. We do catering, special events and family reunions using quality meats and fresh ingredients!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_4d909c79-3567-4cce-b44f-271c26e3b3fe",
+      "expectedIdentity": {
+        "name": "Dieudonne Foundation",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://dieudonnefoundation.org/"
+      },
+      "patch": {
+        "description": "Dieudonne Foundation helps families across Indiana access culturally responsive maternal and infant health support, connecting families with doula care and practical resources during pregnancy and after birth."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dieudonnefoundation.org/about/",
+          "sourceLabel": "Official About | Dieudonne Foundation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We help families across Indiana access culturally responsive maternal and infant health support."
+        }
+      ]
+    },
+    {
+      "businessId": "source_940a5dc9-ace9-4ba4-b6bd-46bb4532a2a1",
+      "expectedIdentity": {
+        "name": "Digital Banners Plus",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "http://www.digitalbannersplus.com/"
+      },
+      "patch": {
+        "phone": "(210) 734-5356",
+        "tags": [
+          "\"wide format signage and graphics\"",
+          "\"vinyl banners\"",
+          "\"yard signs\"",
+          "\"vehicle wraps\"",
+          "\"food truck wraps\""
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://digitalbannersplus.com/",
+          "sourceLabel": "Official Banner, Sign &amp; Vehicle Wrap Shop in San Antonio - Digital Banners Plus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Us 210-734-5356\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://digitalbannersplus.com/graphic-design-services/",
+          "sourceLabel": "Official Graphic Design Services in San Antonio | Digital Banners Plus page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We design for many assorted applications including: Vinyl banners Real-estate signs Company fleet or custom graphics for vehicle wraps Interior/exterior wall graphics Interior/exterior window graphics Wide-format printing is also available for any type of project.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_75edd27d-1789-4d3d-b915-e3c9f05558c2",
+      "expectedIdentity": {
+        "name": "Dignity of Children",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.dignityofchildren.com/"
+      },
+      "patch": {
+        "description": "We empower K-12 educators to lead with emotional intelligence to create a safe, inclusive learning culture where everyone can thrive.",
+        "youtube": "https://www.youtube.com/@dignityofchildreninc"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dignityofchildren.com/",
+          "sourceLabel": "Official Dignity of Children | Empowering Educators with Emotional Intelligence page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our mission is simple yet powerful: We empower K-12 educators to lead with emotional intelligence to create a safe, inclusive learning culture where everyone can thrive—students and teachers alike.\","
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.dignityofchildren.com/",
+          "sourceLabel": "Official Dignity of Children | Empowering Educators with Emotional Intelligence page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@dignityofchildreninc"
+        }
+      ]
+    },
+    {
+      "businessId": "source_781a2738-7b35-4612-8e7c-14e4eab56c59",
+      "expectedIdentity": {
+        "name": "Dimples Restaurant & Lounge",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://dimplesbarandgrill.com/"
+      },
+      "patch": {
+        "description": "Family owned restaurant serving Philly-style cheesesteaks, comfort food, and catering for events.",
+        "hours": "Mon, Tue Closed; Wed-Sun 4:00 PM - 10:00 PM",
+        "phone": "(667)-210-2975"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dimplesbarandgrill.com/",
+          "sourceLabel": "Official Best Bar in Baltimore, MD | Dimples Bar &amp; Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dimples Bar & Grill - Baltimore, MD Family owned serving delicious authentic Philly Cheese Steaks!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://dimplesbarandgrill.com/",
+          "sourceLabel": "Official Best Bar in Baltimore, MD | Dimples Bar &amp; Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon, Tue Closed Wed-Sun 4:00 PM - 10:00 PM"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dimplesbarandgrill.com/",
+          "sourceLabel": "Official Best Bar in Baltimore, MD | Dimples Bar &amp; Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call us at (667)-210-2975"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7efd4cb6-f221-4e8a-aebd-5b68d3a12f3b",
+      "expectedIdentity": {
+        "name": "Direct Freight Carrier LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.directfreightcarrier.com/"
+      },
+      "patch": {
+        "description": "Direct Freight Carrier LLC provides transportation, freight forwarding, trucking, and warehousing services across the USA and Canada.",
+        "hours": "Mon To Fri 8:00 - 18:00",
+        "phone": "+1 614-500-8099",
+        "twitter": "https://twitter.com/",
+        "youtube": "https://www.youtube.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.directfreightcarrier.com/",
+          "sourceLabel": "Official Home - page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We providing reliable and efficient transportation solutions, we have the capacity to handle your transportation of goods and cargo within the United States and Canada.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.directfreightcarrier.com/",
+          "sourceLabel": "Official Home - page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Mon To Fri 8:00 - 18:00\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.directfreightcarrier.com/about/",
+          "sourceLabel": "Official About - page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"+1 614-500-8099\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.directfreightcarrier.com/",
+          "sourceLabel": "Official Home - page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.directfreightcarrier.com/",
+          "sourceLabel": "Official Home - page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_aae09805-203b-4ca5-9693-ef8219935e04",
+      "expectedIdentity": {
+        "name": "Direct Reflections Coaching",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.directreflectionscoaching.com/"
+      },
+      "patch": {
+        "description": "At Direct Reflections Coaching, we provide structure, tools, and insights to guide leaders, entrepreneurs, and professionals toward measurable growth and resilience."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.directreflectionscoaching.com/",
+          "sourceLabel": "Official Direct Reflections Coaching page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Direct Reflections Coaching, we go beyond conversation—we provide the structure, tools, and insights that drive measurable results.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_1f114aa2-020b-447e-8357-62d483e62f29",
+      "expectedIdentity": {
+        "name": "Discover Dope Creative",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.discoverdope.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/KMOJRadio?__tn__=-]K*F",
+        "instagram": "http://instagram.com/mycdazzle",
+        "tiktok": "https://www.tiktok.com/@mycdaz"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.discoverdope.com/",
+          "sourceLabel": "Official Discover Dope page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/KMOJRadio?__tn__=-]K*F"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.discoverdope.com/",
+          "sourceLabel": "Official Discover Dope page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/mycdazzle"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.discoverdope.com/",
+          "sourceLabel": "Official Discover Dope page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@mycdaz"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0aa30ae3-dc0c-4d36-b41b-e44ff32a435a",
+      "expectedIdentity": {
+        "name": "Diverse & Resilient",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/2QfxKO0"
+      },
+      "patch": {
+        "description": "Diverse & Resilient is an organization that works to support lesbian, gay, bisexual, transgender, and queer people in Wisconsin and provides programs related to sexual health, anti-violence, leadership, and youth services.",
+        "phone": "(414) 390-0444",
+        "twitter": "https://twitter.com/dresilient"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.diverseandresilient.org/",
+          "sourceLabel": "Official Diverse &amp; Resilient page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Diverse & Resilient, we see a future in which lesbian, gay, bisexual, transgender, and queer people in Wisconsin thrive, living healthy, satisfying lives in safe, supportive communities."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.diverseandresilient.org/",
+          "sourceLabel": "Official Diverse &amp; Resilient page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: © 2026 Diverse & Resilient is a 501(c)3 organization • 2439 N Holton Street, Milwaukee, WI 53212 • (414) 390-0444"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.diverseandresilient.org/",
+          "sourceLabel": "Official Diverse &amp; Resilient page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/dresilient"
+        }
+      ]
+    },
+    {
+      "businessId": "source_db3fc60c-b83d-4606-bb42-c4d4a5be6608",
+      "expectedIdentity": {
+        "name": "Diversified Systems, Inc.",
+        "city": "Westerville",
+        "state": "OH",
+        "website": "http://www.diversifiedsystems.com/"
+      },
+      "patch": {
+        "description": "Diversified Systems, founded in 1990, is an Ohio-based corporation providing management consulting and IT services nationwide.",
+        "phone": "(614) 476-9939",
+        "tags": [
+          "project management",
+          "systems integration",
+          "database services",
+          "application development",
+          "erp services",
+          "mobile apps design & development",
+          "staff augmentation",
+          "legacy modernization",
+          "business process management",
+          "organizational change management",
+          "training design, development, and delivery"
+        ],
+        "twitter": "https://twitter.com/archie_will"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://diversifiedsystems.com/",
+          "sourceLabel": "Official Home - Diversified Systems, Inc. Diverse IT Solutions for a Diverse IT World. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Diversified Systems, founded in 1990, is an award-winning Ohio-based corporation providing management consulting services nationwide.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://diversifiedsystems.com/",
+          "sourceLabel": "Official Home - Diversified Systems, Inc. Diverse IT Solutions for a Diverse IT World. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(614) 476-9939\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://diversifiedsystems.com/services/",
+          "sourceLabel": "Official Services - Diversified Systems, Inc. Diverse IT Solutions for a Diverse IT World. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Project Management Systems Integration Database Services Application Development ERP Services Mobile Apps Design & Development Staff Augumentation Legacy Modernization Business Process Management Organizational Change Management Training Design, Development, and Delivery\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://diversifiedsystems.com/",
+          "sourceLabel": "Official Home - Diversified Systems, Inc. Diverse IT Solutions for a Diverse IT World. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/archie_will"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ae179bc7-0117-4617-a6d6-c0d4dc7da549",
+      "expectedIdentity": {
+        "name": "Divine Breath Home Care Center",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.dbhomecarecenter.com/"
+      },
+      "patch": {
+        "description": "\"Our mission is to deliver compassionate, professional home care support that honors each client’s dignity, value, and sense of purpose.\"",
+        "phone": "\"215-329-2030\""
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dbhomecarecenter.com/",
+          "sourceLabel": "Official Divine Breath Home Care Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Our mission is to deliver compassionate, professional home care support that honors each client’s dignity, value, and sense of purpose.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dbhomecarecenter.com/",
+          "sourceLabel": "Official Divine Breath Home Care Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"215-329-2030\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_9119f54e-17af-4064-a61f-5bcec6672c2f",
+      "expectedIdentity": {
+        "name": "Divine Care of Indiana",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://www.divinecareindiana.com/"
+      },
+      "patch": {
+        "description": "Divine Care of Indiana, LLC is a licensed Personal Service Care Agency providing non-medical personal care to elderly and individuals requiring assistance in their homes.",
+        "hours": "Divine Care Services are available day & Night.",
+        "phone": "(317) 918-7545",
+        "tags": [
+          "in-home attendant service",
+          "homemaker services",
+          "companion for alzheimer & dementia",
+          "errands & transportation",
+          "senior sitter service",
+          "wheelchair assistance"
+        ],
+        "twitter": "https://www.twitter.com/divinecareindiana"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.divinecareindiana.com/",
+          "sourceLabel": "Official Indianapolis Senior Home Care Services | Divine Care of Indiana, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Divine Care of Indiana, LLC is a licensed Personal Service Care Agency providing quality personal care to the elderly, physically challenged, individuals recovering from hospital and rehabilitation, Alzheimer & Dementia patience, and anyone that requires assistance in their homes."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.divinecareindiana.com/",
+          "sourceLabel": "Official Indianapolis Senior Home Care Services | Divine Care of Indiana, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Divine Care Services are available day & Night."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.divinecareindiana.com/",
+          "sourceLabel": "Official Indianapolis Senior Home Care Services | Divine Care of Indiana, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: (317) 918-7545!"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.divinecareindiana.com/",
+          "sourceLabel": "Official Indianapolis Senior Home Care Services | Divine Care of Indiana, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: In-Home Care Services that our agency provides for your loved ones In-Home Attendant Service Homemaker Services Companion for Alzheimer & Dementia Errands & Transportation Senior Sitter Service Wheelchair Assistance & other health equipments"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.divinecareindiana.com/",
+          "sourceLabel": "Official Indianapolis Senior Home Care Services | Divine Care of Indiana, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/divinecareindiana"
+        }
+      ]
+    },
+    {
+      "businessId": "source_752139f9-3bfc-4789-9e63-58fd48c73734",
+      "expectedIdentity": {
+        "name": "Divine Dynasty Beauty",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://divinedynastybeauty.glossgenius.com/"
+      },
+      "patch": {
+        "description": "Lash and brow services provider in Phoenix, AZ.",
+        "hours": "MONDAY 10 AM - 8 PM TUESDAY 10 AM - 8 PM WEDNESDAY 9 AM - 6:30 PM THURSDAY 9 AM - 8 PM FRIDAY 9 AM - 8 PM SATURDAY 10 AM - 5 PM Sunday Closed",
+        "tags": [
+          "lash extensions",
+          "lash fills",
+          "lash removal",
+          "mobile lash appointment",
+          "brow shaping",
+          "brow wax",
+          "brow tint",
+          "brow lamination",
+          "lash training"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://divinedynastybeauty.glossgenius.com/",
+          "sourceLabel": "Official Divine Dynasty Beauty | Lash &amp; Brow in Phoenix, AZ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Divine Dynasty Beauty | Lash & Brow in Phoenix, AZ"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://divinedynastybeauty.glossgenius.com/",
+          "sourceLabel": "Official Divine Dynasty Beauty | Lash &amp; Brow in Phoenix, AZ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: HOURS AND LOCATION MONDAY 10 AM - 8 PM TUESDAY 10 AM - 8 PM WEDNESDAY 9 AM - 6:30 PM THURSDAY 9 AM - 8 PM FRIDAY 9 AM - 8 PM SATURDAY 10 AM - 5 PM Sunday Closed"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://divinedynastybeauty.glossgenius.com/services",
+          "sourceLabel": "Official Lash &amp; Brow Services in Phoenix, AZ | Divine Dynasty Beauty page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: • CUSTOMIZED FULL SET LASH EXTENSIONS • MINI FILL • STANDARD FILL • EXTENDED FILL • LASH REMOVAL • MOBILE LASH APPOINTMENT (FULL SET) • MOBILE LASH APPOINTMENT (FILL) • SQUEEZE IN APPOINTMENT • BROW SHAPING • BROW WAX, TINT & LAMINATION • LASH TRAINING(DEPOSIT ONLY)"
+        }
+      ]
+    },
+    {
+      "businessId": "source_79d209a6-5bf1-4c0f-922b-a0779737355e",
+      "expectedIdentity": {
+        "name": "Divine Libations, LLC",
+        "city": "Atlanta",
+        "state": "GA",
+        "website": "https://dlibations.com/"
+      },
+      "patch": {
+        "description": "We craft small-batch wines and winemaking experiences that reflect who you are—rooted in CULTURE, rich in INTENTION, and unapologetically BOLD.",
+        "phone": "(404) 578-0980",
+        "tags": [
+          "small-batch wines",
+          "winemaking experiences"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dlibations.com/",
+          "sourceLabel": "Official Divine Libations. LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Divine Libations, we craft small-batch wines and winemaking experiences that reflect who you are—rooted in CULTURE, rich in INTENTION, and unapologetically BOLD.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dlibations.com/",
+          "sourceLabel": "Official Divine Libations. LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(404) 578-0980\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dlibations.com/",
+          "sourceLabel": "Official Divine Libations. LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"we craft small-batch wines and winemaking experiences\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_5c767333-c7ea-4fb0-982b-bbe6ff8be774",
+      "expectedIdentity": {
+        "name": "Divine Touch Home Care Services",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.divinetouchhc.com/"
+      },
+      "patch": {
+        "description": "Divine Touch Home Care provides personalized non-medical home care for older adults and families, offering support shaped around clients' routines, preferences, and household needs.",
+        "hours": "Office hours: Monday–Saturday, 9 a.m.–5 p.m.; Sunday closed.",
+        "phone": "(484) 343-7474"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://divinetouchhc.com/",
+          "sourceLabel": "Official Home Care in Philadelphia, PA | Divine Touch Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Divine Touch Home Care provides personalized non-medical home care for older adults and families. We listen closely, communicate clearly, and shape support around each client’s routines, preferences, and household needs."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://divinetouchhc.com/home-care-service-areas/",
+          "sourceLabel": "Official Home Care in Philadelphia &amp; 4 Nearby Counties | Divine Touch page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office hours: Monday–Saturday, 9 a.m.–5 p.m.; Sunday closed."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://divinetouchhc.com/",
+          "sourceLabel": "Official Home Care in Philadelphia, PA | Divine Touch Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call (484) 343-7474"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ee6ef1c1-560a-403a-bdbd-dfe2c3b7db04",
+      "expectedIdentity": {
+        "name": "Divine Touch Home Care Services Tokunbo Talabi",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.divinetouchhc.com/"
+      },
+      "patch": {
+        "description": "Personalized non-medical home care for older adults and families, including personal care, companionship, light housekeeping, and medication reminders.",
+        "hours": "Office hours: Monday–Saturday, 9 a.m.–5 p.m.; Sunday closed.",
+        "phone": "(484) 343-7474"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://divinetouchhc.com/",
+          "sourceLabel": "Official Home Care in Philadelphia, PA | Divine Touch Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Divine Touch Home Care provides personalized non-medical home care for older adults and families."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://divinetouchhc.com/home-care-service-areas/",
+          "sourceLabel": "Official Home Care in Philadelphia &amp; 4 Nearby Counties | Divine Touch page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Office hours: Monday–Saturday, 9 a.m.–5 p.m.; Sunday closed."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://divinetouchhc.com/",
+          "sourceLabel": "Official Home Care in Philadelphia, PA | Divine Touch Home Care page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call (484) 343-7474"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8c4b5f8e-7889-4f58-b791-df650261e784",
+      "expectedIdentity": {
+        "name": "Divinity Studio & Events",
+        "city": "Savannah",
+        "state": "GA",
+        "website": "https://divinity-events.com/"
+      },
+      "patch": {
+        "description": "Our venue blends timeless elegance with modern sophistication, offering an incomparable backdrop for weddings, corporate events, quinceañeras, baptisms, birthday celebrations, and every milestone in between."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://divinity-events.com/",
+          "sourceLabel": "Official Divinity page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Divinity is more than a space — it is an experience. Our venue blends timeless elegance with modern sophistication, offering an incomparable backdrop for weddings, corporate events, quinceañeras, baptisms, birthday celebrations, and every milestone in between.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_beb356f5-bbfb-4147-9919-65bfff19922a",
+      "expectedIdentity": {
+        "name": "DJ DRiPSweat",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tMs2B9"
+      },
+      "patch": {
+        "phone": "(920) 316-3074"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.djdripsweat.com/contact",
+          "sourceLabel": "Official Looking for booking? &mdash; DJ DRiPSweat page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: djdripsweat@gmail.com (920) 316-3074"
+        }
+      ]
+    },
+    {
+      "businessId": "source_37296033-3b50-4567-a9c7-e563f330cdb5",
+      "expectedIdentity": {
+        "name": "DLE Event Group, LLC",
+        "city": "Bellerose",
+        "state": "NY",
+        "website": "https://www.dleeventgroup.com/"
+      },
+      "patch": {
+        "description": "DLE Event Group provides hybrid live music and DJ entertainment for weddings and private events.",
+        "phone": "877-534-2424",
+        "facebook": "https://www.facebook.com/DLEEventGroup",
+        "instagram": "https://www.instagram.com/dleeventgroup/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dleeventgroup.com/",
+          "sourceLabel": "Official Live Wedding Band &amp; DJ for Luxury NYC Weddings | DLE Event Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Hybrid Live Music Band & DJ Combo seamlessly blends the energy of live musicians with the versatility of a DJ, creating a dynamic atmosphere from your ceremony to the last dance."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dleeventgroup.com/",
+          "sourceLabel": "Official Live Wedding Band &amp; DJ for Luxury NYC Weddings | DLE Event Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone: 877-534-2424"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.dleeventgroup.com/",
+          "sourceLabel": "Official Live Wedding Band &amp; DJ for Luxury NYC Weddings | DLE Event Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/DLEEventGroup"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.dleeventgroup.com/",
+          "sourceLabel": "Official Live Wedding Band &amp; DJ for Luxury NYC Weddings | DLE Event Group page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/dleeventgroup/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b0fdc48e-5a30-4ff8-ab0d-2e67a7dab57f",
+      "expectedIdentity": {
+        "name": "DLL Cleaning Services Llc",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.dllcleaningservices.com/"
+      },
+      "patch": {
+        "description": "Provides residential and commercial cleaning services including standard/recurring cleaning, deep cleaning, move in/move out cleaning, janitorial and office cleaning, building maintenance, and organizing services.",
+        "phone": "(866) 955-0192"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dllcleaningservices.com/",
+          "sourceLabel": "Official Our Services In New York City - DLL Cleaning Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Commercial Cleaning Janitorial Cleaning Office Cleaning Building Maintenance Industries We Serve House Cleaning Standard Cleaning Recurring Cleaning Deep Cleaning Move In / Move Out"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dllcleaningservices.com/",
+          "sourceLabel": "Official Our Services In New York City - DLL Cleaning Service page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (866) 955-0192"
+        }
+      ]
+    },
+    {
+      "businessId": "source_dfd87d10-1a09-4228-85e1-fe1990231a61",
+      "expectedIdentity": {
+        "name": "DM Contracting & Restoration Inc.",
+        "city": "Howard Beach",
+        "state": "NY",
+        "website": "https://dmcontractingandrestoration.com/"
+      },
+      "patch": {
+        "description": "DM Contracting & Restoration specializes in residential and commercial masonry, in addition to home remodeling, renovation and repair services."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dmcontractingandrestoration.com/",
+          "sourceLabel": "Official DM Contracting & Restoration Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"DM Contracting & Restoration specializes in residential and commercial masonry, in addition to home remodeling, renovation and repair services.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_36ae66b2-922a-49e7-8ffd-ccbc5cbebae3",
+      "expectedIdentity": {
+        "name": "Doctryschoice",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "http://doctryschoice.com/"
+      },
+      "patch": {
+        "description": "Doctry's Choice offers dietary supplements designed to complement diet and provide essential vitamins and minerals."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.doctryschoice.com/pages/about-our-brand",
+          "sourceLabel": "Official Doctry&#39;s Choice page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our brand addresses this issue by offering high-quality supplements designed to complement your diet, ensuring you receive the vital nutrients necessary for optimal health and well-being."
+        }
+      ]
+    },
+    {
+      "businessId": "source_ba611ca5-bd45-405f-89f6-e05c03d26f40",
+      "expectedIdentity": {
+        "name": "Docucare Copy Service",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.docucarecopyservice.com/"
+      },
+      "patch": {
+        "description": "Docucare Copy Service is a full-service copy center located on the campus of Temple University that provides copy and printing services to Philadelphia, PA and surrounding areas.",
+        "phone": "215-235-8740",
+        "twitter": "https://twitter.com/DocucareCopy"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.docucarecopyservice.com/",
+          "sourceLabel": "Official Docucare Copy Service | Printing Services | Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Docucare Copy Service is a full-service copy center located on the campus of Temple University. We have been providing quality, affordable copy and printing services to Philadelphia, PA and the surrounding areas for nearly 20 years.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.docucarecopyservice.com/",
+          "sourceLabel": "Official Docucare Copy Service | Printing Services | Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"215-235-8740\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.docucarecopyservice.com/",
+          "sourceLabel": "Official Docucare Copy Service | Printing Services | Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/DocucareCopy"
+        }
+      ]
+    },
+    {
+      "businessId": "source_d1dc9cad-f966-416f-8589-bf0c5496964b",
+      "expectedIdentity": {
+        "name": "Docucare Copy Service",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.docucarecopyservice.com/"
+      },
+      "patch": {
+        "description": "Docucare Copy Service is a full-service copy center located on the campus of Temple University providing copy and printing services to Philadelphia, PA and the surrounding areas.",
+        "phone": "215-235-8740",
+        "twitter": "https://twitter.com/DocucareCopy"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.docucarecopyservice.com/",
+          "sourceLabel": "Official Docucare Copy Service | Printing Services | Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Docucare Copy Service is a full-service copy center located on the campus of Temple University. We have been providing quality, affordable copy and printing services to Philadelphia, PA and the surrounding areas for nearly 20 years.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.docucarecopyservice.com/",
+          "sourceLabel": "Official Docucare Copy Service | Printing Services | Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"215-235-8740\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.docucarecopyservice.com/",
+          "sourceLabel": "Official Docucare Copy Service | Printing Services | Philadelphia, PA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/DocucareCopy"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f1777e27-8dcc-4067-bdfb-0ba11929708a",
+      "expectedIdentity": {
+        "name": "Dodah’s Kitchen",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://dodahskitchen.com/"
+      },
+      "patch": {
+        "description": "Dodah’s Kitchen is vegan with soul and operates cafes and sells products at natural food markets and co-ops.",
+        "hours": "Mon - Sat: 11 a.m. - 8 p.m.; Sun: 11 a.m. - 7 p.m.",
+        "phone": "202-88-DODAH (202-883-6324)",
+        "tags": [
+          "vegan food",
+          "cafes",
+          "wholesale",
+          "catering"
+        ],
+        "tiktok": "https://www.tiktok.com/@dodahskitchen"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dodahskitchen.com/",
+          "sourceLabel": "Official Dodah&#39;s Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dodah’s Kitchen is Vegan With Soul You can visit one of our five cafes… …or find our products at natural food markets & co-ops in MD, DC, VA, DE, PA, NJ & NY!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://dodahskitchen.com/dodahs-cafe",
+          "sourceLabel": "Official About 1 &mdash; Dodah&#39;s Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Baltimore, MD 1210 N Charles St., Baltimore, MD 21201 Hours Mon - Sat: 11 a.m. - 8 p.m. Sun: 11 a.m. - 7 p.m."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dodahskitchen.com/dodahs-cafe",
+          "sourceLabel": "Official About 1 &mdash; Dodah&#39;s Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Phone 202-88-DODAH (202-883-6324)"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dodahskitchen.com/",
+          "sourceLabel": "Official Dodah&#39;s Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Dodah’s Kitchen is Vegan With Soul You can visit one of our five cafes… …or find our products at natural food markets & co-ops in MD, DC, VA, DE, PA, NJ & NY!"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://dodahskitchen.com/",
+          "sourceLabel": "Official Dodah&#39;s Kitchen page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@dodahskitchen"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8a0539a6-577a-48aa-bf32-aa19b7b312fc",
+      "expectedIdentity": {
+        "name": "Dog Basics NYC LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.dogbasicsnyc.com/"
+      },
+      "patch": {
+        "description": "Dog Basics NYC is dedicated to developing happy and healthy relationships; Linda is a certified and expert trainer ready to help you and your dog.",
+        "phone": "347-239-8842",
+        "instagram": "https://www.instagram.com/dogbasicsnyc/",
+        "facebook": "https://www.facebook.com/DogBasicsNYC"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "instagram": "fill",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dogbasicsnyc.com/",
+          "sourceLabel": "Official Dog Basics NYC | Dog Training and Pet Sitting Services in NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dog Basics NYC is dedicated to developing happy and healthy relationships. Linda is a certified and expert trainer ready to help you and your dog!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dogbasicsnyc.com/contact",
+          "sourceLabel": "Official Contact 1 &mdash; Dog Basics NYC | Dog Training and Pet Sitting Services in NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 347-239-8842"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.dogbasicsnyc.com/",
+          "sourceLabel": "Official Dog Basics NYC | Dog Training and Pet Sitting Services in NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/dogbasicsnyc/"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.dogbasicsnyc.com/",
+          "sourceLabel": "Official Dog Basics NYC | Dog Training and Pet Sitting Services in NYC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/DogBasicsNYC"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e575b10b-eb65-43a5-be77-23d1da58a7ec",
+      "expectedIdentity": {
+        "name": "Doll House Boutique",
+        "city": "Baltimore",
+        "state": "MD",
+        "website": "https://shopdollhouseboutique.com/"
+      },
+      "patch": {
+        "description": "Since 2003, The Doll House Boutique provides fashion ranging from couture to simple and stylish staples and provides local designers with a platform to showcase their collections.",
+        "hours": "Mon - Fri, 11 -7pm; Sat 11-5; Sunday, Closed",
+        "phone": "(443.874.7900)",
+        "tags": [
+          "boutique clothing",
+          "designer platform",
+          "wardrobe styling"
+        ],
+        "twitter": "https://twitter.com/ShopDollHouse",
+        "pinterest": "https://www.pinterest.com/dollhouseb/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://shopdollhouseboutique.com/pages/about-us",
+          "sourceLabel": "Official About Us! &ndash; The Doll House Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Since 2003, The Doll House Boutique has been committed to providing fashion that ranges from couture to simple and stylish staples and providing local designers with a platform to showcase their collections."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://shopdollhouseboutique.com/",
+          "sourceLabel": "Official The Doll House Boutique &ndash; The Doll House Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Mon - Fri, 11 -7pm Sat 11-5 Sunday, Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://shopdollhouseboutique.com/pages/contact-us",
+          "sourceLabel": "Official Contact Us! &ndash; The Doll House Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The Doll House Boutique MD (443.874.7900)"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://shopdollhouseboutique.com/pages/about-us",
+          "sourceLabel": "Official About Us! &ndash; The Doll House Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: The Doll House Boutique has been committed to providing fashion that ranges from couture to simple and stylish staples and providing local designers with a platform to showcase their collections."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://shopdollhouseboutique.com/",
+          "sourceLabel": "Official The Doll House Boutique &ndash; The Doll House Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ShopDollHouse"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://shopdollhouseboutique.com/",
+          "sourceLabel": "Official The Doll House Boutique &ndash; The Doll House Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/dollhouseb/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b56067fd-3eeb-47f7-b8c2-6e7865546e87",
+      "expectedIdentity": {
+        "name": "Dolphin Pest Control",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://stopbugsnow.com/"
+      },
+      "patch": {
+        "hours": "Mon 08:00 am – 04:00 pm; Tue 08:00 am – 04:00 pm; Wed 08:00 am – 04:00 pm; Thu 08:00 am – 04:00 pm; Fri 08:00 am – 04:00 pm; Sat Closed; Sun Closed",
+        "phone": "(205) 378-7457"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://stopbugsnow.com/",
+          "sourceLabel": "Official Best Pest Control Services Birmingham, AL | Dolphin Pest Control page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon 08:00 am – 04:00 pm Tue 08:00 am – 04:00 pm Wed 08:00 am – 04:00 pm Thu 08:00 am – 04:00 pm Fri 08:00 am – 04:00 pm Sat Closed Sun Closed"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://stopbugsnow.com/",
+          "sourceLabel": "Official Best Pest Control Services Birmingham, AL | Dolphin Pest Control page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dolphin Pest Control Serving Birmingham and the Surrounding Areas Call or Text : (205) 378-7457"
+        }
+      ]
+    },
+    {
+      "businessId": "source_98af6087-07e9-4adc-85ea-5378a56a64cf",
+      "expectedIdentity": {
+        "name": "Dominion Development",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.dominiondevelopment.net/"
+      },
+      "patch": {
+        "phone": "(281) 444-2222"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://thedominioncompanies.com/development.html",
+          "sourceLabel": "Official Development page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Us NOW (281) 444-2222\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7b51a208-e650-470c-bead-630777137806",
+      "expectedIdentity": {
+        "name": "Donnelly & Moore, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "http://www.donmor.com/"
+      },
+      "patch": {
+        "description": "Donnelly & Moore provides IT hiring solutions and customized IT strategic planning as technical consultants.",
+        "hours": "Operating in Eastern Standard Time beyond U.S. borders, our elite international partners offer over 20 years of deep technical expertise.",
+        "phone": "212-488-1171",
+        "tags": [
+          "it staffing",
+          "cybersecurity staffing",
+          "nearshore/offshore technical services",
+          "it statement of work and project design"
+        ],
+        "twitter": "https://twitter.com/donnelly_moore"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://donmor.com/",
+          "sourceLabel": "Official Donnelly &amp; Moore | IT Staffing | Cybersecurity Staffing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Donnelly & Moore provides exceptional IT hiring solutions supported by fully customized planning. As your personal technical consultants, we offer the quality, creativity, and long-term solutions that will help your team thrive."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://donmor.com/nearshore-offshore-technical-services/",
+          "sourceLabel": "Official Nearshore/Offshore Technical Services - Donnelly &amp; Moore page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Book a 15 minute call Operating in Eastern Standard Time beyond U.S. borders, our elite international partners offer over 20 years of deep technical expertise."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://donmor.com/",
+          "sourceLabel": "Official Donnelly &amp; Moore | IT Staffing | Cybersecurity Staffing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact 212-488-1171"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://donmor.com/",
+          "sourceLabel": "Official Donnelly &amp; Moore | IT Staffing | Cybersecurity Staffing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Services IT Staffing Cybersecurity Staffing IT Statement of Work and Project Design Nearshore/Offshore Technical Services"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://donmor.com/",
+          "sourceLabel": "Official Donnelly &amp; Moore | IT Staffing | Cybersecurity Staffing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/donnelly_moore"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7896f964-4f01-49d6-800c-7efa891b9611",
+      "expectedIdentity": {
+        "name": "Dorothy Adams DNP FNP-BC PMHNP-BC",
+        "city": "Jackson",
+        "state": "MS",
+        "website": "https://www.kiwihealth.com/provider/MS/Jackson/Dorothy-Adams"
+      },
+      "patch": {
+        "description": "Psychiatric nurse practitioner offering psychiatric and behavioral health services, including telehealth."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.kiwihealth.com/provider/MS/Jackson/Dorothy-Adams",
+          "sourceLabel": "Official Make an appointment with Dorothy Adams, DNP, FNP-BC, PMHNP-BC, TERRY, Mississippi page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Passionate psychiatric nurse practitioner with in-depth experience with anxiety, depression, sleep disorders, and ADHD\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_b00c3546-c696-4372-b424-434b5db3333c",
+      "expectedIdentity": {
+        "name": "Dos Hermanos Taco Truck LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.doshermanoscolumbus.com/"
+      },
+      "patch": {
+        "description": "Authentic Oaxacan-inspired Mexican restaurant and catering service bringing food to events and multiple Columbus-area locations.",
+        "phone": "(614) 600-2720",
+        "tiktok": "https://www.tiktok.com/@doshermanostaco"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.eatatdos.com/",
+          "sourceLabel": "Official Dos Hermanos - Auténtica Comida Mexicana page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Authentic Mexican catering that brings people together. From intimate gatherings to large celebrations.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.eatatdos.com/",
+          "sourceLabel": "Official Dos Hermanos - Auténtica Comida Mexicana page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(614) 600-2720\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.eatatdos.com/",
+          "sourceLabel": "Official Dos Hermanos - Auténtica Comida Mexicana page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@doshermanostaco"
+        }
+      ]
+    },
+    {
+      "businessId": "dir-00f433945723e4f7c1ae24ab",
+      "expectedIdentity": {
+        "name": "Double Down Bistro",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://doubledownbistro.com/"
+      },
+      "patch": {
+        "hours": "Sunday - Thursday 11 AM - 10 PM; Friday & Saturday 11 AM - 12 AM; Closed on Mondays; Extended hours on Sundays on three-day weekends!",
+        "phone": "(334)-239-7709"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://doubledownbistro.com/",
+          "sourceLabel": "Official Must-Try Bar in Montgomery, AL | Double Down Bistro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Sunday - Thursday 11 AM - 10 PM Friday & Saturday 11 AM - 12 AM Closed on Mondays Extended hours on Sundays on three-day weekends!\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://doubledownbistro.com/",
+          "sourceLabel": "Official Must-Try Bar in Montgomery, AL | Double Down Bistro page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(334)-239-7709\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_e3a33446-1496-4819-8eed-70d7e379b5ee",
+      "expectedIdentity": {
+        "name": "DP Construction Management",
+        "city": "Queens Village",
+        "state": "NY",
+        "website": "https://dpconstructionmgmt.com/"
+      },
+      "patch": {
+        "description": "DP Construction Inc. is a New York City–based general contracting firm specializing in structural repairs and high-end interior renovations.",
+        "phone": "(718) 216-8274",
+        "facebook": "https://www.facebook.com/1126683487193301",
+        "instagram": "https://www.instagram.com/Dpconstructionmgmt"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dpconstructionmgmt.com/",
+          "sourceLabel": "Official DP Construction: Trusted NYC Contractors for Quality Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"D P Construction Inc. is a New York City–based general contracting firm, also known as DP Contractor, specializing in structural repairs and high-end interior renovations.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dpconstructionmgmt.com/",
+          "sourceLabel": "Official DP Construction: Trusted NYC Contractors for Quality Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(718) 216-8274\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://dpconstructionmgmt.com/",
+          "sourceLabel": "Official DP Construction: Trusted NYC Contractors for Quality Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/1126683487193301"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://dpconstructionmgmt.com/",
+          "sourceLabel": "Official DP Construction: Trusted NYC Contractors for Quality Services page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/Dpconstructionmgmt"
+        }
+      ]
+    },
+    {
+      "businessId": "source_a0b5ea07-49ec-48f2-910d-5c763356c58e",
+      "expectedIdentity": {
+        "name": "DPI Graphic Design",
+        "city": "Pickerington",
+        "state": "OHIO",
+        "website": "http://www.dpigraphicdesign.com/"
+      },
+      "patch": {
+        "description": "Graphic design, logo and branding services."
+      },
+      "fieldModes": {
+        "description": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dpigraphicdesign.com/",
+          "sourceLabel": "Official Graphic Design Columbus Ohio | Logo & Branding | DPI Graphic Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Graphic Design Columbus Ohio | Logo & Branding | DPI Graphic Design"
+        }
+      ]
+    },
+    {
+      "businessId": "source_90709a6d-8eca-4496-8a79-fbdfbc4da19b",
+      "expectedIdentity": {
+        "name": "Dr. Brownies Plant-Based/Vegan Brownies",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.drbrownies.com/"
+      },
+      "patch": {
+        "description": "Plant-based brownie company offering refrigerated ready-to-bake brownie mix.",
+        "tags": [
+          "plant-based brownies",
+          "vegan brownie mix",
+          "refrigerated ready-to-bake mix"
+        ],
+        "facebook": "https://facebook.com/orderbrownies",
+        "instagram": "http://instagram.com/drbrownies.official",
+        "youtube": "https://www.youtube.com/drbrownies"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.drbrownies.com/",
+          "sourceLabel": "Official Dr. Brownies, the original plant-based brownies company vegan approved &ndash; Dr. Brownies ™ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The First EVER Refrigerated Ready to Bake Brownie Mix"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.drbrownies.com/",
+          "sourceLabel": "Official Dr. Brownies, the original plant-based brownies company vegan approved &ndash; Dr. Brownies ™ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dr. Brownies, the original plant-based brownies company vegan approved"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.drbrownies.com/",
+          "sourceLabel": "Official Dr. Brownies, the original plant-based brownies company vegan approved &ndash; Dr. Brownies ™ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://facebook.com/orderbrownies"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.drbrownies.com/",
+          "sourceLabel": "Official Dr. Brownies, the original plant-based brownies company vegan approved &ndash; Dr. Brownies ™ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/drbrownies.official"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.drbrownies.com/",
+          "sourceLabel": "Official Dr. Brownies, the original plant-based brownies company vegan approved &ndash; Dr. Brownies ™ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/drbrownies"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7d7e0c7e-cd56-4609-ab0d-d8ecbc91a0eb",
+      "expectedIdentity": {
+        "name": "Drea & Co.",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://www.dreaandcompany.com/"
+      },
+      "patch": {
+        "description": "Drea & Co. is a marketing & communications agency."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dreaandcompany.com/",
+          "sourceLabel": "Official Drea &amp; Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Drea & Co. is a marketing & communications agency."
+        }
+      ]
+    },
+    {
+      "businessId": "source_e8ae31d2-c928-4e47-be18-e65611277766",
+      "expectedIdentity": {
+        "name": "Dream Builders",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3feCeNy"
+      },
+      "patch": {
+        "description": "DREAM Builders provides architecture and planning services.",
+        "tags": [
+          "architecture",
+          "planning"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dreambuildersmke.com/",
+          "sourceLabel": "Official DREAM Builders | Architecture and Planning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: DREAM Builders | Architecture and Planning"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.dreambuildersmke.com/",
+          "sourceLabel": "Official DREAM Builders | Architecture and Planning page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: DREAM Builders | Architecture and Planning"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ed7a848a-92f5-4a2c-a7d9-9fa6c64641e2",
+      "expectedIdentity": {
+        "name": "Dream Journeys, LLC",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://www.adreamjourney.com/"
+      },
+      "patch": {
+        "description": "Dream Journeys is a comprehensive travel agency specializing in Caribbean destinations, Hawaii, ocean and river cruises, and all-inclusive resorts."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.adreamjourney.com/",
+          "sourceLabel": "Official Dream Journeys - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Dream Journeys is a comprehensive travel agency specializing in Caribbean destinations, Hawaii, ocean and river cruises, and all-inclusive resorts.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_d761b7ae-90d7-45e3-9e85-22c4834d717a",
+      "expectedIdentity": {
+        "name": "DreamLocs & Styles by Crissy, LLC",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://dreamlocsbycrissy.com/"
+      },
+      "patch": {
+        "phone": "629-888-9165"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://dreamlocsbycrissy.com/",
+          "sourceLabel": "Official DREAMLOCS page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"629-888-9165\""
+        }
+      ]
+    },
+    {
+      "businessId": "national-b80cfb8c12376cc3873c9200",
+      "expectedIdentity": {
+        "name": "Driftwood Char Bar",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://driftwoodcharbar.com/"
+      },
+      "patch": {
+        "description": "Driftwood Char Bar is the place for Great Live Music, Bar Food, Drink, and Conversation.",
+        "hours": "EVERYDAY 3PM - 11:30PM",
+        "phone": "612-354-3402"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://driftwoodcharbar.com/",
+          "sourceLabel": "Official Driftwood Char Bar | 4415 Niccolet Ave South, Minneapolis, MN 55419 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Driftwood Char Bar is THE place for Great Live Music, Bar Food, Drink, and Conversation!\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://driftwoodcharbar.com/",
+          "sourceLabel": "Official Driftwood Char Bar | 4415 Niccolet Ave South, Minneapolis, MN 55419 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"HOURS: EVERYDAY 3PM - 11:30PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://driftwoodcharbar.com/",
+          "sourceLabel": "Official Driftwood Char Bar | 4415 Niccolet Ave South, Minneapolis, MN 55419 page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"PH: 612-354-3402\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_ece7224d-1378-4928-92fe-e5ee4e415e86",
+      "expectedIdentity": {
+        "name": "DRiPSweat",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3tMs2B9"
+      },
+      "patch": {
+        "phone": "(920) 316-3074",
+        "tags": [
+          "dj mixes",
+          "live events",
+          "twitch mixes",
+          "podcast mixes"
+        ]
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.djdripsweat.com/contact",
+          "sourceLabel": "Official Looking for booking? &mdash; DJ DRiPSweat page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: djdripsweat@gmail.com (920) 316-3074"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.djdripsweat.com/",
+          "sourceLabel": "Official DJ DRiPSweat page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Welcome Upcoming Events Twitch Mixes Condensed NonGenre'd Press Contact"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0dabc74c-d8ad-4598-8c65-159bf2f4b530",
+      "expectedIdentity": {
+        "name": "Dr. James Wadley, PhD, LPC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.drjameswadley.com/"
+      },
+      "patch": {
+        "description": "Private practice clinician offering therapy, sex therapy, executive coaching, supervision, and trainings.",
+        "phone": "(267) 249-9452",
+        "tags": [
+          "sex therapy",
+          "couples therapy",
+          "therapy for families",
+          "executive coaching",
+          "supervision",
+          "trainings"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.drjameswadley.com/",
+          "sourceLabel": "Official Dr. James Wadley | Sex Therapist in Philadelphia, PA &amp; Pennington, NJ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Navigate Your Relationships With Confidence Professional Guidance From a Leading Expert in Sexual and Mental Health Dr. James Wadley has served as a clinician and mental health consultant in the metropolitan Philadelphia area for over 20 years. He has experience working with individuals, families, and couples and empowering them to reach their emotional, social, intimate, and spiritual potential."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.drjameswadley.com/contact",
+          "sourceLabel": "Official Contact Dr. Wadley | Philadelphia, PA &amp; Pennington, NJ Offices &mdash; Dr. James Wadley &amp; Associates page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call or text me (267) 249-9452"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.drjameswadley.com/",
+          "sourceLabel": "Official Dr. James Wadley | Sex Therapist in Philadelphia, PA &amp; Pennington, NJ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Work With Me I am dedicated to providing a supportive space where you can explore your mental well-being without judgment. Using my clinical background and experience, my mission is to offer compassion, resources, and guidance to help you navigate complex issues and challenges. Executive Coaching Therapy Trainings"
+        }
+      ]
+    },
+    {
+      "businessId": "source_cbec0b85-6caa-4825-85c8-29bb03e969f8",
+      "expectedIdentity": {
+        "name": "Dr. James Wadley, PhD, LPC / Evolution Consulting",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.drjameswadley.com/"
+      },
+      "patch": {
+        "description": "Private practice and consulting services offering therapy, sex therapy, supervision, executive coaching, and trainings in the Philadelphia and Pennington, NJ areas.",
+        "phone": "(267) 249-9452"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.drjameswadley.com/",
+          "sourceLabel": "Official Dr. James Wadley | Sex Therapist in Philadelphia, PA &amp; Pennington, NJ page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dr. James Wadley has served as a clinician and mental health consultant in the metropolitan Philadelphia area for over 20 years. He has experience working with individuals, families, and couples and empowering them to reach their emotional, social, intimate, and spiritual potential."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.drjameswadley.com/contact",
+          "sourceLabel": "Official Contact Dr. Wadley | Philadelphia, PA &amp; Pennington, NJ Offices &mdash; Dr. James Wadley &amp; Associates page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call or text me (267) 249-9452"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5392fa02-df1d-4f27-9724-78dc7ed6e0e9",
+      "expectedIdentity": {
+        "name": "Dtangld Hair Salon Suite",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/33EoQge"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/dtangld"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.dtangld.com/",
+          "sourceLabel": "Official Dtangld Hair Salon Suite | Wauwatosa, Wisconsin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/dtangld"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0d9dd7a5-89d3-40ce-bbf3-78bc97688e1c",
+      "expectedIdentity": {
+        "name": "DT Cabinets & Interior Renovations, Inc.",
+        "city": "Astoria",
+        "state": "NY",
+        "website": "https://dtcabinets-renovations.com/"
+      },
+      "patch": {
+        "description": "DT Cabinets & Interior Renovations Inc. is a one of a kind home remodeler providing interior renovation and custom cabinet services.",
+        "hours": "Monday - Friday from 8AM - 5PM",
+        "phone": "(718) 349-1089",
+        "twitter": "https://twitter.com/DtCabinets"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dtcabinets-renovations.com/",
+          "sourceLabel": "Official Welcome DT Cabinets & Interior Renovations Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"DT Cabinets & Interior Renovations Inc. is a one of a kind home remodeler with passion for Design, Mastership of Skills and Commitment to Craft\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.dtcabinets-renovations.com/",
+          "sourceLabel": "Official Welcome DT Cabinets & Interior Renovations Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"H: Monday - Friday from 8AM - 5PM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dtcabinets-renovations.com/",
+          "sourceLabel": "Official Welcome DT Cabinets & Interior Renovations Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"T: (718) 349-1089\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.dtcabinets-renovations.com/",
+          "sourceLabel": "Official Welcome DT Cabinets & Interior Renovations Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/DtCabinets"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5dbabdba-4144-4ff8-97cf-21b62fd33872",
+      "expectedIdentity": {
+        "name": "DTP Brokerage Agency",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://dtpbrokerageagency.com/"
+      },
+      "patch": {
+        "description": "DTP BROKERAGE AGENCY LLC is a multi-state health and life insurance brokerage company serving clients in Alabama, Georgia, and Mississippi.",
+        "facebook": "https://www.facebook.com/profile.php?id=100064671205841",
+        "instagram": "https://www.instagram.com/THE_PEARLDMF/",
+        "youtube": "https://youtube.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "instagram": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dtpbrokerageagency.com/",
+          "sourceLabel": "Official Health Insurance | DTP BROKERAGE AGENCY LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Founded in 2017, DTP BROKERAGE AGENCY LLC is a multi-state health and life insurance brokerage company serving clients in Alabama, Georgia, and Mississippi."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://dtpbrokerageagency.com/",
+          "sourceLabel": "Official Health Insurance | DTP BROKERAGE AGENCY LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/profile.php?id=100064671205841"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://dtpbrokerageagency.com/",
+          "sourceLabel": "Official Health Insurance | DTP BROKERAGE AGENCY LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/THE_PEARLDMF/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://dtpbrokerageagency.com/",
+          "sourceLabel": "Official Health Insurance | DTP BROKERAGE AGENCY LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_c9a01e98-3794-4113-9bc4-540b08721202",
+      "expectedIdentity": {
+        "name": "D'trespa Consignment Boutique",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://www.dtrespa.com/"
+      },
+      "patch": {
+        "description": "D'Trespa Consignment & Vintage Boutique specializes in the resale of high quality new and gently worn designer, contemporary and vintage clothing, shoes and accessories for women and men.",
+        "hours": "Mon CLOSED; Tue 10AM-6PM; Wed 10AM-6PM; Thu 10AM-6PM; Fri 10AM-6PM; Sat 11AM-4PM; Sun CLOSED",
+        "phone": "(205) 383-5164"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dtrespa.com/about",
+          "sourceLabel": "Official ABOUT &mdash; d&#39;TRESPA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: D'Trespa Consignment & Vintage Boutique specializes in the resale of high quality new and gently worn designer , contemporary and vintage clothing, shoes and accessories for women and men."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.dtrespa.com/",
+          "sourceLabel": "Official d&#39;TRESPA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Mon CLOSED Tue 10AM-6PM Wed 10AM-6PM Thu 10AM-6PM Fri 10AM-6PM Sat 11AM-4PM Sun CLOSED"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dtrespa.com/contact",
+          "sourceLabel": "Official CONTACT &mdash; d&#39;TRESPA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (205) 383-5164"
+        }
+      ]
+    },
+    {
+      "businessId": "source_040dddbd-816a-48d2-8d5b-f18dacf7f269",
+      "expectedIdentity": {
+        "name": "Duarte's Remodeling",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://duartesremodelingllc.godaddysites.com/"
+      },
+      "patch": {
+        "description": "Duarte's Remodeling LLC provides contracting and remodeling services; areas of expertise listed include full house renovation, decks, flooring, bathroom, and kitchens.",
+        "hours": "Monday - Friday: 8am - 6pm; Saturday: 8am - 12pm; Sunday: Closed; Open today 08:00 am – 06:00 pm",
+        "tags": [
+          "full house renovation",
+          "decks",
+          "flooring",
+          "bathroom remodeling",
+          "kitchen remodeling"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://duartesremodelingllc.godaddysites.com/about-us",
+          "sourceLabel": "Official Duarte&#x27;s Remodeling LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Areas of Expertise Full house renovation Decks Flooring Bathroom Kitchens And More!"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://duartesremodelingllc.godaddysites.com/contact-us",
+          "sourceLabel": "Official Duarte&#x27;s Remodeling LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Hours Open today 08:00 am – 06:00 pm Monday - Friday: 8am - 6pm Saturday: 8am - 12pm Sunday: Closed"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://duartesremodelingllc.godaddysites.com/about-us",
+          "sourceLabel": "Official Duarte&#x27;s Remodeling LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Areas of Expertise Full house renovation Decks Flooring Bathroom Kitchens And More!"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0ac0eaf4-b768-4dba-b012-118796bdc72c",
+      "expectedIdentity": {
+        "name": "Duett Interiors",
+        "city": "Portland",
+        "state": "OR",
+        "website": "https://www.duettinteriors.com/"
+      },
+      "patch": {
+        "description": "Duett Interiors is an interior design business."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.duettinteriors.com/",
+          "sourceLabel": "Official Duett Interiors page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Duett Interiors"
+        }
+      ]
+    },
+    {
+      "businessId": "source_705fa3ca-a997-4944-bb32-3eec9dddc7a4",
+      "expectedIdentity": {
+        "name": "Dunia Consulting",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "http://www.duniaconsulting.us/"
+      },
+      "patch": {
+        "description": "Dunia Consulting helps city departments, civic leaders, and employers communicate clearly, work effectively across language and culture, and retain immigrant talent; provides cultural strategy, briefings, trainings, language access and messaging strategy, campaign and event cultural review, public speaking, and mentorship.",
+        "youtube": "https://www.youtube.com/@Terezush"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://duniaconsulting.us/",
+          "sourceLabel": "Official Dunia Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Dunia Consulting Cultural Strategy for a Changing Columbus. I help city departments, civic leaders, and employers communicate clearly, work effectively across language and culture, and retain immigrant talent with confidence."
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://duniaconsulting.us/",
+          "sourceLabel": "Official Dunia Consulting page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@Terezush"
+        }
+      ]
+    },
+    {
+      "businessId": "national-b156a2cb21343b36b13eab9a",
+      "expectedIdentity": {
+        "name": "Du Nord Craft Spirits",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "http://www.dunordcraftspirits.com/"
+      },
+      "patch": {
+        "description": "Producer of spirits including gin, vodka, whiskey, barreled gin, and liqueurs.",
+        "tags": [
+          "spirits producer",
+          "gin",
+          "vodka",
+          "whiskey",
+          "liqueurs"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dunordsocialspirits.com/",
+          "sourceLabel": "Official Du Nord Social Spirits page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Spirits Gin Vodka Whiskey Prominence Barreled Gin Apple Liqueur Coffee Liqueur"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dunordsocialspirits.com/",
+          "sourceLabel": "Official Du Nord Social Spirits page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Spirits Gin Vodka Whiskey Prominence Barreled Gin Apple Liqueur Coffee Liqueur"
+        }
+      ]
+    },
+    {
+      "businessId": "source_7911374a-75a7-4353-a20b-3b6fe3528013",
+      "expectedIdentity": {
+        "name": "Dutch Alley Artists Co-Op",
+        "city": "New Orleans",
+        "state": "LA",
+        "website": "https://dutchalleyonline.com/"
+      },
+      "patch": {
+        "description": "Dutch Alley Artist’s Co-op represents 25 local artists and offers original art in media including ceramics, collage, jewelry, mixed media, painting, photography, printmaking, textiles, and wood; work is for sale in the gallery and online.",
+        "hours": "Open EVERY DAY from 10am to 6pm except Mardi Gras & Christmas",
+        "phone": "(504) 412-9220",
+        "tags": [
+          "art gallery",
+          "artist co-op",
+          "ceramics",
+          "collage",
+          "jewelry",
+          "mixed media",
+          "painting",
+          "photography",
+          "printmaking",
+          "textiles",
+          "woodwork",
+          "art shipping"
+        ],
+        "instagram": "https://www.instagram.com/dutchalley/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.dutchalleyonline.com/",
+          "sourceLabel": "Official Dutch Alley Artist’s Co-op | Explore Unique Art - Shop Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"With 25 local artists , we represent a fantastic array of original, high quality art in a number of media including ceramics, collage, jewelry, mixed media, painting, photography, printmaking, textiles, and wood. Our work is for sale in our gallery and online .\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.dutchalleyonline.com/",
+          "sourceLabel": "Official Dutch Alley Artist’s Co-op | Explore Unique Art - Shop Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Open EVERY DAY from 10am to 6pm except Mardi Gras & Christmas\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.dutchalleyonline.com/",
+          "sourceLabel": "Official Dutch Alley Artist’s Co-op | Explore Unique Art - Shop Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(504) 412-9220\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.dutchalleyonline.com/",
+          "sourceLabel": "Official Dutch Alley Artist’s Co-op | Explore Unique Art - Shop Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"With 25 local artists , we represent a fantastic array of original, high quality art in a number of media including ceramics, collage, jewelry, mixed media, painting, photography, printmaking, textiles, and wood.\""
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.dutchalleyonline.com/",
+          "sourceLabel": "Official Dutch Alley Artist’s Co-op | Explore Unique Art - Shop Now page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/dutchalley/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_10b66714-ba19-4a6a-85fa-a99e7aa71388",
+      "expectedIdentity": {
+        "name": "DVM Industries, LLC",
+        "city": "Astoria",
+        "state": "NY",
+        "website": "https://www.dvmindustries.us/"
+      },
+      "patch": {
+        "description": "DVM Industries is a Turnkey Facility and Energy Solutions Company that specializes in providing services to the Residential, Commercial, Banking, Hospitality and Healthcare markets.",
+        "phone": "+1 212-739-7846",
+        "tags": [
+          "led lighting",
+          "mechanical services",
+          "electrical services",
+          "plumbing services",
+          "ev charging stations",
+          "solar energy",
+          "hvac upgrades",
+          "facility maintenance",
+          "fire alarm systems",
+          "landscaping",
+          "snow removal",
+          "rebate management"
+        ],
+        "twitter": "https://www.twitter.com/dvmindustries"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://dvmindustries.us/",
+          "sourceLabel": "Official DVM Industries page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"DVM Industries is a Turnkey Facility and Energy Solutions Company that specializes in providing services to the Residential, Commercial, Banking, Hospitality and Healthcare markets.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://dvmindustries.us/",
+          "sourceLabel": "Official DVM Industries page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Us +1 212-739-7846\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://dvmindustries.us/",
+          "sourceLabel": "Official DVM Industries page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Some of our services include LED Lighting, General Maintenance Services, Exterior Services, Electrical, and Plumbing services.\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://dvmindustries.us/",
+          "sourceLabel": "Official DVM Industries page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/dvmindustries"
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "5dc9580bbdab31a1379067605a0e2531d120991d0737c9ef438ed9239d7f5bb3"
+}

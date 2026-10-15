@@ -1,0 +1,2724 @@
+{
+  "version": "profile-enrichment-v2",
+  "scope": "kinfolk_current",
+  "batchId": "current-official-site-v2-024",
+  "generatedAt": "2026-10-15T22:02:50.000Z",
+  "candidates": [
+    {
+      "businessId": "source_385e38a4-a5bf-4958-92d7-ce3157b9bb6a",
+      "expectedIdentity": {
+        "name": "Whom IT Concerns Inc",
+        "city": "Montgomery",
+        "state": "AL",
+        "website": "https://whomitconcernsinc.weebly.com/"
+      },
+      "patch": {
+        "description": "WHOM IT CONCERNS,INC. is a private 501(c)3 tax-exempt nonprofit agency providing programs and services that focus on youth, community, and economic development.",
+        "tags": [
+          "youth development",
+          "community development",
+          "economic development",
+          "assisting ex-offenders",
+          "educational advocacy",
+          "climate justice",
+          "agriculture"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://whomitconcernsinc.weebly.com/",
+          "sourceLabel": "Official WHOM IT CONCERNS,INC. - Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"WHOM IT CONCERNS,INC. is a private 501(c)3 tax-exempt nonprofit agency with a history of providing programs and services that enrich communities through quality services and program which focuses on Youth, Community & Economic Development and Advancement.\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://whomitconcernsinc.weebly.com/about.html",
+          "sourceLabel": "Official About - WHOM IT CONCERNS,INC. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Youth Development Community Development Economic Development Assisting Ex-Offenders Educational Advocacy Climate Justice Agriculture\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_eac2f8a9-c7e7-42c4-9cdd-77f1b86b9067",
+      "expectedIdentity": {
+        "name": "WHTART",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://whtart.net/"
+      },
+      "patch": {
+        "description": "WHTART appears to be an art website offering original artwork, collections, art prints, and apparel."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://whtart.net/",
+          "sourceLabel": "Official WHTART &ndash; WHT ART page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to WHTART Home Original Artwork Portfolio Portfolio Memoirs of An Alchemist Letters From A Human After Dark Collection Crown Collection Expression Collection Noire Collection Early Works Art Prints Art Prints Limited Editions Best Sellers Black Art Fan Art Apparel Apparel Graphic Tees Crewnecks Hoodies Stickers Stickers Anime Original Art Digital Downloads Digital Downloads Ebook: How To Make Art Prints"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8aa02b32-828d-475a-b505-1a8ee84901e7",
+      "expectedIdentity": {
+        "name": "WHV Empire Management Consulting Firm",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://www.whvempireco.com/"
+      },
+      "patch": {
+        "phone": "(262) 228-4468"
+      },
+      "fieldModes": {
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.whvempireco.com/about-me",
+          "sourceLabel": "Official Services and Packages&mdash; WHV Empire Management Consulting Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(262) 228-4468\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_918468a7-4d5a-46a4-a537-9ae2f50896bf",
+      "expectedIdentity": {
+        "name": "Wiggins Tours N More",
+        "city": "Philadelphia",
+        "state": "PA",
+        "website": "https://www.wigginstoursnmore.com/"
+      },
+      "patch": {
+        "description": "Wiggins Tours and More focuses on informing various publics about the history of African Americans in Philadelphia and beyond through a rich array of city-wide tour experiences.",
+        "phone": "215-917-6318",
+        "tags": [
+          "city-wide tours",
+          "historic church visits",
+          "house museums",
+          "cultural museums",
+          "exhibits",
+          "lectures and presentations",
+          "dramatic re-enactments",
+          "themed living history packages"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.wigginstoursnmore.com/about/",
+          "sourceLabel": "Official ABOUT &#8211; Wiggins Tours N More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Wiggins Tours and More focuses on informing various publics about the history of African Americans in Philadelphia and beyond through a rich array of city-wide tour experiences.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.wigginstoursnmore.com/",
+          "sourceLabel": "Official Wiggins Tours N More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: 215-917-6318"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.wigginstoursnmore.com/about/",
+          "sourceLabel": "Official ABOUT &#8211; Wiggins Tours N More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"we provide city-wide tours to include: on site visits of historic churches and house museums, cultural museums, exhibits, lectures and presentations, dramatic re-enactments, and themed living history packages to tourists.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_d42e85fd-1f1c-4b01-a7c4-a867af387254",
+      "expectedIdentity": {
+        "name": "Wildflower Digital Inc.",
+        "city": "Astoria",
+        "state": "NY",
+        "website": "https://wildflowerdigitalinc.com/"
+      },
+      "patch": {
+        "description": "We offer customized digital marketing and copywriting services.",
+        "phone": "+1 646.504.2829",
+        "tags": [
+          "digital marketing",
+          "copywriting",
+          "paid social",
+          "content development",
+          "email marketing",
+          "google ads",
+          "digital marketing strategy"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://wildflowerdigitalinc.com/",
+          "sourceLabel": "Official NYC Digital Marketing Agency - Wildflower Digital, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We offer customized digital marketing and copywriting services."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://wildflowerdigitalinc.com/",
+          "sourceLabel": "Official NYC Digital Marketing Agency - Wildflower Digital, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: +1 646.504.2829"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://wildflowerdigitalinc.com/",
+          "sourceLabel": "Official NYC Digital Marketing Agency - Wildflower Digital, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Experience Our experience is in the following areas: Paid Social Content Development Email Marketing Google Ads Digital Marketing Strategy"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3e3d275c-d79b-419a-b0f7-3d66c0341bdf",
+      "expectedIdentity": {
+        "name": "Wild Nueva",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "http://www.wildnueva.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/wildnueva"
+      },
+      "fieldModes": {
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.wildnueva.com/",
+          "sourceLabel": "Official Home | WILD NUEVA page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/wildnueva"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9b667d0c-e97f-477e-a836-1ac63998ef4a",
+      "expectedIdentity": {
+        "name": "William Laurence Portrait Art",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "http://williamlaurence.com/"
+      },
+      "patch": {
+        "description": "Fine portraiture services including planning, photographic sessions, painted portraits, framing, and installation."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://williamlaurence.com/",
+          "sourceLabel": "Official WILLIAM LAURENCE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: The William Laurence Experience affords you the care you deserve Planning Session Ensures art that reflects your personality, tastes and values Photographic Session Perfect lighting and expert direction, in studio or on location Viewing | Design Appointment — We collaborate with you to bring the vision to life Masterful Painting — William renders your painting with expert love and attention Professional Framing — Perfect finishing for your bespoke painted portraits Installation — White glove service so you enjoy your portraits as soon as they are ready"
+        }
+      ]
+    },
+    {
+      "businessId": "source_75920286-a05e-456f-9d41-49c8ee1e0401",
+      "expectedIdentity": {
+        "name": "Williams Insurance & Financial Services",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.affordablememphisinsurance.com/"
+      },
+      "patch": {
+        "phone": "(901) 881-2501",
+        "twitter": "https://twitter.com/wwms48"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.affordablememphisinsurance.com/",
+          "sourceLabel": "Official Wayne Williams Insurance - Auto Insurance, Home, Life, Business - Memphis, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call For a Quote: (901) 881-2501"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.affordablememphisinsurance.com/",
+          "sourceLabel": "Official Wayne Williams Insurance - Auto Insurance, Home, Life, Business - Memphis, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/wwms48"
+        }
+      ]
+    },
+    {
+      "businessId": "source_bcc10cce-2d02-4605-8077-99d29f72e353",
+      "expectedIdentity": {
+        "name": "Wilson Foods",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://shopwilsonfoods.com/"
+      },
+      "patch": {
+        "description": "Online store selling groceries, pantry items, beverages, snacks, personal care, household items, and related products.",
+        "tags": [
+          "groceries",
+          "seasoning & spices",
+          "pantry & condiments",
+          "beverages",
+          "snacks & sweets",
+          "personal care",
+          "household items",
+          "detergent",
+          "cleaning supplies"
+        ],
+        "tiktok": "https://www.tiktok.com/@wilsonfoods23"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://shopwilsonfoods.com/",
+          "sourceLabel": "Official Wilson Foods &ndash; Wilson Foods LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Wilson Foods Groceries Groceries Seasoning & Spices Pantry & Condiments Beverages Snacks & Sweets Beauty Products Personal Care Personal Care Bleachings Personal care Household Items Household Items Detergent Cleaning Supplies Accessories Pharmaceutical 18+ and Older Cured Meat and Fish Ground Provision"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://shopwilsonfoods.com/",
+          "sourceLabel": "Official Wilson Foods &ndash; Wilson Foods LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to Wilson Foods Groceries Groceries Seasoning & Spices Pantry & Condiments Beverages Snacks & Sweets Beauty Products Personal Care Personal Care Bleachings Personal care Household Items Household Items Detergent Cleaning Supplies Accessories Pharmaceutical 18+ and Older Cured Meat and Fish Ground Provision"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://shopwilsonfoods.com/",
+          "sourceLabel": "Official Wilson Foods &ndash; Wilson Foods LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@wilsonfoods23"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f06ca969-039c-42b7-a0ac-387bfbbc6ce3",
+      "expectedIdentity": {
+        "name": "Wilson’s Pizza",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://www.wilsonspizzaandgrill.com/"
+      },
+      "patch": {
+        "description": "Wilson's Pizza & Grill serves pizza and grill items such as hamburgers, custom pizza, grilled basa, gourmet pizza, and garlic cheese sticks.",
+        "hours": "Mon: 10:00 AM - 9:00 PM; Tue: Closed; Wed - Sat: 10:00 AM - 9:00 PM; Sun: Closed; Carryout Hours Mon - Sat: 10:00 AM - 8:30 PM; Sun: Closed; Delivery Hours Mon - Sat: 10:00 AM - 8:00 PM; Sun: Closed",
+        "phone": "(913) 621-4066",
+        "tags": [
+          "pizza",
+          "hamburgers",
+          "grilled basa",
+          "gourmet pizza",
+          "garlic cheese sticks",
+          "carryout",
+          "delivery"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.wilsonspizzaandgrill.com/",
+          "sourceLabel": "Official Home - Wilson&#39;s Pizza &amp; Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We serve Pizza and Grill such as Hamburger, Custom Pizza, Grilled Basa, Gourmet Pizza, and Garlic Cheese Sticks.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.wilsonspizzaandgrill.com/",
+          "sourceLabel": "Official Home - Wilson&#39;s Pizza &amp; Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Hours Mon: 10:00 AM - 9:00 PM Tue: Closed Wed - Sat: 10:00 AM - 9:00 PM Sun: Closed Carryout Hours Mon - Sat: 10:00 AM - 8:30 PM Sun: Closed Delivery Hours Mon - Sat: 10:00 AM - 8:00 PM Sun: Closed\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.wilsonspizzaandgrill.com/",
+          "sourceLabel": "Official Home - Wilson&#39;s Pizza &amp; Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(913) 621-4066\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.wilsonspizzaandgrill.com/",
+          "sourceLabel": "Official Home - Wilson&#39;s Pizza &amp; Grill page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We serve Pizza and Grill such as Hamburger, Custom Pizza, Grilled Basa, Gourmet Pizza, and Garlic Cheese Sticks.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_758ada5e-88f7-4ca9-a158-a9a6e46a8334",
+      "expectedIdentity": {
+        "name": "Windsor Inspections LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://windsorinspections.com/"
+      },
+      "patch": {
+        "description": "Windsor Inspections is a home inspection company serving all five boroughs of New York City, Long Island and Westchester County.",
+        "phone": "(631) 617-2754"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.windsorinspections.com/about",
+          "sourceLabel": "Official About Windsor Inspections | 5 Star Ratings &mdash; Windsor Inspections page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Windsor Inspections is a trusted home inspection company serving all five boroughs of New York City, Long Island and Westchester County.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.windsorinspections.com/contact",
+          "sourceLabel": "Official Inquires | Get In Touch &mdash; Windsor Inspections page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(631) 617-2754\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_95a69572-ec96-4558-a90d-21469ccec14a",
+      "expectedIdentity": {
+        "name": "Wings Cafe",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://thewingscafe.com/"
+      },
+      "patch": {
+        "description": "Wings Cafe of Kansas City is a restaurant offering wings and related menu items.",
+        "phone": "(816) 503-6228"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.thewingscafe.com/",
+          "sourceLabel": "Official Home - Wings Cafe of Kansas City page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Home - Wings Cafe of Kansas City Home Gallery Locations Order Online"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.thewingscafe.com/",
+          "sourceLabel": "Official Home - Wings Cafe of Kansas City page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Westport 3927 Broadway Blvd Kansas City, MO 64111 (816) 503-6228"
+        }
+      ]
+    },
+    {
+      "businessId": "source_581facb2-68c8-48f4-97cf-c4642c10e0f6",
+      "expectedIdentity": {
+        "name": "Winnie Couture",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.winniecouture.com/"
+      },
+      "patch": {
+        "twitter": "https://twitter.com/winniecouture?lang=en",
+        "pinterest": "https://www.pinterest.com/winniecouture/"
+      },
+      "fieldModes": {
+        "twitter": "fill",
+        "pinterest": "fill"
+      },
+      "receipts": [
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.winniecouture.com/",
+          "sourceLabel": "Official Designer Wedding Dresses &amp; Bridal Gowns | WINNIE COUTURE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/winniecouture?lang=en"
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.winniecouture.com/",
+          "sourceLabel": "Official Designer Wedding Dresses &amp; Bridal Gowns | WINNIE COUTURE page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/winniecouture/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6099f94b-25a8-4eb8-b619-d705e7ce3f0b",
+      "expectedIdentity": {
+        "name": "Wisconsin African American Women's Center",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3r9ZP7i"
+      },
+      "patch": {
+        "description": "The WAAW Center provides a flexible, welcoming space for a wide range of events and hosts community expression and gatherings."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://waawcenter.org/",
+          "sourceLabel": "Official WAAWCenter | Discover Your Perfect Venue page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At the WAAW Center, we proudly carry forward her legacy by offering a flexible, welcoming space for a wide range of events."
+        }
+      ]
+    },
+    {
+      "businessId": "source_093813b7-5f1e-4b66-9749-5e6e6d89ea70",
+      "expectedIdentity": {
+        "name": "Wisconsin Supplier Diversity Program",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3w2JQJG"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/WisconsinDOA",
+        "twitter": "https://twitter.com/wisconsindoa"
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://supplierdiversity.wi.gov/Pages/Home.aspx",
+          "sourceLabel": "Official WISDP Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/WisconsinDOA"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://supplierdiversity.wi.gov/Pages/Home.aspx",
+          "sourceLabel": "Official WISDP Home page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/wisconsindoa"
+        }
+      ]
+    },
+    {
+      "businessId": "national-b12b99b28c18bd1fd18b88d8",
+      "expectedIdentity": {
+        "name": "Wise Ink",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://wiseink.com/"
+      },
+      "patch": {
+        "description": "Wise Ink is a creative team and women-owned book publishing company that provides publishing and marketing services to authors, including write, publish, and market support."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.wiseink.com/",
+          "sourceLabel": "Official Wise Ink Media page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Wise Ink is a creative team that goes beyond the book to content solutions that catapult your expert voice and change the world.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_1522c0b4-983d-43f6-af74-7dfc596e7cc8",
+      "expectedIdentity": {
+        "name": "With Favor & Grace Under Fire",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://favorgraceunderfire.com/"
+      },
+      "patch": {
+        "description": "FGUF is a therapy and consulting practice that helps clients move through life transitions by means of therapy, speaking engagements and consulting."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://favorgraceunderfire.com/",
+          "sourceLabel": "Official Welcome To Favor &amp; Grace Under Fire - Favor &amp; Grace Under Fire page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"FGUF is a therapy and consulting practice with the purpose of helping folks intentionally, and fervently, move through life’s transitions with Favor and Grace in order to reach promise, purpose and provision by means of therapy, speaking engagements and consulting!\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_f3841b2c-05e0-4488-bd09-9ff4d1c53310",
+      "expectedIdentity": {
+        "name": "W.J. Alexander & Associates, P.C.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.wjalexander.com/"
+      },
+      "patch": {
+        "description": "W.J. Alexander (WJA) is a full service independent insurance brokerage that provides employee benefits, human resources, risk management, insurance, and technology solutions.",
+        "phone": "713-802-0900",
+        "tags": [
+          "employee benefits",
+          "human resources",
+          "risk management",
+          "insurance",
+          "technology solutions"
+        ],
+        "twitter": "https://twitter.com/wj_alexander"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "http://www.wjalexander.com/",
+          "sourceLabel": "Official W. J. Alexander is A Unique Insurance Brokerage Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Welcome to W.J. Alexander (WJA), a full service independent insurance brokerage. Our team strives to find the right Employee Benefits, Human Resources, Risk Management, Insurance, or Technology solutions to satisfy our clients objectives, while providing the highest quality service."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "http://www.wjalexander.com/",
+          "sourceLabel": "Official W. J. Alexander is A Unique Insurance Brokerage Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Contact Us: 713-802-0900"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "http://www.wjalexander.com/",
+          "sourceLabel": "Official W. J. Alexander is A Unique Insurance Brokerage Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our team strives to find the right Employee Benefits, Human Resources, Risk Management, Insurance, or Technology solutions to satisfy our clients objectives, while providing the highest quality service."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "http://www.wjalexander.com/",
+          "sourceLabel": "Official W. J. Alexander is A Unique Insurance Brokerage Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/wj_alexander"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3e39f5ed-f517-4e56-bf32-facc4ec3b75b",
+      "expectedIdentity": {
+        "name": "WJRJ Electrical",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.wjrjelectrical.com/"
+      },
+      "patch": {
+        "description": "Wholesale electrical contractor serving Minneapolis, MN."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.wjrjelectrical.com/",
+          "sourceLabel": "Official Wholesale Electrical Contractor | WJRJ Electrical | Minneapolis, MN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Wholesale Electrical Contractor | WJRJ Electrical | Minneapolis, MN"
+        }
+      ]
+    },
+    {
+      "businessId": "source_9b29ee39-5fda-482c-b129-5ea83ece3b06",
+      "expectedIdentity": {
+        "name": "Wolfe-Doyle Advertising NY, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.wolfedoyle.com/"
+      },
+      "patch": {
+        "description": "Advertising agency that develops ideas and campaigns intended to increase customer engagement and deliver results for clients."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://wolfedoyle.com/",
+          "sourceLabel": "Official Wolfe Doyle Advertising | Wolfe Doyle Advertising page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Wolfe/Doyle Advertising cures invisibility. Our goal is to get your customers as excited about your brand as you are. We do this by bringing our clients bigger ideas that deliver bigger results.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_7176eaf0-c39f-4be1-84b6-6a238e6314f5",
+      "expectedIdentity": {
+        "name": "Wolf of Fitness",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.aliveshoes.com/wolf-of-fitness"
+      },
+      "patch": {
+        "pinterest": "https://pinterest.com/pin/create/button/?url=https://www.aliveshoes.com/wolf-of-fitness&media=https://s0.as-img.com/r/wolf-of-fitness/product_share_image.jpg?bg=ffffff&u=1754078001&description=Have%20a%20look%20at%20this%20limited%20edition%20shoes!%20Custom%20made%20in%20Italy%20and%20shipped%20to%20you!%20Get%20your%20own%20now!%20https://www.aliveshoes.com/wolf-of-fitness",
+        "twitter": "https://twitter.com/share?url=https://www.aliveshoes.com/wolf-of-fitness&text=Have%20a%20look%20at%20this%20limited%20edition%20shoes!%20Custom%20made%20in%20Italy%20and%20shipped%20to%20you!%20Get%20your%20own%20now!%20https://www.aliveshoes.com/wolf-of-fitness"
+      },
+      "fieldModes": {
+        "pinterest": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://www.aliveshoes.com/wolf-of-fitness",
+          "sourceLabel": "Official Wolf of Fitness | A Custom Shoe concept by Wolf Of Fitness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://pinterest.com/pin/create/button/?url=https://www.aliveshoes.com/wolf-of-fitness&media=https://s0.as-img.com/r/wolf-of-fitness/product_share_image.jpg?bg=ffffff&u=1754078001&description=Have%20a%20look%20at%20this%20limited%20edition%20shoes!%20Custom%20made%20in%20Italy%20and%20shipped%20to%20you!%20Get%20your%20own%20now!%20https://www.aliveshoes.com/wolf-of-fitness"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.aliveshoes.com/wolf-of-fitness",
+          "sourceLabel": "Official Wolf of Fitness | A Custom Shoe concept by Wolf Of Fitness page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/share?url=https://www.aliveshoes.com/wolf-of-fitness&text=Have%20a%20look%20at%20this%20limited%20edition%20shoes!%20Custom%20made%20in%20Italy%20and%20shipped%20to%20you!%20Get%20your%20own%20now!%20https://www.aliveshoes.com/wolf-of-fitness"
+        }
+      ]
+    },
+    {
+      "businessId": "source_5b220aec-c330-44d6-a4d8-dfc0d134bb34",
+      "expectedIdentity": {
+        "name": "Wolf Studios",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3uMAyB7"
+      },
+      "patch": {
+        "phone": "414.378.1070",
+        "youtube": "https://www.youtube.com/channel/UCFlDEPAzJQQ7pXVAYdPkyMw",
+        "twitter": "https://twitter.com/wolf_mke"
+      },
+      "fieldModes": {
+        "phone": "fill",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.wolfstudiosmke.com/",
+          "sourceLabel": "Official WoLF Studios MKE | Entertainment &amp; Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call Email Follow 414.378.1070 info@wolfstudiosmke.com\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.wolfstudiosmke.com/",
+          "sourceLabel": "Official WoLF Studios MKE | Entertainment &amp; Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UCFlDEPAzJQQ7pXVAYdPkyMw"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.wolfstudiosmke.com/",
+          "sourceLabel": "Official WoLF Studios MKE | Entertainment &amp; Design page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/wolf_mke"
+        }
+      ]
+    },
+    {
+      "businessId": "source_fe0c11ae-09b5-4f36-8b82-ee31beb59ca9",
+      "expectedIdentity": {
+        "name": "Women of Power",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://www.womenofpowertn.org/"
+      },
+      "patch": {
+        "description": "Women of Power, Inc. is a 501(c)(3) nonprofit organization dedicated to empowering survivors of domestic violence and their children by providing a safe, nurturing, and supportive environment where healing, growth, and new beginnings are possible."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://womenofpowertn.org/",
+          "sourceLabel": "Official Women of Power | Empowering Women in Memphis, TN page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Women of Power, Inc. is a 501(c)(3) nonprofit organization dedicated to empowering survivors of domestic violence and their children by providing a safe, nurturing, and supportive environment where healing, growth, and new beginnings are possible.\""
+        }
+      ]
+    },
+    {
+      "businessId": "national-f16fd55b2d840b7d81e2a540",
+      "expectedIdentity": {
+        "name": "Women Who Influence",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://womenwhoinfluence.org/"
+      },
+      "patch": {
+        "description": "Women Who Influence is a 501(c)(3) nonprofit advancing entrepreneurship, leadership, and inclusive economic development for women and underrepresented business owners by connecting them to education, capital readiness, strategic relationships, market opportunities, and visibility.",
+        "facebook": "https://m.facebook.com/WOMENWHOINFLUENC/",
+        "youtube": "https://youtube.com/@womenwhoinfluence?si=G7-sfo0RiB6UM6VS"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://womenwhoinfluence.org/about-us/",
+          "sourceLabel": "Official About Us - Women Who Influence page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our mission is to advance entrepreneurship, leadership, and inclusive economic development for women and underrepresented business owners by connecting them to education, capital readiness, strategic relationships, market opportunities, and visibility."
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://womenwhoinfluence.org/",
+          "sourceLabel": "Official Women Who Influence | Entrepreneurship &amp; Leadership page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://m.facebook.com/WOMENWHOINFLUENC/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://womenwhoinfluence.org/",
+          "sourceLabel": "Official Women Who Influence | Entrepreneurship &amp; Leadership page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/@womenwhoinfluence?si=G7-sfo0RiB6UM6VS"
+        }
+      ]
+    },
+    {
+      "businessId": "national-0dc868716e1bedc0a4aabced",
+      "expectedIdentity": {
+        "name": "Woodland Park Christian Learning Center",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "http://www.woodlandparklearningcenter.com/"
+      },
+      "patch": {
+        "description": "Woodland Park Christian Learning Day Care Center is a child care center."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.woodlandparklearningcenter.com/",
+          "sourceLabel": "Official Child Care Center - Woodland Park Christian Learning Day Care Center page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Child Care Center - Woodland Park Christian Learning Day Care Center"
+        }
+      ]
+    },
+    {
+      "businessId": "source_50a3e88a-d5b6-44f4-aa19-bc1a6ac19f29",
+      "expectedIdentity": {
+        "name": "Woofbowl",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/3zmUXlx"
+      },
+      "patch": {
+        "description": "Woofbowl is a creative-led, community-spirited company on a mission to make better dog treats and bring people together.",
+        "tags": [
+          "dog treats",
+          "dog food truck",
+          "pop-ups",
+          "events"
+        ],
+        "youtube": "https://www.youtube.com/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.mywoofbowl.com/",
+          "sourceLabel": "Official Woofbowl Dog Food Truck - Fast Food Doggie Style page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Woofbowl is a creative-led, community-spirited company on a mission to make better dog treats and bring people together.\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.mywoofbowl.com/",
+          "sourceLabel": "Official Woofbowl Dog Food Truck - Fast Food Doggie Style page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Dog food truck Fresh, scratch-made dog treats. Pop-ups. Events. Good times for dogs and their people.\","
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.mywoofbowl.com/",
+          "sourceLabel": "Official Woofbowl Dog Food Truck - Fast Food Doggie Style page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_3c76f7b6-682f-4850-87ad-327caba9d378",
+      "expectedIdentity": {
+        "name": "Wooten Health",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://wootenhealth.com/"
+      },
+      "patch": {
+        "description": "Pediatrics and adolescent medicine practice; care of special needs children and adolescents.",
+        "hours": "Monday - Thursday 8:00am – 5:00pm; Friday 8:00am – 12:00pm; lunch break between 12:30pm -1:30pm",
+        "phone": "(602) 374-4937",
+        "tags": [
+          "pediatrics",
+          "adolescent medicine",
+          "care of special needs children and adolescents"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Pediatrics & Adolescent Medicine Learn more Care of Special Needs Children & Adolescents"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening Hours Monday - Thursday 8:00am – 5:00pm Friday 8:00am – 12:00pm **lunch break between 12:30pm -1:30pm**"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CALL TODAY (602) 374-4937 Phoenix, AZ"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Pediatrics & Adolescent Medicine Learn more Care of Special Needs Children & Adolescents"
+        }
+      ]
+    },
+    {
+      "businessId": "source_92c33bf9-74cb-4336-9c00-57e714648d4b",
+      "expectedIdentity": {
+        "name": "Wooten Healthcare",
+        "city": "Phoenix",
+        "state": "AZ",
+        "website": "https://wootenhealth.com/"
+      },
+      "patch": {
+        "description": "Wooten Healthcare provides pediatrics and adolescent medicine and care of special needs children and adolescents.",
+        "hours": "Monday - Thursday 8:00am – 5:00pm; Friday 8:00am – 12:00pm; **lunch break between 12:30pm -1:30pm**",
+        "phone": "(602) 374-4937",
+        "tags": [
+          "pediatrics",
+          "adolescent medicine",
+          "care of special needs children"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Pediatrics & Adolescent Medicine Learn more Care of Special Needs Children & Adolescents"
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Opening Hours Monday - Thursday 8:00am – 5:00pm Friday 8:00am – 12:00pm **lunch break between 12:30pm -1:30pm**"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: CALL TODAY (602) 374-4937 Phoenix, AZ"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.wootenhealth.com/",
+          "sourceLabel": "Official Wooten Healthcare page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Pediatrics & Adolescent Medicine Learn more Care of Special Needs Children & Adolescents"
+        }
+      ]
+    },
+    {
+      "businessId": "source_0645263b-376b-4bd8-937a-ea1a7b265794",
+      "expectedIdentity": {
+        "name": "Workaholics R Us",
+        "city": "Jacksonville",
+        "state": "Florida",
+        "website": "https://workaholicsrus.com/"
+      },
+      "patch": {
+        "description": "Workaholics R US"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://workaholicsrus.com/",
+          "sourceLabel": "Official Workaholics R US page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Workaholics R US"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b332b5a8-b20b-404e-9d25-23f4842b5f03",
+      "expectedIdentity": {
+        "name": "Workaholics R Us",
+        "city": "Jacksonville",
+        "state": "FL",
+        "website": "https://workaholicsrus.com/"
+      },
+      "patch": {
+        "description": "Workaholics R US"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://workaholicsrus.com/",
+          "sourceLabel": "Official Workaholics R US page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Workaholics R US"
+        }
+      ]
+    },
+    {
+      "businessId": "dir-7eadc3c0d7b68cde3b5a6c40",
+      "expectedIdentity": {
+        "name": "Workforce Solutions",
+        "city": "Richmond",
+        "state": "VA",
+        "website": "https://www.hireaworkforce.com/"
+      },
+      "patch": {
+        "description": "Workforce provides staffing solutions to a range of industries and helps employers and job seekers find suitable matches.",
+        "hours": "Hours",
+        "phone": "(877) 546-9675",
+        "tags": [
+          "staffing solutions",
+          "employment placement",
+          "background checks and drug testing",
+          "human resources"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.hireaworkforce.com/about",
+          "sourceLabel": "Official About &mdash; Workforce page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: For over 20 years, Workforce has provided staffing solutions to a range of industries including manufacturing, medical, IT, professional service firms and hospitality."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.hireaworkforce.com/",
+          "sourceLabel": "Official Workforce page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Introduction Hours"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.hireaworkforce.com/contact",
+          "sourceLabel": "Official Contact &mdash; Workforce page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (877) 546-9675"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.hireaworkforce.com/about",
+          "sourceLabel": "Official About &mdash; Workforce page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Workforce has provided staffing solutions to a range of industries including manufacturing, medical, IT, professional service firms and hospitality."
+        }
+      ]
+    },
+    {
+      "businessId": "source_f71cc5f0-adfd-4aa7-94c2-56cbc4310470",
+      "expectedIdentity": {
+        "name": "Workplace Restorative Practices Inc.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.workplacerestorativepracticesinc.com/"
+      },
+      "patch": {
+        "description": "Workplace Restorative Practices, Inc. provides training to build relationships and increase efficiency in workplaces through restorative approaches focused on non-punitive responses to harm and human dignity.",
+        "hours": "We are available Tuesday through Thursday from 4:00 pm to 7:00 pm.",
+        "phone": "(713) 701 -9304"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.workplacerestorativepracticesinc.com/",
+          "sourceLabel": "Official Workplace Restorative Practices, Inc. | Building Relationships, Fostering Efficiency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We help to build relationships and increase efficiency through our training. The training focuses on non-punitive responses to harm, emphasizing human dignity."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.workplacerestorativepracticesinc.com/",
+          "sourceLabel": "Official Workplace Restorative Practices, Inc. | Building Relationships, Fostering Efficiency page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are available Tuesday through Thursday from 4:00 pm to 7:00 pm."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.workplacerestorativepracticesinc.com/contact/",
+          "sourceLabel": "Official Contact | Workplace Restorative Practices, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call: (713) 701 -9304"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2398af73-e72d-43cd-9901-4b35ee0ac8f6",
+      "expectedIdentity": {
+        "name": "World Youth Foundation, Inc.",
+        "city": "Houston",
+        "state": "TX",
+        "website": "https://www.worldyouthfoundation.org/"
+      },
+      "patch": {
+        "description": "World Youth Foundation, Inc. is a national 501(c)(3) nonprofit that provides out-of-school programming and community engagement to support youth ages 4–24, including programs in AI, S.T.E.A.M., literacy, workforce development, civic engagement, and a food distribution program.",
+        "hours": "(no conversion) Joy of Giving Harvest Food Program: \"five days a week\"",
+        "phone": "713-523-8484"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://worldyouthfoundation.org/",
+          "sourceLabel": "Official World Youth Foundation, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"As a national 501(c)(3) nonprofit, we partner with underserved communities to provide access to education, leadership opportunities, and vital resources for youth ages 4–24. Our programming is rooted in a comprehensive ecosystem that spans AI, S.T.E.A.M., Literacy , and Workforce Development , offering students the tools they need to thrive in an evolving world.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://worldyouthfoundation.org/about",
+          "sourceLabel": "Official About &mdash; World Youth Foundation, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: \"collects and distributes fresh and perishable food five days a week\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://worldyouthfoundation.org/about",
+          "sourceLabel": "Official About &mdash; World Youth Foundation, Inc. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Contact 713-523-8484\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_53eaa4f0-af45-456b-bdfa-ff587e2ff11a",
+      "expectedIdentity": {
+        "name": "WOW DENTAL",
+        "city": "Dallas",
+        "state": "TX",
+        "website": "https://www.mywowdental.com/"
+      },
+      "patch": {
+        "description": "Wow Dental is a privately owned dental practice that provides dental care using technology and continuing education; it treats patients of all ages.",
+        "hours": "Monday 11:00 am - 7:00 pm; Tue, Thu 1:00 pm - 5:00 pm; Wednesday 9:00 am - 5:00 pm; Friday 7:00 am - 1:00 pm; Sat - Sun Closed; *Saturday by Appointment Only",
+        "phone": "(972) 709-4867",
+        "tags": [
+          "general dentistry",
+          "dental cleanings",
+          "dental sealants",
+          "dental implants",
+          "implant dentures",
+          "root canal therapy",
+          "wisdom teeth removal",
+          "tooth extractions",
+          "clear aligner therapy",
+          "veneers",
+          "crowns and bridges",
+          "night and athletic guards"
+        ],
+        "twitter": "https://twitter.com/WowDentalDallas"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.mywowdental.com/",
+          "sourceLabel": "Official WOW Dental: Southern Dallas Dentist - Dental Implants, Veneers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Wow Dental is a privately owned dental practice that takes great pride in offering exceptional services and care to all our patients. Our Southern Dallas, TX office uses the latest in technology for better, faster results for our patients.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.mywowdental.com/",
+          "sourceLabel": "Official WOW Dental: Southern Dallas Dentist - Dental Implants, Veneers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Hours Monday 11:00 am - 7:00 pm Tue, Thu 1:00 pm - 5:00 pm Wednesday 9:00 am - 5:00 pm Friday 7:00 am - 1:00 pm Sat - Sun Closed *Saturday by Appointment Only\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.mywowdental.com/",
+          "sourceLabel": "Official WOW Dental: Southern Dallas Dentist - Dental Implants, Veneers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(972) 709-4867\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.mywowdental.com/",
+          "sourceLabel": "Official WOW Dental: Southern Dallas Dentist - Dental Implants, Veneers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"All Services General Dentistry Dental Cleanings Dental Sealants Fillings Dentistry for Children Laser Assisted Periodontal Therapy Oral Cancer Screenings Root Canal Therapy Scaling and Root Planing Sleep Apnea Treatment Sleep Dentistry Tooth Extractions TMJ Therapy Wisdom Teeth Removal Dental Implants Cosmetic Dentistry Veneers Componeers Dental Crowns and Bridges Implant Dentures E-Max Crowns Orthodontics Clear Correct Expander Therapy Clear Aligner Therapy Night and Athletic Guards Space Maintainers Emergency Patient Info\""
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.mywowdental.com/",
+          "sourceLabel": "Official WOW Dental: Southern Dallas Dentist - Dental Implants, Veneers page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/WowDentalDallas"
+        }
+      ]
+    },
+    {
+      "businessId": "source_34a4c460-373b-4dc0-b9fa-782e05825e5d",
+      "expectedIdentity": {
+        "name": "W&T Contracting Corporation",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://wtcontractingcorp.com/"
+      },
+      "patch": {
+        "description": "W&T Contracting Corporation is a family owned company providing heavy civil construction and infrastructure services including site utility construction, CCTV of sanitary sewer, water main and storm water pipelines, and geo-spatial data collections.",
+        "twitter": "https://twitter.com/WTCCMidsouth"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://wtcontractingcorp.com/",
+          "sourceLabel": "Official W&amp;T Contracting Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Team is trained in processes to possess full capability to perform site utility construction as well as Field Services, which includes CCTV of Sanitary Sewer, Water Main & Storm Water Pipelines, and geo-spatial data collections."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://wtcontractingcorp.com/",
+          "sourceLabel": "Official W&amp;T Contracting Corporation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/WTCCMidsouth"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2c678b95-4117-491f-8148-20f19408ee51",
+      "expectedIdentity": {
+        "name": "Wynn Strategies LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.jennifernwynn.com/consulting"
+      },
+      "patch": {
+        "description": "Wynn Strategies focuses on organizational transformation, change leadership, and healing.",
+        "instagram": "http://instagram.com/theh.i.notepodcast"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.jennifernwynn.com/consulting",
+          "sourceLabel": "Official Consulting &mdash; Jenn Wynn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: I founded Wynn Strategies to focus on organizational transformation, change leadership, and healing."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.jennifernwynn.com/consulting",
+          "sourceLabel": "Official Consulting &mdash; Jenn Wynn page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: http://instagram.com/theh.i.notepodcast"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8af678e7-4b52-440f-a518-cc44af02ab69",
+      "expectedIdentity": {
+        "name": "Xenuvi",
+        "city": "Cincinnati",
+        "state": "OH",
+        "website": "https://xenuvi.com/"
+      },
+      "patch": {
+        "description": "Xenuvi is a salon that offers healthy hair care services and products.",
+        "phone": "5139794726",
+        "tags": [
+          "healthy hair care",
+          "hair products",
+          "blow-dry serum",
+          "stylist bookings"
+        ],
+        "youtube": "https://www.youtube.com/channel/UC5FDGa91qsfnjHM--g0mi1g"
+      },
+      "fieldModes": {
+        "description": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://xenuvi.com/",
+          "sourceLabel": "Official Xenuvi Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: WELCOME TO XENUVI WHERE HEALTHY HAIR COMES FIRST!"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://xenuvi.com/",
+          "sourceLabel": "Official Xenuvi Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Get in touch 5139794726"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://xenuvi.com/collections/xenuvi-full-collection/products/optimum-strengthening-blow-dry-serum",
+          "sourceLabel": "Official Optimum strengthening Blow-Dry Serum &ndash; Xenuvi page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: Description This one-of-a-kind strengthening serum will de-frizz and detangle. Use as a blowout serum to smooth curly locks, or just leave it in to increase softness and shine."
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://xenuvi.com/",
+          "sourceLabel": "Official Xenuvi Salon page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UC5FDGa91qsfnjHM--g0mi1g"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8b766da3-fb60-4917-9c52-6dac23b13d8b",
+      "expectedIdentity": {
+        "name": "Xperteks Computer Consultancy, Inc.",
+        "city": "New York",
+        "state": "NY",
+        "website": "https://www.xperteks.com/"
+      },
+      "patch": {
+        "description": "Xperteks helps business leaders secure their systems, stabilize operations, support Apple and Windows users, modernize cloud environments, and enable employees to work productively from anywhere through experienced human guidance and AI-driven technology operations.",
+        "tags": [
+          "managed it services",
+          "cybersecurity services",
+          "cloud and modern workplace",
+          "employee lifecycle management",
+          "compliance and risk management",
+          "business continuity",
+          "strategic it consulting",
+          "ai-driven it innovation"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.xperteks.com/",
+          "sourceLabel": "Official AI-Driven Managed IT, Cybersecurity &amp; Cloud Services | Xperteks page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Xperteks helps business leaders secure their systems, stabilize operations, support Apple and Windows users, modernize cloud environments, and enable employees to work productively from anywhere through experienced human guidance and AI-driven technology operations.\","
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.xperteks.com/",
+          "sourceLabel": "Official AI-Driven Managed IT, Cybersecurity &amp; Cloud Services | Xperteks page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"What Xperteks Does for Your Business AI-Driven IT Innovation: We use AI-enabled workflows to improve visibility, response, and decision-making while keeping human judgment at the center of every action. Managed IT Services: A dedicated Enterprise IT Team that keeps your systems reliable, your users supported, and your operations productive every day. Cybersecurity Services: Layered protection guided by experienced security professionals who understand your business risk and what it takes to stay protected. Cloud and Modern Workplace: We design and manage secure, productive cloud environments…"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b7aaec6b-962d-4b48-8603-184c6e5fd568",
+      "expectedIdentity": {
+        "name": "Xposeyour LLC",
+        "city": "Columbus",
+        "state": "OH",
+        "website": "https://www.xposeyoursolutions.com/"
+      },
+      "patch": {
+        "description": "We design readiness strategies, measure adoption, and equip leaders for lasting transformation; we provide change management solutions, training, and a SaaS readiness product (Readiness Xchange).",
+        "phone": "(614) 467-8081"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.xposeyoursolutions.com/",
+          "sourceLabel": "Official Xposeyour | Expert Change Management for Leaders Driving Transformation page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We design readiness strategies, measure adoption, and equip leaders for lasting transformation."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.xposeyoursolutions.com/about-us",
+          "sourceLabel": "Official XPOSEYOUR| About Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (614) 467-8081"
+        }
+      ]
+    },
+    {
+      "businessId": "source_92b1f75e-6676-4e5c-a9a0-0dace84afa5a",
+      "expectedIdentity": {
+        "name": "X-Traordinary Development",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://x-traordinarydevelopment.com/"
+      },
+      "patch": {
+        "facebook": "https://www.facebook.com/people/XtraordinaryDevelopment/61563038754489/",
+        "instagram": "https://www.instagram.com/xtraordinary_development_llc?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+      },
+      "fieldModes": {
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "facebook",
+          "sourceUrl": "https://x-traordinarydevelopment.com/",
+          "sourceLabel": "Official Custom Software &amp; AI Development Minneapolis | X-Traordinary page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/people/XtraordinaryDevelopment/61563038754489/"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://x-traordinarydevelopment.com/",
+          "sourceLabel": "Official Custom Software &amp; AI Development Minneapolis | X-Traordinary page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/xtraordinary_development_llc?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+        }
+      ]
+    },
+    {
+      "businessId": "source_e8aec7b2-c255-439c-bc87-a1e7852de546",
+      "expectedIdentity": {
+        "name": "XX Theater Company LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://www.ashleyantonialopez.org/xxtheatercompany"
+      },
+      "patch": {
+        "description": "X|X Theater Company LLC is a multimedia theater company that empowers artists of color to create an immersive experience for the City of New York while upholding the values of creativity and honesty."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.ashleyantonialopez.org/xxtheatercompany/",
+          "sourceLabel": "Official Explore XX Theater Company’s Multimedia Productions page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"X|X Theater Company LLC is a multimedia theater company that empowers artists of color to create an immersive experience for the City of New York while upholding the values of creativity and honesty.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_d1c38359-828d-4ee0-a4aa-a41225ca349f",
+      "expectedIdentity": {
+        "name": "YANA STUDIOS, LLC",
+        "city": "Bronx",
+        "state": "NY",
+        "website": "https://yanastudios.com/"
+      },
+      "patch": {
+        "description": "A podcast and content project focused on conversations about relationships, identity, emotional growth, aging, and navigating change, presented as \"The Human Season\" by Yana Studios, LLC."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yanastudios.com/",
+          "sourceLabel": "Official Home | Active Living | Yana Studios, LLC page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"The Human Season is a podcast for anyone navigating change, growth, reinvention, and the evolving journey of being human.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_6accab62-6e41-4d62-85ec-3b42e239045a",
+      "expectedIdentity": {
+        "name": "Yapheh Hair & Skin, LLC",
+        "city": "Cincinnati",
+        "state": "OH",
+        "website": "https://www.yaphehhairskinllc.com/"
+      },
+      "patch": {
+        "description": "YAPHEH Hair & Skin combines nature's finest ingredients to create products your whole family can trust.",
+        "instagram": "https://www.instagram.com/shopify",
+        "youtube": "https://www.youtube.com/shopify",
+        "tiktok": "https://www.tiktok.com/@shopify",
+        "twitter": "https://www.twitter.com/shopify"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "instagram": "fill",
+        "youtube": "fill",
+        "tiktok": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.yaphehhairskinllc.com/",
+          "sourceLabel": "Official Yapheh Hair & Skin &ndash; Yapheh Hair &amp; Skin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: YAPHEH Hair & Skin combines nature's finest ingredients to create products your whole family can trust."
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://www.yaphehhairskinllc.com/",
+          "sourceLabel": "Official Yapheh Hair & Skin &ndash; Yapheh Hair &amp; Skin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/shopify"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.yaphehhairskinllc.com/",
+          "sourceLabel": "Official Yapheh Hair & Skin &ndash; Yapheh Hair &amp; Skin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/shopify"
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.yaphehhairskinllc.com/",
+          "sourceLabel": "Official Yapheh Hair & Skin &ndash; Yapheh Hair &amp; Skin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@shopify"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.yaphehhairskinllc.com/",
+          "sourceLabel": "Official Yapheh Hair & Skin &ndash; Yapheh Hair &amp; Skin page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://www.twitter.com/shopify"
+        }
+      ]
+    },
+    {
+      "businessId": "source_2e36b784-b176-4ea3-9777-a76e840a0022",
+      "expectedIdentity": {
+        "name": "Yard Sign Sisters",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://customsignsisters.com/"
+      },
+      "patch": {
+        "description": "Custom Sign Sisters specializes in yard sign rentals, balloon décor, party favors, and a snack cart called The Joy Bar.",
+        "phone": "317-836-2527",
+        "tags": [
+          "yard sign rentals",
+          "balloon décor",
+          "party favors",
+          "snack cart"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://customsignsisters.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; Custom Sign Sisters page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Custom Sign Sisters, we specialize in elevating events through yard sign rentals, balloon décor, party favors, and The Joy Bar—our signature snack cart."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://customsignsisters.com/pages/contact",
+          "sourceLabel": "Official Get A Custom Quote &ndash; Custom Sign Sisters page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Or shoot us a text at 317-836-2527."
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://customsignsisters.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; Custom Sign Sisters page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: At Custom Sign Sisters, we specialize in elevating events through yard sign rentals, balloon décor, party favors, and The Joy Bar—our signature snack cart."
+        }
+      ]
+    },
+    {
+      "businessId": "source_498efaae-6b34-4f82-a4e8-8e181ba004eb",
+      "expectedIdentity": {
+        "name": "Yaso Jamaican Grill",
+        "city": "Indianapolis",
+        "state": "IN",
+        "website": "https://yasogrill.com/"
+      },
+      "patch": {
+        "description": "Yaso's menu is inspired by the diverse roots of Jamaican cuisine. We provide fresh, modern renditions of traditional island specialties such as jerk chicken and ribs, curry goat, escovitch red snapper, oxtails, and of course Jamaican patties- all seasoned with authentic Jamaican spices alongside the freshest ingredients.",
+        "hours": "Wednesday 7/22 11a-6p Thursday 7/23 11a-6p Friday 7/24 11a-6p Saturday 7/25 11a-6p Sunday 7/25 11a-6p We will return to normal operating hours on Wednesday July 29th at 11:00am."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yasogrill.com/",
+          "sourceLabel": "Official Must-Visit Caribbean Restaurant in Indianapolis | Yaso&apos;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Yaso's menu is inspired by the diverse roots of Jamaican cuisine. We provide fresh, modern renditions of traditional island specialties such as jerk chicken and ribs, curry goat, escovitch red snapper, oxtails, and of course Jamaican patties- all seasoned with authentic Jamaican spices alongside the freshest ingredients.\","
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://yasogrill.com/",
+          "sourceLabel": "Official Must-Visit Caribbean Restaurant in Indianapolis | Yaso&apos;s page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Wednesday 7/22 11a-6p Thursday 7/23 11a-6p Friday 7/24 11a-6p Saturday 7/25 11a-6p Sunday 7/25 11a-6p We will return to normal operating hours on Wednesday July 29th at 11:00am.\","
+        }
+      ]
+    },
+    {
+      "businessId": "source_ab32b123-fdfd-404a-a4d3-55b5489b550e",
+      "expectedIdentity": {
+        "name": "Yawa & CO.",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://yawaandco.com/"
+      },
+      "patch": {
+        "description": "\"Our mission is to provide a feel good daily self care essentials that are accessible, affordable, and effective; helping men and women all over the country to take better care of themselves.\"",
+        "pinterest": "https://www.pinterest.com/Yawaandco/",
+        "youtube": "https://www.youtube.com/@yawaandco9321"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "pinterest": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yawaandco.com/",
+          "sourceLabel": "Official Yawa &amp; Co | Natural Skincare Products | Handmade Soaps &amp; Body Care &ndash; YAWA &amp; CO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our Mission Our mission is to provide a feel good daily self care essentials that are accessible, affordable, and effective; helping men and women all over the country to take better care of themselves."
+        },
+        {
+          "field": "pinterest",
+          "sourceUrl": "https://yawaandco.com/",
+          "sourceLabel": "Official Yawa &amp; Co | Natural Skincare Products | Handmade Soaps &amp; Body Care &ndash; YAWA &amp; CO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this pinterest profile link: https://www.pinterest.com/Yawaandco/"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://yawaandco.com/",
+          "sourceLabel": "Official Yawa &amp; Co | Natural Skincare Products | Handmade Soaps &amp; Body Care &ndash; YAWA &amp; CO page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@yawaandco9321"
+        }
+      ]
+    },
+    {
+      "businessId": "source_e2e11dd5-919d-49b8-85e5-168bc9f7ba77",
+      "expectedIdentity": {
+        "name": "Yo Chef Surf & Turf Smokehouse",
+        "city": "Birmingham",
+        "state": "AL",
+        "website": "https://yochefsurfandturf.net/"
+      },
+      "patch": {
+        "hours": "Mon Closed; Tue, Wed 11:00 AM - 4:00 AM; Thu 11:00 AM - 5:00 AM; Fri, Sat 11:00 AM - 6:00 AM; Sun 11:00 AM - 4:00 AM",
+        "phone": "(877)-722-5954"
+      },
+      "fieldModes": {
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "hours",
+          "sourceUrl": "https://yochefsurfandturf.net/",
+          "sourceLabel": "Official Yo Chef Surf and Turf Smokehouse – Best Bar in Birmingham page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Hours Mon Closed Tue, Wed 11:00 AM - 4:00 AM Thu 11:00 AM - 5:00 AM Fri, Sat 11:00 AM - 6:00 AM Sun 11:00 AM - 4:00 AM\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://yochefsurfandturf.net/",
+          "sourceLabel": "Official Yo Chef Surf and Turf Smokehouse – Best Bar in Birmingham page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Call us at (877)-722-5954\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_2f3185e4-89f6-4b4c-a6f5-28bc2ba1b112",
+      "expectedIdentity": {
+        "name": "Yoothforever",
+        "city": "Minnesota",
+        "state": "MN",
+        "website": "https://www.yoothforever.net/"
+      },
+      "patch": {
+        "description": "Yoothforever sells premium slim-fit denim and apparel inspired by African culture and modern streetwear."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.yoothforever.net/",
+          "sourceLabel": "Official CULTURE. STYLE. LEGACY IN MOTION &ndash; Yoothforever page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: African-Inspired Denim Jeans Premium slim-fit denim where African culture meets modern Streetwear."
+        }
+      ]
+    },
+    {
+      "businessId": "source_baac0a26-1081-43e5-adaf-db176999b6b9",
+      "expectedIdentity": {
+        "name": "Youdle",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://youdleit.com/"
+      },
+      "patch": {
+        "description": "Youdle is a grocery search, news and community platform that helps shoppers find in-stock products, compare nearby options, and read grocery news.",
+        "tiktok": "https://www.tiktok.com/@getyoudle",
+        "youtube": "https://www.youtube.com/@youdle"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.youdle.io/",
+          "sourceLabel": "Official Youdle | Grocery Brief, In-Stock Products &amp; Shopper Insights page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Youdle is a grocery search, news and community platform. Search for groceries near you, compare nearby options, read the Grocery Brief and hear from real shoppers.\","
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://www.youdle.io/",
+          "sourceLabel": "Official Youdle | Grocery Brief, In-Stock Products &amp; Shopper Insights page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@getyoudle"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.youdle.io/",
+          "sourceLabel": "Official Youdle | Grocery Brief, In-Stock Products &amp; Shopper Insights page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@youdle"
+        }
+      ]
+    },
+    {
+      "businessId": "source_43a68fb1-0955-4a8c-8ed1-9ea580d64bbb",
+      "expectedIdentity": {
+        "name": "Young, Black, & Opinionated",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://bit.ly/2RTveNO"
+      },
+      "patch": {
+        "description": "Podcast and organization Young, Black, & Opinionated."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.facebook.com/ybopodcastmke/",
+          "sourceLabel": "Official Young, Black, &amp; Opinionated page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Young, Black, & Opinionated"
+        }
+      ]
+    },
+    {
+      "businessId": "source_02e556b8-8ba2-43f3-97be-9b7fdb42ad2f",
+      "expectedIdentity": {
+        "name": "Youngblood Worldwide",
+        "city": "Cleveland",
+        "state": "OH",
+        "website": "http://www.youngbloodworldwide.com/"
+      },
+      "patch": {
+        "description": "We are a lifestyle brand that sells premium accessories and apparel at a fraction of traditional retail prices, while also helping underrepresented entrepreneurs achieve their goals.",
+        "youtube": "https://www.youtube.com/watch?v=3W63w9EfAA0",
+        "facebook": "https://www.facebook.com/Youngbloodworldwide/",
+        "twitter": "https://twitter.com/ybworldnow",
+        "instagram": "https://www.instagram.com/youngbloodworldwide/?hl=en"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill",
+        "facebook": "fill",
+        "twitter": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://youngbloodworldwide.com/pages/about",
+          "sourceLabel": "Official About Us | Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"We are a lifestyle brand that sells premium accessories and apparel at a fraction of traditional retail prices, while also helping underrepresented entrepreneurs achieve their goals.\""
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://youngbloodworldwide.com/",
+          "sourceLabel": "Official Men’s &amp; Women stainless steel watch &amp; Clothing | Youngblood &ndash; Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=3W63w9EfAA0"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://youngbloodworldwide.com/",
+          "sourceLabel": "Official Men’s &amp; Women stainless steel watch &amp; Clothing | Youngblood &ndash; Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Youngbloodworldwide/"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://youngbloodworldwide.com/",
+          "sourceLabel": "Official Men’s &amp; Women stainless steel watch &amp; Clothing | Youngblood &ndash; Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ybworldnow"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://youngbloodworldwide.com/",
+          "sourceLabel": "Official Men’s &amp; Women stainless steel watch &amp; Clothing | Youngblood &ndash; Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/youngbloodworldwide/?hl=en"
+        }
+      ]
+    },
+    {
+      "businessId": "source_62b04844-eae4-4885-ad1e-9d24f8fac970",
+      "expectedIdentity": {
+        "name": "Youngblood Worldwide",
+        "city": "Cleveland",
+        "state": "Ohio",
+        "website": "http://www.youngbloodworldwide.com/"
+      },
+      "patch": {
+        "description": "Youngblood Worldwide is a lifestyle brand that sells premium accessories and apparel and helps underrepresented entrepreneurs.",
+        "youtube": "https://www.youtube.com/watch?v=3W63w9EfAA0",
+        "twitter": "https://twitter.com/ybworldnow"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "youtube": "fill",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://youngbloodworldwide.com/pages/about",
+          "sourceLabel": "Official About Us | Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We are a lifestyle brand that sells premium accessories and apparel at a fraction of traditional retail prices, while also helping underrepresented entrepreneurs achieve their goals."
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://youngbloodworldwide.com/",
+          "sourceLabel": "Official Men’s &amp; Women stainless steel watch &amp; Clothing | Youngblood &ndash; Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/watch?v=3W63w9EfAA0"
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://youngbloodworldwide.com/",
+          "sourceLabel": "Official Men’s &amp; Women stainless steel watch &amp; Clothing | Youngblood &ndash; Youngblood Worldwide page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/ybworldnow"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f1732a06-a158-41a9-a365-67134f646b40",
+      "expectedIdentity": {
+        "name": "Young Risers LLC",
+        "city": "Brooklyn",
+        "state": "NY",
+        "website": "https://www.youngrisers.com/"
+      },
+      "patch": {
+        "description": "Early childhood education and childcare programs for ages 3 months to 5 years.",
+        "phone": "(718) 439-4817",
+        "tags": [
+          "infant care",
+          "toddler programs",
+          "pre-k programs",
+          "childcare",
+          "early childhood education"
+        ],
+        "facebook": "https://www.facebook.com/365915853486738",
+        "instagram": "https://www.instagram.com/youngrisers2013"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill",
+        "instagram": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://youngrisers.com/",
+          "sourceLabel": "Official Young Risers Infant-Toddler/ Pre-K Programs - Childcare, Education page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Young Risers Infant-Toddler/ Pre-K Programs - Childcare, Education Now Enrolling 3 Months - 5 Years"
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://youngrisers.com/contact-us",
+          "sourceLabel": "Official Contact Us page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: (718) 439-4817 / info@youngrisers.com"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://youngrisers.com/",
+          "sourceLabel": "Official Young Risers Infant-Toddler/ Pre-K Programs - Childcare, Education page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Young Risers Infant-Toddler/ Pre-K Programs - Childcare, Education Now Enrolling 3 Months - 5 Years"
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://youngrisers.com/",
+          "sourceLabel": "Official Young Risers Infant-Toddler/ Pre-K Programs - Childcare, Education page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/365915853486738"
+        },
+        {
+          "field": "instagram",
+          "sourceUrl": "https://youngrisers.com/",
+          "sourceLabel": "Official Young Risers Infant-Toddler/ Pre-K Programs - Childcare, Education page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this instagram profile link: https://www.instagram.com/youngrisers2013"
+        }
+      ]
+    },
+    {
+      "businessId": "source_6a83a53d-228f-4d21-87ab-d95577dc93b3",
+      "expectedIdentity": {
+        "name": "Young World Marketing",
+        "city": "Milwaukee",
+        "state": "WI",
+        "website": "https://youngworldmarketing.com/"
+      },
+      "patch": {
+        "description": "Young World Marketing is a Milwaukee web design, SEO, and digital marketing agency serving businesses throughout the Milwaukee metro.",
+        "phone": "(414) 296-4023"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://youngworldmarketing.com/",
+          "sourceLabel": "Official Milwaukee Web Design &amp; SEO | Young World Marketing — Building Websites That Mean Business page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Young World Marketing is a Milwaukee web design, SEO, and digital marketing agency serving businesses throughout Milwaukee, Wauwatosa, Shorewood, Mequon, and the Greater Milwaukee Area.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://youngworldmarketing.com/milwaukee-seo-services",
+          "sourceLabel": "Official Milwaukee SEO Services | SEO Company Milwaukee WI | Young World Marketing page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"(414) 296-4023\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_4b8c737c-53b9-4d18-80c4-ad159e11f293",
+      "expectedIdentity": {
+        "name": "Your Ori",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://yourori.ai/shop/"
+      },
+      "patch": {
+        "description": "Your Òrí is a clean beauty brand that creates skincare and body care products using non-toxic cosmetic formulations and ethically sourced ingredients.",
+        "tiktok": "https://www.tiktok.com/@shopyourori?_t=ZT-8wgblaExvtj&",
+        "youtube": "https://youtube.com/@shopyourori?si=K8J5MIC3Hnm0cP_6"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "tiktok": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yourori.ai/about/",
+          "sourceLabel": "Official About - Your Ori page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Your Òrí is a clean beauty brand with a vision to create skincare that not only nourishes your body naturally but also creates radiant skin. All of our skincare essentials are crafted with care, using only high-quality and ethically sourced ingredients that are gentle on your skin and kind to the planet.\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://yourori.ai/shop/",
+          "sourceLabel": "Official Shop - Your Ori page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@shopyourori?_t=ZT-8wgblaExvtj&"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://yourori.ai/shop/",
+          "sourceLabel": "Official Shop - Your Ori page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://youtube.com/@shopyourori?si=K8J5MIC3Hnm0cP_6"
+        }
+      ]
+    },
+    {
+      "businessId": "source_8b55654a-1799-4ee9-99ad-c58f4b5ea1a0",
+      "expectedIdentity": {
+        "name": "Your Shirts Ink’D Custom Printing",
+        "city": "Memphis",
+        "state": "TN",
+        "website": "https://yourshirtsinkd.com/"
+      },
+      "patch": {
+        "description": "Screen printing and embroidery services; a full-service printing company.",
+        "hours": "Mon - Fri 9:00 am - 6:00 pm; Sat - Sun Closed Weekends By Appointment Only",
+        "phone": "(901) 691-7479"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://yourshirtsinkd.com/about",
+          "sourceLabel": "Official About | Your Shirts Ink'd &amp; More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"a full service Screen Printing and Embroidery Company\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://yourshirtsinkd.com/contact",
+          "sourceLabel": "Official Contact | Your Shirts Ink'd &amp; More | Memphis page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Business Hours Mon - Fri 9:00 am - 6:00 pm Sat - Sun Closed Weekends By Appointment Only\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://yourshirtsinkd.com/",
+          "sourceLabel": "Official T-Shirt Screen Printing | Your Shirts Ink'd &amp; More page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Give us a call: (901) 691-7479\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_45cbc1d9-bc80-48ae-a09b-ca9bf63db498",
+      "expectedIdentity": {
+        "name": "YourTempo",
+        "city": "Nashville",
+        "state": "TN",
+        "website": "https://www.yourtempo.com/"
+      },
+      "patch": {
+        "description": "Music business management software offering solutions for booking agencies, tour management, talent buying, and music publishing.",
+        "phone": "629-895-5285",
+        "tags": [
+          "booking agencies",
+          "tour management",
+          "talent buying",
+          "music publishing"
+        ],
+        "twitter": "https://x.com/hey_tempo",
+        "youtube": "https://www.youtube.com/@YourTempo"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.yourtempo.com/",
+          "sourceLabel": "Official End to End Music Business Management Software - YourTempo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our goal has always been to streamline the processes of booking agencies , tour management , talent buyers , and more."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.yourtempo.com/contact",
+          "sourceLabel": "Official Contact YourTempo | Music Management Software Support - YourTempo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Call Us 629-895-5285"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.yourtempo.com/about-us",
+          "sourceLabel": "Official About Us | Music Industry Management Software - YourTempo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Our goal has always been to streamline the processes of booking agencies , tour management , talent buying software and crew, as well as music publishers so they can spend more time focusing on what they do best--making great music and sharing it with the world."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://www.yourtempo.com/",
+          "sourceLabel": "Official End to End Music Business Management Software - YourTempo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://x.com/hey_tempo"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://www.yourtempo.com/",
+          "sourceLabel": "Official End to End Music Business Management Software - YourTempo page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/@YourTempo"
+        }
+      ]
+    },
+    {
+      "businessId": "source_ad86cf93-f257-400c-98ce-cb36c733a3bb",
+      "expectedIdentity": {
+        "name": "ZamCo Directional Drilling LLC",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.zam-construction.com/"
+      },
+      "patch": {
+        "description": "ZamCo is a veteran-owned directional drilling and utility company started in the heart of Houston, Texas. We provide a wide range of services in the underground construction industry.",
+        "phone": "832-306-0400",
+        "tags": [
+          "horizontal directional drilling",
+          "primary & secondary electrical duct bank construction",
+          "telecom duct bank construction",
+          "concrete duct bank construction",
+          "transformer & equipment pads",
+          "light bases",
+          "water & waste water installation",
+          "bollards",
+          "hdpe installation & handling",
+          "manhole rehabilitation",
+          "telecom underground construction"
+        ],
+        "facebook": "https://www.facebook.com/Zamcodrillers/"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "phone": "fill",
+        "tags": "append",
+        "facebook": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.zam-construction.com/about",
+          "sourceLabel": "Official About | ZamCo Directional Drilling &amp; Utility Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"ZamCo is a veteran-owned directional drilling and utility company started in the heart of Houston, Texas. We provide a wide range of services in the underground construction industry.\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.zam-construction.com/",
+          "sourceLabel": "Official Home | ZamCo Directional Drilling &amp; Utility Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"832-306-0400\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.zam-construction.com/services",
+          "sourceLabel": "Official Services | ZamCo Directional Drilling &amp; Utility Co. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"SERVICES Horizontal Directional Drilling Primary & Secondary Electrical Duct Bank Construction Telecom Duct Bank Construction Concrete Duct Bank Construction Transformer & Equipment Pads Light Bases Water & Waste Water Installation Bollards HDPE Installation & Handling Manhole Rehabilitation Telecom Underground Construction\""
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://www.zam-construction.com/",
+          "sourceLabel": "Official Home | ZamCo Directional Drilling &amp; Utility Company page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Zamcodrillers/"
+        }
+      ]
+    },
+    {
+      "businessId": "source_62ff242a-6c34-4bf1-bf26-dd8d71e3d505",
+      "expectedIdentity": {
+        "name": "ZanNabi Boutique",
+        "city": "Kansas City",
+        "state": "MO",
+        "website": "https://zannabiboutique.com/"
+      },
+      "patch": {
+        "description": "\"Founded by a proud Senegalese mother of three, ZanNabi Boutique blends African heritage, Islamic elegance, and timeless modesty. Our pieces are curated and reimagined for the modern woman who dresses with intention and distinction & express faith and beauty with pride.\"",
+        "hours": "\"Opening hours: Everyday 8:00am - 5:00pm\"",
+        "phone": "\"Phone: +1 (973) 435-3638\"",
+        "tags": [
+          "\"luxury modest fashion\"",
+          "\"abayas\"",
+          "\"hijabs\"",
+          "\"kaftans\""
+        ],
+        "tiktok": "https://www.tiktok.com/@zannabiboutique"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "tiktok": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://zannabiboutique.com/pages/about-us",
+          "sourceLabel": "Official About Us &ndash; ZanNabi Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Founded by a proud Senegalese mother of three, ZanNabi Boutique blends African heritage, Islamic elegance, and timeless modesty. Our pieces are curated and reimagined for the modern woman who dresses with intention and distinction & express faith and beauty with pride.\","
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://zannabiboutique.com/pages/contact",
+          "sourceLabel": "Official Contact &ndash; ZanNabi Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Opening hours: Everyday 8:00am - 5:00pm\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://zannabiboutique.com/pages/contact",
+          "sourceLabel": "Official Contact &ndash; ZanNabi Boutique page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone: +1 (973) 435-3638\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://zannabiboutique.com/",
+          "sourceLabel": "Official ZanNabi Boutique | Luxury Modest Fashion, Abayas, Hijabs, and Kaftans. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"ZanNabi Boutique | Luxury Modest Fashion, Abayas, Hijabs, and Kaftans.\""
+        },
+        {
+          "field": "tiktok",
+          "sourceUrl": "https://zannabiboutique.com/",
+          "sourceLabel": "Official ZanNabi Boutique | Luxury Modest Fashion, Abayas, Hijabs, and Kaftans. page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this tiktok profile link: https://www.tiktok.com/@zannabiboutique"
+        }
+      ]
+    },
+    {
+      "businessId": "source_f618ac1b-d663-4926-8cad-1e84cfddd991",
+      "expectedIdentity": {
+        "name": "Zarka Law Firm",
+        "city": "San Antonio",
+        "state": "TX",
+        "website": "http://www.zarkalawfirm.com/"
+      },
+      "patch": {
+        "description": "Criminal defense and family law firm handling cases such as DWI, assault, drug offenses, domestic violence, divorce, and child custody matters.",
+        "hours": "We love our customers, so feel free to visit during normal business hours.",
+        "phone": "(210) 468-0400",
+        "tags": [
+          "criminal defense",
+          "family law",
+          "dwi",
+          "assault",
+          "drug offenses",
+          "domestic violence",
+          "divorce",
+          "child custody"
+        ],
+        "twitter": "https://twitter.com/zarkalaw"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append",
+        "twitter": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://zarkalawfirm.com/about-us/",
+          "sourceLabel": "Official About Zarka Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We handle a wide range of cases, including DWI , assault, drug offenses , domestic violence , divorce , and child custody matters."
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://zarkalawfirm.com/contact-us/",
+          "sourceLabel": "Official Contact Us | Zarka Law Frm page",
+          "observedAt": "2026-10-15",
+          "confidence": "medium",
+          "note": "Official page evidence: We love our customers, so feel free to visit during normal business hours."
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://zarkalawfirm.com/",
+          "sourceLabel": "Official San Antonio Criminal Lawyer - Experienced Criminal Law | Zarka Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Talk With a Lawyer Now (210) 468-0400"
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://zarkalawfirm.com/about-us/",
+          "sourceLabel": "Official About Zarka Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: We handle a wide range of cases, including DWI , assault, drug offenses , domestic violence , divorce , and child custody matters."
+        },
+        {
+          "field": "twitter",
+          "sourceUrl": "https://zarkalawfirm.com/",
+          "sourceLabel": "Official San Antonio Criminal Lawyer - Experienced Criminal Law | Zarka Law Firm page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this twitter profile link: https://twitter.com/zarkalaw"
+        }
+      ]
+    },
+    {
+      "businessId": "source_b5b5925a-8b82-4837-a407-e64c2fc4c760",
+      "expectedIdentity": {
+        "name": "Zenore",
+        "city": "Charlotte",
+        "state": "NC",
+        "website": "https://zenorehaircare.com/"
+      },
+      "patch": {
+        "description": "Zenore offers hair and beard care products formulated for textured hair and infused with natural, organic ingredients.",
+        "facebook": "https://www.facebook.com/Zenore-Hair-Care-100280735640965",
+        "youtube": "https://www.youtube.com/channel/UC7i_BfzF156fAOXJwfIt6lg"
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "facebook": "fill",
+        "youtube": "fill"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://zenorehaircare.com/",
+          "sourceLabel": "Official Zenore: Men’s Textured Hair & Beard Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"At Zenore, we understand what a desert the men’s hair care market can be for men with textured hair. With the majority of products designed for straight, non-textured hair, our collections are infused with natural, organic ingredients and specifically designed with YOU in mind.\","
+        },
+        {
+          "field": "facebook",
+          "sourceUrl": "https://zenorehaircare.com/",
+          "sourceLabel": "Official Zenore: Men’s Textured Hair & Beard Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this facebook profile link: https://www.facebook.com/Zenore-Hair-Care-100280735640965"
+        },
+        {
+          "field": "youtube",
+          "sourceUrl": "https://zenorehaircare.com/",
+          "sourceLabel": "Official Zenore: Men’s Textured Hair & Beard Care Products page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "The official website includes this youtube profile link: https://www.youtube.com/channel/UC7i_BfzF156fAOXJwfIt6lg"
+        }
+      ]
+    },
+    {
+      "businessId": "source_44b504a0-5646-435f-a724-0f30254828a4",
+      "expectedIdentity": {
+        "name": "Zentric Flo llc",
+        "city": "Las Vegas",
+        "state": "NV",
+        "website": "https://zentricflo.com/"
+      },
+      "patch": {
+        "description": "Zentric Flo is a high-quality yoga accessories company developed with an aim to delight and inspire. Making products that help make yoga more accessible to all."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://zentricflo.com/",
+          "sourceLabel": "Official Zentric Flo Cork Yoga Mats &ndash; Zentric Flo Holistics page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: Zentric Flo is a high-quality yoga accessories company developed with an aim to delight and inspire. Making products that help make yoga more accessible to all."
+        }
+      ]
+    },
+    {
+      "businessId": "national-b7a4d9e1065de7f80c50ed37",
+      "expectedIdentity": {
+        "name": "ZOMA House",
+        "city": "Minneapolis",
+        "state": "MN",
+        "website": "https://www.zomahouse.com/"
+      },
+      "patch": {
+        "description": "ZOMA House is a community art studio, event venue, and storefront in Uptown Minneapolis run by a team of local artists."
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.zomahouse.com/our-story",
+          "sourceLabel": "Official Our Story &mdash; ZOMA House page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"ZOMA House is a community art studio, event venue, and storefront in Uptown Minneapolis run by a team of local artists.\""
+        }
+      ]
+    },
+    {
+      "businessId": "source_11595147-2d92-4b6b-9bc0-5aa7bf3f1a64",
+      "expectedIdentity": {
+        "name": "Zomper & Associates",
+        "city": "Houston",
+        "state": "TX",
+        "website": "http://www.zomper.com/"
+      },
+      "patch": {
+        "description": "Zomper & Associates provides commercial real estate services including acquisitions, dispositions, and development in the Houston market.",
+        "hours": "Monday – Friday, 9am – 6pm CST",
+        "phone": "832.712.6252",
+        "tags": [
+          "commercial acquisitions",
+          "dispositions",
+          "development",
+          "deal sourcing",
+          "underwriting",
+          "asset sales",
+          "leasing",
+          "property sales"
+        ]
+      },
+      "fieldModes": {
+        "description": "replace_generic_directory",
+        "hours": "fill",
+        "phone": "fill",
+        "tags": "append"
+      },
+      "receipts": [
+        {
+          "field": "description",
+          "sourceUrl": "https://www.zomper.com/",
+          "sourceLabel": "Official Zomper & Associates | Commercial Real Estate — Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Houston's commercial real estate specialists — acquisitions, dispositions, and development.\""
+        },
+        {
+          "field": "hours",
+          "sourceUrl": "https://www.zomper.com/contact.html",
+          "sourceLabel": "Official Contact | Zomper &amp; Associates | Houston, TX page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Available Monday – Friday, 9am – 6pm CST\""
+        },
+        {
+          "field": "phone",
+          "sourceUrl": "https://www.zomper.com/",
+          "sourceLabel": "Official Zomper & Associates | Commercial Real Estate — Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Phone 832.712.6252\""
+        },
+        {
+          "field": "service_tags",
+          "sourceUrl": "https://www.zomper.com/",
+          "sourceLabel": "Official Zomper & Associates | Commercial Real Estate — Houston page",
+          "observedAt": "2026-10-15",
+          "confidence": "high",
+          "note": "Official page evidence: \"Services Commercial Properties & Leasing Acquisitions Deal Sourcing & Underwriting Dispositions Asset Sales & Strategy\""
+        }
+      ]
+    }
+  ],
+  "contentFingerprint": "c71930f7a81366df5e0cdf7f9a96b0190fe6c0ece4318e9f124e799be3e55851"
+}
