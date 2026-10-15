@@ -15,6 +15,7 @@ import {
   VIBES_BY_CATEGORY,
   VIBE_ELIGIBLE_CATEGORIES,
   OWNERSHIP_DESIGNATIONS,
+  ownershipDesignationDisplayLabel,
 } from "@workspace/constants";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -610,7 +611,7 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                   { label: "Hours", value: hours === "Custom" ? customHours : hours || "—" },
                   { label: "Price", value: priceRange || "—" },
                   { label: "Social", value: [instagram, facebook, tiktok].filter(Boolean).join(", ") || "—" },
-                  { label: "Ownership", value: ownershipDesignations.join(", ") || "—" },
+                  { label: "Ownership", value: ownershipDesignations.map(ownershipDesignationDisplayLabel).join(", ") || "—" },
                   { label: "Vibes", value: selectedVibes.join(", ") || "—" },
                   { label: "Research source", value: researchSourceLabel || "—" },
                   { label: "Backfill batch", value: intakeBatchReference || "—" },

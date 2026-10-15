@@ -3,6 +3,9 @@ import {
   extractExplicitOwnershipDesignationFilterIds,
   normalizeOwnershipDesignationFilterIds,
   normalizeSupportLensMode,
+  ownershipDesignationBadgeLabel,
+  ownershipDesignationDisplayLabel,
+  ownershipDesignationFilterId,
   ownershipDesignationStorageValues,
   replaceSelectedSupportLensOption,
   selectedSupportLensOption,
@@ -61,6 +64,15 @@ describe("explicit ownership support requests", () => {
     expect(ownershipDesignationStorageValues("guatemalan").values).toContain(
       "Guatemalan-Owned",
     );
+  });
+
+  it("formats Black identity labels for sentence and badge display without changing filter ids", () => {
+    expect(ownershipDesignationDisplayLabel("black-owned")).toBe("Black-owned");
+    expect(ownershipDesignationDisplayLabel("BLACK OWNED")).toBe("Black-owned");
+    expect(ownershipDesignationDisplayLabel("black business owners")).toBe("Black business owners");
+    expect(ownershipDesignationDisplayLabel("Black / African American-Owned")).toBe("Black-owned");
+    expect(ownershipDesignationBadgeLabel("black-owned")).toBe("Black-Owned");
+    expect(ownershipDesignationFilterId("black-owned")).toBe("black-african-american");
   });
 
   it("normalizes legacy aliases, applies all-of inputs independently, and defaults empty lenses to all businesses", () => {

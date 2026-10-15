@@ -63,6 +63,7 @@ export {
   BLACK_OWNED_DESIGNATIONS,
   ownershipDesignationFilterId,
   ownershipDesignationDisplayLabel,
+  ownershipDesignationBadgeLabel,
   ownershipDesignationStorageValues,
   normalizeOwnershipDesignationFilterIds,
   SUPPORT_LENS_MODES,

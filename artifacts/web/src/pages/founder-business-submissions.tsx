@@ -3,6 +3,7 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link, Redirect } from "wouter";
 import { Layout } from "@/components/layout";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { ownershipDesignationDisplayLabel } from "@workspace/constants";
 import {
   CheckCircle2, XCircle, MessageSquare, Clock, Store,
   MapPin, Globe, Phone, ArrowLeft, RefreshCw, ChevronDown,
@@ -254,7 +255,7 @@ export default function FounderBusinessSubmissions() {
                         <div className="flex flex-wrap gap-1.5 sm:col-span-2">
                           {s.ownership_designations.map((d) => (
                             <span key={d} className="text-xs px-2.5 py-1 bg-[#CA922B]/10 text-[#CA922B] rounded-full font-medium">
-                              {d}
+                              {ownershipDesignationDisplayLabel(d)}
                             </span>
                           ))}
                         </div>

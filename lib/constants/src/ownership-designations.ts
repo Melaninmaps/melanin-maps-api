@@ -194,11 +194,20 @@ export function ownershipDesignationFilterId(value: string): string {
   return OWNERSHIP_FILTER_ALIASES[normalized] ?? normalized;
 }
 
-/** Member-facing wording for a canonical stored designation. */
+/**
+ * Member-facing wording for a designation without changing its stored value,
+ * identifier, or filter behavior.
+ */
 export function ownershipDesignationDisplayLabel(value: string): string {
   return ownershipDesignationFilterId(value) === "black-african-american"
     ? "Black-owned"
-    : value;
+    : value.replace(/\bblack\b/giu, "Black");
+}
+
+/** Title-case wording for compact ownership badges. */
+export function ownershipDesignationBadgeLabel(value: string): string {
+  const label = ownershipDesignationDisplayLabel(value);
+  return label === "Black-owned" ? "Black-Owned" : label;
 }
 
 export const OWNERSHIP_FILTER_OPTIONS = OWNERSHIP_DESIGNATIONS.map((label) => ({

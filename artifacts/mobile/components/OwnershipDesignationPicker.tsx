@@ -2,7 +2,10 @@ import React, { useMemo, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
-import { filterOwnershipDesignationSearchOptions } from "@workspace/constants";
+import {
+  filterOwnershipDesignationSearchOptions,
+  ownershipDesignationDisplayLabel,
+} from "@workspace/constants";
 
 export type OwnershipDesignationOption = { id: string; label: string };
 
@@ -53,7 +56,10 @@ export function OwnershipDesignationPicker({
     onChange(selectedIds.filter((selected) => selected !== id));
   }
 
-  const selected = selectedIds.map((id) => options.find((option) => option.id === id) ?? { id, label: id });
+  const selected = selectedIds.map((id) => options.find((option) => option.id === id) ?? {
+    id,
+    label: ownershipDesignationDisplayLabel(id),
+  });
   const showMenu = focused || normalizedQuery.length > 0;
 
   return (

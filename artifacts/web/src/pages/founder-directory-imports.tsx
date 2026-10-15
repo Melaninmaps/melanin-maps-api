@@ -3,6 +3,7 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link, Redirect } from "wouter";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import { Layout } from "@/components/layout";
+import { ownershipDesignationDisplayLabel } from "@workspace/constants";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -734,7 +735,7 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
                     {(candidate.ownership_designations ?? []).length > 0 && (
                       <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
                         <p className="text-sm font-bold text-violet-950">External ownership designation</p>
-                        <p className="mt-1 text-sm text-violet-900/80">{candidate.ownership_designations.join(", ")}</p>
+                        <p className="mt-1 text-sm text-violet-900/80">{candidate.ownership_designations.map(ownershipDesignationDisplayLabel).join(", ")}</p>
                         {candidate.ownership_evidence && <p className="mt-2 text-xs leading-relaxed text-violet-900/75">{candidate.ownership_evidence}</p>}
                       </div>
                     )}

@@ -8,6 +8,8 @@ function source(relativePath: string): string {
 
 const submissionSource = source("../pages/submit-business.tsx");
 const selectorSource = source("../components/OwnershipDesignationCombobox.tsx");
+const adminAddSource = source("../components/AdminAddBusiness.tsx");
+const founderSubmissionSource = source("../pages/founder-business-submissions.tsx");
 const designationSearchSource = source("../../../../lib/constants/src/ownership-designation-search.ts");
 
 describe("community business ownership designation parity", () => {
@@ -43,5 +45,12 @@ describe("community business ownership designation parity", () => {
     expect(designationSearchSource).toContain('"bl"');
     expect(designationSearchSource).toContain('"his"');
     expect(designationSearchSource).toContain("DESIGNATION_SEARCH_ALIASES");
+  });
+
+  it("formats legacy Black ownership labels only at display boundaries", () => {
+    expect(selectorSource).toContain("ownershipDesignationDisplayLabel");
+    expect(selectorSource).toContain("label: ownershipDesignationDisplayLabel(value)");
+    expect(adminAddSource).toContain("ownershipDesignations.map(ownershipDesignationDisplayLabel)");
+    expect(founderSubmissionSource).toContain("ownershipDesignationDisplayLabel(d)");
   });
 });
