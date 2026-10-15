@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { DisclaimerNote } from "@/components/DisclaimerNote";
+import { DEVICE_FARM_TEST_IDS } from "@/lib/deviceFarmSelectors";
 
 const WIDGET_ORDER_KEY = "@melanin_maps_safety_widget_order";
 
@@ -190,7 +191,11 @@ export default function SafetyHubTab() {
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View
+      testID={DEVICE_FARM_TEST_IDS.safetyScreen}
+      accessibilityLabel="Safety screen"
+      style={[styles.root, { backgroundColor: colors.background }]}
+    >
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
         {canNavigateBack ? (
           <TouchableOpacity

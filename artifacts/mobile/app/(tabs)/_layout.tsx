@@ -7,6 +7,7 @@ import * as SecureStore from "expo-secure-store";
 
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
+import { DEVICE_FARM_TEST_IDS } from "@/lib/deviceFarmSelectors";
 
 function ClassicTabLayout() {
   const colors = useColors();
@@ -84,6 +85,8 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Discover",
+          tabBarButtonTestID: DEVICE_FARM_TEST_IDS.discoverTab,
+          tabBarAccessibilityLabel: "Discover tab",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="safari" tintColor={color} size={24} />
@@ -96,6 +99,8 @@ function ClassicTabLayout() {
         name="map"
         options={{
           title: "Map",
+          tabBarButtonTestID: DEVICE_FARM_TEST_IDS.mapTab,
+          tabBarAccessibilityLabel: "Map tab",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="map" tintColor={color} size={24} />
@@ -108,6 +113,8 @@ function ClassicTabLayout() {
         name="safety-hub"
         options={{
           title: "Safety",
+          tabBarButtonTestID: DEVICE_FARM_TEST_IDS.safetyTab,
+          tabBarAccessibilityLabel: "Safety tab",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="shield.fill" tintColor={color} size={24} />

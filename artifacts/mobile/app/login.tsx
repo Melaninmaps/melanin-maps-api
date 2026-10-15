@@ -28,6 +28,7 @@ import {
   hasStoredToken,
   authenticateWithBiometrics,
 } from "@/hooks/useBiometrics";
+import { DEVICE_FARM_TEST_IDS } from "@/lib/deviceFarmSelectors";
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -309,6 +310,8 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
+      testID={DEVICE_FARM_TEST_IDS.loginScreen}
+      accessibilityLabel="Sign-in screen"
       style={[styles.root, { backgroundColor: c.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
@@ -534,6 +537,8 @@ export default function LoginScreen() {
                   value={emailVal}
                   onChangeText={setEmailVal}
                   keyboardType="email-address"
+                  testID={DEVICE_FARM_TEST_IDS.loginEmail}
+                  accessibilityLabel="Email address"
                   autoCapitalize="none"
                   autoCorrect={false}
                   autoFocus
@@ -554,10 +559,12 @@ export default function LoginScreen() {
                     placeholder="Your password"
                     placeholderTextColor={c.mutedForeground}
                     value={passwordVal}
-                    onChangeText={setPasswordVal}
-                    secureTextEntry={!showPw}
-                    autoCapitalize="none"
-                    autoCorrect={false}
+                  onChangeText={setPasswordVal}
+                  secureTextEntry={!showPw}
+                  testID={DEVICE_FARM_TEST_IDS.loginPassword}
+                  accessibilityLabel="Password"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                   />
                   <TouchableOpacity
                     activeOpacity={0.85}
@@ -592,6 +599,8 @@ export default function LoginScreen() {
                 ]}
                 onPress={handleEmailSignIn}
                 disabled={loading}
+                testID={DEVICE_FARM_TEST_IDS.loginSubmit}
+                accessibilityLabel="Sign in"
                 activeOpacity={0.85}
               >
                 {loading && emailMode ? (
