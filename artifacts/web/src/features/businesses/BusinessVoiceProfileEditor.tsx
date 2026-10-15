@@ -61,14 +61,18 @@ export function BusinessVoiceProfileEditor({
         const response = await authenticatedFetch(
           `${BASE}api/businesses/${businessId}/kinfolk-voice-profile`,
         );
-        const payload = (await response.json()) as {
+        const payload = (await response.json().catch(() => ({}))) as {
           profile?: Profile | null;
           error?: string;
         };
-        if (!response.ok)
+        if (!response.ok) {
+          const unavailableMessage = response.status >= 500
+            ? "Business Voice Profile is temporarily unavailable in this environment. Your business profile has not changed."
+            : "Could not load Business Voice Profile.";
           throw new Error(
-            payload.error ?? "Could not load Business Voice Profile.",
+            payload.error ?? unavailableMessage,
           );
+        }
         if (active && payload.profile)
           setProfile({ ...EMPTY, ...payload.profile });
       } catch (error) {

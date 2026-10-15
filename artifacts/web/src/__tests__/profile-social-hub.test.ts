@@ -36,10 +36,20 @@ describe("social profile hub", () => {
     expect(profile).toContain("Sign Out");
     expect(profile).toContain('id="legacy-community-badges"');
     expect(profile).toContain("<BadgePanel");
-    expect(profile).toContain('href="/business-dashboard"');
+    expect(profile).toContain("href={`/business-dashboard?businessId=${encodeURIComponent(");
     expect(app).toContain('<Route path="/profile">');
     expect(app).toContain('<Route path="/connections">');
     expect(app).toContain('<Route path="/circles">');
     expect(app).toContain('<Route path="/messages">');
+  });
+
+  it("discovers business access from approved relationships instead of a stale user flag", () => {
+    expect(profile).toContain('authenticatedFetch(`${BASE}api/businesses/mine/managed`)');
+    expect(profile).toContain('aria-label="My Business"');
+    expect(profile).toContain("Approved businesses connected to this member account.");
+    expect(profile).toContain("Checking your business access…");
+    expect(profile).toContain("Your business access could not load.");
+    expect(profile).toContain("businessId=${encodeURIComponent(business.id)}");
+    expect(profile).not.toContain("isBusinessOwner={Boolean((auth?.user as any)?.isBusinessOwner)}");
   });
 });

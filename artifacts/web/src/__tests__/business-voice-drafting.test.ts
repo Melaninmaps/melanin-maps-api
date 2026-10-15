@@ -25,4 +25,10 @@ describe("Business Voice editable drafting presentation", () => {
     expect(source).toContain("never posts, sends, replies, or changes your business record");
     expect(source).not.toContain("window.open(");
   });
+
+  it("explains server-side voice-profile unavailability without implying a profile change", () => {
+    expect(source).toContain("Business Voice Profile is temporarily unavailable in this environment.");
+    expect(source).toContain("Your business profile has not changed.");
+    expect(source).toContain("response.json().catch(() => ({}))");
+  });
 });

@@ -57,7 +57,7 @@ import {
   X,
   Pencil,
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { KinfolkExperienceSettings } from "@/components/kinfolk/KinfolkExperienceSettings";
 import { ProfilePresentationControls } from "@/components/profile/ProfilePresentationControls";
 import { SocialVideoPreferences } from "@/features/profile/SocialVideoPreferences";
@@ -66,6 +66,7 @@ import { MemberContextPreferences } from "@/features/profile/MemberContextPrefer
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -837,6 +838,16 @@ const PROFILE_SETTINGS_FOLDERS: ReadonlyArray<{
   },
 ];
 
+type ManagedBusinessProfileLink = {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  state: string;
+  verified: boolean;
+  status: string;
+};
+
 type ProfileHubProps = {
   activeSection: ProfileHubSection;
   onSectionChange: (section: ProfileHubSection) => void;
@@ -859,7 +870,10 @@ type ProfileHubProps = {
     createdAt: string;
   }>;
   circles: Array<{ id: string; name: string; memberCount?: number; description?: string }>;
-  isBusinessOwner: boolean;
+  managedBusinesses: ManagedBusinessProfileLink[];
+  managedBusinessesLoading: boolean;
+  managedBusinessesError: string | null;
+  onRetryManagedBusinesses: () => void;
   membershipLabel: string | null;
 };
 
@@ -883,7 +897,10 @@ function SocialProfileHub({
   connectionsCount,
   recentReviews,
   circles,
-  isBusinessOwner,
+  managedBusinesses,
+  managedBusinessesLoading,
+  managedBusinessesError,
+  onRetryManagedBusinesses,
   membershipLabel,
 }: ProfileHubProps) {
   const displayName = [profile?.firstName, profile?.lastName]
@@ -1130,8 +1147,37 @@ function SocialProfileHub({
                 <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Account & settings</h2>
                 <p className="mt-1 max-w-2xl text-sm leading-6 text-[#3A1F0E]/65">Profile editing, privacy, password, safety alerts, Kinfolk preferences, badges, and other existing account controls are available below. Nothing has been moved to a new data source.</p>
               </div>
-              {isBusinessOwner ? <Link href="/business-dashboard" className="inline-flex items-center gap-2 rounded-xl border border-[#CA922B]/40 bg-white px-3.5 py-2 text-sm font-bold text-[#8D5C17] hover:bg-[#F5EBD8]"><Building2 className="h-4 w-4" /> Business dashboard</Link> : null}
             </div>
+            <section aria-label="My Business" className="mt-5 rounded-2xl border border-[#CA922B]/25 bg-white p-4">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl bg-[#CA922B]/10 p-2"><Building2 className="h-5 w-5 text-[#8D5C17]" /></div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-serif text-lg font-bold text-[#2B1507]">My Business</h3>
+                  <p className="mt-0.5 text-sm leading-5 text-[#3A1F0E]/60">Approved businesses connected to this member account.</p>
+                </div>
+              </div>
+              {managedBusinessesLoading ? <p className="mt-4 text-sm text-[#3A1F0E]/60" role="status">Checking your business access…</p> : null}
+              {managedBusinessesError ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert">
+                  <span>{managedBusinessesError}</span>
+                  <button type="button" onClick={onRetryManagedBusinesses} className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-bold text-red-800">Try again</button>
+                </div>
+              ) : null}
+              {!managedBusinessesLoading && !managedBusinessesError && managedBusinesses.length === 0 ? <p className="mt-4 text-sm text-[#3A1F0E]/60">No approved business is connected to this member account yet.</p> : null}
+              {managedBusinesses.length > 0 ? (
+                <div className="mt-4 space-y-2">
+                  {managedBusinesses.map((business) => (
+                    <Link key={business.id} href={`/business-dashboard?businessId=${encodeURIComponent(business.id)}`} className="flex items-center justify-between gap-3 rounded-xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-3 transition-colors hover:border-[#CA922B]/45 hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-[#2B1507]">{business.name}</p>
+                        <p className="mt-0.5 text-xs text-[#3A1F0E]/55">{business.city}, {business.state} · {business.category}</p>
+                      </div>
+                      <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[#8D5C17]">Manage <ChevronRight className="h-4 w-4" /></span>
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </section>
             <div className="mt-4 flex flex-wrap gap-2 text-sm">
               <button type="button" onClick={() => onOpenSettingsFolder("profile")} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-bold text-[#8D5C17] hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
                 <Pencil className="h-4 w-4" /> Edit profile
@@ -1197,6 +1243,42 @@ export default function Profile() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
   const [membershipLabel, setMembershipLabel] = useState<string | null>(null);
+  const [managedBusinesses, setManagedBusinesses] = useState<ManagedBusinessProfileLink[]>([]);
+  const [managedBusinessesLoading, setManagedBusinessesLoading] = useState(false);
+  const [managedBusinessesError, setManagedBusinessesError] = useState<string | null>(null);
+
+  const loadManagedBusinesses = useCallback(async () => {
+    if (!auth?.user) {
+      setManagedBusinesses([]);
+      setManagedBusinessesLoading(false);
+      setManagedBusinessesError(null);
+      return;
+    }
+    setManagedBusinessesLoading(true);
+    setManagedBusinessesError(null);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/businesses/mine/managed`);
+      const payload = (await response.json().catch(() => ({}))) as {
+        businesses?: ManagedBusinessProfileLink[];
+        error?: string;
+      };
+      if (!response.ok || !Array.isArray(payload.businesses)) {
+        throw new Error(payload.error ?? "Your business access could not load.");
+      }
+      setManagedBusinesses(payload.businesses);
+    } catch (error) {
+      setManagedBusinesses([]);
+      setManagedBusinessesError(
+        error instanceof Error ? error.message : "Your business access could not load.",
+      );
+    } finally {
+      setManagedBusinessesLoading(false);
+    }
+  }, [auth?.user]);
+
+  useEffect(() => {
+    void loadManagedBusinesses();
+  }, [loadManagedBusinesses]);
 
   // ── Safety Alerts settings ─────────────────────────────────────────────────
   const [safetyAlertPolice, setSafetyAlertPolice] = useState(true);
@@ -1732,7 +1814,10 @@ export default function Profile() {
           connectionsCount={connectionsCount}
           recentReviews={recentReviews}
           circles={myCircles}
-          isBusinessOwner={Boolean((auth?.user as any)?.isBusinessOwner)}
+          managedBusinesses={managedBusinesses}
+          managedBusinessesLoading={managedBusinessesLoading}
+          managedBusinessesError={managedBusinessesError}
+          onRetryManagedBusinesses={() => { void loadManagedBusinesses(); }}
           membershipLabel={membershipLabel}
         />
       </div>
@@ -2254,8 +2339,8 @@ export default function Profile() {
                   <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
                 </div>
               </Link>
-              {(auth?.user as any)?.isBusinessOwner && (
-                <Link href="/business-dashboard">
+              {managedBusinesses.length > 0 && (
+                <Link href={`/business-dashboard?businessId=${encodeURIComponent(managedBusinesses[0].id)}`}>
                   <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
                     <div className="flex items-center gap-2.5">
                       <Building2 className="w-4 h-4 text-[#CA922B] shrink-0" />
