@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, savedPlacesTable, businessesTable, notificationsTable, pool } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
 import { sendPushToUser } from "../lib/pushNotifications";
+import { recordNonSensitiveDiscoveryInterest } from "../kinfolk/interest-intelligence-service";
 
 const HEALTH_KEYWORDS = ["health", "medical", "clinic", "hospital", "pharmacy", "wellness", "mental", "therapy", "doctor", "dental", "urgent care", "rehabilitation", "counseling", "psychiatr", "addiction"];
 
@@ -47,10 +48,19 @@ router.post("/saved-places", async (req: Request, res: Response) => {
     (async () => {
       try {
         const [biz] = await db
-          .select({ name: businessesTable.name, submittedById: businessesTable.submittedById })
+          .select({ name: businessesTable.name, submittedById: businessesTable.submittedById, category: businessesTable.category })
           .from(businessesTable)
           .where(eq(businessesTable.id, businessId))
           .limit(1);
+        // An explicit save can count toward an optional, reviewable broad
+        // discovery pattern. The helper ignores sensitive categories and stores
+        // no listing name, search text, or other activity detail.
+        if (biz) {
+          void recordNonSensitiveDiscoveryInterest({
+            userId: req.user!.id,
+            businessCategory: biz.category,
+          }).catch(() => undefined);
+        }
         const ownerId = biz?.submittedById;
         if (!ownerId || ownerId === req.user!.id) return;
         const title = `⭐ Someone saved ${biz.name}`;

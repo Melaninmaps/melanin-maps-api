@@ -6538,6 +6538,78 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         ON mwm_persistent_safety_location_audit (owner_id, created_at DESC);
     `,
   },
+  {
+    // Separate, opt-in, non-sensitive interest evidence. This never imports
+    // private memories, chat content, search text, profile data, or Circle data.
+    name: "kinfolk_interest_intelligence_v1",
+    sql: `
+      ALTER TABLE user_preferences
+        ADD COLUMN IF NOT EXISTS interest_recognition_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS proactive_discovery_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS interest_notifications_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
+      CREATE TABLE IF NOT EXISTS kinfolk_member_interests (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        label VARCHAR(100) NOT NULL,
+        category VARCHAR(64) NOT NULL,
+        source VARCHAR(32) NOT NULL DEFAULT 'explicit'
+          CHECK (source IN ('explicit', 'conversation_pattern', 'discovery_pattern')),
+        state VARCHAR(24) NOT NULL DEFAULT 'confirmed'
+          CHECK (state IN ('tentative', 'confirmed', 'paused', 'dismissed')),
+        observation_count INTEGER NOT NULL DEFAULT 1 CHECK (observation_count >= 1),
+        confidence INTEGER NOT NULL DEFAULT 100 CHECK (confidence BETWEEN 0 AND 100),
+        is_temporary BOOLEAN NOT NULL DEFAULT FALSE,
+        expires_at TIMESTAMPTZ,
+        confirmed_at TIMESTAMPTZ,
+        paused_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, label),
+        CHECK ((is_temporary = FALSE) OR expires_at IS NOT NULL)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_member_interests_member_active_idx
+        ON kinfolk_member_interests (user_id, state, updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS kinfolk_interest_recommendations (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        resource_type VARCHAR(32) NOT NULL CHECK (resource_type IN ('business', 'event')),
+        resource_id VARCHAR(255) NOT NULL,
+        interest_label VARCHAR(100) NOT NULL,
+        source VARCHAR(32) NOT NULL DEFAULT 'interest' CHECK (source IN ('interest', 'circle')),
+        reason TEXT NOT NULL,
+        rank INTEGER NOT NULL DEFAULT 0 CHECK (rank >= 0),
+        status VARCHAR(24) NOT NULL DEFAULT 'shown' CHECK (status IN ('shown', 'saved', 'dismissed')),
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, resource_type, resource_id)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_interest_recommendations_member_active_idx
+        ON kinfolk_interest_recommendations (user_id, status, expires_at DESC);
+
+      CREATE TABLE IF NOT EXISTS kinfolk_interest_recommendation_feedback (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        recommendation_id INTEGER NOT NULL REFERENCES kinfolk_interest_recommendations(id) ON DELETE CASCADE,
+        feedback VARCHAR(32) NOT NULL CHECK (feedback IN ('interested', 'not_interested', 'hide')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, recommendation_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS kinfolk_circle_interest_shares (
+        id SERIAL PRIMARY KEY,
+        circle_id INTEGER NOT NULL REFERENCES kinfolk_circles(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        interest_id INTEGER NOT NULL REFERENCES kinfolk_member_interests(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (circle_id, user_id, interest_id)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_circle_interest_shares_circle_idx
+        ON kinfolk_circle_interest_shares (circle_id, created_at DESC);
+    `,
+  },
 ];
 
 /**
@@ -7613,6 +7685,43 @@ export async function ensureKinfolkFeedbackFlywheelSchema(logger?: Logger): Prom
     "SELECT business_id, topic_key, threshold, member_count, status FROM kinfolk_community_need_insights LIMIT 0",
   );
   log("Kinfolk feedback flywheel schema is ready");
+}
+
+// Interest Intelligence is a member-controlled release surface. In explicit
+// feature-release mode the broad runner may be off, so this exact additive
+// schema is established before the route reads or writes a preference.
+const KINFOLK_INTEREST_INTELLIGENCE_SCHEMA_MIGRATIONS = new Set([
+  "kinfolk_interest_intelligence_v1",
+]);
+let kinfolkInterestIntelligenceSchemaReady: Promise<void> | null = null;
+
+export async function ensureKinfolkInterestIntelligenceSchema(logger?: Logger): Promise<void> {
+  if (kinfolkInterestIntelligenceSchemaReady) return kinfolkInterestIntelligenceSchemaReady;
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[kinfolk-interest-intelligence-schema] ${msg}`);
+  const ready = (async () => {
+    const migrations = MIGRATIONS.filter((migration) =>
+      KINFOLK_INTEREST_INTELLIGENCE_SCHEMA_MIGRATIONS.has(migration.name),
+    );
+    if (migrations.length !== KINFOLK_INTEREST_INTELLIGENCE_SCHEMA_MIGRATIONS.size) {
+      throw new Error("Kinfolk interest intelligence schema migration definition is incomplete.");
+    }
+    for (const migration of migrations) {
+      await pool.query(migration.sql);
+    }
+    await Promise.all([
+      pool.query("SELECT interest_recognition_enabled, proactive_discovery_enabled FROM user_preferences LIMIT 0"),
+      pool.query("SELECT id, user_id, label, state FROM kinfolk_member_interests LIMIT 0"),
+      pool.query("SELECT id, user_id, resource_type, resource_id FROM kinfolk_interest_recommendations LIMIT 0"),
+      pool.query("SELECT circle_id, user_id, interest_id FROM kinfolk_circle_interest_shares LIMIT 0"),
+    ]);
+    log("Kinfolk interest intelligence schema is ready");
+  })();
+  kinfolkInterestIntelligenceSchemaReady = ready.catch((error) => {
+    kinfolkInterestIntelligenceSchemaReady = null;
+    throw error;
+  });
+  return kinfolkInterestIntelligenceSchemaReady;
 }
 
 export async function ensureCanonicalMwmOwnerAttachmentAuditSchema(logger?: Logger): Promise<void> {
