@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { authenticatedAdminFetch, readAdminJson } from "@/lib/adminDataFetch";
 
 const RECONCILIATION_SCOPE = {
-  city: "Bensalem",
-  state: "PA",
-  batch: "Latino-Hispanic-Source-Reconciliation-v1",
+  batch: "founder_city_directories_2026_09_27",
   ownershipScope: "latino",
   existingOnly: true,
   currentOnly: false,
@@ -130,7 +128,7 @@ export function FounderSourceReconciliation() {
             <h3 id="founder-source-reconciliation-heading" className="font-serif text-lg font-semibold">Latino / Hispanic source reconciliation</h3>
           </div>
           <p className="text-sm leading-6 text-teal-900">
-            Fixed scope: Bensalem, PA, batch <code className="font-semibold">Latino-Hispanic-Source-Reconciliation-v1</code>. This existing-profile-only process never creates a profile, map pin, or Kinfolk membership record. Kinfolk Current matches are excluded during planning and rechecked immediately before mutation.
+            Fixed scope: the retained, documented <code className="font-semibold">founder_city_directories_2026_09_27</code> batch (3,139 Latino / Hispanic source records). This existing-profile-only process never creates a profile, map pin, or Kinfolk membership record. Kinfolk Current matches are excluded during planning and rechecked immediately before mutation.
           </p>
           <p className="text-sm leading-6 text-teal-900">
             Preview the current page first. The matching apply action remains disabled until that preview confirms the no-create scope and explicit Kinfolk Current exclusion; each request is limited to 100 source records.
