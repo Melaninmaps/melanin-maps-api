@@ -6,7 +6,7 @@
 
 **Completed repair source:** `candidate/mwm-kinfolk-voice-meaning-live` at `8779b90969f2fe42017830259dfdb823eaf7a8e6`. It is already an ancestor of the authoritative candidate, so the prescribed repair-first order is preserved in the branch ancestry without creating a duplicate merge.
 
-**Combined source candidate:** `integration/kinfolk-interest-intelligence-source-candidate-20261015`, initially merged as `3ca91dc80f66dc51838b93672817f7b8463ecabb` before this runbook receipt.
+**Combined source candidate:** `integration/kinfolk-interest-intelligence-source-candidate-20261015`, initially merged as `3ca91dc80f66dc51838b93672817f7b8463ecabb` and subsequently advanced to `2b3bdf7ced30f18c21cd8ed214e5f6e2aca43046` by approved integration work. The candidate contains the completed Interest Intelligence merge and PR #283's test-maintenance merge; it does not contain the still-open PR #293 or draft PR #284.
 
 **Merge requirement:** Complete and validate the separate repair work first. Do **not** deploy this feature branch by itself and do **not** apply the feature migration to shared staging before the combined candidate exists.
 
@@ -131,14 +131,33 @@ The following completed on the merged integration worktree. No deployment, datab
 | Web production build | Pass (non-blocking existing source-map and chunk-size warnings only) |
 | Merge conflict marker scan and whitespace check | Pass |
 
-### Inherited test-suite failures deliberately not changed
+### Previously inherited test-suite failures — resolved by existing maintenance work
 
-These failures were discovered by the wider targeted suites but are not caused by the feature integration. The failing test files are unchanged from `f818056c…`, and the Interest Intelligence diff does not alter the asserted routes/components.
+PR #283 (`chore/kinfolk-interest-intelligence-stale-tests-20261015`) was merged into this candidate as `1cda52adef5da0770f3849c4e9861f3e91a43f28`. Its source commit `5b217958` updated only stale test contracts: five API `kinfolk-route-wiring` assertions now use the current `hasPrivateQuestionAttachment` boundary, and the Web Private Places assertion now matches the existing `separate from Kinfolk memory` disclosure.
 
-1. `artifacts/api-server/src/kinfolk/__tests__/kinfolk-route-wiring.test.ts`: **5 stale string-contract assertions** fail against the already-current cumulative candidate. The assertions require older `verifiedImageUrls` and current-research code-shapes that are absent in both `f818056c…` and the integration candidate. This requires a separate intentional Kinfolk route-test reconciliation; it is not safe to change in this integration task.
-2. `artifacts/web/src/__tests__/kinfolk-experience-settings.test.ts`: **1 stale wording assertion** requires the literal `never chat memory` in `PrivatePlacesSettings`. That wording is absent in both `f818056c…` and the integration candidate; the only merged settings change is adding the two Interest Intelligence components.
+Revalidation on the current combined source passed:
 
-Neither inherited defect blocks the feature-specific, conversation-signal, settings, For You, business/event discovery, or Circle-path tests listed above. They remain explicit release follow-ups and prevent a claim that the entire historical Kinfolk suite is green.
+| Reconciled suite | Result |
+|---|---|
+| API `kinfolk-route-wiring.test.ts` | Pass — 59 tests |
+| Web `kinfolk-experience-settings.test.ts` | Pass — 5 tests |
+| Combined Interest Intelligence/API route rerun | Pass — 70 tests across 4 files |
+| Combined Interest Intelligence/Web rerun | Pass — 7 tests across 2 files |
+| Native Interest Intelligence rerun | Pass — 3 tests |
+| API, web, and native TypeScript rerun | Pass |
+
+The reconciliation changes no runtime behavior; it aligns string-based tests with already-current behavior.
+
+## Main-integration dependencies and handoff
+
+This document and the companion completion matrix are the handoff on the shared, advancing integration branch. The Interest Intelligence source is preserved in that branch and its test-maintenance dependency is already included.
+
+| Workstream | Current status | Ownership / next boundary |
+|---|---|---|
+| Interest Intelligence source | Integrated and source-complete in this candidate | Main Kinfolk integration keeps the branch intact and performs the separately authorized isolated-staging gate. |
+| PR #293 — Organization Transparency | **Open; not included**. Its head is `b160ba23a87bf7fb8d3233865e48755bfe778406`, based on `a7fb0fb3…`. | Organization Transparency workstream owns its isolated tables, approval-required migration, routes, and any future intentional merge. Do not apply its migration or enable its feature flag as part of Interest Intelligence. |
+| PR #284 — Device Farm P0 selectors | **Draft; not included**. Its head is `30d51d1e0d5407c1b897a04efa742531f4ce2a5b`, based on `1cda52ad…`. | Mobile QA workstream owns rebase/merge readiness and the Device Farm selector contract. Do not start AWS sessions, upload an app, or create a build as part of this handoff. |
+| Background monitoring and member push delivery | **Intentionally incomplete follow-up** | A future authorized workstream must choose delivery channel, scheduler/trigger, user-facing frequency/quiet-hour controls, and operational monitoring. It is not present or implied in this candidate. |
 
 ## Rollback behavior
 
