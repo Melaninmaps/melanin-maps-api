@@ -330,5 +330,22 @@ export function isGenericProfileEnrichmentDescriptionPlaceholder(
     "tbd",
     "coming soon",
   ]);
-  return genericLabels.has(normalized);
+  if (genericLabels.has(normalized)) return true;
+
+  // Imported source cohorts sometimes placed a short ownership/cuisine label
+  // or a source-directory boilerplate sentence in `description`. Those are
+  // not business-specific profile copy, so a high-confidence first-party
+  // description may replace them. This remains a closed, deliberately narrow
+  // set; a descriptive sentence that happens to mention Black ownership is
+  // still preserved.
+  const genericOwnershipLabels = new Set([
+    "black owned",
+    "black owned jamaican caribbean",
+    "black american southern",
+  ]);
+  if (genericOwnershipLabels.has(normalized)) return true;
+  return [
+    /^black owned directory listing .+$/,
+    /^black owned black business ecosystem directory evidence (?:is )?current to \d{4} .+$/,
+  ].some((pattern) => pattern.test(normalized));
 }
