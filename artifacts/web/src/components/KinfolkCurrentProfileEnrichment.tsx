@@ -1,5 +1,5 @@
-import { ChangeEvent, useMemo, useRef, useState } from "react";
-import { CheckCircle2, FileText, Loader2, Upload } from "lucide-react";
+import { ChangeEvent, useMemo, useState } from "react";
+import { CheckCircle2, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authenticatedAdminFetch, readAdminJson } from "@/lib/adminDataFetch";
 
@@ -46,7 +46,6 @@ export function KinfolkCurrentProfileEnrichment({
   scope: "kinfolk_current" | "non_kinfolk_current";
   onApplied?: () => void;
 }) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const [manifest, setManifest] = useState<ManifestPreview | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -118,10 +117,16 @@ export function KinfolkCurrentProfileEnrichment({
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <input ref={inputRef} type="file" accept="application/json,.json" className="sr-only" onChange={handleManifestFile} />
-          <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} className="border-amber-400 bg-white text-amber-950 hover:bg-amber-100">
-            <Upload className="mr-2 h-4 w-4" aria-hidden="true" /> Load reviewed batch
-          </Button>
+          <label className="flex min-w-56 flex-col gap-1 text-xs font-medium text-amber-950">
+            <span>Load reviewed batch</span>
+            <input
+              aria-label="Upload reviewed profile enrichment manifest"
+              type="file"
+              accept="application/json,.json"
+              className="block w-full cursor-pointer rounded-md border border-amber-400 bg-white px-2 py-1.5 text-xs text-amber-950 file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-amber-100 file:px-2 file:py-1 file:text-xs file:font-medium file:text-amber-950 hover:bg-amber-50"
+              onChange={handleManifestFile}
+            />
+          </label>
           <Button type="button" disabled={!manifest || submitting} onClick={applyManifest} className="bg-amber-800 text-white hover:bg-amber-900">
             {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" />}
             {submitting ? "Applying source-backed fields…" : "Apply reviewed enrichment"}
