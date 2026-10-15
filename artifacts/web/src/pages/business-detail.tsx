@@ -18,7 +18,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord } from "@/features/businesses/businessHero";
-import { detectSocialVideoPlatform, type SocialVideoPlatform } from "@workspace/constants";
+import {
+  detectSocialVideoPlatform,
+  ownershipDesignationDisplayLabel,
+  type SocialVideoPlatform,
+} from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 import { normalizeBusinessSocialProfileUrl } from "@/lib/businessProfileSocialUrl";
 
@@ -1024,7 +1028,7 @@ export default function BusinessDetail() {
                 {badges.map((d: string) => (
                   <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#CA922B]/10 border border-[#CA922B]/30 text-[#CA922B]">
                     {isCommunityReportedOwnership ? <Users className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}
-                    {isCommunityReportedOwnership ? `Community-reported: ${d}` : d}
+                    {isCommunityReportedOwnership ? `Community-reported: ${ownershipDesignationDisplayLabel(d)}` : ownershipDesignationDisplayLabel(d)}
                   </span>
                 ))}
                 {isVerified && (

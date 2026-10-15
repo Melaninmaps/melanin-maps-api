@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Search, MapPin, Star, Loader2, ArrowRight, Plus, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import BookstoreDiscoveryPanel from "@/components/BookstoreDiscoveryPanel";
-import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
+import {
+  OWNERSHIP_FILTER_OPTIONS,
+  ownershipDesignationDisplayLabel,
+  ownershipDesignationFilterId,
+} from "@workspace/constants";
 import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
 
 const BASE = import.meta.env.BASE_URL;
@@ -75,7 +79,7 @@ interface UniversalResult {
 // ── Constants ───────────────────────────────────────────────────────────────
 
 const OWNERSHIP_FILTERS = [
-  { id: "black-african-american", label: "Black / African American-Owned" },
+  { id: "black-african-american", label: "Black-owned" },
   { id: "latino-hispanic", label: "Latino / Hispanic-Owned" },
   { id: "no_tag", label: "No ownership tag" },
 ] as const;
@@ -103,9 +107,9 @@ const CATEGORY_FILTERS = [
 
 function ownershipLabel(biz: Business): string | null {
   if (biz.ownershipDesignations && biz.ownershipDesignations.length > 0) {
-    return biz.ownershipDesignations[0];
+    return ownershipDesignationDisplayLabel(biz.ownershipDesignations[0]);
   }
-  if (biz.blackOwned) return "Black / African American-Owned";
+  if (biz.blackOwned) return "Black-owned";
   return null;
 }
 

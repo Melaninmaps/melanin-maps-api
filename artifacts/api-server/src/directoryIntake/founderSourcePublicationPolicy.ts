@@ -2,10 +2,10 @@ import type { SourceBackedDirectoryCandidate } from "./sourceBackedDirectoryCand
 
 /**
  * Founder-authorized publication rules for the immutable source-directory packs.
- * A source listing supports its stated ownership designation, but an ordinary MWM
- * listing still needs one member-facing official destination: an official website
- * OR a source-listed official social profile. Address and geocode govern map pins
- * only; they never govern whether a legitimate online/service business is listed.
+ * A source listing supports its stated ownership designation. A valid official
+ * website or source-listed social profile is retained when supplied, but neither
+ * is required for a founder-authorized ownership-directory profile to be
+ * discoverable. Address and geocode govern map pins only.
  */
 export const FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION =
   "founder-source-presence-publication-v1" as const;
@@ -98,4 +98,4 @@ export function founderSourceObservedAt(batch: string): string {
 }
 
 export const FOUNDER_SOURCE_PUBLICATION_RULE =
-  "A founder-provided ownership directory receipt supports only its stated ownership designation. Publish a source-backed unclaimed profile when at least one valid official website or source-listed official social profile is present; reject directory/marketplace URLs from the official-website field; require address plus audited geocode only for a map pin.";
+  "A founder-provided ownership directory receipt supports only its stated ownership designation. Publish a source-backed unclaimed profile with its retained source identity even when no official website or social profile is available. Keep valid official website and social links when supplied; reject directory and marketplace URLs from the official-website field; require address plus audited geocode only for a map pin.";
