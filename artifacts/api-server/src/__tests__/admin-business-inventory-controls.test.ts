@@ -301,6 +301,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     }
     expect(adminRoute).toContain("function parseAdminBusinessSearchTerms");
     expect(adminRoute).toContain("function escapeAdminBusinessSearchTerm");
+    expect(adminRoute).toContain("/\\bwomen(?:[-\\s]+)owned\\b/gi");
+    expect(adminRoute).toContain("ownershipDesignationSearchTerm");
     expect(adminRoute).toContain("ILIKE ${parameter} ESCAPE");
     expect(adminScreen).toContain("Use quotes for one exact phrase");
   });
