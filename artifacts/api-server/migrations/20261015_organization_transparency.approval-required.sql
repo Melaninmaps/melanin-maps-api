@@ -60,6 +60,14 @@ CREATE INDEX organization_profiles_exact_name_status_idx
 CREATE INDEX organization_profiles_surface_states_idx
   ON organization_profiles (factual_status, search_status, map_pin_status, kinfolk_status, promotion_status);
 
+-- One stable identity claim makes the exact-name/location duplicate guard
+-- atomic without publishing, pinning, or changing any existing directory row.
+CREATE TABLE organization_profile_identity_claims (
+  identity_key VARCHAR(620) PRIMARY KEY,
+  organization_id UUID NOT NULL UNIQUE REFERENCES organization_profiles(id) ON DELETE RESTRICT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE organization_locations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organization_profiles(id) ON DELETE RESTRICT,
@@ -98,6 +106,7 @@ CREATE TABLE organization_experiences (
   reviewer_member_id VARCHAR(255) REFERENCES users(id) ON DELETE RESTRICT,
   moderated_at TIMESTAMPTZ,
   moderation_note VARCHAR(2000),
+  safety_flags JSONB NOT NULL DEFAULT '[]'::jsonb,
   client_request_id VARCHAR(128),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -123,6 +132,32 @@ CREATE UNIQUE INDEX organization_experiences_member_request_key
   WHERE client_request_id IS NOT NULL;
 CREATE INDEX organization_experiences_public_summary_idx
   ON organization_experiences (organization_id, moderation_status, privacy_level, created_at DESC);
+
+CREATE TABLE organization_experience_appeals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  experience_id UUID NOT NULL REFERENCES organization_experiences(id) ON DELETE RESTRICT,
+  organization_id UUID NOT NULL REFERENCES organization_profiles(id) ON DELETE RESTRICT,
+  appellant_member_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  body VARCHAR(2000) NOT NULL,
+  status VARCHAR(40) NOT NULL DEFAULT 'pending_moderation',
+  reviewer_member_id VARCHAR(255) REFERENCES users(id) ON DELETE RESTRICT,
+  reviewer_note VARCHAR(2000),
+  reviewed_at TIMESTAMPTZ,
+  client_request_id VARCHAR(128),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT organization_experience_appeals_status_check CHECK (status IN (
+    'pending_moderation', 'accepted', 'declined', 'withdrawn'
+  ))
+);
+CREATE UNIQUE INDEX organization_experience_appeals_one_open_per_experience_member
+  ON organization_experience_appeals (experience_id, appellant_member_id)
+  WHERE status = 'pending_moderation';
+CREATE UNIQUE INDEX organization_experience_appeals_member_request_key
+  ON organization_experience_appeals (experience_id, appellant_member_id, client_request_id)
+  WHERE client_request_id IS NOT NULL;
+CREATE INDEX organization_experience_appeals_review_idx
+  ON organization_experience_appeals (status, created_at ASC);
 
 -- A claim establishes a limited ability to submit correction, response, and
 -- dispute requests after human verification. It never changes experience state.

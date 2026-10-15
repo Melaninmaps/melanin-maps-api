@@ -27,8 +27,10 @@ function isAuthorizedFounderReconciliationRoute(req: Request): boolean {
   // per receipt page and has its own authorization plus idempotency guards.
   // It must not consume the member-facing browse budget during a large,
   // administrator-authorized repair run.
-  return req.path === "/admin/founder-source-publication"
-    || req.path.startsWith("/admin/founder-source-publication/");
+  return (
+    req.path === "/admin/founder-source-publication" ||
+    req.path.startsWith("/admin/founder-source-publication/")
+  );
 }
 
 export const generalLimiter = rateLimit({
@@ -40,9 +42,10 @@ export const generalLimiter = rateLimit({
   // Auth routes are protected by authLimiter in app.ts and must never consume
   // a signed-in member's general browsing budget.
   // KinfolkAI has its own token-bucket queue; skip it here too.
-  skip: (req: Request) => isAuthRoute(req)
-    || req.path.startsWith("/kinfolk")
-    || (isAuthorizedFounderReconciliationRoute(req) && isAdmin(req)),
+  skip: (req: Request) =>
+    isAuthRoute(req) ||
+    req.path.startsWith("/kinfolk") ||
+    (isAuthorizedFounderReconciliationRoute(req) && isAdmin(req)),
   handler: (_req, res) => {
     res.status(429).json({
       error: "Too many requests, please try again later.",
@@ -76,7 +79,10 @@ export const reviewLimiter = rateLimit({
   limit: 5,
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: { error: "You can submit up to 5 reviews per hour. Please wait before submitting another." },
+  message: {
+    error:
+      "You can submit up to 5 reviews per hour. Please wait before submitting another.",
+  },
 });
 
 export const surveyLimiter = rateLimit({
@@ -84,7 +90,10 @@ export const surveyLimiter = rateLimit({
   limit: 10,
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: { error: "You can submit up to 10 safety reports per hour. Please try again later." },
+  message: {
+    error:
+      "You can submit up to 10 safety reports per hour. Please try again later.",
+  },
 });
 
 export const reportLimiter = rateLimit({
@@ -113,7 +122,8 @@ export const essentialServicesLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: generalApiKey,
   message: {
-    error: "You have made several essential-services searches. Please try again in a little while.",
+    error:
+      "You have made several essential-services searches. Please try again in a little while.",
     code: "ESSENTIAL_SERVICES_RATE_LIMITED",
   },
 });
@@ -127,13 +137,50 @@ export const businessSubmissionLimiter = rateLimit({
   keyGenerator: generalApiKey,
   handler: (_req, res) => {
     res.status(429).json({
-      error: "You can submit up to 20 community businesses per hour. Please try again later.",
+      error:
+        "You can submit up to 20 community businesses per hour. Please try again later.",
       code: "BUSINESS_SUBMISSION_RATE_LIMITED",
       retryAfterSeconds: 60 * 60,
     });
   },
 });
 
+// Organization Transparency intake is review-first and deliberately has a
+// tighter member-keyed write budget than routine browsing. This prevents a
+// shared IP address from throttling an entire household or workplace.
+export const organizationTransparencySubmissionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "test",
+  keyGenerator: generalApiKey,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error:
+        "You can submit up to 10 organizations per hour. Please try again later.",
+      code: "ORGANIZATION_SUBMISSION_RATE_LIMITED",
+      retryAfterSeconds: 60 * 60,
+    });
+  },
+});
+
+export const organizationExperienceLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "test",
+  keyGenerator: generalApiKey,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error:
+        "You can submit up to 5 organization experiences per hour. Please try again later.",
+      code: "ORGANIZATION_EXPERIENCE_RATE_LIMITED",
+      retryAfterSeconds: 60 * 60,
+    });
+  },
+});
 
 export const libraryResearchLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -143,7 +190,8 @@ export const libraryResearchLimiter = rateLimit({
   keyGenerator: generalApiKey,
   handler: (_req, res) => {
     res.status(429).json({
-      error: "Live Library research is temporarily rate limited. Please try again shortly.",
+      error:
+        "Live Library research is temporarily rate limited. Please try again shortly.",
       code: "LIBRARY_RESEARCH_RATE_LIMITED",
       retryAfterSeconds: 15 * 60,
     });

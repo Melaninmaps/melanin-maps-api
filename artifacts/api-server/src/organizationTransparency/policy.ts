@@ -61,6 +61,19 @@ export const EXPERIENCE_STATUSES = [
 ] as const;
 export type ExperienceStatus = (typeof EXPERIENCE_STATUSES)[number];
 
+export const EXPERIENCE_RELATIONSHIP_LABELS: Record<
+  ExperienceRelationship,
+  string
+> = {
+  current_employee: "Current employee",
+  former_employee: "Former employee",
+  contractor: "Contractor",
+  job_applicant: "Job applicant",
+  customer: "Customer",
+  patient: "Patient",
+  caregiver: "Caregiver",
+};
+
 export const ORGANIZATION_FACTUAL_STATUSES = [
   "pending_moderation",
   "factual_approved",
@@ -155,6 +168,13 @@ export function experienceContextForRelationship(
   )
     return "workplace";
   return "customer";
+}
+
+/** Public labels describe a relationship only; member identity is never exposed. */
+export function pseudonymousExperienceLabel(
+  relationship: ExperienceRelationship,
+): string {
+  return EXPERIENCE_RELATIONSHIP_LABELS[relationship];
 }
 
 export function experienceCategoriesFor(input: {

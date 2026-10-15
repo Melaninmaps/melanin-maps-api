@@ -38,6 +38,12 @@ export type OrganizationExperienceInput = Readonly<{
   categoryCodes: string[];
   narrative?: string;
   privacyLevel: ExperiencePrivacyLevel;
+  organizationLocationId?: string;
+  clientRequestId?: string;
+}>;
+
+export type OrganizationExperienceAppealInput = Readonly<{
+  body: string;
   clientRequestId?: string;
 }>;
 
@@ -250,6 +256,18 @@ export function validateOrganizationExperience(
     categoryCodes,
     narrative: optionalText(body, "narrative", 4_000),
     privacyLevel,
+    organizationLocationId: optionalText(body, "organizationLocationId", 64),
+    clientRequestId: normalizeClientRequestId(body),
+  };
+}
+
+/** Appeals add reviewer context; they never self-publish or alter the original. */
+export function validateOrganizationExperienceAppeal(
+  input: unknown,
+): OrganizationExperienceAppealInput {
+  const body = record(input, "organization experience appeal");
+  return {
+    body: requiredText(body, "body", 2_000),
     clientRequestId: normalizeClientRequestId(body),
   };
 }
