@@ -3,6 +3,7 @@ import {
   KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION,
   PROFILE_ENRICHMENT_MANIFEST_VERSION,
   isEmptyProfileEnrichmentField,
+  isGenericProfileEnrichmentDescriptionPlaceholder,
   kinfolkCurrentProfileEnrichmentFingerprint,
   parseKinfolkCurrentProfileEnrichmentManifest,
   parseProfileEnrichmentManifest,
@@ -82,7 +83,7 @@ describe("Kinfolk Current profile enrichment manifest", () => {
     expect(() => parseKinfolkCurrentProfileEnrichmentManifest(input)).toThrow("exactly one receipt");
   });
 
-  it("only fills absent profile fields and never overwrites existing content", () => {
+  it("only fills absent profile fields and appends service tags", () => {
     expect(isEmptyProfileEnrichmentField("description", null)).toBe(true);
     expect(isEmptyProfileEnrichmentField("hours", "  ")).toBe(true);
     expect(isEmptyProfileEnrichmentField("phone", "215-555-0100")).toBe(false);
@@ -108,5 +109,11 @@ describe("Kinfolk Current profile enrichment manifest", () => {
       })],
     });
     expect(() => parseProfileEnrichmentManifest(unsafeMode)).toThrow("Only descriptions");
+  });
+
+  it("only identifies a closed list of generic imported descriptions as replaceable", () => {
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Barber")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Beauty & Hair")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Neighborhood barbershop offering fades and beard care.")).toBe(false);
   });
 });

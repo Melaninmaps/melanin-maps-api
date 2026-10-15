@@ -261,3 +261,52 @@ export function isEmptyProfileEnrichmentField(field: EnrichmentPatchField, value
   if (field === "tags") return !Array.isArray(value) || value.length === 0;
   return !String(value ?? "").trim();
 }
+
+function normalizedPlaceholderText(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("en-US")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * An automated official-site enrichment may replace only a short generic
+ * description that contributes no business-specific information. This keeps a
+ * high-confidence first-party fact from being blocked by legacy import labels
+ * such as "Barber" while preserving every substantive existing description.
+ */
+export function isGenericProfileEnrichmentDescriptionPlaceholder(
+  value: unknown,
+): boolean {
+  const normalized = normalizedPlaceholderText(value);
+  if (!normalized) return false;
+  const genericLabels = new Set([
+    "business",
+    "barber",
+    "barbershop",
+    "hair salon",
+    "restaurant",
+    "beauty hair",
+    "beauty personal care",
+    "food drink",
+    "food beverage",
+    "health wellness",
+    "professional services",
+    "arts culture",
+    "retail shopping",
+    "faith community",
+    "home trades",
+    "childcare education",
+    "fashion",
+    "retail",
+    "store",
+    "shop",
+    "not provided",
+    "not available",
+    "n a",
+    "tbd",
+    "coming soon",
+  ]);
+  return genericLabels.has(normalized);
+}

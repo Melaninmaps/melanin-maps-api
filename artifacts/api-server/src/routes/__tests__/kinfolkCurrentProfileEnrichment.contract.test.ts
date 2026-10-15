@@ -14,17 +14,18 @@ describe("source-receipted profile enrichment route", () => {
     expect(route).toContain("parseProfileEnrichmentManifest");
     expect(route).toContain("BEGIN ISOLATION LEVEL SERIALIZABLE");
     expect(route).toContain("kinfolkCurrentSqlPredicate");
-    expect(route).toContain("manifest.scope === \"kinfolk_current\"");
+    expect(route).toContain('manifest.scope === "kinfolk_current"');
     expect(route).toContain("profileEnrichmentIdentityMatches");
   });
 
-  it("uses audited receipts for the approved additive profile fields", () => {
+  it("uses audited receipts for approved additive and generic-placeholder fields", () => {
     expect(route).toContain("isEmptyProfileEnrichmentField");
+    expect(route).toContain("isGenericProfileEnrichmentDescriptionPlaceholder");
+    expect(route).toContain('receipt.confidence === "high"');
     expect(route).toContain('"instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"');
     expect(route).toContain("sourceReceipts.length !== Object.keys(fillOnlyPatch).length");
     expect(route).toContain("business_profile_field_receipts");
     expect(route).toContain("business_admin_profile_edit_audit_events");
-    expect(route).toContain("isGenericDirectoryProfileDescription");
   });
 
   it("holds scope, lifecycle, identity, and populated-value conflicts without overwriting", () => {

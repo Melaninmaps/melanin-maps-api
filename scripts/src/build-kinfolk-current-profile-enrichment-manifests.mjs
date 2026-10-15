@@ -2,7 +2,7 @@
 /**
  * Build bounded, fingerprinted, source-receipted Admin manifests from official
  * website extraction packets. This is read-only: the audited Admin apply route
- * performs the current identity, scope, receipt, conflict, and lifecycle checks.
+ * performs current identity, scope, receipt, conflict, and lifecycle checks.
  */
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
@@ -45,25 +45,77 @@ function readJsonl(text) {
   return text.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
 }
 
-function receiptFor(field, accepted, page) {
+function hasControlCharacter(value) {
+  return /[\u0000-\u001F\u007F]/.test(String(value ?? ""));
+}
+
+function strictText(value, maximum) {
+  if (typeof value !== "string" || hasControlCharacter(value)) return null;
+  const result = value.trim();
+  return result && result.length <= maximum ? result : null;
+}
+
+function displayText(value, maximum, fallback) {
+  const result = String(value ?? "").replace(/[\u0000-\u001F\u007F]+/g, " ").replace(/\s+/g, " ").trim().slice(0, maximum);
+  return result || fallback;
+}
+
+function publicHttpUrl(value) {
+  const text = strictText(value, 512);
+  if (!text) return null;
+  try {
+    const url = new URL(text);
+    const host = url.hostname.toLocaleLowerCase();
+    const privateHost = host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.startsWith("127.") || host.startsWith("10.") || host.startsWith("192.168.") || /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+    if (!/^https?:$/.test(url.protocol) || !host || privateHost) return null;
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function observationDate(value) {
+  const text = strictText(value, 10);
+  return text && /^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(Date.parse(`${text}T00:00:00Z`)) ? text : null;
+}
+
+function validFieldValue(field, value) {
+  if (field === "tags") {
+    if (!Array.isArray(value) || value.length === 0 || value.length > 12) return null;
+    const tags = [...new Set(value.map((tag) => strictText(tag, 80)).filter(Boolean))];
+    return tags.length ? tags : null;
+  }
+  const maximum = field === "description" ? 700 : field === "hours" ? 255 : 30;
+  const text = strictText(value, maximum);
+  if (!text) return null;
+  if (field === "phone") {
+    const digitCount = text.replace(/\D/g, "").length;
+    if (digitCount < 7 || digitCount > 15) return null;
+  }
+  return text;
+}
+
+function receiptFor(field, accepted, page, observedAt, sourceUrl) {
+  const evidenceQuote = displayText(accepted.evidenceQuote, 900, "Official website page evidence.");
   return {
     field: FIELD_TO_RECEIPT[field],
-    sourceUrl: page.sourceUrl,
-    sourceLabel: `Official ${page.title?.trim() || "website"} page`,
-    observedAt: accepted.observedAt,
+    sourceUrl,
+    sourceLabel: displayText(`Official ${page.title?.trim() || "website"} page`, 255, "Official website page"),
+    observedAt,
     confidence: accepted.confidence,
-    note: `Official page evidence: ${accepted.evidenceQuote}`.slice(0, 1000),
+    note: displayText(`Official page evidence: ${evidenceQuote}`, 1000, "Official website page evidence."),
   };
 }
 
-function socialReceipt(field, url, page, observedAt) {
+function socialReceipt(field, url, page, observedAt, sourceUrl) {
   return {
     field: FIELD_TO_RECEIPT[field],
-    sourceUrl: page.sourceUrl,
-    sourceLabel: `Official ${page.title?.trim() || "website"} page`,
+    sourceUrl,
+    sourceLabel: displayText(`Official ${page.title?.trim() || "website"} page`, 255, "Official website page"),
     observedAt,
     confidence: "high",
-    note: `The official website includes this ${field} profile link: ${url}`.slice(0, 1000),
+    note: displayText(`The official website includes this ${field} profile link: ${url}`, 1000, "Official website social link."),
   };
 }
 
@@ -80,8 +132,14 @@ function sourceSnapshotValue(snapshot, field) {
 }
 
 function genericDirectoryDescription(value) {
-  const normalized = String(value ?? "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
-  return /\bbusiness in\b|\blisted by\b|\bblack business directory\b|\bcurrent public source\b/.test(normalized);
+  const normalized = String(value ?? "").trim().toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, " ").trim();
+  return new Set([
+    "business", "barber", "barbershop", "hair salon", "restaurant",
+    "beauty hair", "beauty personal care", "food drink", "food beverage",
+    "health wellness", "professional services", "arts culture", "retail shopping",
+    "faith community", "home trades", "childcare education", "fashion", "retail",
+    "store", "shop", "not provided", "not available", "n a", "tbd", "coming soon",
+  ]).has(normalized);
 }
 
 /**
@@ -91,39 +149,47 @@ function genericDirectoryDescription(value) {
  */
 export function candidateFromProposal(proposal, pagePacket) {
   const pages = pagePacket?.pages ?? [];
-  const identityConfirmed = proposal.identityConfirmed || pagePacket?.disposition === "READY_FOR_EXTRACTION";
-  if (!identityConfirmed || !pages[0]?.sourceUrl) return null;
+  const identityConfirmed = proposal?.identityConfirmed || pagePacket?.disposition === "READY_FOR_EXTRACTION";
+  const businessId = strictText(proposal?.businessId, 255);
+  const name = strictText(proposal?.businessName, 255);
+  const city = strictText(proposal?.city, 100);
+  const state = strictText(proposal?.state, 50);
+  const website = proposal?.website ? publicHttpUrl(proposal.website) : null;
+  const observedAt = observationDate(proposal?.observedAt ?? pagePacket?.completedAt?.slice(0, 10));
+  if (!identityConfirmed || !businessId || !name || !city || !state || !observedAt || (proposal?.website && !website)) return null;
+
   const patch = {};
   const fieldModes = {};
   const receipts = [];
-  for (const accepted of proposal.accepted ?? []) {
-    if (!FIELD_TO_RECEIPT[accepted.field] || Object.hasOwn(patch, accepted.field)) continue;
+  for (const accepted of proposal?.accepted ?? []) {
+    const field = accepted?.field;
+    if (!FIELD_TO_RECEIPT[field] || Object.hasOwn(patch, field)) continue;
     const page = pages[accepted.sourcePageIndex];
-    if (!page?.sourceUrl || !accepted.evidenceQuote || !accepted.observedAt) continue;
-    patch[accepted.field] = accepted.value;
-    fieldModes[accepted.field] = accepted.field === "tags"
+    const sourceUrl = publicHttpUrl(page?.sourceUrl);
+    const value = validFieldValue(field, accepted?.value);
+    if (!sourceUrl || !value || !strictText(accepted?.evidenceQuote, 600) || !["high", "medium"].includes(accepted?.confidence)) continue;
+    patch[field] = value;
+    fieldModes[field] = field === "tags"
       ? "append"
-      : accepted.field === "description" && genericDirectoryDescription(proposal.sourceSnapshot?.Description)
+      : field === "description" && accepted.confidence === "high" && genericDirectoryDescription(proposal.sourceSnapshot?.Description)
         ? "replace_generic_directory"
         : "fill";
-    receipts.push(receiptFor(accepted.field, accepted, page));
+    receipts.push(receiptFor(field, accepted, page, observedAt, sourceUrl));
   }
-  for (const [field, url] of Object.entries(pagePacket?.officialSocialLinks ?? {})) {
-    if (!SOCIAL_FIELDS.has(field) || typeof url !== "string" || !url.trim() || Object.hasOwn(patch, field)) continue;
+  const socialPage = pages[0];
+  const socialSourceUrl = publicHttpUrl(socialPage?.sourceUrl);
+  for (const [field, rawUrl] of Object.entries(pagePacket?.officialSocialLinks ?? {})) {
+    const url = publicHttpUrl(rawUrl);
+    if (!SOCIAL_FIELDS.has(field) || !url || !socialSourceUrl || Object.hasOwn(patch, field)) continue;
     if (sourceSnapshotValue(pagePacket.sourceSnapshot, field)) continue;
     patch[field] = url;
     fieldModes[field] = "fill";
-    receipts.push(socialReceipt(field, url, pages[0], proposal.observedAt ?? pagePacket.completedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10)));
+    receipts.push(socialReceipt(field, url, socialPage, observedAt, socialSourceUrl));
   }
   if (Object.keys(patch).length === 0 || receipts.length !== Object.keys(patch).length) return null;
   return {
-    businessId: proposal.businessId,
-    expectedIdentity: {
-      name: proposal.businessName,
-      city: proposal.city,
-      state: proposal.state,
-      website: proposal.website || null,
-    },
+    businessId,
+    expectedIdentity: { name, city, state, website },
     patch,
     fieldModes,
     receipts,
@@ -142,13 +208,7 @@ export function buildManifests(proposals, packets, {
   const manifests = [];
   for (let index = 0; index < candidates.length; index += batchSize) {
     const batchNumber = String(Math.floor(index / batchSize) + 1).padStart(3, "0");
-    const base = {
-      version: VERSION,
-      scope,
-      batchId: `${batchPrefix}-${batchNumber}`,
-      generatedAt,
-      candidates: candidates.slice(index, index + batchSize),
-    };
+    const base = { version: VERSION, scope, batchId: `${batchPrefix}-${batchNumber}`, generatedAt, candidates: candidates.slice(index, index + batchSize) };
     manifests.push({ ...base, contentFingerprint: manifestFingerprint(base) });
   }
   return { candidates, manifests };
@@ -166,19 +226,9 @@ async function main() {
   const { candidates, manifests } = buildManifests(readJsonl(proposalsText), readJsonl(pagesText), { scope, batchPrefix, generatedAt });
   await fs.mkdir(outputDirectory, { recursive: true });
   for (const manifest of manifests) await fs.writeFile(resolve(outputDirectory, `${manifest.batchId}.json`), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-  const summary = {
-    version: VERSION,
-    scope,
-    productionWrite: false,
-    generatedAt,
-    proposalsPath,
-    pagesPath,
-    candidateCount: candidates.length,
-    batchCount: manifests.length,
-    batches: manifests.map((manifest) => ({ batchId: manifest.batchId, candidateCount: manifest.candidates.length, contentFingerprint: manifest.contentFingerprint })),
-  };
+  const summary = { version: VERSION, scope, productionWrite: false, generatedAt, proposalsPath, pagesPath, candidateCount: candidates.length, batchCount: manifests.length, batches: manifests.map((manifest) => ({ batchId: manifest.batchId, candidateCount: manifest.candidates.length, contentFingerprint: manifest.contentFingerprint })) };
   await fs.writeFile(resolve(outputDirectory, "manifest-index.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
-  process.stdout.write(`Built ${manifests.length} ${scope} profile enrichment manifests for ${candidates.length} business profiles. No production records were changed.\n`);
+  process.stdout.write(`Built ${manifests.length} ${scope} source-receipted profile enrichment manifests for ${candidates.length} business profiles. No production records were changed.\n`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

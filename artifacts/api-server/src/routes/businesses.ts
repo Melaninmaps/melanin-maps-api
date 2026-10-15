@@ -83,6 +83,7 @@ import {
 } from "../businesses/adminBusinessProfilePolicy";
 import {
   isEmptyProfileEnrichmentField,
+  isGenericProfileEnrichmentDescriptionPlaceholder,
   parseProfileEnrichmentManifest,
   type ProfileEnrichmentCandidate,
 } from "../businesses/kinfolkCurrentProfileEnrichment";
@@ -4450,20 +4451,11 @@ function profileEnrichmentIdentityMatches(
     && normalizedProfileEnrichmentWebsite(existing.website) === normalizedProfileEnrichmentWebsite(candidate.expectedIdentity.website);
 }
 
-/** Only a known directory placeholder may be replaced by a first-party description. */
-function isGenericDirectoryProfileDescription(value: string | null): boolean {
-  const normalized = String(value ?? "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
-  return Boolean(normalized) && (
-    /\bbusiness in\b/.test(normalized)
-    || /\blisted by\b/.test(normalized)
-    || /\bblack business directory\b/.test(normalized)
-    || /\bcurrent public source\b/.test(normalized)
-  );
-}
-
-// Apply up to 100 source-receipted, first-party facts. It never changes
-// business identity, addresses, ownership, lifecycle, Kinfolk membership, map
-// coordinates, media, or prices. Every candidate is freshly locked and checked.
+// Apply up to 100 source-receipted, first-party facts. It fills missing profile
+// fields, appends only new service tags, and may replace a high-confidence,
+// known-generic directory description. It never changes identity, addresses,
+// ownership, lifecycle, Kinfolk membership, map coordinates, media, or prices.
+// Every candidate is freshly locked and checked before its own atomic update.
 async function applyProfileEnrichmentManifest(req: Request, res: Response): Promise<void> {
   if (!hasAdminAccess(req)) {
     res.status(403).json({ error: "Admin required" });
@@ -4567,7 +4559,10 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
           fillOnlyPatch[field] = proposedText;
           continue;
         }
-        if (field === "description" && mode === "replace_generic_directory" && isGenericDirectoryProfileDescription(existing.description)) {
+        if (field === "description"
+          && mode === "replace_generic_directory"
+          && candidate.receipts.some((receipt) => receipt.field === "description" && receipt.confidence === "high")
+          && isGenericProfileEnrichmentDescriptionPlaceholder(existing.description)) {
           fillOnlyPatch.description = proposedText;
           continue;
         }
@@ -4597,7 +4592,7 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
         }));
       if (sourceReceipts.length !== Object.keys(fillOnlyPatch).length || Object.entries(fillOnlyPatch).some(([field]) => !sourceReceipts.some((receipt) => receipt.field === receiptFieldForPatchField[field]))) {
         await client.query("ROLLBACK");
-        results.push({ businessId: candidate.businessId, status: "skipped", reason: "The reviewed manifest is missing a source receipt for a fillable profile field." });
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "The reviewed manifest is missing a source receipt for an eligible profile field." });
         continue;
       }
       const validated = validateAdminBusinessProfilePatch({
@@ -4629,7 +4624,7 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
       const allowedFields = ["description", "hours", "phone", "tags", "website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"];
       if (validated.locationChanged || validated.changedColumns.some((field) => !allowedFields.includes(field))) {
         await client.query("ROLLBACK");
-        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Manifest attempted a profile field outside the fill-only enrichment boundary." });
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Manifest attempted a profile field outside the conservative enrichment boundary." });
         continue;
       }
       if (validated.changedColumns.length === 0) {
