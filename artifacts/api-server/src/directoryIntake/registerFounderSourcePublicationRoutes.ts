@@ -52,6 +52,7 @@ type SourceTarget = Readonly<{
 type FounderSourceRequest = Readonly<{
   apply: boolean;
   existingOnly: boolean;
+  currentOnly: boolean;
   city: string | null;
   state: string | null;
   batch: string | null;
@@ -88,6 +89,9 @@ function parseRequest(req: Request): FounderSourceRequest | null {
     // default. A separate, explicit future workflow is required to create a
     // business profile that does not already have a unique canonical record.
     existingOnly: req.body?.existingOnly !== false,
+    // This scope is for an additive source-ownership pass over profiles that
+    // are already current. It must never create or enrich another field.
+    currentOnly: req.body?.currentOnly === true,
     city,
     state,
     batch,
@@ -766,7 +770,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       }
 
       const selectedKeys = new Set(selected.map((candidate) => candidate.sourceRecordKey));
-      const plannedCreates = plan.toCreate
+      const plannedCreates = request.currentOnly ? [] : plan.toCreate
         .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey));
       const kinfolkCurrentIds = new Set(existing.filter((business) => business.kinfolkCurrent).map((business) => business.id));
       const deletedIds = new Set(existing
@@ -777,7 +781,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       const protectedMatches = candidateMatches.filter((match) =>
         Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId)),
       );
-      const canonicalProfileHolds = request.existingOnly
+      const canonicalProfileHolds = request.currentOnly ? [] : request.existingOnly
         ? [
           ...plannedCreates.filter((candidate) => candidate.ownershipDesignations.length > 0),
           ...candidateMatches
@@ -786,17 +790,19 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         ]
         : [];
       const canonicalProfileHoldKeys = new Set(canonicalProfileHolds.map((candidate) => candidate.sourceRecordKey));
-      const newCandidates = (request.existingOnly ? [] : plannedCreates)
+      const newCandidates = (request.currentOnly || request.existingOnly ? [] : plannedCreates)
         .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey))
         .filter((candidate) => candidate.ownershipDesignations.length > 0);
-      const duplicateMatches = candidateMatches.filter((match) => !protectedMatches.includes(match));
-      const identityHolds = plan.identityHolds.filter((hold) =>
+      const duplicateMatches = candidateMatches
+        .filter((match) => !protectedMatches.includes(match))
+        .filter((match) => !request.currentOnly || Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId)));
+      const identityHolds = (request.currentOnly ? [] : plan.identityHolds).filter((hold) =>
         selectedKeys.has(hold.candidate.sourceRecordKey)
           && !hold.candidateBusinessIds.some((businessId) => kinfolkCurrentIds.has(businessId) || deletedIds.has(businessId)),
       );
       const batchKey = hash(JSON.stringify({
         policy: FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION,
-        city: request.city, state: request.state, batch: request.batch, ownershipScope: request.ownershipScope,
+        city: request.city, state: request.state, batch: request.batch, ownershipScope: request.ownershipScope, currentOnly: request.currentOnly,
         keys: selected.map((candidate) => candidate.sourceRecordKey),
       }));
       const client = await pool.connect();
