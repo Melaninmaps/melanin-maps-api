@@ -98,6 +98,12 @@ describe("Kinfolk Current profile enrichment manifest", () => {
     expect(parsed.candidates[0].patch.instagram).toBe("https://www.instagram.com/communitybooks/");
   });
 
+  it("accepts the held-profile scope without granting lifecycle mutation fields", () => {
+    const parsed = parseProfileEnrichmentManifest(nonCurrentManifest({ scope: "non_kinfolk_current_all" }));
+    expect(parsed.scope).toBe("non_kinfolk_current_all");
+    expect(parsed.candidates[0].patch).not.toHaveProperty("listingStatus");
+  });
+
   it("rejects an unscoped manifest and unsafe replacement modes", () => {
     const unscoped = nonCurrentManifest({ scope: undefined });
     expect(() => parseProfileEnrichmentManifest(unscoped)).toThrow("scope");

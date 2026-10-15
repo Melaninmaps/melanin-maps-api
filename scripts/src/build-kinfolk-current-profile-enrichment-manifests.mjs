@@ -203,7 +203,9 @@ export function buildManifests(proposals, packets, {
   generatedAt = new Date().toISOString(),
   batchSize = 100,
 } = {}) {
-  if (!["kinfolk_current", "non_kinfolk_current"].includes(scope)) throw new Error("scope must be kinfolk_current or non_kinfolk_current");
+  if (!["kinfolk_current", "non_kinfolk_current", "non_kinfolk_current_all"].includes(scope)) {
+    throw new Error("scope must be kinfolk_current, non_kinfolk_current, or non_kinfolk_current_all");
+  }
   const packetById = new Map(packets.map((packet) => [packet.businessId, packet]));
   const candidates = proposals.map((proposal) => candidateFromProposal(proposal, packetById.get(proposal.businessId))).filter(Boolean);
   const manifests = [];

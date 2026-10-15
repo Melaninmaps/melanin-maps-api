@@ -32,6 +32,9 @@ describe("source-receipted profile enrichment route", () => {
     expect(route).toContain("Business is already in Kinfolk Current and is outside the non-current enrichment scope.");
     expect(route).toContain("kinfolk_current_online_presence_reviews");
     expect(route).toContain("Business is not currently publicly listed.");
+    expect(route).toContain('manifest.scope === "non_kinfolk_current_all"');
+    expect(route).toContain('["live_unclaimed", "live_claimed", "staged"]');
+    expect(route).toContain("not an active live or staged record eligible for held-profile enrichment");
     expect(route).toContain("differs from the reviewed source snapshot");
     expect(route).toContain("HOLD_IDENTITY_OR_CONTACT_CONFLICT");
     expect(route).toContain("existingTags");

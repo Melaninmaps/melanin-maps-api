@@ -4511,9 +4511,19 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
         results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business no longer exists." });
         continue;
       }
-      if (!["live_unclaimed", "live_claimed"].includes(existing.listing_status ?? "")) {
+      const allowsStagedProfileEnrichment = manifest.scope === "non_kinfolk_current_all";
+      const allowedListingStatuses = allowsStagedProfileEnrichment
+        ? ["live_unclaimed", "live_claimed", "staged"]
+        : ["live_unclaimed", "live_claimed"];
+      if (!allowedListingStatuses.includes(existing.listing_status ?? "")) {
         await client.query("ROLLBACK");
-        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business is not currently publicly listed." });
+        results.push({
+          businessId: candidate.businessId,
+          status: "skipped",
+          reason: allowsStagedProfileEnrichment
+            ? "Business is not an active live or staged record eligible for held-profile enrichment."
+            : "Business is not currently publicly listed.",
+        });
         continue;
       }
       if (!profileEnrichmentIdentityMatches(existing, candidate)) {
@@ -4602,7 +4612,7 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
       const validated = validateAdminBusinessProfilePatch({
         ...fillOnlyPatch,
         sourceReceipts,
-        changeNote: `Official first-party ${manifest.scope === "kinfolk_current" ? "Kinfolk Current" : "non-Kinfolk Current"} profile enrichment (${manifest.batchId}; ${manifest.contentFingerprint.slice(0, 12)})`,
+        changeNote: `Official first-party ${manifest.scope === "kinfolk_current" ? "Kinfolk Current" : manifest.scope === "non_kinfolk_current_all" ? "non-Kinfolk Current (including held staged profiles)" : "non-Kinfolk Current"} profile enrichment (${manifest.batchId}; ${manifest.contentFingerprint.slice(0, 12)})`,
       }, {
         name: existing.name,
         description: existing.description,

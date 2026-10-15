@@ -33,6 +33,16 @@ test("builds a scoped, source-receipted manifest with a stable fingerprint", () 
   assert.equal(manifests[0].contentFingerprint, manifestFingerprint(manifests[0]));
 });
 
+test("builds an audited held-profile manifest without lifecycle fields", () => {
+  const { candidates, manifests } = buildManifests([proposal], [packet], {
+    scope: "non_kinfolk_current_all",
+    generatedAt: "2026-10-15T19:00:00.000Z",
+  });
+  assert.equal(candidates.length, 1);
+  assert.equal(manifests[0].scope, "non_kinfolk_current_all");
+  assert.equal("listingStatus" in manifests[0].candidates[0].patch, false);
+});
+
 test("does not duplicate a stored social account", () => {
   const existingSocialPacket = { ...packet, sourceSnapshot: { Instagram: "https://www.instagram.com/communitybooks/" } };
   const { candidates } = buildManifests([{ ...proposal, accepted: [] }], [existingSocialPacket], { scope: "non_kinfolk_current" });
