@@ -216,6 +216,20 @@ async function finalizeOneDueHold(
       return "missing";
     }
 
+    const queuedReview = await client.query<{ business_id: string }>(
+      `SELECT business_id
+         FROM kinfolk_current_online_presence_reviews
+        WHERE business_id = $1
+          AND state = 'queued'
+        FOR UPDATE`,
+      [businessId],
+    );
+    if (queuedReview.rows[0]) {
+      throw new Error(
+        "Business is in Kinfolk Current Delete Review and cannot be permanently deleted until specifically resolved through review",
+      );
+    }
+
     const cohortReceipts = await client.query<{
       snapshot: Record<string, unknown>;
     }>(

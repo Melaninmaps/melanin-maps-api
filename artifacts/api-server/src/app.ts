@@ -364,6 +364,15 @@ app.use(
   "/api/founder/directory-import/ingress",
   express.json({ limit: DIRECTORY_REVIEW_INGRESS_JSON_LIMIT }),
 );
+// The evidence-bound Kinfolk Current online-presence plan contains individual
+// receipts for every requested change. Its 1.43 MiB verified manifest exceeds
+// Express's 100 KiB default, so grant only this administrator route a bounded
+// 3 MiB parser before the global JSON parser. The route still caps actions at
+// 1,000 records and verifies every current record server-side.
+app.use(
+  "/api/admin/businesses/kinfolk-current/online-presence-apply",
+  express.json({ limit: "3mb" }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Structured request correlation — attaches x-request-id header to every

@@ -1,0 +1,2770 @@
+[
+  {
+    "businessId": "source_21ea9f01-d368-4499-ad42-b5e09e003998",
+    "businessName": "1 Source Auto Group",
+    "city": "Memphis",
+    "state": "TN",
+    "originalWebsite": "https://onesourceautogroupllc.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/1sourceautogroupllc/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://onesourceautogroupllc.com/",
+      "normalizedUrl": "https://onesourceautogroupllc.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://onesourceautogroupllc.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:00:26.880Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "onesourceautogroupllc.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://onesourceautogroupllc.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:00:26.880Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "onesourceautogroupllc.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "d9d296a6b78336a612846dc1a55ce288ab7297a98940d6d8ee84955c66f065f9",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_2ae0b72e-ae6b-4722-9cd3-aee89f0942fe",
+    "businessName": "1St Source Mobile Media",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.1stsourcemobilemedia.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/1stsourcemobilemedia"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.1stsourcemobilemedia.com/",
+      "normalizedUrl": "https://www.1stsourcemobilemedia.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.1stsourcemobilemedia.com/",
+        "finalUrl": "https://www.1stsourcemobilemedia.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:05:37.582Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.1stsourcemobilemedia.com/",
+            "finalUrl": "https://www.1stsourcemobilemedia.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:05:37.582Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "2e955e11ce584f5c714ca3913c566bb4f5dfa838437de39d4edd23766a9037a8",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_4080a68a-a70b-4951-82c8-72db12cf9902",
+    "businessName": "2BLIT Candle Co",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://www.2blitcandleco.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "http://www.facebook.com/2blitcandleco"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.2blitcandleco.com/",
+      "normalizedUrl": "http://www.2blitcandleco.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://www.2blitcandleco.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:23:42.022Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.2blitcandleco.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://www.2blitcandleco.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:23:42.022Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.2blitcandleco.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "22ecd34d50adff602377fe9db559e489fe7bd5f0f74a552e76a74fd60c3f3169",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_c4d80390-a110-4d4e-89db-9791487346f2",
+    "businessName": "A Good Life Photo Co",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.agoodlifephotoco.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/agoodlifephotoco/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.agoodlifephotoco.com/",
+      "normalizedUrl": "https://www.agoodlifephotoco.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.agoodlifephotoco.com/",
+        "finalUrl": "https://www.agoodlifephotoco.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:06:24.498Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.agoodlifephotoco.com/",
+            "finalUrl": "https://www.agoodlifephotoco.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:06:24.498Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "ef2f3486fcf1fb7a8a8cbee0a93e670069fb8d5bf430f74088d21d123df1a3dc",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_4fbc9e29-b182-490e-b043-b54a31c80d56",
+    "businessName": "A Little TLC: Home and Bod LLC",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://www.alittletlchomeandbody.bigcartel.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "http://www.facebook.com/alittletlchomeandbody"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.alittletlchomeandbody.bigcartel.com/",
+      "normalizedUrl": "http://www.alittletlchomeandbody.bigcartel.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "http://www.alittletlchomeandbody.bigcartel.com/",
+        "finalUrl": "http://alittletlchomeandbody.bigcartel.com/",
+        "redirectChain": [
+          {
+            "status": 302,
+            "from": "http://www.alittletlchomeandbody.bigcartel.com/",
+            "to": "http://alittletlchomeandbody.bigcartel.com/"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T14:24:23.284Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "http://www.alittletlchomeandbody.bigcartel.com/",
+            "finalUrl": "http://alittletlchomeandbody.bigcartel.com/",
+            "redirectChain": [
+              {
+                "status": 302,
+                "from": "http://www.alittletlchomeandbody.bigcartel.com/",
+                "to": "http://alittletlchomeandbody.bigcartel.com/"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T14:24:23.284Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "c5c018e8357df1b22f87e9fb80b2326e880feef798f335762ec93a9677847682",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_cec92edc-2d85-4b9d-949f-80a0150f6f16",
+    "businessName": "Allegro Logistics",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.allegrologistics.co/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/profile.php?id=61559298187869"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.allegrologistics.co/",
+      "normalizedUrl": "https://www.allegrologistics.co/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.allegrologistics.co/",
+        "finalUrl": "https://www.allegrologistics.co/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:06:35.146Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.allegrologistics.co/",
+            "finalUrl": "https://www.allegrologistics.co/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:06:35.146Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "15a6a2bca8641c152b9e10c394b7cb868493167e95aeadbdcec491df091eb2f5",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_19112d69-974f-41ea-8ad1-ba8ee27a2074",
+    "businessName": "AudaciousLife",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://audaciouslifeindy.storenvy.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "http://facebook.com/audaciouslifeindy"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://audaciouslifeindy.storenvy.com/",
+      "normalizedUrl": "http://audaciouslifeindy.storenvy.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "http://audaciouslifeindy.storenvy.com/",
+        "finalUrl": "https://audaciouslifeindy.storenvy.com/",
+        "redirectChain": [
+          {
+            "status": 301,
+            "from": "http://audaciouslifeindy.storenvy.com/",
+            "to": "https://audaciouslifeindy.storenvy.com/"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T14:18:08.143Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "http://audaciouslifeindy.storenvy.com/",
+            "finalUrl": "https://audaciouslifeindy.storenvy.com/",
+            "redirectChain": [
+              {
+                "status": 301,
+                "from": "http://audaciouslifeindy.storenvy.com/",
+                "to": "https://audaciouslifeindy.storenvy.com/"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T14:18:08.143Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "a2742a91b60996520ce018fde9289c793d17c48e57c9b22cca37bcd1d23dbf48",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_04d7fc5e-82a9-4ea7-92bf-e8d0fc73ae26",
+    "businessName": "A-Way Tranzport",
+    "city": "Memphis",
+    "state": "TN",
+    "originalWebsite": "https://www.a-waytranzport.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/AWAYTRANZPORT/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.a-waytranzport.com/",
+      "normalizedUrl": "https://www.a-waytranzport.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.a-waytranzport.com/",
+        "finalUrl": "https://www.a-waytranzport.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:05:51.474Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.a-waytranzport.com/",
+            "finalUrl": "https://www.a-waytranzport.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:05:51.474Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "b6ef34529c5f6cfed8dde74f80210dc059186e9b5891dc93cfce7597e428d966",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_2ad4fef4-2294-478d-957d-318d590408bf",
+    "businessName": "BAKER ESTATE PHOTOGRAPHY",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://www.bakerestatephotography.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "http://www.facebook.com/bakerestatephotography"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.bakerestatephotography.com/",
+      "normalizedUrl": "http://www.bakerestatephotography.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://www.bakerestatephotography.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:24:49.318Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.bakerestatephotography.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://www.bakerestatephotography.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:24:49.318Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.bakerestatephotography.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "46d96468b3fed3a1b89530ca601630823538230ce781332dcf88c39352e8cbf3",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_75690617-e4ad-41b1-a346-938f3722679f",
+    "businessName": "Bill’s Bar-B-Que",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.billsbbqelk.com/menus",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/billsbbqelk/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.billsbbqelk.com/menus",
+      "normalizedUrl": "https://www.billsbbqelk.com/menus",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.billsbbqelk.com/menus",
+        "finalUrl": "https://www.billsbbqelk.com/menus",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html;charset=UTF-8",
+        "checkedAt": "2026-10-15T15:07:22.973Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.billsbbqelk.com/menus",
+            "finalUrl": "https://www.billsbbqelk.com/menus",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html;charset=UTF-8",
+            "checkedAt": "2026-10-15T15:07:22.973Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "3ea0dc4c6a2246efdab341f9a7c145b44492e1fe4178bbbb0637316829728725",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_43d7590f-8483-4e61-a864-6c086f8e44ab",
+    "businessName": "Breath of Heaven Christian Bookstore",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://breath-of-heaven-christian-bookstore.business.site/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/profile.php?id=100064239507152"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://breath-of-heaven-christian-bookstore.business.site/",
+      "normalizedUrl": "https://breath-of-heaven-christian-bookstore.business.site/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://breath-of-heaven-christian-bookstore.business.site/",
+        "finalUrl": "https://breath-of-heaven-christian-bookstore.business.site/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=UTF-8",
+        "checkedAt": "2026-10-15T14:52:14.187Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://breath-of-heaven-christian-bookstore.business.site/",
+            "finalUrl": "https://breath-of-heaven-christian-bookstore.business.site/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=UTF-8",
+            "checkedAt": "2026-10-15T14:52:14.187Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "8bf41ce880a5d59d3a2ec06dca68a0621487b3fd54f1790aec7f95a3a24009ae",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_a3986b55-f56f-49d7-a049-f76a24ee89c0",
+    "businessName": "Capstone Solutions Group",
+    "city": "Memphis",
+    "state": "TN",
+    "originalWebsite": "http://www.capstonesolutionsgroup.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/people/Capstone-Solutions-Group/61575074261723/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.capstonesolutionsgroup.com/",
+      "normalizedUrl": "http://www.capstonesolutionsgroup.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://www.capstonesolutionsgroup.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:25:28.928Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.capstonesolutionsgroup.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://www.capstonesolutionsgroup.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:25:28.928Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.capstonesolutionsgroup.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "f0884edec6d4b1e5bd139d78b81f139da85e7285606d20a8b8909d39a1010f60",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_3a2d2973-1e90-4550-a0ad-f26f689db2e7",
+    "businessName": "Cleo’s Bodega and Café",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.flannerhouse.org/bodega",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/people/Cleos-Bodega-Cafe/100054190484617/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.flannerhouse.org/bodega",
+      "normalizedUrl": "https://www.flannerhouse.org/bodega",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.flannerhouse.org/bodega",
+        "finalUrl": "https://flannerhouse.org/bodega",
+        "redirectChain": [
+          {
+            "status": 301,
+            "from": "https://www.flannerhouse.org/bodega",
+            "to": "https://flannerhouse.org/bodega"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=UTF-8",
+        "checkedAt": "2026-10-15T15:10:27.318Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.flannerhouse.org/bodega",
+            "finalUrl": "https://flannerhouse.org/bodega",
+            "redirectChain": [
+              {
+                "status": 301,
+                "from": "https://www.flannerhouse.org/bodega",
+                "to": "https://flannerhouse.org/bodega"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=UTF-8",
+            "checkedAt": "2026-10-15T15:10:27.318Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "5030af14bf3a5841ad3c819e393e65796037bdf04b19336e24b70069302f0c0a",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_e6f8bbdf-df96-4d79-8e13-ea6f974a4aa5",
+    "businessName": "Creating Space for You, LLC",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://www.creatingspace4u.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/creatingspaceforyoullc"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.creatingspace4u.com/",
+      "normalizedUrl": "http://www.creatingspace4u.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "http://www.creatingspace4u.com/",
+        "finalUrl": "https://www.creatingspace4u.com/",
+        "redirectChain": [
+          {
+            "status": 301,
+            "from": "http://www.creatingspace4u.com/",
+            "to": "https://www.creatingspace4u.com/"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T14:26:13.961Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "http://www.creatingspace4u.com/",
+            "finalUrl": "https://www.creatingspace4u.com/",
+            "redirectChain": [
+              {
+                "status": 301,
+                "from": "http://www.creatingspace4u.com/",
+                "to": "https://www.creatingspace4u.com/"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T14:26:13.961Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "89080bb12c4ee63501c9e31981aecb22c2dca80c66b356866c3737699d7ce695",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_8fec429b-2704-43fe-abb6-afe1c1dd3c77",
+    "businessName": "Crumbs of Love",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://crumbsoflove.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/CrumbsOfLoveCookieCo/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://crumbsoflove.com/",
+      "normalizedUrl": "http://crumbsoflove.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "http://crumbsoflove.com/",
+        "finalUrl": "http://www.crumbsoflove.com/",
+        "redirectChain": [
+          {
+            "status": 301,
+            "from": "http://crumbsoflove.com/",
+            "to": "http://www.crumbsoflove.com/"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=UTF-8",
+        "checkedAt": "2026-10-15T14:18:40.390Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "http://crumbsoflove.com/",
+            "finalUrl": "http://www.crumbsoflove.com/",
+            "redirectChain": [
+              {
+                "status": 301,
+                "from": "http://crumbsoflove.com/",
+                "to": "http://www.crumbsoflove.com/"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=UTF-8",
+            "checkedAt": "2026-10-15T14:18:40.390Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "fe1a95ef358dd2f377601108c5a2475f0db3dfbe1e25c752ba1c51ad72df42c2",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_1ab989da-a199-4ec4-be78-c1407394961c",
+    "businessName": "Devyne Business Consulting, LLC",
+    "city": "Memphis",
+    "state": "TN",
+    "originalWebsite": "https://www.devynebusiness.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "http://facebook.com/devynebusinessconsulting"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.devynebusiness.com/",
+      "normalizedUrl": "https://www.devynebusiness.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.devynebusiness.com/",
+        "finalUrl": "https://www.devynebusiness.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:09:02.438Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.devynebusiness.com/",
+            "finalUrl": "https://www.devynebusiness.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:09:02.438Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "e89936148f99e19dc5458b183e23f89b5eec9cf8b1fcdb2463c93508c6506062",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_26df9da7-ee78-4bae-8dd0-8face316da9e",
+    "businessName": "Firuze Floral Decor",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.firuzefloraldecor.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "tiktok",
+        "url": "https://www.tiktok.com/@firuzefloraldecor?_t=8hcIUbU41Mp&_r=1"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.firuzefloraldecor.com/",
+      "normalizedUrl": "https://www.firuzefloraldecor.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.firuzefloraldecor.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:10:20.085Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.firuzefloraldecor.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.firuzefloraldecor.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:10:20.085Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.firuzefloraldecor.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "463b20d7a107b63071796a62ba8951569bcb1dad2c9d5ad6f7a56cdb94f94052",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_9708e153-6d74-4b69-8cc7-465305a02d1a",
+    "businessName": "Flavorful Living Brand",
+    "city": "Memphis",
+    "state": "TN",
+    "originalWebsite": "http://www.flavordullivingbrand.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/flavorfullivingbrand"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.flavordullivingbrand.com/",
+      "normalizedUrl": "http://www.flavordullivingbrand.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://www.flavordullivingbrand.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:27:28.425Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.flavordullivingbrand.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://www.flavordullivingbrand.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:27:28.425Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.flavordullivingbrand.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "9e756232fa0204f0b24184c492160e3bd4872188823566f51685973ee3fa77d6",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_a74c8dcd-553a-484c-8dd2-d74b4ac3cf73",
+    "businessName": "Four Little Hooligans Photography",
+    "city": "Baltimore",
+    "state": "MD",
+    "originalWebsite": "https://www.fourlittlehooligansphotography.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/tia.wright.photography/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.fourlittlehooligansphotography.com/",
+      "normalizedUrl": "https://www.fourlittlehooligansphotography.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.fourlittlehooligansphotography.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:10:31.298Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.fourlittlehooligansphotography.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.fourlittlehooligansphotography.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:10:31.298Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.fourlittlehooligansphotography.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "992e76138a959e8edce3dc3a15a6331a326be110697f5154185d3a8d481074ff",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_79e05e2b-d3b0-461d-babf-1eca335028fe",
+    "businessName": "Gordon’s Milkshake Bar",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://gordons-milkshakes-bar.business.site/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/milkshakeindy/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://gordons-milkshakes-bar.business.site/",
+      "normalizedUrl": "https://gordons-milkshakes-bar.business.site/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://gordons-milkshakes-bar.business.site/",
+        "finalUrl": "https://gordons-milkshakes-bar.business.site/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=UTF-8",
+        "checkedAt": "2026-10-15T14:55:59.554Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://gordons-milkshakes-bar.business.site/",
+            "finalUrl": "https://gordons-milkshakes-bar.business.site/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=UTF-8",
+            "checkedAt": "2026-10-15T14:55:59.554Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "b360ad9642e0a61386a5158cd532accb530c31ca5ac6331f4707fbb8d576e0f4",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_fd0a5692-4242-40bc-a691-166ee3336e36",
+    "businessName": "Greater Elevations LLC",
+    "city": "Houston",
+    "state": "TX",
+    "originalWebsite": "https://www.gehomehealth.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/GreaterHoustonBlackChamber/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.gehomehealth.com/",
+      "normalizedUrl": "https://www.gehomehealth.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.gehomehealth.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:10:45.843Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.gehomehealth.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.gehomehealth.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:10:45.843Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.gehomehealth.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "2ed587a2b9d9d63fccf6c402488d4eba0843c4e7150277f33f86fbaf93bb72d7",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_2b7974cb-fb7f-4af0-8edb-43cdce0c505a",
+    "businessName": "HijabSoForeign",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://www.hijabsoforeign.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "http://facebook.com/hijabsoforeign"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.hijabsoforeign.com/",
+      "normalizedUrl": "http://www.hijabsoforeign.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://www.hijabsoforeign.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:28:49.207Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.hijabsoforeign.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://www.hijabsoforeign.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:28:49.207Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.hijabsoforeign.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "f3858a519ba3f68b55fc4a3142300bd101323df559b1851af1e4f05d5648024f",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_04059309-e51d-4a2f-918b-fdb5914aea7d",
+    "businessName": "Holy Hands Beauty Salon N Spa",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.holyhandsbeautysalonnspa.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/HolyHandsSalonNSpa/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.holyhandsbeautysalonnspa.com/",
+      "normalizedUrl": "https://www.holyhandsbeautysalonnspa.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.holyhandsbeautysalonnspa.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:11:41.252Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.holyhandsbeautysalonnspa.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.holyhandsbeautysalonnspa.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:11:41.252Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.holyhandsbeautysalonnspa.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "f4ded64505141a73f203d84796477bad8c9d3410369a22e3df593d9cd17a7883",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_af0f3767-0bcd-4509-9124-736b6e513537",
+    "businessName": "Hustle Harder",
+    "city": "Memphis",
+    "state": "TN",
+    "originalWebsite": "https://www.hustle-harder.net/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/profile.php?id=61579936743492"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.hustle-harder.net/",
+      "normalizedUrl": "https://www.hustle-harder.net/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.hustle-harder.net/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:11:53.552Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.hustle-harder.net",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.hustle-harder.net/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:11:53.552Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.hustle-harder.net",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "38e2c47264eca76faf269765547090c16f7501784bb805a13f9589b705990786",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_b692ff0e-5b07-4c43-8f5d-cad12570d2e2",
+    "businessName": "Imagination Fruit",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://imaginationfruitindy.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/ImaginationFruit/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://imaginationfruitindy.com/",
+      "normalizedUrl": "http://imaginationfruitindy.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://imaginationfruitindy.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:20:03.318Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "imaginationfruitindy.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://imaginationfruitindy.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:20:03.318Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "imaginationfruitindy.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "2b40facde24a04123ecd33f9bb729a5b7263cdaee8dffbb99e1e0103b24a7917",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_e3333154-a615-4d1f-86fe-9432b30fda66",
+    "businessName": "Jbee’s Jamaican Me Crazy",
+    "city": "Baltimore",
+    "state": "MD",
+    "originalWebsite": "https://jbeesjamaican.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/JbeesJamaican"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://jbeesjamaican.com/",
+      "normalizedUrl": "https://jbeesjamaican.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://jbeesjamaican.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:57:09.710Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "jbeesjamaican.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://jbeesjamaican.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:57:09.710Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "jbeesjamaican.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "ac27f5e132a959ad32de0dd294469b35e2fd5c3aba759a4318315b9d0e9a2423",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_f9f97a4c-9b7a-4260-932d-554551891d2c",
+    "businessName": "Leading In Life Enterprise",
+    "city": "Memphis",
+    "state": "TN",
+    "originalWebsite": "https://www.leadinginlifeent.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/LeadingInLifeEnt"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.leadinginlifeent.com/",
+      "normalizedUrl": "https://www.leadinginlifeent.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.leadinginlifeent.com/",
+        "finalUrl": "https://www.leadinginlifeent.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:13:29.247Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.leadinginlifeent.com/",
+            "finalUrl": "https://www.leadinginlifeent.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:13:29.247Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "83731cf2ca9c7afdb244e4561ee62ee43e750ee2ee18de6e0384e6fded45816a",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_69b97fe3-10f2-447d-b9dc-31f4549c22e3",
+    "businessName": "Mochahontas Cosmetics",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.mochahontascosmetics.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/Mochahontascosmetics/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.mochahontascosmetics.com/",
+      "normalizedUrl": "https://www.mochahontascosmetics.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.mochahontascosmetics.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:16:37.783Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.mochahontascosmetics.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.mochahontascosmetics.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:16:37.783Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.mochahontascosmetics.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "08c74328472a5d22dff84a9a2c72fbd84866715e2871d6965b867ce36b65f3a7",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_4dfb0a54-8a4e-40cb-bb80-1616e541c8c1",
+    "businessName": "My Indy Cleaning Services, LLC",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.myindycleaning.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/myindycleaning"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.myindycleaning.com/",
+      "normalizedUrl": "https://www.myindycleaning.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.myindycleaning.com/",
+        "finalUrl": "https://www.myindycleaning.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:17:16.200Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.myindycleaning.com/",
+            "finalUrl": "https://www.myindycleaning.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:17:16.200Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "39691990ca1fc5bbf5860b5f0ff30ff6c516e05907d63946955de7b8b3f6e2a6",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_0ad4a3c0-b3ae-41b2-8ef2-1b6ca425414e",
+    "businessName": "Natural Textures Salon",
+    "city": "Baltimore",
+    "state": "MD",
+    "originalWebsite": "http://naturaltexturessalon.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/p/Natural-Textures-Salon-100044389870827/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://naturaltexturessalon.com/",
+      "normalizedUrl": "http://naturaltexturessalon.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://naturaltexturessalon.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:21:25.966Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "naturaltexturessalon.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://naturaltexturessalon.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:21:25.966Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "naturaltexturessalon.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "29eac4adb6394da1a4d2cd82a069e73ffe745a3fd9a60064fa7d5eb725787d28",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_6fe1c50b-281e-421a-8843-7fa2a6792de7",
+    "businessName": "Network in Action NE Houston",
+    "city": "Houston",
+    "state": "TX",
+    "originalWebsite": "https://nianortheasthouston.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/GreaterHoustonBlackChamber/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://nianortheasthouston.com/",
+      "normalizedUrl": "https://nianortheasthouston.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://nianortheasthouston.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:00:01.368Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "nianortheasthouston.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://nianortheasthouston.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:00:01.368Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "nianortheasthouston.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "16c6730b9f27ae37a8668ce8062cc8702d4cacc8e05452859314f565184f48da",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_57bb9388-beed-4413-84f2-39cfa3480728",
+    "businessName": "North Tampa Pharmacy",
+    "city": "Tampa",
+    "state": "FL",
+    "originalWebsite": "https://www.northtampapharmacy.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/TampaBayBlackExcellenceChallenge"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.northtampapharmacy.com/",
+      "normalizedUrl": "https://www.northtampapharmacy.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.northtampapharmacy.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:17:57.523Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.northtampapharmacy.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.northtampapharmacy.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:17:57.523Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.northtampapharmacy.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "93264b3e6279cec6c95653fc95cc7c56b463efaf2beb006deafd097d06de08e8",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_d50d0f42-596e-46a8-a7d4-904c377627b0",
+    "businessName": "Peaceful Pixie",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://www.peacefulpixie.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/thepeacefulpixies"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.peacefulpixie.com/",
+      "normalizedUrl": "http://www.peacefulpixie.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "http://www.peacefulpixie.com/",
+        "finalUrl": "https://www.peacefulpixie.com/",
+        "redirectChain": [
+          {
+            "status": 301,
+            "from": "http://www.peacefulpixie.com/",
+            "to": "https://www.peacefulpixie.com/"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T14:33:03.122Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "http://www.peacefulpixie.com/",
+            "finalUrl": "https://www.peacefulpixie.com/",
+            "redirectChain": [
+              {
+                "status": 301,
+                "from": "http://www.peacefulpixie.com/",
+                "to": "https://www.peacefulpixie.com/"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T14:33:03.122Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "2a6462f27b232c7028fb737b00103135050142c6e4311564fbf4256169a44f93",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_94d22f20-875d-46be-bed4-6d252db35fec",
+    "businessName": "REC Consulting LLC",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://www.recconsultingllc.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/profile.php?id=100091454770280&mibextid=LQQJ4d"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://www.recconsultingllc.com/",
+      "normalizedUrl": "http://www.recconsultingllc.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "http://www.recconsultingllc.com/",
+        "finalUrl": "https://www.recconsultingllc.com/",
+        "redirectChain": [
+          {
+            "status": 301,
+            "from": "http://www.recconsultingllc.com/",
+            "to": "https://www.recconsultingllc.com/"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T14:34:09.988Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "http://www.recconsultingllc.com/",
+            "finalUrl": "https://www.recconsultingllc.com/",
+            "redirectChain": [
+              {
+                "status": 301,
+                "from": "http://www.recconsultingllc.com/",
+                "to": "https://www.recconsultingllc.com/"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T14:34:09.988Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "586d0e55fa880b02ad087d25940383077e6125402098c33cbdbbfedab19fac5e",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_1140a166-5dd0-4231-b961-56633f6d6fab",
+    "businessName": "Sky Bull",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://shopskybull.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "http://facebook.com/shopskybull"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://shopskybull.com/",
+      "normalizedUrl": "http://shopskybull.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://shopskybull.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:22:17.335Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "shopskybull.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://shopskybull.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:22:17.335Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "shopskybull.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "4019704b92f0b15431e4a40ca5406a293edd73fa09b3c59565adbd6f43dc4137",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_1d4ed899-cd49-4e2f-807e-59215de6b546",
+    "businessName": "Smoove’s Indy",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://smoovesindy.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/Smoovesindy/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://smoovesindy.com/",
+      "normalizedUrl": "http://smoovesindy.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "http://smoovesindy.com/",
+        "finalUrl": "https://www.smoovesindy.com/",
+        "redirectChain": [
+          {
+            "status": 301,
+            "from": "http://smoovesindy.com/",
+            "to": "https://www.smoovesindy.com/"
+          }
+        ],
+        "httpStatus": 404,
+        "contentType": "text/html;charset=utf-8",
+        "checkedAt": "2026-10-15T14:22:33.490Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "http://smoovesindy.com/",
+            "finalUrl": "https://www.smoovesindy.com/",
+            "redirectChain": [
+              {
+                "status": 301,
+                "from": "http://smoovesindy.com/",
+                "to": "https://www.smoovesindy.com/"
+              }
+            ],
+            "httpStatus": 404,
+            "contentType": "text/html;charset=utf-8",
+            "checkedAt": "2026-10-15T14:22:33.490Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "06e57f386fc80e50d3a5c49c4a66491704364cfc75c216efc6067170bfa18a81",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_1f56cb50-5e88-4a62-ac33-1d29588f6a3e",
+    "businessName": "Take.Two LLC",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.taketwoindy.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/share/19exBbZRYH/?mibextid=wwXIfr"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.taketwoindy.com/",
+      "normalizedUrl": "https://www.taketwoindy.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://www.taketwoindy.com/",
+        "finalUrl": "https://www.taketwoindy.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T15:21:36.317Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://www.taketwoindy.com/",
+            "finalUrl": "https://www.taketwoindy.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T15:21:36.317Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "fe5dbda743dfd2b19bceb2ace53f2a391937e6f27dadba3e9ac1419debbaa6f7",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_8cc836c4-df6d-4c13-8de0-182740827e03",
+    "businessName": "The Good Spot",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://indygspot.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/profile.php?id=100088901042470"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://indygspot.com/",
+      "normalizedUrl": "https://indygspot.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://indygspot.com/",
+        "finalUrl": "https://indygspot.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=utf-8",
+        "checkedAt": "2026-10-15T14:56:56.029Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://indygspot.com/",
+            "finalUrl": "https://indygspot.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=utf-8",
+            "checkedAt": "2026-10-15T14:56:56.029Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "626c1a3777ac24846ddae64174f2bbdc31130153e90c056020e7b279fb0d6803",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_5e2ff03e-82bd-48d7-b09b-c440376f992e",
+    "businessName": "THE MAD GRIDDLE",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://www.themadgriddle.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/Themadgriddleindy"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://www.themadgriddle.com/",
+      "normalizedUrl": "https://www.themadgriddle.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://www.themadgriddle.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:22:14.368Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "www.themadgriddle.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://www.themadgriddle.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:22:14.368Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "www.themadgriddle.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "fbeeaf4a5809df1329c91c535591958cc13fe8a20df70774b394ed937116f5b7",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_8145f018-c6e8-49bc-bb64-04f7c055111b",
+    "businessName": "The Popcorn Treasury",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "http://thepopcorntreasury.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/ThePopcornTreasury/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "http://thepopcorntreasury.com/",
+      "normalizedUrl": "http://thepopcorntreasury.com/",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "http://thepopcorntreasury.com/",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T14:23:06.371Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "thepopcorntreasury.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "http://thepopcorntreasury.com/",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T14:23:06.371Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "thepopcorntreasury.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "2cfeab3931f1a2a4300a428dd5bf979a009b2c2fbea56486dff0b19e3e604ef0",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_1b01cbd6-304c-4bf0-b62b-69247702d156",
+    "businessName": "Top-Notch Barbershop",
+    "city": "Baltimore",
+    "state": "MD",
+    "originalWebsite": "https://top-notchbarbershop.business.site/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/profile.php?id=100063756030629"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://top-notchbarbershop.business.site/",
+      "normalizedUrl": "https://top-notchbarbershop.business.site/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://top-notchbarbershop.business.site/",
+        "finalUrl": "https://top-notchbarbershop.business.site/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "text/html; charset=UTF-8",
+        "checkedAt": "2026-10-15T15:04:19.056Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://top-notchbarbershop.business.site/",
+            "finalUrl": "https://top-notchbarbershop.business.site/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "text/html; charset=UTF-8",
+            "checkedAt": "2026-10-15T15:04:19.056Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "afef421bf98d5b9c4c6f95e7cf56e22bec403ad6c1de1de76c7dafa873fa566d",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_d727108c-277b-4d27-ab4d-d5b659a8e87d",
+    "businessName": "Transform Mind and Body Spa",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://transformmindbodyspa.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/tmbspa1/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://transformmindbodyspa.com/",
+      "normalizedUrl": "https://transformmindbodyspa.com/",
+      "reason": "The destination is unavailable (http_404).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_404",
+        "requestedUrl": "https://transformmindbodyspa.com/",
+        "finalUrl": "https://transformmindbodyspa.com/",
+        "redirectChain": [],
+        "httpStatus": 404,
+        "contentType": "",
+        "checkedAt": "2026-10-15T15:04:24.029Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_404",
+            "requestedUrl": "https://transformmindbodyspa.com/",
+            "finalUrl": "https://transformmindbodyspa.com/",
+            "redirectChain": [],
+            "httpStatus": 404,
+            "contentType": "",
+            "checkedAt": "2026-10-15T15:04:24.029Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "0f840337f1ab00e1d7be04767d12193fc19527ba0853341588db9fcd94e49fc6",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_7179975e-2400-4b2b-aa40-304176b5c837",
+    "businessName": "Unlimited Beauty Empire",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://unlimitedbeautyempire.zoca.com/",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/p/Unlimited-Beauty-Empire-61570493499524/"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://unlimitedbeautyempire.zoca.com/",
+      "normalizedUrl": "https://unlimitedbeautyempire.zoca.com/",
+      "reason": "The destination is unavailable (http_410).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "http_410",
+        "requestedUrl": "https://unlimitedbeautyempire.zoca.com/",
+        "finalUrl": "https://unlimitedbeautyempire.zoca.com/",
+        "redirectChain": [],
+        "httpStatus": 410,
+        "contentType": "text/plain",
+        "checkedAt": "2026-10-15T15:04:43.387Z",
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "http_410",
+            "requestedUrl": "https://unlimitedbeautyempire.zoca.com/",
+            "finalUrl": "https://unlimitedbeautyempire.zoca.com/",
+            "redirectChain": [],
+            "httpStatus": 410,
+            "contentType": "text/plain",
+            "checkedAt": "2026-10-15T15:04:43.387Z"
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "483b4c712fcc03dda51d36faa3869011592aa5843ef14279b55bcd75cb3f2a8a",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  },
+  {
+    "businessId": "source_fb662ffa-421d-4086-856f-6e6ce12b050f",
+    "businessName": "Walker & Bulwark Consulting",
+    "city": "Indianapolis",
+    "state": "IN",
+    "originalWebsite": "https://walkerbulwarkconsulting.com/home",
+    "verifiedOfficialSocial": [
+      {
+        "platform": "facebook",
+        "url": "https://www.facebook.com/profile.php?id=61576798953771"
+      }
+    ],
+    "verification": {
+      "classification": "REMOVE_CONFIRMED_INACTIVE",
+      "originalUrl": "https://walkerbulwarkconsulting.com/home",
+      "normalizedUrl": "https://walkerbulwarkconsulting.com/home",
+      "reason": "The destination is unavailable (dns_nxdomain).",
+      "probe": {
+        "state": "unavailable",
+        "reason": "dns_nxdomain",
+        "requestedUrl": "https://walkerbulwarkconsulting.com/home",
+        "finalUrl": null,
+        "redirectChain": [],
+        "checkedAt": "2026-10-15T15:05:05.240Z",
+        "dns": {
+          "state": "nxdomain",
+          "hostname": "walkerbulwarkconsulting.com",
+          "errorCodes": [
+            "ENOTFOUND",
+            "ENOTFOUND"
+          ]
+        },
+        "attempts": [
+          {
+            "state": "unavailable",
+            "reason": "dns_nxdomain",
+            "requestedUrl": "https://walkerbulwarkconsulting.com/home",
+            "finalUrl": null,
+            "redirectChain": [],
+            "checkedAt": "2026-10-15T15:05:05.240Z",
+            "dns": {
+              "state": "nxdomain",
+              "hostname": "walkerbulwarkconsulting.com",
+              "errorCodes": [
+                "ENOTFOUND",
+                "ENOTFOUND"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "currentSnapshotHash": "c41b2f3e5a058e68d3f4f47d8e87a0dd4f1d2937706fdcfcbed402e19e77b4bb",
+    "requiredFreshRecordCheck": true,
+    "proposedChange": {
+      "website": null
+    },
+    "nonChanges": [
+      "business identity",
+      "ownership designations",
+      "listing status",
+      "Kinfolk eligibility",
+      "map eligibility",
+      "coordinates",
+      "social links"
+    ]
+  }
+]

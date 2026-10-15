@@ -8050,7 +8050,13 @@ async function ensureTourBusinesses(
       await pool.query(
         `UPDATE businesses SET listing_status = 'live_unclaimed'
          WHERE listing_status IN ('staged','pending')
-           AND LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) = ANY($1::text[])`,
+           AND LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) = ANY($1::text[])
+           AND NOT EXISTS (
+             SELECT 1
+               FROM kinfolk_current_online_presence_reviews review
+              WHERE review.business_id::text = businesses.id::text
+                AND review.state = 'queued'
+           )`,
         [
           TOUR_BUSINESSES_SEED.slice(0, 200).map(
             (b) =>

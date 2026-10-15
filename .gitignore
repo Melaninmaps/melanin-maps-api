@@ -60,3 +60,8 @@ test-results/
 playwright-report/
 .cache/ms-playwright/
 .github/workflows/railway-sha-verify.yml
+
+# Full online-presence probe outputs remain in the authoritative workspace and
+# are preserved in the tracked compressed receipt archive beside the report.
+docs/directory-operations/kinfolk-current-online-presence-2026-10-15/presence-verification.jsonl
+docs/directory-operations/kinfolk-current-online-presence-2026-10-15/url-probe-cache.json

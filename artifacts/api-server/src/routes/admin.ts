@@ -74,8 +74,23 @@ import {
   recordBusinessDeletionHoldEvent,
   sevenDaysFrom,
 } from "../businesses/businessDeletionHold";
+import {
+  KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS,
+  KINFOLK_CURRENT_DELETE_REVIEW_REASON,
+  ensureKinfolkCurrentOnlinePresenceReviewSchema,
+  parseKinfolkCurrentOnlinePresenceManifest,
+  recordKinfolkCurrentOnlinePresenceReviewEvent,
+  type ActiveOfficialSocial,
+} from "../businesses/kinfolkCurrentOnlinePresenceReview";
 
 const router: IRouter = Router();
+
+// One immutable, reviewed plan for the 2026-10-15 Kinfolk Current sweep.
+// The route rejects altered or substitute browser JSON even if it repeats a
+// familiar evidence label; a future scan requires a separately reviewed source
+// change with its own exact content fingerprint.
+const APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINT =
+  "b6247028c68e02897c51750985b980373c4c13d4461788c74bb37be13b607f71";
 
 // Additive source receipt set. Historical and Minnesota directory manifests stay
 // isolated by receipt batch so reconciliation never expands an admin request to
@@ -928,6 +943,7 @@ type AdminBusinessInventoryFilters = Readonly<{
   status: string;
   reconciliation: string;
   reconciliationLedgerAvailable: boolean;
+  onlinePresenceReviewTableAvailable: boolean;
   sort: "added_desc" | "name_asc";
   orderBy: string;
   where: string;
@@ -1046,6 +1062,12 @@ async function compileAdminBusinessInventoryFilters(
     "SELECT to_regclass('public.business_directory_reconciliation_ledger') AS table_name",
   );
   const reconciliationLedgerAvailable = Boolean(reconciliationLedgerProbe.rows[0]?.table_name);
+  const onlinePresenceReviewProbe = await pool.query<{ table_name: string | null }>(
+    "SELECT to_regclass('public.kinfolk_current_online_presence_reviews') AS table_name",
+  );
+  const onlinePresenceReviewTableAvailable = Boolean(
+    onlinePresenceReviewProbe.rows[0]?.table_name,
+  );
   const filters: string[] = [];
   const filterParams: unknown[] = [];
   const addFilter = (clause: string, value: string) => {
@@ -1091,6 +1113,20 @@ async function compileAdminBusinessInventoryFilters(
     filters.push("COALESCE(is_duplicate, false) = true");
   } else if (status === "archived") {
     filters.push("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
+  } else if (status === "kinfolk_current_delete_review") {
+    // The queue is deliberately distinct from Archive and Needs Review. It
+    // retains the original record and evidence while keeping only this bounded
+    // online-presence outcome out of public discovery.
+    filters.push(
+      onlinePresenceReviewTableAvailable
+        ? `listing_status = '${KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS}'
+           AND EXISTS (
+             SELECT 1 FROM kinfolk_current_online_presence_reviews presence_review
+              WHERE presence_review.business_id::text = businesses.id::text
+                AND presence_review.state = 'queued'
+           )`
+        : "FALSE",
+    );
   } else if (status !== "all") {
     // All ordinary review modes exclude the reversible archive. `all` is used
     // only by the explicit Admin CSV inventory download. Confirmed duplicates
@@ -1194,6 +1230,7 @@ async function compileAdminBusinessInventoryFilters(
     status,
     reconciliation,
     reconciliationLedgerAvailable,
+    onlinePresenceReviewTableAvailable,
     sort,
     orderBy,
     where: filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "",
@@ -1749,6 +1786,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       completedCohortPredicate,
       nationalMasterPredicate,
       manusCreatedPredicate,
+      onlinePresenceReviewTableAvailable,
     } = await compileAdminBusinessInventoryFilters(req.query);
     const pageParams = [...filterParams, String(pageSize), String((page - 1) * pageSize)];
 
@@ -1758,6 +1796,14 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const liveInventoryWhere = "COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false";
     const archivedInventoryWhere = "listing_status = 'archived' AND COALESCE(is_duplicate, false) = false";
     const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true";
+    const kinfolkCurrentDeleteReviewInventoryWhere = onlinePresenceReviewTableAvailable
+      ? `listing_status = '${KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS}'
+         AND EXISTS (
+           SELECT 1 FROM kinfolk_current_online_presence_reviews presence_review
+            WHERE presence_review.business_id::text = businesses.id::text
+              AND presence_review.state = 'queued'
+         )`
+      : "FALSE";
     // The master owner inventory deliberately includes every retained row.
     // Its controls remain status-aware; this only removes the view-level wall
     // between live, archived, and duplicate records.
@@ -1765,6 +1811,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       ? duplicateInventoryWhere
       : status === "archived"
         ? archivedInventoryWhere
+        : status === "kinfolk_current_delete_review"
+          ? kinfolkCurrentDeleteReviewInventoryWhere
         : status === "all"
           ? "TRUE"
           : liveInventoryWhere;
@@ -1791,6 +1839,16 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               'unreviewed'::text AS reconciliation_ownership_status,
               'retain'::text AS reconciliation_recommended_action,
               NULL::timestamptz AS reconciliation_reviewed_at,`;
+    const onlinePresenceReviewJoin = onlinePresenceReviewTableAvailable
+      ? `LEFT JOIN kinfolk_current_online_presence_reviews presence_review
+           ON presence_review.business_id::text = businesses.id::text
+          AND presence_review.state = 'queued'`
+      : "";
+    const onlinePresenceReviewColumns = onlinePresenceReviewTableAvailable
+      ? `CASE WHEN presence_review.business_id IS NULL THEN false ELSE true END AS kinfolk_current_delete_review,
+              presence_review.queued_at AS kinfolk_current_delete_review_queued_at,`
+      : `false AS kinfolk_current_delete_review,
+              NULL::timestamptz AS kinfolk_current_delete_review_queued_at,`;
     const [
       businesses,
       inventoryCount,
@@ -1801,6 +1859,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       kinfolkRecommendableCount,
       permanentlyClosedCount,
       needsReviewCount,
+      kinfolkCurrentDeleteReviewCount,
       filteredCount,
       cities,
       services,
@@ -1842,6 +1901,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       reconciliation_reviewed_at: string | null;
       created_at: string;
       needs_verification: boolean;
+      kinfolk_current_delete_review: boolean;
+      kinfolk_current_delete_review_queued_at: string | null;
       enrichment_note: string | null;
       address: string | null;
       latitude: string | null;
@@ -1872,6 +1933,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
                    AND (resolved_presence.official_website_evidence_id IS NOT NULL OR resolved_presence.official_social_evidence_id IS NOT NULL)
               ) THEN false ELSE true END AS official_presence_unresolved,
               ${reconciliationColumns}
+              ${onlinePresenceReviewColumns}
               created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
@@ -1887,6 +1949,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               CASE WHEN ${manusCreatedPredicate} THEN true ELSE false END AS manus_created
        FROM businesses
        ${reconciliationJoin}
+       ${onlinePresenceReviewJoin}
        LEFT JOIN business_deletion_holds deletion_hold
          ON deletion_hold.business_id::text = businesses.id::text
        ${where}
@@ -1930,6 +1993,13 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
           WHERE ${liveInventoryWhere}
             AND needs_verification = true`,
       ),
+      onlinePresenceReviewTableAvailable
+        ? pool.query<{ total: string }>(
+            `SELECT COUNT(*)::text AS total
+               FROM kinfolk_current_online_presence_reviews
+              WHERE state = 'queued'`,
+          )
+        : Promise.resolve({ rows: [{ total: "0" }] }),
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total FROM businesses ${where}`,
         filterParams,
@@ -1985,6 +2055,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const kinfolkRecommendableTotal = Number(kinfolkRecommendableCount.rows[0]?.total ?? 0);
     const permanentlyClosedTotal = Number(permanentlyClosedCount.rows[0]?.total ?? 0);
     const needsReviewTotal = Number(needsReviewCount.rows[0]?.total ?? 0);
+    const kinfolkCurrentDeleteReviewTotal = Number(
+      kinfolkCurrentDeleteReviewCount.rows[0]?.total ?? 0,
+    );
     const filteredTotal = Number(filteredCount.rows[0]?.total ?? 0);
     const reconciliationAccountedTotal = Number(reconciliationAccountedCount.rows[0]?.total ?? 0);
     const intakeCohortCounts = cohortCounts.rows[0] ?? {
@@ -2007,6 +2080,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       isDuplicate: b.is_duplicate,
       deletionHoldState: b.deletion_hold_state,
       deletionHoldDeleteAfter: b.deletion_hold_delete_after,
+      kinfolkCurrentDeleteReview: b.kinfolk_current_delete_review,
+      kinfolkCurrentDeleteReviewQueuedAt: b.kinfolk_current_delete_review_queued_at,
       phone: b.phone,
       website: b.website,
       instagram: b.instagram,
@@ -2081,6 +2156,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       kinfolkRecommendableTotal,
       permanentlyClosedTotal,
       needsReviewTotal,
+      kinfolkCurrentDeleteReviewTotal,
       reconciliationLedgerAvailable,
       reconciliationAccountedTotal,
       filteredTotal,
@@ -2185,6 +2261,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
   const client = await pool.connect();
   try {
     await ensureListingStatusAuditSchema(client);
+    await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
     await client.query("BEGIN");
     const currentResult = await client.query<{
       id: string;
@@ -2204,6 +2281,22 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
     if (currentResult.rows.length !== uniqueIds.length) {
       await client.query("ROLLBACK");
       res.status(404).json({ error: "One or more selected businesses were not found." });
+      return;
+    }
+    const queuedReviews = await client.query<{ business_id: string }>(
+      `SELECT business_id
+         FROM kinfolk_current_online_presence_reviews
+        WHERE business_id = ANY($1::text[])
+          AND state = 'queued'
+        FOR UPDATE`,
+      [uniqueIds],
+    );
+    if (queuedReviews.rows.length > 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "A Kinfolk Current Delete Review record can only be restored through its dedicated review control.",
+        blockedIds: queuedReviews.rows.map((row) => row.business_id),
+      });
       return;
     }
 
@@ -2342,6 +2435,435 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
   }
 });
 
+
+function normalizedStoredLink(value: string | null | undefined): string {
+  return String(value ?? "").trim();
+}
+
+function normalizedIdentityPart(value: string | null | undefined): string {
+  return String(value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+type OnlinePresenceCurrentBusiness = {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  website: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  twitter: string | null;
+  youtube: string | null;
+  pinterest: string | null;
+  listing_status: string | null;
+  status: string;
+  promotion_eligible: boolean;
+  featured: boolean;
+  promoted_until: string | null;
+  snapshot: Record<string, unknown>;
+};
+
+const ONLINE_PRESENCE_SOCIAL_COLUMNS: readonly ActiveOfficialSocial["platform"][] = [
+  "instagram",
+  "tiktok",
+  "facebook",
+  "twitter",
+  "youtube",
+  "pinterest",
+];
+
+function currentSocialMatches(
+  business: OnlinePresenceCurrentBusiness,
+  social: readonly ActiveOfficialSocial[],
+): boolean {
+  return social.some((entry) =>
+    normalizedStoredLink(business[entry.platform]) === normalizedStoredLink(entry.url),
+  );
+}
+
+function currentIdentityMatches(
+  business: Pick<OnlinePresenceCurrentBusiness, "name" | "city" | "state">,
+  expected: Readonly<{ businessName: string; city: string; state: string }>,
+): boolean {
+  return normalizedIdentityPart(business.name) === normalizedIdentityPart(expected.businessName)
+    && normalizedIdentityPart(business.city) === normalizedIdentityPart(expected.city)
+    && normalizedIdentityPart(business.state) === normalizedIdentityPart(expected.state);
+}
+
+function currentLinksMatchDeleteReview(
+  business: OnlinePresenceCurrentBusiness,
+  expected: Readonly<{
+    businessName: string;
+    city: string;
+    state: string;
+    originalLinks: Readonly<{ website: string | null; social: Readonly<Record<string, string>> }>;
+  }>,
+): boolean {
+  if (!currentIdentityMatches(business, expected)) return false;
+  if (normalizedStoredLink(business.website) !== normalizedStoredLink(expected.originalLinks.website)) {
+    return false;
+  }
+  return ONLINE_PRESENCE_SOCIAL_COLUMNS.every((platform) =>
+    normalizedStoredLink(business[platform]) === normalizedStoredLink(expected.originalLinks.social[platform]),
+  );
+}
+
+function onlinePresenceCheckedAt(verification: Record<string, unknown>, fallback: string): string {
+  const probe = verification.probe;
+  if (probe && typeof probe === "object" && !Array.isArray(probe)) {
+    const checkedAt = (probe as Record<string, unknown>).checkedAt;
+    if (typeof checkedAt === "string" && Number.isFinite(Date.parse(checkedAt))) return checkedAt;
+  }
+  return fallback;
+}
+
+function onlinePresenceFinalDestination(verification: Record<string, unknown>): string | null {
+  const probe = verification.probe;
+  if (!probe || typeof probe !== "object" || Array.isArray(probe)) return null;
+  const destination = (probe as Record<string, unknown>).finalUrl;
+  return typeof destination === "string" && destination.trim() ? destination.trim() : null;
+}
+
+// POST /admin/businesses/kinfolk-current/online-presence-apply — apply only a
+// complete, recent screening manifest. Each row is read and locked before an
+// update; stale, changed, non-current, or newly-social records are skipped.
+router.post("/admin/businesses/kinfolk-current/online-presence-apply", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  let manifest;
+  try {
+    manifest = parseKinfolkCurrentOnlinePresenceManifest((req.body as { manifest?: unknown })?.manifest);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "The online-presence manifest is invalid." });
+    return;
+  }
+  if (manifest.manifestFingerprint !== APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINT) {
+    res.status(409).json({
+      error: "This online-presence plan is not the reviewed immutable manifest for this execution.",
+    });
+    return;
+  }
+
+  const allIds = [
+    ...manifest.websiteRemovals.map((item) => item.businessId),
+    ...manifest.deleteReviews.map((item) => item.businessId),
+  ];
+  const client = await pool.connect();
+  try {
+    await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
+    await ensureListingStatusAuditSchema(client);
+    await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+    await client.query(
+      "SELECT set_config('app.kinfolk_current_review_lifecycle_transition', 'apply', true)",
+    );
+    const currentResult = await client.query<OnlinePresenceCurrentBusiness>(
+      `SELECT id, name, city, state, website, instagram, tiktok, facebook, twitter, youtube, pinterest,
+              listing_status, status, promotion_eligible, featured, promoted_until,
+              to_jsonb(businesses) AS snapshot
+         FROM businesses
+        WHERE id = ANY($1::text[])
+        FOR UPDATE`,
+      [allIds],
+    );
+    const currentById = new Map(currentResult.rows.map((business) => [business.id, business]));
+    const currentKinfolkResult = await client.query<{ id: string }>(
+      `SELECT current_kinfolk.id
+         FROM public.public_businesses AS current_kinfolk
+        WHERE current_kinfolk.id = ANY($1::text[])
+          AND ${mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")}`,
+      [allIds],
+    );
+    const currentKinfolkIds = new Set(currentKinfolkResult.rows.map((row) => row.id));
+    const skipped: Array<{ businessId: string; lane: "website_removal" | "delete_review"; reason: string }> = [];
+    let websiteRemoved = 0;
+    let deleteReviewQueued = 0;
+
+    for (const item of manifest.websiteRemovals) {
+      const business = currentById.get(item.businessId);
+      if (!business) {
+        skipped.push({ businessId: item.businessId, lane: "website_removal", reason: "The business is no longer retained." });
+        continue;
+      }
+      if (!currentKinfolkIds.has(item.businessId)) {
+        skipped.push({ businessId: item.businessId, lane: "website_removal", reason: "The business is no longer in the current public Kinfolk catalog." });
+        continue;
+      }
+      if (!currentIdentityMatches(business, item)) {
+        skipped.push({ businessId: item.businessId, lane: "website_removal", reason: "The business identity changed after screening." });
+        continue;
+      }
+      if (normalizedStoredLink(business.website) !== normalizedStoredLink(item.originalWebsite)) {
+        skipped.push({ businessId: item.businessId, lane: "website_removal", reason: "The website changed after screening." });
+        continue;
+      }
+      if (!currentSocialMatches(business, item.verifiedOfficialSocial)) {
+        skipped.push({ businessId: item.businessId, lane: "website_removal", reason: "The verified official social URL changed after screening." });
+        continue;
+      }
+      await client.query(
+        `UPDATE businesses
+            SET website = NULL,
+                website_cleanup_status = 'inactive_broken',
+                website_cleanup_at = NOW(),
+                updated_at = NOW()
+          WHERE id = $1`,
+        [business.id],
+      );
+      await client.query(
+        `INSERT INTO business_website_cleanup_audit_events (
+           id, business_id, original_website, final_destination, cleanup_status,
+           reason, evidence_source_url, evidence_summary, checked_at, actor_user_id
+         ) VALUES ($1, $2, $3, $4, 'inactive_broken', $5, $6, $7::jsonb, $8::timestamptz, $9)`,
+        [
+          randomUUID(),
+          business.id,
+          item.originalWebsite,
+          onlinePresenceFinalDestination(item.verification),
+          "Kinfolk Current verification confirmed the stored website is inactive while a matching official social profile remains active.",
+          item.originalWebsite,
+          JSON.stringify({
+            manifestKind: manifest.kind,
+            manifestFingerprint: manifest.manifestFingerprint,
+            manifestSource: manifest.source,
+            verification: item.verification,
+            verifiedOfficialSocial: item.verifiedOfficialSocial,
+            currentSnapshotHash: item.currentSnapshotHash,
+          }),
+          onlinePresenceCheckedAt(item.verification, manifest.generatedAt),
+          req.user?.id ?? null,
+        ],
+      );
+      websiteRemoved += 1;
+    }
+
+    for (const item of manifest.deleteReviews) {
+      const business = currentById.get(item.businessId);
+      if (!business) {
+        skipped.push({ businessId: item.businessId, lane: "delete_review", reason: "The business is no longer retained." });
+        continue;
+      }
+      if (!currentKinfolkIds.has(item.businessId)) {
+        skipped.push({ businessId: item.businessId, lane: "delete_review", reason: "The business is no longer in the current public Kinfolk catalog." });
+        continue;
+      }
+      if (!currentLinksMatchDeleteReview(business, item)) {
+        skipped.push({ businessId: item.businessId, lane: "delete_review", reason: "The business identity, website, or social links changed after screening." });
+        continue;
+      }
+      const beforeState: ListingAuditState = {
+        listingStatus: business.listing_status,
+        status: business.status,
+        promotionEligible: business.promotion_eligible,
+        featured: business.featured,
+        promotedUntil: business.promoted_until,
+      };
+      const queued = await client.query<{ business_id: string }>(
+        `INSERT INTO kinfolk_current_online_presence_reviews (
+           business_id, state, original_listing_state, verification_evidence,
+           source_manifest, queued_by
+         ) VALUES ($1, 'queued', $2::jsonb, $3::jsonb, $4::jsonb, $5)
+         ON CONFLICT (business_id) DO NOTHING
+         RETURNING business_id`,
+        [
+          business.id,
+          JSON.stringify(beforeState),
+          JSON.stringify({
+            websiteVerification: item.websiteVerification,
+            socialVerification: item.socialVerification,
+            originalLinks: item.originalLinks,
+            originalSnapshot: item.originalSnapshot,
+          }),
+          JSON.stringify({
+            kind: manifest.kind,
+            manifestFingerprint: manifest.manifestFingerprint,
+            generatedAt: manifest.generatedAt,
+            source: manifest.source,
+          }),
+          req.user?.id ?? null,
+        ],
+      );
+      if (!queued.rows[0]) {
+        skipped.push({ businessId: item.businessId, lane: "delete_review", reason: "A retained review history already exists for this business." });
+        continue;
+      }
+      const nextState: ListingAuditState = {
+        listingStatus: KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS,
+        status: "suspended",
+        promotionEligible: false,
+        featured: false,
+        promotedUntil: null,
+      };
+      await client.query(
+        `UPDATE businesses
+            SET listing_status = $1,
+                status = $2,
+                promotion_eligible = $3,
+                featured = $4,
+                promoted_until = $5,
+                updated_at = NOW()
+          WHERE id = $6`,
+        [
+          nextState.listingStatus,
+          nextState.status,
+          nextState.promotionEligible,
+          nextState.featured,
+          nextState.promotedUntil,
+          business.id,
+        ],
+      );
+      await recordListingStatusAudit(client, {
+        businessId: business.id,
+        action: "remove_public_discovery",
+        actorUserId: req.user?.id ?? null,
+        reason: KINFOLK_CURRENT_DELETE_REVIEW_REASON,
+        beforeState,
+        afterState: nextState,
+      });
+      await recordKinfolkCurrentOnlinePresenceReviewEvent(client, {
+        businessId: business.id,
+        action: "queued",
+        actorUserId: req.user?.id ?? null,
+        details: {
+          originalBusinessSnapshot: business.snapshot,
+          originalListingState: beforeState,
+          verificationEvidence: {
+            websiteVerification: item.websiteVerification,
+            socialVerification: item.socialVerification,
+          },
+        },
+      });
+      deleteReviewQueued += 1;
+    }
+
+    await client.query("COMMIT");
+    req.log?.info(
+      { websiteRemoved, deleteReviewQueued, skippedCount: skipped.length },
+      "Admin applied an evidence-bound Kinfolk Current online-presence manifest",
+    );
+    res.json({ ok: true, websiteRemoved, deleteReviewQueued, skipped });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log?.error({ error }, "Failed to apply Kinfolk Current online-presence manifest");
+    res.status(500).json({ error: "No online-presence changes were applied; retry after checking the manifest and current inventory." });
+  } finally {
+    client.release();
+  }
+});
+
+// PATCH /admin/businesses/kinfolk-current/delete-review/restore — restore the
+// exact pre-queue discovery state. It never changes the business identity,
+// ownership, contacts, receipts, or original online-presence evidence.
+router.patch("/admin/businesses/kinfolk-current/delete-review/restore", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const ids = Array.isArray((req.body as { ids?: unknown })?.ids)
+    ? [...new Set((req.body as { ids: unknown[] }).ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  if (ids.length === 0 || ids.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 Kinfolk Current Delete Review records." });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
+    await ensureListingStatusAuditSchema(client);
+    await ensureBusinessDeletionHoldSchema(client);
+    await client.query("BEGIN");
+    await client.query(
+      "SELECT set_config('app.kinfolk_current_review_lifecycle_transition', 'restore', true)",
+    );
+    const queued = await client.query<{
+      business_id: string;
+      original_listing_state: ListingAuditState;
+      listing_status: string | null;
+      status: string;
+      promotion_eligible: boolean;
+      featured: boolean;
+      promoted_until: string | null;
+    }>(
+      `SELECT review.business_id, review.original_listing_state,
+              business.listing_status, business.status, business.promotion_eligible,
+              business.featured, business.promoted_until
+         FROM kinfolk_current_online_presence_reviews review
+         JOIN businesses business ON business.id::text = review.business_id::text
+        WHERE review.business_id = ANY($1::text[])
+          AND review.state = 'queued'
+        FOR UPDATE OF review, business`,
+      [ids],
+    );
+    const restoredIds: string[] = [];
+    for (const review of queued.rows) {
+      const restored = review.original_listing_state;
+      const currentState: ListingAuditState = {
+        listingStatus: review.listing_status,
+        status: review.status,
+        promotionEligible: review.promotion_eligible,
+        featured: review.featured,
+        promotedUntil: review.promoted_until,
+      };
+      await cancelBusinessDeletionHold(client, {
+        businessId: review.business_id,
+        actorUserId: req.user?.id ?? null,
+        reason: "Administrator restored a Kinfolk Current Delete Review record before any deletion hold could finalize",
+      });
+      await client.query(
+        `UPDATE businesses
+            SET listing_status = $1,
+                status = $2,
+                promotion_eligible = $3,
+                featured = $4,
+                promoted_until = $5,
+                updated_at = NOW()
+          WHERE id = $6`,
+        [
+          restored.listingStatus,
+          restored.status,
+          restored.promotionEligible,
+          restored.featured,
+          restored.promotedUntil,
+          review.business_id,
+        ],
+      );
+      await client.query(
+        `UPDATE kinfolk_current_online_presence_reviews
+            SET state = 'restored', restored_by = $1, restored_at = NOW()
+          WHERE business_id = $2 AND state = 'queued'`,
+        [req.user?.id ?? null, review.business_id],
+      );
+      await recordListingStatusAudit(client, {
+        businessId: review.business_id,
+        action: "restore_public_discovery",
+        actorUserId: req.user?.id ?? null,
+        reason: "Administrator restored a Kinfolk Current Delete Review record to its exact pre-review discovery state",
+        beforeState: currentState,
+        afterState: restored,
+      });
+      await recordKinfolkCurrentOnlinePresenceReviewEvent(client, {
+        businessId: review.business_id,
+        action: "restored",
+        actorUserId: req.user?.id ?? null,
+        details: { restoredListingState: restored },
+      });
+      restoredIds.push(review.business_id);
+    }
+    await client.query("COMMIT");
+    res.json({ ok: true, restoredIds, skippedIds: ids.filter((id) => !restoredIds.includes(id)) });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log?.error({ error }, "Failed to restore Kinfolk Current Delete Review records");
+    res.status(500).json({ error: "No review records were restored." });
+  } finally {
+    client.release();
+  }
+});
+
 // DELETE /admin/businesses/permanent — schedule a permanent deletion after a
 // seven-day reversible hold. The route name is retained for existing dashboard
 // clients, but it can no longer remove a business in the request that starts it.
@@ -2371,6 +2893,7 @@ router.delete(
     const client = await pool.connect();
     try {
       await ensureBusinessDeletionHoldSchema(client);
+      await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
       await client.query("BEGIN");
       const current = await client.query<{
         id: string;
@@ -2396,6 +2919,22 @@ router.delete(
         res
           .status(404)
           .json({ error: "One or more selected businesses were not found." });
+        return;
+      }
+      const queuedReviews = await client.query<{ business_id: string }>(
+        `SELECT business_id
+           FROM kinfolk_current_online_presence_reviews
+          WHERE business_id = ANY($1::text[])
+            AND state = 'queued'
+          FOR UPDATE`,
+        [ids],
+      );
+      if (queuedReviews.rows.length > 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          error: "A Kinfolk Current Delete Review record must be restored or specifically resolved through review before permanent deletion can be scheduled.",
+          blockedIds: queuedReviews.rows.map((row) => row.business_id),
+        });
         return;
       }
 
@@ -2540,6 +3079,7 @@ router.patch(
     const client = await pool.connect();
     try {
       await ensureListingStatusAuditSchema(client);
+      await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
       await client.query("BEGIN");
       const currentResult = await client.query<{
         id: string;
@@ -2558,6 +3098,21 @@ router.patch(
       if (!current) {
         await client.query("ROLLBACK");
         res.status(404).json({ error: "Business not found" });
+        return;
+      }
+      const queuedReview = await client.query<{ business_id: string }>(
+        `SELECT business_id
+           FROM kinfolk_current_online_presence_reviews
+          WHERE business_id = $1
+            AND state = 'queued'
+          FOR UPDATE`,
+        [id],
+      );
+      if (queuedReview.rows[0]) {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          error: "This business is in Kinfolk Current Delete Review. Use the dedicated review restore control to preserve its audited prior state.",
+        });
         return;
       }
 

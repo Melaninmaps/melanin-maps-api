@@ -452,6 +452,22 @@ router.post("/admin/business-claims/:id/approve", async (req: Request, res: Resp
       res.status(409).json({ error: "An active owner link already exists for this business" }); return;
     }
 
+    const { rows: queuedReview } = await client.query(
+      `SELECT business_id
+         FROM kinfolk_current_online_presence_reviews
+        WHERE business_id = $1
+          AND state = 'queued'
+        FOR UPDATE`,
+      [claim.business_id],
+    );
+    if (queuedReview[0]) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "This business is in Kinfolk Current Delete Review. Resolve or restore that review before changing claim lifecycle state.",
+      });
+      return;
+    }
+
     // 1. Approve the claim
     await client.query(
       `UPDATE business_claims
@@ -517,6 +533,31 @@ router.post("/admin/business-claims/:id/revoke", async (req: Request, res: Respo
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const { rows: activeLinks } = await client.query<{ business_id: string }>(
+      `SELECT business_id
+         FROM business_owner_links
+        WHERE claim_id = $1
+          AND revoked_at IS NULL
+        FOR UPDATE`,
+      [claimId],
+    );
+    if (activeLinks[0]) {
+      const { rows: queuedReview } = await client.query(
+        `SELECT business_id
+           FROM kinfolk_current_online_presence_reviews
+          WHERE business_id = $1
+            AND state = 'queued'
+          FOR UPDATE`,
+        [activeLinks[0].business_id],
+      );
+      if (queuedReview[0]) {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          error: "This business is in Kinfolk Current Delete Review. Resolve or restore that review before changing claim lifecycle state.",
+        });
+        return;
+      }
+    }
     const { rows: linkRows } = await client.query(
       `UPDATE business_owner_links
        SET revoked_at=NOW(), revoked_by=$1, revocation_reason=$2, updated_at=NOW()

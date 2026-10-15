@@ -1,0 +1,39 @@
+{
+  "verifierVersion": "kinfolk-current-online-presence-v1",
+  "inputPath": "/home/ubuntu/Downloads/mwm-production-kinfolk-current-2026-10-09.csv",
+  "inputSha256": "c9bf02d37ff86b3f9a0317dd54346606f22912dc0a0c6e20c07217cc551f459c",
+  "inputModifiedAt": "2026-10-09T03:49:05.704Z",
+  "records": 7571,
+  "allInputRecords": 7571,
+  "uniqueWebsites": 5627,
+  "uniqueSocialUrls": 3217,
+  "concurrency": 8,
+  "timeoutMs": 9000,
+  "readOnly": true,
+  "runStartedAt": "2026-10-15T14:17:29.224Z",
+  "completedAt": "2026-10-15T15:26:45.115Z",
+  "priorEvidenceRecordsMatched": 1759,
+  "websiteCounts": {
+    "KEEP_ACTIVE": 3047,
+    "HOLD_INCONCLUSIVE": 2216,
+    "REMOVE_CONFIRMED_INACTIVE": 989,
+    "MISSING": 1319
+  },
+  "socialCounts": {
+    "HOLD_INCONCLUSIVE": 2971,
+    "KEEP_ACTIVE_SOCIAL": 587,
+    "ACTIVE_BUT_IDENTITY_UNCLEAR": 2573,
+    "NOT_EVALUATED_ACTIVE_WEBSITE": 1930,
+    "INACTIVE_OR_REMOVED": 6
+  },
+  "dispositionCounts": {
+    "RETAIN": 3047,
+    "HOLD_FOR_REVIEW": 3557,
+    "DELETE_REVIEW_PROPOSAL": 659,
+    "RETAIN_SOCIAL_ONLY_WEBSITE_REMOVAL_PROPOSAL": 44,
+    "RETAIN_SOCIAL_ONLY": 264
+  },
+  "websiteRemovalProposals": 44,
+  "deleteReviewProposals": 659,
+  "execution": "READ_ONLY; no production records, eligibility, visibility, map pins, ownership labels, or credentials were changed."
+}

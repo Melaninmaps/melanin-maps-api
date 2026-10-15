@@ -30,6 +30,7 @@ import {
   ensureBusinessDeletionHoldSchema,
   startBusinessDeletionHoldWorker,
 } from "./businesses/businessDeletionHold";
+import { ensureKinfolkCurrentOnlinePresenceReviewSchema } from "./businesses/kinfolkCurrentOnlinePresenceReview";
 import {
   startLatinxLehighValleyPublication,
 } from "./directoryImport/latinxLehighValleyPublication";
@@ -193,6 +194,10 @@ try {
   // request can schedule a hold or a worker can finalize an expired one.
   await ensureBusinessDeletionHoldSchema(pool);
   logger.info("Business deletion hold schema ready before traffic acceptance");
+  // This queue is a reversible, evidence-bound public-discovery hold. Its
+  // schema is data-neutral until an administrator applies a validated manifest.
+  await ensureKinfolkCurrentOnlinePresenceReviewSchema(pool);
+  logger.info("Kinfolk Current online-presence review schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {

@@ -642,7 +642,13 @@ router.post("/admin/batch-launch-all", async (req: Request, res: Response) => {
         `UPDATE businesses
            SET listing_status = 'live_unclaimed', updated_at = NOW()
          WHERE LOWER(city) = LOWER($1) AND LOWER(state) = LOWER($2)
-           AND listing_status = 'staged'`,
+           AND listing_status = 'staged'
+           AND NOT EXISTS (
+             SELECT 1
+               FROM kinfolk_current_online_presence_reviews review
+              WHERE review.business_id::text = businesses.id::text
+                AND review.state = 'queued'
+           )`,
         [city, state]
       );
 
@@ -699,6 +705,12 @@ router.post("/admin/batch-launch-all", async (req: Request, res: Response) => {
          AND LOWER(TRIM(b.state)) = LOWER(TRIM(cl.state))
          AND cl.status = 'live'
          AND b.listing_status = 'staged'
+         AND NOT EXISTS (
+           SELECT 1
+             FROM kinfolk_current_online_presence_reviews review
+            WHERE review.business_id::text = b.id::text
+              AND review.state = 'queued'
+         )
     `);
 
     // ── 4. Ensure businesses without listing_status are visible ───────────────
