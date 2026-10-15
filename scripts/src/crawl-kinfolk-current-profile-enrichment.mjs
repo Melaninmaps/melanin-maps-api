@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Read-only, resumable first-party website crawler for Kinfolk Current profile
- * enrichment. It never calls a Mapping With Melanin write endpoint. It accepts
- * only the prior verified KEEP_ACTIVE website evidence, follows a small set of
- * same-site information pages, and writes compact page packets for structured
- * field extraction and later source-receipted review.
+ * Read-only, resumable first-party profile crawler. It never calls a Mapping
+ * With Melanin write endpoint. It accepts only previously verified active
+ * official websites or public social profiles, follows a small set of same-site
+ * website information pages, and writes compact packets for structured field
+ * extraction and later source-receipted review.
  *
  * Usage:
  *   node scripts/src/crawl-kinfolk-current-profile-enrichment.mjs \
@@ -16,7 +16,7 @@ import { promises as fs } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { assessIdentity, probePublicUrl } from "./verify-kinfolk-current-online-presence.mjs";
 
-export const PROFILE_ENRICHMENT_CRAWLER_VERSION = "kinfolk-current-profile-enrichment-crawl-v1";
+export const PROFILE_ENRICHMENT_CRAWLER_VERSION = "profile-enrichment-crawl-v2";
 const DEFAULT_INPUT = "docs/directory-operations/kinfolk-current-online-presence-2026-10-15/presence-verification.jsonl";
 const DEFAULT_OUT = "docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15";
 const MAX_FOLLOWUP_PAGES = 3;
@@ -155,23 +155,37 @@ async function mapWithConcurrency(values, concurrency, worker, onProgress) {
   await Promise.all(Array.from({ length: Math.min(values.length, concurrency) }, runWorker));
 }
 
-function inputRecords(source) {
+export function inputRecords(source) {
   return source.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line))
-    .filter((row) => row?.website?.classification === "KEEP_ACTIVE" && row.website.normalizedUrl)
-    .map((row) => ({
-      businessId: String(row.businessId),
-      businessName: String(row.businessName),
-      city: String(row.city ?? ""),
-      state: String(row.state ?? ""),
-      website: String(row.website.normalizedUrl),
-      sourceSnapshot: row.sourceSnapshot ?? {},
-      currentSnapshotHash: row.currentSnapshotHash ?? null,
-      verifiedWebsiteEvidence: {
-        classification: row.website.classification,
-        reason: row.website.reason,
-        checkedAt: row.website.probe?.checkedAt ?? null,
-      },
-    }));
+    .map((row) => {
+      const verifiedWebsite = row?.website?.classification === "KEEP_ACTIVE" && row.website.normalizedUrl
+        ? { kind: "website", url: String(row.website.normalizedUrl), evidence: row.website }
+        : null;
+      const verifiedSocial = Object.values(row?.social ?? {}).find((social) =>
+        social?.classification === "KEEP_ACTIVE_SOCIAL" && social.normalizedUrl,
+      );
+      const source = verifiedWebsite ?? (verifiedSocial
+        ? { kind: "social", url: String(verifiedSocial.normalizedUrl), evidence: verifiedSocial }
+        : null);
+      if (!source) return null;
+      return {
+        businessId: String(row.businessId),
+        businessName: String(row.businessName),
+        city: String(row.city ?? ""),
+        state: String(row.state ?? ""),
+        website: verifiedWebsite?.url ?? null,
+        sourceUrl: source.url,
+        sourceKind: source.kind,
+        sourceSnapshot: row.sourceSnapshot ?? {},
+        currentSnapshotHash: row.currentSnapshotHash ?? null,
+        verifiedPresenceEvidence: {
+          classification: source.evidence.classification,
+          reason: source.evidence.reason,
+          checkedAt: source.evidence.probe?.checkedAt ?? null,
+        },
+      };
+    })
+    .filter(Boolean);
 }
 
 function pagePacket(url, html, probe) {
@@ -188,6 +202,8 @@ function summarize(rows) {
   const count = (predicate) => rows.filter(predicate).length;
   return {
     recordsSelected: rows.length,
+    websiteSources: count((row) => row.sourceKind === "website"),
+    socialSources: count((row) => row.sourceKind === "social"),
     identityMatched: count((row) => row.disposition === "READY_FOR_EXTRACTION"),
     held: count((row) => row.disposition !== "READY_FOR_EXTRACTION"),
     withFollowupPages: count((row) => row.pages?.length > 1),
@@ -197,7 +213,7 @@ function summarize(rows) {
 
 function reportMarkdown(run, rows, outputDirectory) {
   const summary = summarize(rows);
-  return `# Kinfolk Current Official-Site Profile Enrichment Crawl\n\n**Run:** ${run.runStartedAt}\n\nThis is a read-only first-party website crawl for active, identity-matched Kinfolk Current websites. It does not change a Mapping With Melanin record. The resulting page packets are only input to a later structured extraction and source-receipted production review.\n\n| Result | Count |\n|---|---:|\n| Verified active official websites selected | ${summary.recordsSelected.toLocaleString()} |\n| Ready for structured field extraction | ${summary.identityMatched.toLocaleString()} |\n| Held because the current site could not be safely re-read | ${summary.held.toLocaleString()} |\n| Records with relevant internal pages captured | ${summary.withFollowupPages.toLocaleString()} |\n| Records whose official website links an official social profile | ${summary.withOfficialSocialLinks.toLocaleString()} |\n\nThe crawler reads the home page and up to ${MAX_FOLLOWUP_PAGES} same-site pages whose paths or link text indicate About, Contact, Location, Hours, Services, Prices, Booking, or FAQ information. It never follows directory, marketplace, or cross-site links as business-profile evidence.\n\n**Evidence:** \`${outputDirectory}/profile-enrichment-pages.jsonl\`\n`;
+  return `# Official First-Party Profile Enrichment Crawl\n\n**Run:** ${run.runStartedAt}\n\nThis is a read-only crawl of active, identity-matched official business websites and public social profiles. It does not change a Mapping With Melanin record. The resulting packets are only input to structured extraction and a later audited, receipt-backed production review.\n\n| Result | Count |\n|---|---:|\n| Verified official website sources selected | ${summary.websiteSources.toLocaleString()} |\n| Verified official social sources selected | ${summary.socialSources.toLocaleString()} |\n| Ready for structured field extraction | ${summary.identityMatched.toLocaleString()} |\n| Held because the current source could not be safely re-read | ${summary.held.toLocaleString()} |\n| Website records with relevant internal pages captured | ${summary.withFollowupPages.toLocaleString()} |\n| Website records that link an official social profile | ${summary.withOfficialSocialLinks.toLocaleString()} |\n\nFor a website, the crawler reads the home page and up to ${MAX_FOLLOWUP_PAGES} same-site pages whose paths or link text indicate About, Contact, Location, Hours, Services, Prices, Booking, or FAQ information. For a public social profile, it reads only that verified profile page. It never follows directory, marketplace, or cross-site links as business-profile evidence.\n\n**Evidence:** \`${outputDirectory}/profile-enrichment-pages.jsonl\`\n`;
 }
 
 async function main() {
@@ -211,7 +227,7 @@ async function main() {
   const inputHash = createHash("sha256").update(source).digest("hex");
   const allRecords = inputRecords(source);
   const records = maxRecords > 0 ? allRecords.slice(0, maxRecords) : allRecords;
-  if (!records.length) throw new Error("No verified active Kinfolk Current websites were found in the input evidence.");
+  if (!records.length) throw new Error("No verified active first-party websites or public social profiles were found in the input evidence.");
 
   const checkpointPath = resolve(outputDirectory, "checkpoint.json");
   const cachePath = resolve(outputDirectory, "crawl-cache.json");
@@ -232,7 +248,7 @@ async function main() {
     version: PROFILE_ENRICHMENT_CRAWLER_VERSION,
     inputPath,
     inputHash,
-    allVerifiedActiveWebsites: allRecords.length,
+    allVerifiedActiveSources: allRecords.length,
     selectedRecords: records.length,
     concurrency,
     timeoutMs,
@@ -248,9 +264,9 @@ async function main() {
 
   await mapWithConcurrency(pending, concurrency, async (record) => {
     const options = { dnsCache, timeoutMs, retryDelayMs: 900, includeHtml: true, maxHtmlBytes: 300_000 };
-    const homeProbe = await probePublicUrl(record.website, options);
+    const homeProbe = await probePublicUrl(record.sourceUrl, options);
     if (homeProbe.state !== "available" || !homeProbe.html) {
-      completed.set(record.businessId, { ...record, disposition: "HOLD_SITE_UNAVAILABLE", homeProbe, pages: [], officialSocialLinks: {}, completedAt: new Date().toISOString(), productionWrite: false });
+      completed.set(record.businessId, { ...record, disposition: "HOLD_SOURCE_UNAVAILABLE", homeProbe, pages: [], officialSocialLinks: {}, completedAt: new Date().toISOString(), productionWrite: false });
       return;
     }
     const homeIdentity = assessIdentity({ businessName: record.businessName, finalUrl: homeProbe.finalUrl, document: homeProbe.document });
@@ -258,11 +274,11 @@ async function main() {
       completed.set(record.businessId, { ...record, disposition: "HOLD_IDENTITY_RECHECK", homeProbe: { ...homeProbe, html: undefined }, identity: homeIdentity, pages: [], officialSocialLinks: {}, completedAt: new Date().toISOString(), productionWrite: false });
       return;
     }
-    const homeUrl = homeProbe.finalUrl ?? record.website;
+    const homeUrl = homeProbe.finalUrl ?? record.sourceUrl;
     const pages = [pagePacket(homeUrl, homeProbe.html, homeProbe)];
     const observedPageUrls = new Set(pages.map((page) => page.sourceUrl));
-    const officialSocialLinks = extractOfficialSocialLinks(homeProbe.html, homeUrl);
-    const followups = selectRelevantInternalUrls(homeProbe.html, homeUrl);
+    const officialSocialLinks = record.sourceKind === "website" ? extractOfficialSocialLinks(homeProbe.html, homeUrl) : {};
+    const followups = record.sourceKind === "website" ? selectRelevantInternalUrls(homeProbe.html, homeUrl) : [];
     for (const url of followups) {
       await sleep(100);
       const probe = await probePublicUrl(url, options);
