@@ -57,7 +57,7 @@ router.get("/intelligence/trending", async (req: Request, res: Response) => {
     }
 
     const businesses = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean }>(
-      `SELECT id, name, category, city, verified FROM businesses WHERE id = ANY($1) AND status = 'active'`,
+      `SELECT id, name, category, city, verified FROM public.public_businesses WHERE id = ANY($1)`,
       [entityIds],
     );
 
@@ -102,7 +102,7 @@ router.get("/intelligence/journey-patterns", async (req: Request, res: Response)
     }
 
     const businesses = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean }>(
-      `SELECT id, name, category, city, verified FROM businesses WHERE id = ANY($1) AND status = 'active'`,
+      `SELECT id, name, category, city, verified FROM public.public_businesses WHERE id = ANY($1)`,
       [entityIds],
     );
 

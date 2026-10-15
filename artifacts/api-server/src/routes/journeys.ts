@@ -3,6 +3,7 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, pool, lifeJourneysTable, businessesTable, type JourneyPhase } from "@workspace/db";
 import { eq, and, desc, gte, count } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 // Monthly journey creation limits by tier
 const JOURNEY_MONTHLY_LIMITS: Record<string, number> = {
@@ -182,6 +183,7 @@ router.post("/journeys", async (req: Request, res: Response) => {
           .where(and(
             eq(businessesTable.status, "active"),
             eq(businessesTable.blackOwned, true),
+            isMemberDiscoverableBusiness(businessesTable.id),
           ))
           .limit(25)
       : [];
@@ -421,9 +423,8 @@ router.get("/journeys/:id/smart-matches", async (req: Request, res: Response) =>
       topCategories.map(async ({ category, fromCity, savedCount }) => {
         const matches = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean; black_owned: boolean }>(
           `SELECT id, name, category, city, verified, black_owned
-           FROM businesses
-           WHERE status = 'active'
-             AND black_owned = true
+           FROM public.public_businesses
+           WHERE black_owned = true
              AND city ILIKE $1
              AND category ILIKE $2
            ORDER BY verified DESC, name ASC

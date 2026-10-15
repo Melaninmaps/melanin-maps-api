@@ -6,6 +6,7 @@ import { eventsTable } from "@workspace/db";
 import { neighborhoodSurveysTable } from "@workspace/db";
 import { neighborhoodPinsTable, INTENTS, type IntentId } from "@workspace/db";
 import { requireMembership } from "../middleware/requireMembership";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 const router = Router();
 
@@ -30,7 +31,11 @@ async function buildPathway(pin: typeof neighborhoodPinsTable.$inferSelect) {
   const lng = pin.longitude ?? -84.38;
 
   // Fetch businesses
-  const allBusinesses = await db.select().from(businessesTable).limit(2000);
+  const allBusinesses = await db
+    .select()
+    .from(businessesTable)
+    .where(isMemberDiscoverableBusiness(businessesTable.id))
+    .limit(2000);
   const nearby = allBusinesses.filter(b => {
     if (!b.latitude || !b.longitude) return false;
     return haversineMiles(lat, lng, Number(b.latitude), Number(b.longitude)) <= 50;

@@ -15,6 +15,7 @@ import {
   usersTable,
 } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 const router = Router();
 // The feed badge is safe to request before a session has been restored. Its
@@ -720,14 +721,15 @@ router.get("/knowledge/topics/:topicId/articles", async (req: Request, res: Resp
           address: businessesTable.address,
         })
         .from(businessesTable)
-        .where(
+        .where(and(
+          isMemberDiscoverableBusiness(businessesTable.id),
           or(
             ilike(businessesTable.name, `%${topicName}%`),
             ilike(businessesTable.category, `%${topicName}%`),
             ilike(businessesTable.city, `%${topicName}%`),
             ilike(businessesTable.state, `%${topicName}%`),
           ),
-        )
+        ))
         .limit(15),
     ]);
 

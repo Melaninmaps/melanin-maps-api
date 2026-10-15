@@ -10,6 +10,7 @@ import {
 } from "@workspace/db/schema";
 import { eq, and, inArray, ne, sql, desc, gte, count } from "drizzle-orm";
 import * as SecureStore from "expo-secure-store";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 const router = Router();
 
@@ -72,7 +73,10 @@ router.get("/kinfolk/twin-recommendations", async (req: Request, res: Response) 
 
       const trendIds = trending.map((t) => t.businessId);
       if (!trendIds.length) { res.json({ recommendations: [], source: "trending" }); return; }
-      const businesses = await db.select().from(businessesTable).where(inArray(businessesTable.id, trendIds));
+      const businesses = await db.select().from(businessesTable).where(and(
+        inArray(businessesTable.id, trendIds),
+        isMemberDiscoverableBusiness(businessesTable.id),
+      ));
       const bizMap = Object.fromEntries(businesses.map((b) => [b.id, b]));
       res.json({
         recommendations: trendIds
@@ -131,11 +135,14 @@ router.get("/kinfolk/twin-recommendations", async (req: Request, res: Response) 
 
     // 5. Fetch business details + twin cities
     const [businesses, twinLocations] = await Promise.all([
-      db.select().from(businessesTable).where(inArray(businessesTable.id, sortedIds)),
+      db.select().from(businessesTable).where(and(
+        inArray(businessesTable.id, sortedIds),
+        isMemberDiscoverableBusiness(businessesTable.id),
+      )),
       pool.query<{ user_id: string; city: string | null; state: string | null }>(
         `SELECT sp.user_id, b.city, b.state
          FROM saved_places sp
-         JOIN businesses b ON b.id = sp.business_id
+         JOIN public.public_businesses b ON b.id = sp.business_id
          WHERE sp.user_id = ANY($1)
          AND sp.business_id = ANY($2)
          AND b.city IS NOT NULL
@@ -192,7 +199,7 @@ router.get("/kinfolk/community-trends", async (req: Request, res: Response) => {
     const categorySavesRows = await pool.query<{ category: string; save_count: number }>(
       `SELECT b.category, COUNT(*) AS save_count
        FROM saved_places sp
-       JOIN businesses b ON b.id = sp.business_id
+       JOIN public.public_businesses b ON b.id = sp.business_id
        WHERE sp.created_at >= $1
        ${city ? "AND LOWER(b.city) = LOWER($2)" : ""}
        ${state && city ? "AND LOWER(b.state) = LOWER($3)" : state ? "AND LOWER(b.state) = LOWER($2)" : ""}
@@ -220,7 +227,7 @@ router.get("/kinfolk/community-trends", async (req: Request, res: Response) => {
     const prevCatRows = await pool.query<{ category: string; save_count: number }>(
       `SELECT b.category, COUNT(*) AS save_count
        FROM saved_places sp
-       JOIN businesses b ON b.id = sp.business_id
+       JOIN public.public_businesses b ON b.id = sp.business_id
        WHERE sp.created_at >= $1 AND sp.created_at < $2
        ${city ? "AND LOWER(b.city) = LOWER($3)" : ""}
        GROUP BY b.category`,
@@ -288,7 +295,7 @@ router.get("/businesses/:id/market-insights", async (req: Request, res: Response
     const localCategoryDemand = await pool.query<{ category: string; save_count: number }>(
       `SELECT b.category, COUNT(*) AS save_count
        FROM saved_places sp
-       JOIN businesses b ON b.id = sp.business_id
+       JOIN public.public_businesses b ON b.id = sp.business_id
        WHERE sp.created_at >= $1
        AND (LOWER(b.city) = LOWER($2) OR LOWER(b.state) = LOWER($3))
        GROUP BY b.category
@@ -309,7 +316,7 @@ router.get("/businesses/:id/market-insights", async (req: Request, res: Response
       `SELECT ROUND(AVG(save_count), 1) AS avg_saves FROM (
          SELECT COUNT(*) AS save_count
          FROM saved_places sp
-         JOIN businesses b ON b.id = sp.business_id
+         JOIN public.public_businesses b ON b.id = sp.business_id
          WHERE b.category = $1
          AND (LOWER(b.city) = LOWER($2) OR LOWER(b.state) = LOWER($3))
          AND sp.created_at >= $4

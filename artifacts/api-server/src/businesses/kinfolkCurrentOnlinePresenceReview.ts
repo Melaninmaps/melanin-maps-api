@@ -5,6 +5,8 @@ export const KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_VERSION =
 export const KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS = "staged";
 export const KINFOLK_CURRENT_DELETE_REVIEW_REASON =
   "Kinfolk Current online-presence verification found no active official website or social profile";
+export const KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON =
+  "Kinfolk Current Delete Review automatic permanent deletion held for seven days";
 
 export type SqlClient = {
   query: (statement: string, values?: readonly unknown[]) => Promise<unknown>;
@@ -31,6 +33,7 @@ export type DeleteReviewManifestItem = Readonly<{
   businessName: string;
   city: string;
   state: string;
+  currentSnapshotHash: string;
   originalLinks: Readonly<{
     website: string | null;
     social: Readonly<Record<string, string>>;
@@ -100,12 +103,45 @@ function asArray(value: unknown, label: string): readonly unknown[] {
   return value;
 }
 
-function verifyInactiveWebsite(
+function verifyConfirmedInactiveWebsite(
   evidence: Record<string, unknown>,
   label: string,
 ): Record<string, unknown> {
   if (evidence.classification !== "REMOVE_CONFIRMED_INACTIVE") {
     throw new Error(`${label} must contain a confirmed inactive website result.`);
+  }
+  return evidence;
+}
+
+function verifyNoQualifyingOfficialWebsite(
+  evidence: Record<string, unknown>,
+  label: string,
+): Record<string, unknown> {
+  const classification = evidence.classification;
+  if (
+    classification !== "REMOVE_CONFIRMED_INACTIVE" &&
+    classification !== "MISSING" &&
+    classification !== "UNVERIFIED_OR_IDENTITY_UNCLEAR"
+  ) {
+    throw new Error(
+      `${label} must document a confirmed inactive, missing, or identity-unverified website.`,
+    );
+  }
+  return evidence;
+}
+
+function verifyNoQualifyingOfficialSocial(
+  evidence: Record<string, unknown>,
+  label: string,
+): Record<string, unknown> {
+  const classification = evidence.classification;
+  if (
+    classification !== "INACTIVE_OR_REMOVED" &&
+    classification !== "UNVERIFIED_OR_IDENTITY_UNCLEAR"
+  ) {
+    throw new Error(
+      `${label} must document an inactive or identity-unverified official social URL.`,
+    );
   }
   return evidence;
 }
@@ -138,7 +174,7 @@ function parseWebsiteRemoval(value: unknown, index: number): WebsiteRemovalManif
     state: requiredString(item.state, `websiteRemovals[${index}].state`),
     originalWebsite: requiredString(item.originalWebsite, `websiteRemovals[${index}].originalWebsite`),
     verifiedOfficialSocial: social,
-    verification: verifyInactiveWebsite(
+    verification: verifyConfirmedInactiveWebsite(
       asRecord(item.verification, `websiteRemovals[${index}].verification`),
       `websiteRemovals[${index}].verification`,
     ),
@@ -162,7 +198,10 @@ function parseDeleteReview(value: unknown, index: number): DeleteReviewManifestI
     `deleteReviews[${index}].websiteVerification`,
   );
   if (originalWebsite) {
-    verifyInactiveWebsite(websiteVerification, `deleteReviews[${index}].websiteVerification`);
+    verifyNoQualifyingOfficialWebsite(
+      websiteVerification,
+      `deleteReviews[${index}].websiteVerification`,
+    );
   } else if (websiteVerification.classification !== "MISSING") {
     throw new Error(
       `deleteReviews[${index}] must either retain an inactive website receipt or explicitly document that no website is stored.`,
@@ -175,18 +214,20 @@ function parseDeleteReview(value: unknown, index: number): DeleteReviewManifestI
       socialVerification[platform],
       `deleteReviews[${index}].socialVerification.${platform}`,
     );
-    if (verification.classification !== "INACTIVE_OR_REMOVED") {
-      throw new Error(
-        `deleteReviews[${index}] cannot remove a listing while ${platform} is not decisively inactive.`,
-      );
-    }
-    parsedSocialVerification[platform] = verification;
+    parsedSocialVerification[platform] = verifyNoQualifyingOfficialSocial(
+      verification,
+      `deleteReviews[${index}].socialVerification.${platform}`,
+    );
   }
   return {
     businessId: requiredString(item.businessId, `deleteReviews[${index}].businessId`),
     businessName: requiredString(item.businessName, `deleteReviews[${index}].businessName`),
     city: requiredString(item.city, `deleteReviews[${index}].city`),
     state: requiredString(item.state, `deleteReviews[${index}].state`),
+    currentSnapshotHash: requiredString(
+      item.currentSnapshotHash,
+      `deleteReviews[${index}].currentSnapshotHash`,
+    ),
     originalLinks: {
       website: originalWebsite || null,
       social: Object.fromEntries(

@@ -38,6 +38,7 @@ function validManifest() {
         businessName: "Delete Review",
         city: "Houston",
         state: "TX",
+        currentSnapshotHash: "b".repeat(64),
         originalLinks: { website: "https://closed-two.example", social: {} },
         websiteVerification: inactiveWebsite,
         socialVerification: {},
@@ -64,17 +65,33 @@ describe("Kinfolk Current online-presence manifest", () => {
     expect(manifest.websiteRemovals[0]?.verifiedOfficialSocial[0]?.platform).toBe("facebook");
   });
 
-  it("rejects a Delete Review record with a non-decisive social result", () => {
+  it("accepts identity-unverified evidence for reversible Delete Review while preserving the exact stored social link", () => {
     const manifest = validManifest();
     manifest.deleteReviews[0]!.originalLinks.social = {
       instagram: "https://instagram.com/example",
     };
     manifest.deleteReviews[0]!.socialVerification = {
-      instagram: { classification: "HOLD_INCONCLUSIVE" },
+      instagram: {
+        classification: "UNVERIFIED_OR_IDENTITY_UNCLEAR",
+        sourceClassification: "HOLD_INCONCLUSIVE",
+      },
+    };
+    resealManifest(manifest);
+    expect(parseKinfolkCurrentOnlinePresenceManifest(manifest).deleteReviews[0]?.socialVerification.instagram?.classification)
+      .toBe("UNVERIFIED_OR_IDENTITY_UNCLEAR");
+  });
+
+  it("rejects a Delete Review record with a claimed active social source", () => {
+    const manifest = validManifest();
+    manifest.deleteReviews[0]!.originalLinks.social = {
+      instagram: "https://instagram.com/example",
+    };
+    manifest.deleteReviews[0]!.socialVerification = {
+      instagram: { classification: "KEEP_ACTIVE_SOCIAL" },
     };
     resealManifest(manifest);
     expect(() => parseKinfolkCurrentOnlinePresenceManifest(manifest)).toThrow(
-      "cannot remove a listing",
+      "identity-unverified official social URL",
     );
   });
 

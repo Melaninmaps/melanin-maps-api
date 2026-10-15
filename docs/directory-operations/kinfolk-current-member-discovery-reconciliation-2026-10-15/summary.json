@@ -1,0 +1,54 @@
+{
+  "reconciliationVersion": "kinfolk-current-member-discovery-reconciliation-v1",
+  "generatedAt": "2026-10-15T18:47:05.562Z",
+  "inputSha256": "42b5315aa9056af01a6f68699d1d4ad880e988983acefb2a6f3bcb5214497e83",
+  "totalSourceRecords": 7571,
+  "totalDiscoveryRecords": 2216,
+  "totalPreviousReviewManifestRecords": 659,
+  "counts": {
+    "DELETE_REVIEW_REQUIRED": 3295,
+    "KEEP_ACTIVE_SOCIAL": 559,
+    "KEEP_ACTIVE_WEBSITE": 3047,
+    "KEEP_RECONFIRMED_STORED_WEBSITE": 11,
+    "PREVIOUS_DELETE_REVIEW_SCOPE_REQUIRES_LIVE_CENSUS": 659
+  },
+  "newDeleteReviewRecords": 3295,
+  "batches": [
+    {
+      "index": 1,
+      "count": 500,
+      "manifestFingerprint": "52496fc6e6cc7241f8c35f132e74290c3eba870881da4a0f67785d8f64ec74b8"
+    },
+    {
+      "index": 2,
+      "count": 500,
+      "manifestFingerprint": "5f4785bf8a769a3fce6a17f4f2b5158fd8c89587e4d679ceb4d864b629fc8f7e"
+    },
+    {
+      "index": 3,
+      "count": 500,
+      "manifestFingerprint": "585f3e5d77d335e990a1e6c4899b8e0e21e91bd00dea31d602685665896ba104"
+    },
+    {
+      "index": 4,
+      "count": 500,
+      "manifestFingerprint": "8d236af1585dec9bb5d495bf9d6e10f1f712b22b8b6f849a7fcc2eb9766829c9"
+    },
+    {
+      "index": 5,
+      "count": 500,
+      "manifestFingerprint": "6e36d832ef4ded9289f454c97ea828cf37490b033b1ae1f9e94a00b396fbea6e"
+    },
+    {
+      "index": 6,
+      "count": 500,
+      "manifestFingerprint": "9642a53dbcf2d76bda4951520367f524e2176c7b9235caf1e43dd5529aa86024"
+    },
+    {
+      "index": 7,
+      "count": 295,
+      "manifestFingerprint": "9765ac38da5d74bd37496ab079a2734a58ca1e04c677dc5e03a9c0309e4b77c3"
+    }
+  ],
+  "operationalGate": "A fresh authenticated live Admin census is required before any batch is authorized or applied. The apply route rechecks immutable identity and stored links under a serializable transaction."
+}

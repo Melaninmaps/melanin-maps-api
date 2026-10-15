@@ -75,6 +75,7 @@ import {
   sevenDaysFrom,
 } from "../businesses/businessDeletionHold";
 import {
+  KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON,
   KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS,
   KINFOLK_CURRENT_DELETE_REVIEW_REASON,
   ensureKinfolkCurrentOnlinePresenceReviewSchema,
@@ -85,12 +86,21 @@ import {
 
 const router: IRouter = Router();
 
-// One immutable, reviewed plan for the 2026-10-15 Kinfolk Current sweep.
+// Immutable, review-bound plans for the 2026-10-15 Kinfolk Current sweeps.
 // The route rejects altered or substitute browser JSON even if it repeats a
-// familiar evidence label; a future scan requires a separately reviewed source
-// change with its own exact content fingerprint.
-const APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINT =
-  "b6247028c68e02897c51750985b980373c4c13d4461788c74bb37be13b607f71";
+// familiar evidence label. Each batch is independently fingerprinted, scoped
+// to at most 1,000 immutable IDs, and still requires a fresh locked identity
+// and stored-link recheck before any lifecycle change is made.
+const APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINTS = new Set([
+  "b6247028c68e02897c51750985b980373c4c13d4461788c74bb37be13b607f71",
+  "52496fc6e6cc7241f8c35f132e74290c3eba870881da4a0f67785d8f64ec74b8",
+  "5f4785bf8a769a3fce6a17f4f2b5158fd8c89587e4d679ceb4d864b629fc8f7e",
+  "585f3e5d77d335e990a1e6c4899b8e0e21e91bd00dea31d602685665896ba104",
+  "8d236af1585dec9bb5d495bf9d6e10f1f712b22b8b6f849a7fcc2eb9766829c9",
+  "6e36d832ef4ded9289f454c97ea828cf37490b033b1ae1f9e94a00b396fbea6e",
+  "9642a53dbcf2d76bda4951520367f524e2176c7b9235caf1e43dd5529aa86024",
+  "9765ac38da5d74bd37496ab079a2734a58ca1e04c677dc5e03a9c0309e4b77c3",
+]);
 
 // Additive source receipt set. Historical and Minnesota directory manifests stay
 // isolated by receipt batch so reconciliation never expands an admin request to
@@ -2541,7 +2551,7 @@ router.post("/admin/businesses/kinfolk-current/online-presence-apply", async (re
     res.status(400).json({ error: error instanceof Error ? error.message : "The online-presence manifest is invalid." });
     return;
   }
-  if (manifest.manifestFingerprint !== APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINT) {
+  if (!APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINTS.has(manifest.manifestFingerprint)) {
     res.status(409).json({
       error: "This online-presence plan is not the reviewed immutable manifest for this execution.",
     });
@@ -2556,6 +2566,7 @@ router.post("/admin/businesses/kinfolk-current/online-presence-apply", async (re
   try {
     await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
     await ensureListingStatusAuditSchema(client);
+    await ensureBusinessDeletionHoldSchema(client);
     await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
     await client.query(
       "SELECT set_config('app.kinfolk_current_review_lifecycle_transition', 'apply', true)",
@@ -2690,6 +2701,40 @@ router.post("/admin/businesses/kinfolk-current/online-presence-apply", async (re
         skipped.push({ businessId: item.businessId, lane: "delete_review", reason: "A retained review history already exists for this business." });
         continue;
       }
+      const deleteAfter = sevenDaysFrom(new Date());
+      await client.query(
+        `INSERT INTO business_deletion_holds
+           (business_id, requested_by, delete_after, reason, snapshot)
+         VALUES ($1, $2, $3, $4, $5::jsonb)
+         ON CONFLICT (business_id) DO NOTHING`,
+        [
+          business.id,
+          req.user?.id ?? null,
+          deleteAfter,
+          KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON,
+          JSON.stringify({
+            originalBusinessSnapshot: business.snapshot,
+            originalListingState: beforeState,
+            verificationEvidence: {
+              websiteVerification: item.websiteVerification,
+              socialVerification: item.socialVerification,
+              currentSnapshotHash: item.currentSnapshotHash,
+            },
+            manifestFingerprint: manifest.manifestFingerprint,
+          }),
+        ],
+      );
+      await recordBusinessDeletionHoldEvent(client, {
+        businessId: business.id,
+        action: "scheduled",
+        actorUserId: req.user?.id ?? null,
+        reason: KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON,
+        deleteAfter,
+        snapshot: {
+          manifestFingerprint: manifest.manifestFingerprint,
+          originalBusinessSnapshot: business.snapshot,
+        },
+      });
       const nextState: ListingAuditState = {
         listingStatus: KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS,
         status: "suspended",
@@ -2733,6 +2778,7 @@ router.post("/admin/businesses/kinfolk-current/online-presence-apply", async (re
           verificationEvidence: {
             websiteVerification: item.websiteVerification,
             socialVerification: item.socialVerification,
+            currentSnapshotHash: item.currentSnapshotHash,
           },
         },
       });

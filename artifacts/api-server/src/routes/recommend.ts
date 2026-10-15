@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, lifeJourneysTable, userPreferencesTable, type JourneyPhase } from "@workspace/db";
 import { eq, and, desc, ilike } from "drizzle-orm";
 import { pool } from "@workspace/db";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 const router: IRouter = Router();
 
@@ -134,7 +135,7 @@ router.get("/recommend", async (req: Request, res: Response) => {
           if (crossCityRows.rows.length > 0) {
             const topCat = crossCityRows.rows[0]!;
             const newCityMatches = await pool.query<{ name: string }>(
-              `SELECT name FROM businesses WHERE status = 'active' AND city ILIKE $1 AND category ILIKE $2 LIMIT 2`,
+              `SELECT name FROM public.public_businesses WHERE city ILIKE $1 AND category ILIKE $2 LIMIT 2`,
               [`%${journey.city}%`, `%${topCat.category}%`],
             );
 
@@ -164,7 +165,7 @@ router.get("/recommend", async (req: Request, res: Response) => {
       if (userCity) {
         const trending = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean }>(
           `SELECT b.id, b.name, b.category, b.city, b.verified
-           FROM community_signals cs JOIN businesses b ON cs.entity_id = b.id
+           FROM community_signals cs JOIN public.public_businesses b ON cs.entity_id = b.id
            WHERE cs.entity_type = 'business' AND cs.city ILIKE $1
              AND cs.created_at > NOW() - INTERVAL '30 days'
              AND b.status = 'active'
@@ -187,7 +188,10 @@ router.get("/recommend", async (req: Request, res: Response) => {
           const fallback = await db
             .select({ id: businessesTable.id, name: businessesTable.name, category: businessesTable.category, city: businessesTable.city, verified: businessesTable.verified })
             .from(businessesTable)
-            .where(and(ilike(businessesTable.city, `%${userCity}%`), eq(businessesTable.status, "active")))
+            .where(and(
+              ilike(businessesTable.city, `%${userCity}%`),
+              isMemberDiscoverableBusiness(businessesTable.id),
+            ))
             .limit(3);
 
           if (fallback.length > 0) {
@@ -241,7 +245,10 @@ router.get("/recommend", async (req: Request, res: Response) => {
         const localBiz = await db
           .select({ id: businessesTable.id, name: businessesTable.name, category: businessesTable.category, city: businessesTable.city })
           .from(businessesTable)
-          .where(and(ilike(businessesTable.city, `%${city}%`), eq(businessesTable.status, "active")))
+          .where(and(
+            ilike(businessesTable.city, `%${city}%`),
+            isMemberDiscoverableBusiness(businessesTable.id),
+          ))
           .limit(3);
 
         if (localBiz.length > 0) {

@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, businessesTable } from "@workspace/db";
 import { eq, ilike, or, and, isNotNull } from "drizzle-orm";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 const router: IRouter = Router();
 
@@ -42,6 +43,7 @@ router.post("/travel-planner/generate", async (req: Request, res: Response) => {
             ilike(businessesTable.address, `%${citySlug}%`),
           ),
           isNotNull(businessesTable.name),
+          isMemberDiscoverableBusiness(businessesTable.id),
         ),
       )
       .limit(40);

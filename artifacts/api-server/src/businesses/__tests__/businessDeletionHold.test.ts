@@ -5,6 +5,7 @@ import {
   ensureBusinessDeletionHoldSchema,
   sevenDaysFrom,
 } from "../businessDeletionHold";
+import { KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON } from "../kinfolkCurrentOnlinePresenceReview";
 
 describe("business deletion hold", () => {
   it("sets a precise seven-day recovery deadline", () => {
@@ -34,5 +35,10 @@ describe("business deletion hold", () => {
     expect(statements.join("\n")).toContain(
       "business_permanent_deletion_audit_events",
     );
+  });
+
+  it("uses a distinct, auditable reason for the automatic Delete Review hold", () => {
+    expect(KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON).toContain("automatic permanent deletion");
+    expect(KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON).toContain("seven days");
   });
 });

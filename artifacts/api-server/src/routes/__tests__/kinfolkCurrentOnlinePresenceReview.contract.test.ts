@@ -21,13 +21,14 @@ describe("Kinfolk Current online-presence review route", () => {
   it("requires an evidence-bearing manifest and rechecks live catalog scope before any mutation", () => {
     expect(adminRoute).toContain('router.post("/admin/businesses/kinfolk-current/online-presence-apply"');
     expect(adminRoute).toContain("parseKinfolkCurrentOnlinePresenceManifest");
-    expect(adminRoute).toContain("APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINT");
+    expect(adminRoute).toContain("APPROVED_KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_FINGERPRINTS");
     expect(adminRoute).toContain("BEGIN ISOLATION LEVEL SERIALIZABLE");
     expect(adminRoute).toContain("FOR UPDATE");
     expect(adminRoute).toContain("currentKinfolkIds");
     expect(adminRoute).toContain("The website changed after screening.");
     expect(adminRoute).toContain("The verified official social URL changed after screening.");
     expect(adminRoute).toContain("The business identity, website, or social links changed after screening.");
+    expect(adminRoute).toContain("currentSnapshotHash: item.currentSnapshotHash");
     expect(serverApp).toContain('"/api/admin/businesses/kinfolk-current/online-presence-apply"');
     expect(serverApp).toContain('express.json({ limit: "3mb" })');
   });
@@ -46,6 +47,9 @@ describe("Kinfolk Current online-presence review route", () => {
     expect(adminRoute).toContain('router.patch("/admin/businesses/kinfolk-current/delete-review/restore"');
     expect(adminRoute).toContain("original_listing_state");
     expect(adminRoute).toContain("state = 'restored'");
+    expect(adminRoute).toContain("KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON");
+    expect(adminRoute).toContain("INSERT INTO business_deletion_holds");
+    expect(adminRoute).toContain("recordBusinessDeletionHoldEvent(client");
     expect(adminRoute).not.toContain("DELETE FROM businesses WHERE id = ANY($1::text[])");
   });
 
@@ -54,6 +58,8 @@ describe("Kinfolk Current online-presence review route", () => {
     expect(adminRoute).toContain("can only be restored through its dedicated review control");
     expect(adminRoute).toContain("cancelBusinessDeletionHold(client");
     expect(deletionHoldWorker).toContain("Business is in Kinfolk Current Delete Review and cannot be permanently deleted");
+    expect(deletionHoldWorker).toContain("KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON");
+    expect(deletionHoldWorker).toContain("kinfolkCurrentOnlinePresenceReview: onlinePresenceReviewSnapshot");
     expect(reviewModule).toContain("prevent_queued_kinfolk_current_review_deletion");
     expect(reviewModule).toContain("BEFORE DELETE ON businesses");
     expect(reviewModule).toContain("prevent_queued_kinfolk_current_review_lifecycle_mutation");

@@ -156,6 +156,7 @@ import {
 } from "../kinfolk/governedBusinessRepository";
 import { shouldLoadKinfolkHomeCatalog } from "../kinfolk/home-catalog-gate";
 import { matchesDocumentedDesignationScope } from "../kinfolk/designation-predicate-policy";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 import {
   namedBusinessPromptBlock,
   resolveNamedBusinessTurn,
@@ -14269,6 +14270,7 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
             ilike(businessesTable.city, `%${toCity}%`),
             eq(businessesTable.blackOwned, true),
             eq(businessesTable.status, "active"),
+            isMemberDiscoverableBusiness(businessesTable.id),
             or(...catConditions),
           ),
         )

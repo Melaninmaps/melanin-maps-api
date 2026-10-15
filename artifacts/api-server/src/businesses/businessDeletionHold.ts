@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Pool } from "pg";
+import { KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON } from "./kinfolkCurrentOnlinePresenceReview";
 
 export const BUSINESS_DELETION_HOLD_DAYS = 7;
 export const BUSINESS_DELETION_HOLD_REASON =
@@ -216,17 +217,29 @@ async function finalizeOneDueHold(
       return "missing";
     }
 
-    const queuedReview = await client.query<{ business_id: string }>(
-      `SELECT business_id
+    const queuedReview = await client.query<{
+      business_id: string;
+      snapshot: Record<string, unknown>;
+    }>(
+      `SELECT business_id, to_jsonb(kinfolk_current_online_presence_reviews) AS snapshot
          FROM kinfolk_current_online_presence_reviews
         WHERE business_id = $1
           AND state = 'queued'
         FOR UPDATE`,
       [businessId],
     );
+    let onlinePresenceReviewSnapshot: Record<string, unknown> | null = null;
     if (queuedReview.rows[0]) {
-      throw new Error(
-        "Business is in Kinfolk Current Delete Review and cannot be permanently deleted until specifically resolved through review",
+      if (hold.reason !== KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON) {
+        throw new Error(
+          "Business is in Kinfolk Current Delete Review and cannot be permanently deleted until specifically resolved through review",
+        );
+      }
+      onlinePresenceReviewSnapshot = queuedReview.rows[0].snapshot;
+      await client.query(
+        `DELETE FROM kinfolk_current_online_presence_reviews
+          WHERE business_id = $1 AND state = 'queued'`,
+        [businessId],
       );
     }
 
@@ -242,6 +255,7 @@ async function finalizeOneDueHold(
     const deletionSnapshot = {
       business: current.snapshot,
       inventoryCohortReceipt: cohortReceipts.rows[0]?.snapshot ?? null,
+      kinfolkCurrentOnlinePresenceReview: onlinePresenceReviewSnapshot,
       deletionHoldSnapshot: hold.snapshot,
     };
 

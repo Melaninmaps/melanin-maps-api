@@ -3,6 +3,7 @@ import { db, pool, businessesTable, hiddenGemNominationsTable } from "@workspace
 import { eq, sql, and, gt, isNotNull } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
 import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 const PAID_TIERS = new Set(["navigator", "trailblazer", "community_builder", "legacy_member"]);
 
@@ -87,7 +88,7 @@ router.post("/:businessId/nominate", async (req: Request, res: Response) => {
     const [biz] = await db
       .select({ id: businessesTable.id, name: businessesTable.name, category: businessesTable.category, rating: businessesTable.rating, hiddenGemLabel: businessesTable.hiddenGemLabel, hiddenGemExpiresAt: businessesTable.hiddenGemExpiresAt, hiddenGemNominations: businessesTable.hiddenGemNominations })
       .from(businessesTable)
-      .where(eq(businessesTable.id, businessId))
+      .where(and(eq(businessesTable.id, businessId), isMemberDiscoverableBusiness(businessesTable.id)))
       .limit(1);
 
     if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
@@ -164,7 +165,7 @@ router.get("/:businessId/status", async (req: Request, res: Response) => {
         hiddenGemNominations: businessesTable.hiddenGemNominations,
       })
       .from(businessesTable)
-      .where(eq(businessesTable.id, businessId))
+      .where(and(eq(businessesTable.id, businessId), isMemberDiscoverableBusiness(businessesTable.id)))
       .limit(1);
 
     if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
@@ -218,6 +219,7 @@ router.get("/", async (req: Request, res: Response) => {
   try {
     const now = new Date();
     const conditions = [
+      isMemberDiscoverableBusiness(businessesTable.id),
       isNotNull(businessesTable.hiddenGemLabel),
       gt(businessesTable.hiddenGemExpiresAt, now),
     ];

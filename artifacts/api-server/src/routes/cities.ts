@@ -32,7 +32,7 @@ router.get("/cities/:slug/story", async (req: Request, res: Response) => {
          cp.cultural_anchors,
          cp.updated_at AS story_updated_at,
          (
-           SELECT COUNT(*) FROM businesses b
+           SELECT COUNT(*) FROM public.public_businesses b
            WHERE LOWER(TRIM(b.city)) = LOWER(TRIM(cl.city))
              AND LOWER(TRIM(b.state)) = LOWER(TRIM(cl.state))
              AND b.listing_status IN ('live_unclaimed','live_claimed')
@@ -126,7 +126,7 @@ router.get("/cities/:slug/welcome", async (req: Request, res: Response) => {
          cl.city, cl.state, cl.slug,
          cp.brief_context,
          (
-           SELECT COUNT(*) FROM businesses bw
+           SELECT COUNT(*) FROM public.public_businesses bw
            WHERE LOWER(TRIM(bw.city)) = LOWER(TRIM(cl.city))
              AND LOWER(TRIM(bw.state)) = LOWER(TRIM(cl.state))
              AND bw.listing_status IN ('live_unclaimed','live_claimed')
@@ -198,7 +198,7 @@ router.get("/cities", async (req: Request, res: Response) => {
          cp.cultural_anchors,
          (cp.id IS NOT NULL) AS has_profile,
          (
-           SELECT COUNT(*) FROM businesses b2
+           SELECT COUNT(*) FROM public.public_businesses b2
            WHERE LOWER(TRIM(b2.city)) = LOWER(TRIM(cl.city))
              AND LOWER(TRIM(b2.state)) = LOWER(TRIM(cl.state))
              AND b2.listing_status IN ('live_unclaimed','live_claimed')

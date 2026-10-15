@@ -12,7 +12,7 @@ router.get("/ai/for-you", async (req: Request, res: Response) => {
     const [savedResult, prefResult, postsResult] = await Promise.all([
       pool.query<{ category: string; name: string }>(
         `SELECT b.category, b.name FROM saved_places sp
-         JOIN businesses b ON b.id = sp.business_id
+         JOIN public.public_businesses b ON b.id = sp.business_id
          WHERE sp.user_id = $1 ORDER BY sp.created_at DESC LIMIT 12`,
         [userId]
       ),

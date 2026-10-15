@@ -265,8 +265,8 @@ router.get("/maps/geo-extract", mapsLimiter, async (req: Request, res: Response)
   if (locationWordCount <= 3) {
     try {
       const bizCheck = await pool.query<{ id: string }>(
-        `SELECT id FROM businesses
-         WHERE (name ILIKE $1 OR name ILIKE $2) AND status = 'active'
+        `SELECT id FROM public.public_businesses
+         WHERE name ILIKE $1 OR name ILIKE $2
          LIMIT 1`,
         [locationQuery, locationQuery + "%"],
       );

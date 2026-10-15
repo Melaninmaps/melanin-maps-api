@@ -233,7 +233,7 @@ router.get("/community-alerts/minority-alternatives", async (req: Request, res: 
             cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
             + sin(radians($1)) * sin(radians(b.latitude::float))
           )))) AS distance_km
-       FROM businesses b
+       FROM public.public_businesses b
        WHERE b.black_owned = true
          AND ($3 = '' OR b.category ILIKE $3)
          AND (6371 * acos(GREATEST(-1, LEAST(1,
@@ -302,7 +302,7 @@ router.get("/community-alerts/flagged-businesses", async (req: Request, res: Res
           cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
           + sin(radians($1)) * sin(radians(b.latitude::float))
         )))) AS distance_km
-      FROM businesses b
+      FROM public.public_businesses b
       LEFT JOIN community_alerts ca ON (
         ca.created_at > NOW() - INTERVAL '${alertWindowMonths} months'
         AND (6371 * acos(GREATEST(-1, LEAST(1,

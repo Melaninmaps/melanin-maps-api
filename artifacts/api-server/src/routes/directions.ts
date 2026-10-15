@@ -162,7 +162,7 @@ router.post("/directions/safety-context", requireMembership("navigator"), async 
             sr.id, sr.target_name, sr.description,
             b.latitude, b.longitude
          FROM safety_reports sr
-         JOIN businesses b ON sr.target_id = b.id AND sr.target_type = 'business'
+         JOIN public.public_businesses b ON sr.target_id = b.id AND sr.target_type = 'business'
          WHERE sr.category = 'sundown'
            AND sr.status = 'approved'
            AND b.latitude IS NOT NULL AND b.longitude IS NOT NULL
@@ -185,7 +185,7 @@ router.post("/directions/safety-context", requireMembership("navigator"), async 
               cos(radians($5)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($6))
               + sin(radians($5)) * sin(radians(b.latitude::float))
             )))) AS distance_km
-         FROM businesses b
+         FROM public.public_businesses b
          WHERE b.black_owned = true
            AND b.latitude IS NOT NULL AND b.longitude IS NOT NULL
            AND b.latitude::float BETWEEN $1 AND $2
@@ -216,7 +216,7 @@ router.post("/directions/safety-context", requireMembership("navigator"), async 
               cos(radians($5)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($6))
               + sin(radians($5)) * sin(radians(b.latitude::float))
             )))) AS distance_km
-         FROM businesses b
+         FROM public.public_businesses b
          LEFT JOIN community_alerts ca ON (
            ca.is_active = true
            AND ca.created_at > NOW() - INTERVAL '6 months'

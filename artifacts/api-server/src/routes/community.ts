@@ -24,6 +24,7 @@ import {
 } from "../community/communityMediaValidation";
 import { fetchTikTokVideoPreview, type TikTokVideoPreview } from "../community/tiktokPreview";
 import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
+import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
 
 const router: IRouter = Router();
 const TIKTOK_PREVIEW_CACHE_TTL_MS = 10 * 60 * 1_000;
@@ -669,7 +670,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       const [mb] = await db
         .select({ name: businessesTable.name, submittedById: businessesTable.submittedById })
         .from(businessesTable)
-        .where(eq(businessesTable.id, mentionedBusinessId))
+        .where(and(eq(businessesTable.id, mentionedBusinessId), isMemberDiscoverableBusiness(businessesTable.id)))
         .limit(1);
       mentionedBizName = mb?.name ?? null;
       mentionedBizOwnerId = mb?.submittedById ?? null;
@@ -723,7 +724,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       const [biz] = await db
         .select({ name: businessesTable.name, blackOwned: businessesTable.blackOwned, city: businessesTable.city, category: businessesTable.category })
         .from(businessesTable)
-        .where(eq(businessesTable.id, businessId))
+        .where(and(eq(businessesTable.id, businessId), isMemberDiscoverableBusiness(businessesTable.id)))
         .limit(1);
       resolvedBusinessName = resolvedBusinessName ?? biz?.name ?? null;
       resolvedBusinessBlackOwned = biz?.blackOwned ?? null;
