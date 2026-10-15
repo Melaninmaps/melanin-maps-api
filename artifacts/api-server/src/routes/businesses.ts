@@ -40,6 +40,10 @@ import {
   ne,
 } from "drizzle-orm";
 import { withDbRetry } from "../lib/db-retry";
+import {
+  hasMatchingSelectedBusinessContext,
+  resolveMemberAccountContext,
+} from "../lib/account-context";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
@@ -1690,6 +1694,11 @@ router.get("/businesses/mine/managed/:businessId", async (req: any, res: Respons
     return;
   }
   try {
+    const accountContext = await resolveMemberAccountContext(req);
+    if (!hasMatchingSelectedBusinessContext(accountContext, businessId)) {
+      res.status(403).json({ error: "Selected business access is required." });
+      return;
+    }
     const [business] = await db
       .select()
       .from(businessesTable)
@@ -1718,6 +1727,12 @@ router.patch("/businesses/mine/managed/:businessId/profile", async (req: any, re
   }
   if (!businessId) {
     res.status(400).json({ error: "A business selection is required." });
+    return;
+  }
+
+  const accountContext = await resolveMemberAccountContext(req);
+  if (!hasMatchingSelectedBusinessContext(accountContext, businessId)) {
+    res.status(403).json({ error: "Selected business access is required." });
     return;
   }
 

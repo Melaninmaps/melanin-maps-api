@@ -14,6 +14,11 @@ import { Link } from "wouter";
 import { GoldFeatherMark } from "@/components/brand/GoldFeatherMark";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { getWebToken } from "@/lib/webAuth";
+import {
+  accountContextKey,
+  type AccountContextSelection,
+  useAccountContext,
+} from "@/contexts/account-context";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
 import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
 import { KinfolkContinuityDisclosure } from "@/components/kinfolk/KinfolkContinuityDisclosure";
@@ -89,8 +94,15 @@ const BASE = import.meta.env.BASE_URL;
 // Do NOT inject a Bearer token here — the localStorage token can go stale after
 // a Railway redeploy / rolling session renewal and will override the valid cookie
 // in getSessionId(), causing 401s for logged-in users.
-function kinfolkAuthHeaders(extra?: HeadersInit): HeadersInit {
-  return extra ?? {};
+function kinfolkAuthHeaders(extra?: HeadersInit, accountContext?: AccountContextSelection): HeadersInit {
+  const headers = new Headers(extra);
+  if (accountContext) {
+    const contextValue = accountContext.kind === "business"
+      ? `business:${accountContext.businessId}`
+      : accountContext.kind;
+    headers.set("X-MWM-Account-Context", contextValue);
+  }
+  return headers;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1015,7 +1027,10 @@ class KinfolkErrorBoundary extends Component<{ children: ReactNode }, { error: E
 // ─── Main page ────────────────────────────────────────────────────────────────
 function TravelPage() {
   const { data: authData, isLoading: authLoading } = useGetCurrentAuthUser();
+  const { activeContext } = useAccountContext();
   const isLoggedIn = !authLoading && !!authData?.user;
+  const activeAccountContextKey = accountContextKey(activeContext);
+  const isPersonalAccountContext = activeContext.kind === "personal";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -1162,6 +1177,47 @@ function TravelPage() {
     audioUrlRef.current = null;
   }, []);
 
+  const activeAccountContextKeyRef = useRef(activeAccountContextKey);
+  useEffect(() => {
+    activeAccountContextKeyRef.current = activeAccountContextKey;
+    clearResponseStatusTimers();
+    activeChatControllerRef.current?.abort("account_context_changed");
+    activeChatControllerRef.current = null;
+    voiceGuardRef.current.invalidate("account_context_changed");
+    voicePlaybackRef.current?.queue.interrupt();
+    voicePlaybackRef.current = null;
+    releaseAudio();
+    autoSpokenMessageIdsRef.current.clear();
+    setMessages([]);
+    setSessionId(undefined);
+    setSessions([]);
+    setSessionsLoading(false);
+    setPrefs(DEFAULT_PREFS);
+    setPrefsLoaded(false);
+    setPreferencesHydrated(false);
+    setKinfolkMode(normalizeSavedKinfolkMode(DEFAULT_PREFS.personalityMode));
+    setKinfolkContinuityEnabled(false);
+    setKinfolkContinuityDisclosureRequired(false);
+    setConversationHandoff(null);
+    setPendingSensitiveMemory(null);
+    setPendingClarificationMsgId(null);
+    setImageAttachments([]);
+    setPendingImageConsent(null);
+    setGeneratedImage(null);
+    setShowImageCreation(false);
+    setIncludeCommunityPerspective(false);
+    setExactRadiusOrigin("");
+    setVoiceState("idle");
+    setFeedback({});
+    setShowHistory(false);
+    setShowMemoryManager(false);
+    setShowPrefs(false);
+    setSending(false);
+    setPlayingId(null);
+    setPausedId(null);
+    setSpokenText(null);
+  }, [activeAccountContextKey, clearResponseStatusTimers, releaseAudio]);
+
   useEffect(() => {
     const stopPlayback = () => {
       pageForegroundRef.current = false;
@@ -1216,9 +1272,15 @@ function TravelPage() {
   // Load preferences — always merge with DEFAULT_PREFS so every array field is
   // guaranteed to be an array even if the DB row predates a field addition.
   const loadPrefs = useCallback(async () => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !isPersonalAccountContext) {
+      setPrefs(DEFAULT_PREFS);
+      setPrefsLoaded(true);
+      setPreferencesHydrated(false);
+      return;
+    }
+    const requestContextKey = activeAccountContextKey;
     try {
-      const r = await fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include", headers: kinfolkAuthHeaders() });
+      const r = await fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include", headers: kinfolkAuthHeaders(undefined, activeContext) });
       if (r.ok) {
         const d = await r.json() as {
           preferences: Record<string, unknown>;
@@ -1254,18 +1316,22 @@ function TravelPage() {
           autoSpeak:          raw.autoSpeak === true,
           aaveLevel:          Number.isInteger(raw.aaveLevel) && Number(raw.aaveLevel) >= 0 && Number(raw.aaveLevel) <= 3 ? Number(raw.aaveLevel) : 0,
         };
+        if (activeAccountContextKeyRef.current !== requestContextKey) return;
         setPrefs(hydratedPrefs);
         setKinfolkMode(normalizeSavedKinfolkMode(hydratedPrefs.personalityMode));
         setPreferencesHydrated(true);
       }
-    } finally { setPrefsLoaded(true); }
-  }, [isLoggedIn]);
+    } finally {
+      if (activeAccountContextKeyRef.current === requestContextKey) setPrefsLoaded(true);
+    }
+  }, [activeAccountContextKey, isLoggedIn, isPersonalAccountContext, activeContext]);
 
   const savePrefs = useCallback(async (p: Prefs) => {
+    if (!isPersonalAccountContext) throw new Error("PREFERENCES_REQUIRE_PERSONAL_CONTEXT");
     // Map ownershipTypes → preferredOwnershipTypes (API field name)
     const response = await fetch(`${BASE}api/kinfolk/preferences`, {
       method: "PUT", credentials: "include",
-      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
       body: JSON.stringify({ ...p, preferredOwnershipTypes: p.ownershipTypes }),
     });
     if (!response.ok) throw new Error("PREFERENCE_SAVE_FAILED");
@@ -1274,10 +1340,10 @@ function TravelPage() {
     const saved = { ...p, personalityMode: normalizeSavedKinfolkMode(p.personalityMode) };
     setPrefs(saved);
     setKinfolkMode(normalizeSavedKinfolkMode(saved.personalityMode));
-  }, []);
+  }, [isPersonalAccountContext, activeContext]);
 
   const selectKinfolkMode = useCallback(async (nextMode: KinfolkMode) => {
-    if (!isLoggedIn || modeSaveStatus === "saving" || nextMode === kinfolkMode) return;
+    if (!isLoggedIn || !isPersonalAccountContext || modeSaveStatus === "saving" || nextMode === kinfolkMode) return;
     const previousMode = kinfolkMode;
     setKinfolkMode(nextMode);
     setPrefs(current => ({ ...current, personalityMode: nextMode }));
@@ -1286,7 +1352,7 @@ function TravelPage() {
       const response = await fetch(`${BASE}api/kinfolk/preferences`, {
         method: "PUT",
         credentials: "include",
-        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
         body: JSON.stringify({ personalityMode: nextMode }),
       });
       if (!response.ok) throw new Error("MODE_SAVE_FAILED");
@@ -1296,7 +1362,7 @@ function TravelPage() {
       setPrefs(current => ({ ...current, personalityMode: previousMode }));
       setModeSaveStatus("error");
     }
-  }, [isLoggedIn, kinfolkMode, modeSaveStatus]);
+  }, [isLoggedIn, isPersonalAccountContext, kinfolkMode, modeSaveStatus, activeContext]);
 
   const abortTranscription = useCallback((reason: string) => {
     if (transcriptionTimeoutRef.current) {
@@ -1348,6 +1414,10 @@ function TravelPage() {
   }
 
   const finishRecording = useCallback(async (captured: Blob | Blob[], mimeType: SupportedRecordingMimeType) => {
+    if (!isPersonalAccountContext) {
+      setVoiceState("idle");
+      return;
+    }
     setVoiceState("processing");
     // Wall-clock duration from the ref set when recording started
     const durationMs = recordingStartedAtRef.current !== null
@@ -1390,6 +1460,7 @@ function TravelPage() {
       const r = await fetch(`${BASE}api/kinfolk/transcribe`, {
         method: "POST",
         credentials: "include",
+        headers: kinfolkAuthHeaders(undefined, activeContext),
         // Do NOT set Content-Type manually — browser must supply the multipart boundary
         body: form,
         signal: controller.signal,
@@ -1448,7 +1519,7 @@ function TravelPage() {
       if (transcriptionControllerRef.current === controller) transcriptionControllerRef.current = null;
       audioChunksRef.current = [];
     }
-  }, [prefs.regionalFlavor]);
+  }, [prefs.regionalFlavor, isPersonalAccountContext, activeContext]);
 
   // ── Voice: stop recording and submit the captured clip ─────────────────────
   const stopRecording = useCallback(() => {
@@ -1472,6 +1543,7 @@ function TravelPage() {
   // This function intentionally does not contain the first-use notice gate so
   // accepting the notice can proceed directly to the browser permission prompt.
   const beginVoiceRecording = useCallback(async () => {
+    if (!isPersonalAccountContext) return;
     setVoiceState("requesting");
     let stream: MediaStream | null = null;
     try {
@@ -1569,10 +1641,11 @@ function TravelPage() {
       setVoiceState("denied");
       setTimeout(() => setVoiceState("idle"), 4000);
     }
-  }, [stopRecording, finishRecording]);
+  }, [stopRecording, finishRecording, isPersonalAccountContext]);
 
   // ── Voice: primary tap handler ──────────────────────────────────────────────
   const handleVoiceTap = useCallback(async () => {
+    if (!isPersonalAccountContext) return;
     // Stop recording if already recording
     if (voiceState === "recording") {
       stopRecording();
@@ -1589,13 +1662,14 @@ function TravelPage() {
     }
 
     await beginVoiceRecording();
-  }, [voiceState, stopRecording, beginVoiceRecording]);
+  }, [voiceState, stopRecording, beginVoiceRecording, isPersonalAccountContext]);
 
   // ── Voice: proceed from privacy notice ─────────────────────────────────────
   const handleVoiceNoticeAccept = useCallback(async () => {
+    if (!isPersonalAccountContext) return;
     privacyNoticeSeen.current = true;
     await beginVoiceRecording();
-  }, [beginVoiceRecording]);
+  }, [beginVoiceRecording, isPersonalAccountContext]);
   useEffect(() => {
     const discardForPageLifecycle = () => {
       if (mediaRecorderRef.current?.state === "recording") discardRecording("page_hidden");
@@ -1612,6 +1686,13 @@ function TravelPage() {
       discardRecording("unmount");
     };
   }, [abortTranscription, discardRecording]);
+
+  useEffect(() => {
+    if (isPersonalAccountContext) return;
+    // A workspace switch must discard an in-progress microphone capture before
+    // its callback can submit a Personal-context transcription request.
+    discardRecording("workspace_changed");
+  }, [isPersonalAccountContext, discardRecording]);
 
   // Cleanup on unmount
   useEffect(() => () => {
@@ -1630,7 +1711,7 @@ function TravelPage() {
   // reply; `onended` advances to the next clip instead of treating a provider
   // chunk boundary as the end of the member's answer.
   const playMessage = useCallback(async (msgId: string, content: string, source: "manual" | "auto" = "manual") => {
-    if (!content.trim()) return;
+    if (!isPersonalAccountContext || !content.trim()) return;
 
     const finishPlayback = (playback: NonNullable<typeof voicePlaybackRef.current>) => {
       if (voicePlaybackRef.current !== playback) return;
@@ -1754,7 +1835,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/speak`, {
         method: "POST", credentials: "include",
-        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
         body: JSON.stringify({ text: content, mode: kinfolkMode, requestId: msgId }),
         signal: request.signal,
       });
@@ -1786,35 +1867,53 @@ function TravelPage() {
         ? { ...current, phase: "unavailable" }
         : current);
     }
-  }, [playingId, kinfolkMode, releaseAudio]);
+  }, [playingId, kinfolkMode, releaseAudio, isPersonalAccountContext, activeContext]);
 
   // Load session list
   const loadSessions = useCallback(async () => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !isPersonalAccountContext) {
+      setSessions([]);
+      setSessionsLoading(false);
+      return;
+    }
+    const requestContextKey = activeAccountContextKey;
     setSessionsLoading(true);
     try {
-      const r = await fetch(`${BASE}api/kinfolk/sessions?view=${historyView}`, { credentials: "include", headers: kinfolkAuthHeaders() });
-      if (r.ok) { const d = await r.json() as { sessions: Session[] }; setSessions(d.sessions); }
-    } finally { setSessionsLoading(false); }
-  }, [isLoggedIn, historyView]);
+      const r = await fetch(`${BASE}api/kinfolk/sessions?view=${historyView}`, { credentials: "include", headers: kinfolkAuthHeaders(undefined, activeContext) });
+      if (r.ok) {
+        const d = await r.json() as { sessions: Session[] };
+        if (activeAccountContextKeyRef.current !== requestContextKey) return;
+        setSessions(d.sessions);
+      }
+    } finally {
+      if (activeAccountContextKeyRef.current === requestContextKey) setSessionsLoading(false);
+    }
+  }, [activeAccountContextKey, isLoggedIn, historyView, isPersonalAccountContext, activeContext]);
 
   const loadKinfolkContinuity = useCallback(async () => {
-    if (!isLoggedIn) return;
-    const response = await fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include", headers: kinfolkAuthHeaders() });
+    if (!isLoggedIn || !isPersonalAccountContext) {
+      setKinfolkContinuityEnabled(false);
+      setKinfolkContinuityDisclosureRequired(false);
+      return;
+    }
+    const requestContextKey = activeAccountContextKey;
+    const response = await fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include", headers: kinfolkAuthHeaders(undefined, activeContext) });
     if (!response.ok) return;
     const body = await response.json() as { enabled?: boolean; disclosureRequired?: boolean };
+    if (activeAccountContextKeyRef.current !== requestContextKey) return;
     setKinfolkContinuityEnabled(body.enabled === true);
     setKinfolkContinuityDisclosureRequired(body.disclosureRequired === true);
-  }, [isLoggedIn]);
+  }, [activeAccountContextKey, isLoggedIn, isPersonalAccountContext, activeContext]);
 
   const setKinfolkContinuity = useCallback(async (
     enabled: boolean,
     decision?: "accepted" | "declined",
   ): Promise<boolean> => {
+    if (!isPersonalAccountContext) return false;
     const response = await fetch(`${BASE}api/kinfolk/continuity`, {
       method: "PUT",
       credentials: "include",
-      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
       body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) }),
     });
     if (!response.ok) return false;
@@ -1824,17 +1923,18 @@ function TravelPage() {
     setSessions([]);
     if (body.enabled === true) void loadSessions();
     return true;
-  }, [loadSessions]);
+  }, [loadSessions, isPersonalAccountContext, activeContext]);
 
   const organizeSession = useCallback(async (id: string, action: "archive" | "restore" | "pin" | "unpin") => {
+    if (!isPersonalAccountContext) return;
     const response = await fetch(`${BASE}api/kinfolk/sessions/${encodeURIComponent(id)}/organization`, {
       method: "PATCH",
       credentials: "include",
-      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
       body: JSON.stringify({ action }),
     });
     if (response.ok) void loadSessions();
-  }, [loadSessions]);
+  }, [loadSessions, isPersonalAccountContext, activeContext]);
 
   useEffect(() => { loadSessions(); loadPrefs(); loadKinfolkContinuity(); }, [loadSessions, loadPrefs, loadKinfolkContinuity]);
 
@@ -1904,6 +2004,10 @@ function TravelPage() {
   }, [messages, sending]);
 
   const uploadKinfolkImage = useCallback(async (file: File) => {
+    if (!isPersonalAccountContext) {
+      setImageError("Private image review is available only in Personal workspace.");
+      return;
+    }
     if (imageAttachments.length >= 2 || uploadingImage) return;
     setUploadingImage(true);
     setImageError(null);
@@ -1925,7 +2029,7 @@ function TravelPage() {
     } finally {
       setUploadingImage(false);
     }
-  }, [imageAttachments.length, uploadingImage]);
+  }, [imageAttachments.length, uploadingImage, isPersonalAccountContext]);
 
   const removeKinfolkImage = useCallback(async (attachment: { assetId: string; previewUrl: string }) => {
     setImageAttachments((items) => items.filter((item) => item.assetId !== attachment.assetId));
@@ -1933,7 +2037,7 @@ function TravelPage() {
     try {
       await fetch(`${BASE}api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}`, {
         method: "DELETE",
-        headers: kinfolkAuthHeaders(),
+        headers: kinfolkAuthHeaders(undefined, activeContext),
         credentials: "include",
       });
     } catch {
@@ -1941,16 +2045,20 @@ function TravelPage() {
       // drops before this explicit member deletion reaches the API.
       setImageError("The image was removed from this screen and will expire shortly from private processing.");
     }
-  }, []);
+  }, [activeContext]);
 
   const createKinfolkImage = useCallback(async () => {
+    if (!isPersonalAccountContext) {
+      setImageCreationError("Original visual creation is available only in Personal workspace.");
+      return;
+    }
     if (generatingImage) return;
     setGeneratingImage(true);
     setImageCreationError(null);
     try {
       const response = await fetch(`${BASE}api/kinfolk/images/generate`, {
         method: "POST",
-        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
         credentials: "include",
         body: JSON.stringify({
           brief: imageCreationBrief,
@@ -1979,7 +2087,7 @@ function TravelPage() {
     } finally {
       setGeneratingImage(false);
     }
-  }, [generatingImage, imageCreationBrief, providerDisclosureAccepted, noRealPersonOrPrivateInfoConfirmed]);
+  }, [generatingImage, imageCreationBrief, providerDisclosureAccepted, noRealPersonOrPrivateInfoConfirmed, isPersonalAccountContext, activeContext]);
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -2008,11 +2116,11 @@ function TravelPage() {
 
     const attachedImagePreviews = imageAttachments.map((attachment) => attachment.previewUrl);
     const attachedImageAssetIds = imageAttachments.map((attachment) => attachment.assetId);
-    const conversationContext = messages.slice(-6).map((message) => ({
+    const conversationContext = isPersonalAccountContext ? messages.slice(-6).map((message) => ({
       role: message.role,
       content: message.content,
       resultView: message.resultView ?? null,
-    }));
+    })) : undefined;
     const recentLocation = [...messages]
       .reverse()
       .find((message) => message.location?.city)?.location?.city;
@@ -2032,15 +2140,18 @@ function TravelPage() {
     // fetch has no built-in deadline. This abort controller guarantees the UI
     // always resolves and shows a recoverable error message.
     const controller = new AbortController();
+    const requestAccountContextKey = activeAccountContextKey;
     activeChatControllerRef.current = controller;
     const timeoutId = setTimeout(() => controller.abort("timeout"), 30000);
 
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
-        method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext), credentials: "include",
+        body: JSON.stringify({ sessionId: isPersonalAccountContext ? sessionId : undefined, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: isPersonalAccountContext ? attachedImageAssetIds : [], imageVisionConsent: isPersonalAccountContext && attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
+
+      if (activeAccountContextKeyRef.current !== requestAccountContextKey) return;
 
       // Always check r.ok — a 4xx/5xx response contains { error: "..." } not
       // { reply: "..." }. Without this check, data.reply is undefined and the
@@ -2192,6 +2303,7 @@ function TravelPage() {
         setPendingClarificationMsgId(assistantMsgId);
       }
     } catch (err) {
+      if (activeAccountContextKeyRef.current !== requestAccountContextKey) return;
       // New-chat and unmount aborts are intentional; avoid adding a stale error
       // after the conversation has been cleared. A timeout remains recoverable.
       const wasAborted = controller.signal.aborted || (err instanceof Error && err.name === "AbortError");
@@ -2207,13 +2319,13 @@ function TravelPage() {
       clearTimeout(timeoutId);
       if (activeChatControllerRef.current === controller) activeChatControllerRef.current = null;
       clearResponseStatusTimers();
-      setSending(false);
+      if (activeAccountContextKeyRef.current === requestAccountContextKey) setSending(false);
       // This deliberately clears only pending assets. The user-message preview
       // above stays local to this browser tab; the API purges the private object
       // after its response (or the bounded expiry worker handles interruption).
-      setImageAttachments([]);
+      if (activeAccountContextKeyRef.current === requestAccountContextKey) setImageAttachments([]);
     }
-  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio]);
+  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, activeContext, activeAccountContextKey, isPersonalAccountContext]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2222,10 +2334,11 @@ function TravelPage() {
     answerPlanId: string,
     action: "show_more" | "show_less",
   ) => {
+    if (!isPersonalAccountContext) return;
     try {
       await fetch(`${BASE}api/kinfolk/answer-plans/${answerPlanId}/depth`, {
         method: "PATCH",
-        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
         credentials: "include",
         body: JSON.stringify({ action }),
       });
@@ -2245,17 +2358,18 @@ function TravelPage() {
         canShowLess: newDepth !== "brief",
       };
     }));
-  }, []);
+  }, [isPersonalAccountContext, activeContext]);
 
   const loadSession = useCallback(async (id: string) => {
+    if (!isPersonalAccountContext) return;
     try {
-      const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders() });
+      const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders(undefined, activeContext) });
       if (!r.ok) return;
       const d = await r.json() as { session: { id: string; messages: Message[] }; resumePreview?: ConversationHandoffStatus | null };
       setSessionId(d.session.id); setMessages(d.session.messages ?? []); setConversationHandoff(d.resumePreview ?? null);
       setShowHistory(false);
     } catch { /* ignore */ }
-  }, []);
+  }, [isPersonalAccountContext, activeContext]);
 
   const newChat = () => {
     clearResponseStatusTimers();
@@ -2284,11 +2398,12 @@ function TravelPage() {
   }, []);
 
   const handleFeedback = async (name: string, cat: string, reaction: "like" | "dislike") => {
+    if (!isPersonalAccountContext) return;
     setFeedback(prev => ({ ...prev, [name]: reaction }));
     if (!isLoggedIn) return;
     await fetch(`${BASE}api/kinfolk/feedback`, {
       method: "POST", credentials: "include",
-      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
       body: JSON.stringify({ sessionId, businessName: name, category: cat, reaction }),
     });
   };
@@ -2298,7 +2413,7 @@ function TravelPage() {
     reaction: "helpful" | "not_helpful" | "needs_more_help",
     includeNote = false,
   ) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !isPersonalAccountContext) return;
     const previous = responseFeedback[message.id];
     setResponseFeedback(prev => ({ ...prev, [message.id]: reaction }));
     setResponseFeedbackError(prev => {
@@ -2311,7 +2426,7 @@ function TravelPage() {
       const response = await fetch(`${BASE}api/kinfolk/response-feedback`, {
         method: "PUT",
         credentials: "include",
-        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext),
         body: JSON.stringify({
           sessionId,
           messageId: message.id,
@@ -2343,7 +2458,7 @@ function TravelPage() {
   };
 
   const revokeResponseFeedback = async (messageId: string) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !isPersonalAccountContext) return;
     const previous = responseFeedback[messageId];
     setResponseFeedback(prev => {
       const next = { ...prev };
@@ -2355,7 +2470,7 @@ function TravelPage() {
       const response = await fetch(`${BASE}api/kinfolk/response-feedback/${encodeURIComponent(messageId)}`, {
         method: "DELETE",
         credentials: "include",
-        headers: kinfolkAuthHeaders(),
+        headers: kinfolkAuthHeaders(undefined, activeContext),
       });
       if (!response.ok) throw new Error("Feedback was not revoked");
       setResponseFeedbackNotes(prev => {
@@ -2377,11 +2492,11 @@ function TravelPage() {
   };
 
   const shareTrip = async () => {
-    if (!sessionId) return;
+    if (!isPersonalAccountContext || !sessionId) return;
     try {
       const r = await fetch(`${BASE}api/kinfolk/sessions/${sessionId}/share`, {
         method: "POST", credentials: "include",
-        headers: kinfolkAuthHeaders(),
+        headers: kinfolkAuthHeaders(undefined, activeContext),
       });
       if (r.ok) {
         const { shareId } = await r.json() as { shareId: string; shareUrl: string };
@@ -2416,9 +2531,9 @@ function TravelPage() {
 
   const saveTaskAction = async (message: Message) => {
     const action = message.taskAction;
-    if (!action || !isLoggedIn) return;
+    if (!action || !isLoggedIn || !isPersonalAccountContext) return;
     try {
-      const headers = kinfolkAuthHeaders({ "Content-Type": "application/json" });
+      const headers = kinfolkAuthHeaders({ "Content-Type": "application/json" }, activeContext);
       if (action.type === "create_task" && action.tasks[0]) {
         const task = action.tasks[0];
         const response = await fetch(`${BASE}api/kinfolk/tasks`, {
@@ -2503,10 +2618,10 @@ function TravelPage() {
       )}
 
       {/* Preferences panel */}
-      {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={closePreferences} prefs={prefs} onSave={savePrefs}
+      {isLoggedIn && isPersonalAccountContext && <PreferencesPanel open={showPrefs} onClose={closePreferences} prefs={prefs} onSave={savePrefs}
         hydrated={preferencesHydrated} />}
       <KinfolkContinuityDisclosure
-        visible={isLoggedIn && kinfolkContinuityDisclosureRequired}
+        visible={isLoggedIn && isPersonalAccountContext && kinfolkContinuityDisclosureRequired}
         onChoose={(decision) => setKinfolkContinuity(decision === "accepted", decision)}
       />
 
@@ -2523,18 +2638,18 @@ function TravelPage() {
         </div>
         {isLoggedIn && (
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setShowHistory(v => !v)}
+            {isPersonalAccountContext && <button onClick={() => setShowHistory(v => !v)}
               aria-label={showHistory ? "Close conversation history" : "Open conversation history"}
               aria-pressed={showHistory}
               className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-[#F5EBD8]/70 transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]">
               <History size={13} />
               <span className="hidden lg:inline">History</span>
-            </button>
-            <button onClick={() => setShowPrefs(true)}
+            </button>}
+            {isPersonalAccountContext && <button onClick={() => setShowPrefs(true)}
               className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-[#F5EBD8]/70 transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]">
               <Settings size={13} />
               <span className="hidden sm:inline">Preferences</span>
-            </button>
+            </button>}
             <button onClick={newChat}
               className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-[#F5EBD8]/70 transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]">
               <Plus size={13} /><span className="hidden sm:inline">New Chat</span>
@@ -2542,6 +2657,12 @@ function TravelPage() {
           </div>
         )}
       </div>
+
+      {!isPersonalAccountContext && (
+        <div className="border-b border-[#CA922B]/20 bg-[#FFF8EC] px-4 py-2 text-center text-xs font-medium text-[#6A3B1E]" data-testid="kinfolk-nonpersonal-workspace-notice">
+          {activeContext.kind === "business" ? `Business workspace: ${activeContext.businessName}.` : "Admin workspace."} This conversation starts clean and does not use or save personal Kinfolk history, preferences, memories, images, or reminders.
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile history drawer overlay */}
@@ -2780,7 +2901,7 @@ function TravelPage() {
                           >
                             <Copy size={10} /> Copy
                           </button>
-                          <button
+                          {isPersonalAccountContext && <button
                             onClick={() => playMessage(msg.id, msg.content)}
                             className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors ${
                               playingId === msg.id
@@ -2790,11 +2911,11 @@ function TravelPage() {
                           >
                             <Volume2 size={10} />
                             {pausedId === msg.id ? "Resume" : playingId === msg.id ? "Pause" : spokenText?.messageId === msg.id ? "Replay" : "Listen"}
-                          </button>
-                          {voiceStatus[msg.id] && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/40">{voiceStatus[msg.id]}</span>}
+                          </button>}
+                          {isPersonalAccountContext && voiceStatus[msg.id] && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/40">{voiceStatus[msg.id]}</span>}
                         </div>
                       )}
-                      {msg.role === "assistant" && isLoggedIn && msg.content.trim() && msg.taskAction && (
+                      {isPersonalAccountContext && msg.role === "assistant" && isLoggedIn && msg.content.trim() && msg.taskAction && (
                         <div className="mt-3 rounded-xl border border-[#CA922B]/25 bg-[#CA922B]/5 p-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
@@ -2812,7 +2933,7 @@ function TravelPage() {
                             </div>
                         </div>
                       )}
-                      {msg.role === "assistant" && isLoggedIn && msg.content.trim() && (
+                      {isPersonalAccountContext && msg.role === "assistant" && isLoggedIn && msg.content.trim() && (
                         <div className="mt-2" data-testid="kinfolk-response-feedback">
                           <p className="mb-1 text-[10px] text-[#3A1F0E]/45">Was this helpful?</p>
                           <div className="flex flex-wrap items-center gap-2">
@@ -2937,7 +3058,7 @@ function TravelPage() {
                       )}
                       {msg.resultView && <ConversationalBusinessCards view={msg.resultView} />}
                       {msg.recommendations && !msg.resultView && !hasItineraryDays(msg.itinerary) && (
-                        <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
+                        <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isPersonalAccountContext && isLoggedIn && sessionId ? shareTrip : undefined} />
                       )}
                       {msg.role === "assistant" && msg.privateFinancialGoalOffer && (
                         <aside data-testid="kinfolk-private-financial-goal-offer" className="mt-3 rounded-2xl border border-[#CA922B]/25 bg-[#FFF8EC] p-4">
@@ -2977,7 +3098,7 @@ function TravelPage() {
                         </div>
                       )}
                       {/* Show more / Show less — adaptive depth controls */}
-                      {msg.role === "assistant" && msg.answerPlanId && (msg.canShowMore || msg.canShowLess) && (
+                      {isPersonalAccountContext && msg.role === "assistant" && msg.answerPlanId && (msg.canShowMore || msg.canShowLess) && (
                         <div className="flex items-center gap-2 mt-2">
                           {msg.canShowLess && (
                             <button
@@ -3202,7 +3323,7 @@ function TravelPage() {
                   </div>
                 )}
 
-                <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between gap-3">
+                {isPersonalAccountContext && <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between gap-3">
                   <button
                     type="button"
                     onClick={() => setShowComposerControls((visible) => !visible)}
@@ -3215,8 +3336,8 @@ function TravelPage() {
                     <ChevronRight size={12} className={`transition-transform ${showComposerControls ? "rotate-90" : ""}`} />
                   </button>
                   <span className="hidden text-[10px] text-[#3A1F0E]/38 sm:block">Review, edit, or turn off memory anytime.</span>
-                </div>
-                {showComposerControls && (
+                </div>}
+                {isPersonalAccountContext && showComposerControls && (
                   <div id="kinfolk-composer-controls" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
                     <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
@@ -3234,7 +3355,7 @@ function TravelPage() {
                   </div>
                 )}
 
-                {pendingImageConsent && <div role="dialog" aria-modal="true" aria-label="Use an image with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
+                {isPersonalAccountContext && pendingImageConsent && <div role="dialog" aria-modal="true" aria-label="Use an image with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
                   <p className="font-bold">Use this image for this answer?</p>
                   <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/75">Kinfolk will review this image only to answer your current question. It is sent to Kinfolk&apos;s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If the answer is interrupted, the private upload expires within 15 minutes.</p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -3243,7 +3364,7 @@ function TravelPage() {
                   </div>
                 </div>}
 
-                {showImageCreation && <div role="dialog" aria-modal="true" aria-label="Create an original visual with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
+                {isPersonalAccountContext && showImageCreation && <div role="dialog" aria-modal="true" aria-label="Create an original visual with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-bold">Create an original visual</p>
@@ -3277,7 +3398,7 @@ function TravelPage() {
                   </div>
                 </div>}
 
-                {generatedImage && <div className="mb-3 mx-auto max-w-3xl overflow-hidden rounded-2xl border border-[#8D5C17]/20 bg-[#FFF9ED] p-3 shadow-sm">
+                {isPersonalAccountContext && generatedImage && <div className="mb-3 mx-auto max-w-3xl overflow-hidden rounded-2xl border border-[#8D5C17]/20 bg-[#FFF9ED] p-3 shadow-sm">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div><p className="text-xs font-bold text-[#3A1F0E]">{generatedImage.label}</p><p className="text-[11px] text-[#3A1F0E]/65">Created for this session only. It is not saved, posted, or added to Kinfolk memory.</p></div>
                     <button type="button" onClick={() => setGeneratedImage(null)} className="rounded-full p-1 text-[#3A1F0E]/55 hover:bg-white" aria-label="Dismiss generated visual"><X size={16} /></button>
@@ -3309,10 +3430,10 @@ function TravelPage() {
 
                 <div className="flex items-end gap-2 max-w-3xl mx-auto">
                   <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) { setImageError(null); setPendingImageConsent(file); } event.target.value = ""; }} />
-                  {isLoggedIn && <button data-testid="kinfolk-image-create" type="button" onClick={() => { setShowImageCreation(true); setImageCreationError(null); }} disabled={sending || uploadingImage} aria-label="Create an original visual" title="Create an original visual" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0"><Sparkles size={16} /></button>}
-                  {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
+                  {isLoggedIn && isPersonalAccountContext && <button data-testid="kinfolk-image-create" type="button" onClick={() => { setShowImageCreation(true); setImageCreationError(null); }} disabled={sending || uploadingImage} aria-label="Create an original visual" title="Create an original visual" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0"><Sparkles size={16} /></button>}
+                  {isLoggedIn && isPersonalAccountContext && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
                   {/* Microphone button */}
-                  {isLoggedIn && (
+                  {isLoggedIn && isPersonalAccountContext && (
                     <button
                       onClick={handleVoiceTap}
                       aria-label={voiceState === "recording" ? "Stop recording" : "Speak to Kinfolk"}
@@ -3356,7 +3477,7 @@ function TravelPage() {
                   {isLoggedIn ? "Enter to send · Shift+Enter for new line · Add up to 2 images · Memory is yours to review or turn off" : "Enter to send · Shift+Enter for new line"}
                 </p>
                 <DisclaimerBanner type="ai" className="mt-2 mx-auto max-w-3xl" />
-                {showMemoryManager && <KinfolkMemoryManager
+                {isPersonalAccountContext && showMemoryManager && <KinfolkMemoryManager
                   onClose={() => setShowMemoryManager(false)}
                   onReset={() => {
                     setMessages([]);

@@ -8,6 +8,7 @@ import { objectStorageClient } from "../lib/objectStorage";
 import { deleteAllSessionsForUser } from "../lib/auth";
 import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
 import { isAdmin } from "../lib/adminAuth";
+import { listMemberAccountContexts } from "../lib/account-context";
 import { getUserTier, TIER_DISPLAY } from "../middleware/requireMembership";
 
 const avatarUpload = multer({
@@ -155,6 +156,22 @@ router.get("/users/me", async (req: Request, res: Response) => {
   }
 });
 
+// Returns only workspaces the current session is already authorized to use.
+// This endpoint deliberately does not expose claimant contacts, review evidence,
+// private member data, or any unapproved/revoked business relationship.
+router.get("/users/me/account-contexts", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  try {
+    res.json(await listMemberAccountContexts(req));
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/me/account-contexts error");
+    res.status(500).json({ error: "Could not load account contexts" });
+  }
+});
+
 router.get("/users/check-username/:username", async (req: Request, res: Response) => {
   const raw = String(req.params.username ?? "").trim().toLowerCase().replace(/^@/, "");
   if (!USERNAME_RE.test(raw)) {
@@ -279,7 +296,19 @@ router.patch("/users/me", async (req: Request, res: Response) => {
   }
 
   try {
-    const { firstName, lastName, profileImageUrl, industry, jobTitle, username, bio } = req.body as Record<string, unknown>;
+    const {
+      firstName,
+      lastName,
+      profileImageUrl,
+      industry,
+      jobTitle,
+      username,
+      bio,
+      phoneNumber,
+      homeCity,
+      homeState,
+      showCity,
+    } = req.body as Record<string, unknown>;
 
     const updates: Partial<typeof usersTable.$inferInsert> = {};
     if (typeof firstName === "string") updates.firstName = firstName.trim() || null;
@@ -288,6 +317,35 @@ router.patch("/users/me", async (req: Request, res: Response) => {
     if (typeof industry === "string") updates.industry = industry.trim() || null;
     if (typeof jobTitle === "string") updates.jobTitle = jobTitle.trim() || null;
     if (typeof bio === "string") updates.bio = bio.trim().slice(0, 300) || null;
+    if (typeof homeCity === "string") updates.homeCity = homeCity.trim().slice(0, 100) || null;
+    if (typeof homeState === "string") {
+      const normalizedState = homeState.trim().toUpperCase();
+      if (normalizedState && !/^[A-Z]{2}$/.test(normalizedState)) {
+        res.status(400).json({ error: "Home state must use a two-letter abbreviation." });
+        return;
+      }
+      updates.homeState = normalizedState || null;
+    }
+    if (typeof showCity === "boolean") updates.showCity = showCity;
+    if (typeof phoneNumber === "string") {
+      const normalizedPhone = phoneNumber.trim().replace(/\s+/g, " ");
+      if (normalizedPhone && !/^[+0-9(). -]{7,20}$/.test(normalizedPhone)) {
+        res.status(400).json({ error: "Enter a valid phone number or leave it blank." });
+        return;
+      }
+      if (normalizedPhone) {
+        const [existingPhone] = await db
+          .select({ id: usersTable.id })
+          .from(usersTable)
+          .where(and(eq(usersTable.phoneNumber, normalizedPhone), ne(usersTable.id, req.user.id)))
+          .limit(1);
+        if (existingPhone) {
+          res.status(409).json({ error: "That phone number is already associated with another account." });
+          return;
+        }
+      }
+      updates.phoneNumber = normalizedPhone || null;
+    }
     if (typeof username === "string") {
       const clean = username.trim().toLowerCase().replace(/^@/, "");
       if (clean === "") {

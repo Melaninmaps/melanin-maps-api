@@ -9,6 +9,7 @@ export * from './apiError';
 export * from './authorizationSessionHeaderParameter';
 export * from './authUser';
 export * from './authUserEnvelope';
+export * from './authUserRole';
 export * from './beginBrowserLoginParams';
 export * from './business';
 export * from './businessEnvelope';

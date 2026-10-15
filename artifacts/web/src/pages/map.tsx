@@ -17,6 +17,7 @@ import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/a
 import { DEFAULT_MAP_VIEWPORT } from "@/features/map/defaultMapViewport";
 import { parseLocalMapSearch } from "@/features/map/parseLocalMapSearch";
 import { parseBusinessMapSearchPhrase } from "@/features/map/parseBusinessMapSearchPhrase";
+import { useAccountContext } from "@/contexts/account-context";
 import AddPlaceModal from "@/components/AddPlaceModal";
 import UniversalSearchResults, { type UniversalSearchResult } from "@/components/UniversalSearchResults";
 
@@ -258,6 +259,12 @@ const LEGEND_TILES = [
 
 export default function MapPage() {
   const [, navigate] = useLocation();
+  const { activeContext } = useAccountContext();
+  const isPersonalAccountContext = activeContext.kind === "personal";
+  const isPersonalAccountContextRef = useRef(isPersonalAccountContext);
+  useEffect(() => {
+    isPersonalAccountContextRef.current = isPersonalAccountContext;
+  }, [isPersonalAccountContext]);
   // The map only retains pins for its current visible geography. The API cursor
   // avoids a national marker download when evidence reconciliation restores a
   // large map-ready population.
@@ -268,9 +275,19 @@ export default function MapPage() {
   const [savedDesignations, setSavedDesignations] = useState<string[]>([]);
   const [supportLensError, setSupportLensError] = useState<string | null>(null);
   useEffect(() => {
-    fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, { credentials: "include" })
+    let active = true;
+    if (!isPersonalAccountContext) {
+      setSavedDesignations([]);
+      setMapSupportScope(null);
+      return () => { active = false; };
+    }
+    fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, {
+      credentials: "include",
+      headers: { "X-MWM-Account-Context": "personal" },
+    })
       .then((response) => response.ok ? response.json() : null)
       .then((payload) => {
+        if (!active) return;
         const prefs = payload?.preferences;
         const values = Array.isArray(prefs?.preferredOwnershipTypes)
           ? prefs.preferredOwnershipTypes
@@ -278,12 +295,18 @@ export default function MapPage() {
         if (prefs?.supportLensMode === "strict_documented_designations") setSavedDesignations(values);
       })
       .catch(() => {});
-  }, []);
+    return () => { active = false; };
+  }, [isPersonalAccountContext]);
   const removeMapDesignation = async (designation: string) => {
+    if (!isPersonalAccountContext) return;
     setSupportLensError(null);
     const result = await persistReducedSupportLensRemoval({
-      baseUrl: `${BASE.replace(/\/$/, "")}/`, savedDesignations, removeDesignation: designation,
+      baseUrl: `${BASE.replace(/\/$/, "")}/`,
+      savedDesignations,
+      removeDesignation: designation,
+      accountContextHeader: "personal",
     });
+    if (!isPersonalAccountContextRef.current) return;
     if (result.error) {
       setSupportLensError(result.error);
     } else {
@@ -296,9 +319,10 @@ export default function MapPage() {
   };
   const { data: authData } = useGetCurrentAuthUser();
   const savedHomeCity = useMemo(() => {
+    if (!isPersonalAccountContext) return null;
     const candidate = (authData?.user as { homeCity?: unknown } | undefined)?.homeCity;
     return typeof candidate === "string" && candidate.trim() ? candidate.trim() : null;
-  }, [authData?.user]);
+  }, [authData?.user, isPersonalAccountContext]);
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap>(null);
@@ -2269,26 +2293,32 @@ export default function MapPage() {
                       >
                         Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === designation)?.label ?? designation}
                       </button>) : null}
-                      <button
-                        onClick={() => { void (async () => {
-                          setSupportLensError(null);
-                          try {
-                            const response = await fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, {
-                            method: "PUT", credentials: "include",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
-                            });
-                            if (!response.ok) throw new Error("preference update failed");
-                            setMapSupportScope("all_businesses");
-                            setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null);
-                          } catch {
-                            setSupportLensError("Could not update Support Lens. Please try again.");
-                          }
-                        })(); }}
-                        className="px-4 py-2 rounded-full border border-[#CA922B] text-[#CA922B] text-xs font-bold"
-                      >
-                        Show all businesses
-                      </button>
+                      {isPersonalAccountContext && (
+                        <button
+                          onClick={() => { void (async () => {
+                            setSupportLensError(null);
+                            try {
+                              const response = await fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, {
+                              method: "PUT", credentials: "include",
+                              headers: {
+                                "Content-Type": "application/json",
+                                "X-MWM-Account-Context": "personal",
+                              },
+                              body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
+                              });
+                              if (!response.ok) throw new Error("preference update failed");
+                              if (!isPersonalAccountContextRef.current) return;
+                              setMapSupportScope("all_businesses");
+                              setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null);
+                            } catch {
+                              setSupportLensError("Could not update Support Lens. Please try again.");
+                            }
+                          })(); }}
+                          className="px-4 py-2 rounded-full border border-[#CA922B] text-[#CA922B] text-xs font-bold"
+                        >
+                          Show all businesses
+                        </button>
+                      )}
                     </div>
                     {search.trim() && (
                       <Link href={`/travel?q=${encodeURIComponent(search.trim())}`}>

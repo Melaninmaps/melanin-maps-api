@@ -287,7 +287,10 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
         {
           method: "PUT",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-MWM-Account-Context": "personal",
+          },
           body: JSON.stringify({
             recommendationLifeStage,
             favoriteCities: cityList.length > 0 ? cityList : undefined,
@@ -367,7 +370,10 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
       await fetch(`${BASE}api/kinfolk/preferences`, {
         method: "PUT",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-MWM-Account-Context": "personal",
+        },
         body: JSON.stringify({
           preferredOwnershipTypes: [],
           ownershipTypes: [],

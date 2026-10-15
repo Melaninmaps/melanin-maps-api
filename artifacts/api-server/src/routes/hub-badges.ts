@@ -22,7 +22,8 @@ router.get("/knowledge/hubs/:topicId/experts", async (req: Request, res: Respons
         firstName: usersTable.firstName,
         lastName: usersTable.lastName,
         avatarUrl: usersTable.profileImageUrl,
-        city: usersTable.homeCity,
+        // Expert participation never grants public access to home area.
+        city: sql<string | null>`NULL`,
         helpfulVotes: sql<number>`(
           SELECT COUNT(*) FROM badge_helpful_votes WHERE badge_id = ${userBadgesTable.id}
         )`.mapWith(Number),

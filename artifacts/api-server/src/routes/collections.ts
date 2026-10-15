@@ -26,7 +26,9 @@ router.get("/collections", async (req: Request, res: Response) => {
         creatorFirstName: usersTable.firstName,
         creatorLastName: usersTable.lastName,
         creatorAvatar: usersTable.profileImageUrl,
-        creatorCity: usersTable.homeCity,
+        // A member's saved home area is private account context, never public
+        // collection metadata.
+        creatorCity: sql<string | null>`NULL`,
       })
       .from(collectionsTable)
       .innerJoin(usersTable, eq(collectionsTable.userId, usersTable.id))
@@ -93,7 +95,8 @@ router.get("/collections/:id", async (req: Request, res: Response) => {
         creatorFirstName: usersTable.firstName,
         creatorLastName: usersTable.lastName,
         creatorAvatar: usersTable.profileImageUrl,
-        creatorCity: usersTable.homeCity,
+        // Preserve the response shape without disclosing private home area.
+        creatorCity: sql<string | null>`NULL`,
       })
       .from(collectionsTable)
       .innerJoin(usersTable, eq(collectionsTable.userId, usersTable.id))

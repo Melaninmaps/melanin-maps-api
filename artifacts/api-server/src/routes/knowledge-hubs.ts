@@ -176,7 +176,9 @@ router.get("/knowledge/hubs/:topicId", async (req: Request, res: Response) => {
           lastName: usersTable.lastName,
           username: usersTable.username,
           profileImageUrl: usersTable.profileImageUrl,
-          homeCity: usersTable.homeCity,
+          // Home city may match a local hub internally but is not public
+          // creator-card data.
+          homeCity: sql<string | null>`NULL`,
         })
         .from(usersTable)
         .where(and(eq(usersTable.isContentCreator, true), or(...locOrClauses)))
@@ -193,7 +195,8 @@ router.get("/knowledge/hubs/:topicId", async (req: Request, res: Response) => {
           lastName: usersTable.lastName,
           username: usersTable.username,
           profileImageUrl: usersTable.profileImageUrl,
-          homeCity: usersTable.homeCity,
+          // Members retain the same private-home-area boundary in every hub.
+          homeCity: sql<string | null>`NULL`,
         })
         .from(usersTable)
         .innerJoin(

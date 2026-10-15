@@ -723,6 +723,10 @@ components:
           enum: [user, tester, admin]
         approved:
           type: boolean
+        # GET /auth/user always resolves this for an authenticated member so
+        # clients can offer onboarding without guessing from profile fields.
+        profileSetupComplete:
+          type: boolean
 
     AuthUserEnvelope:
       type: object
@@ -1016,6 +1020,26 @@ components:
           type: [string, 'null']
         profileImageUrl:
           type: [string, 'null']
+        username:
+          type: [string, 'null']
+        bio:
+          type: [string, 'null']
+        jobTitle:
+          type: [string, 'null']
+        industry:
+          type: [string, 'null']
+        # These fields are returned only by GET /users/me for the authenticated
+        # member. They are not public-profile fields.
+        phoneNumber:
+          type: [string, 'null']
+        homeCity:
+          type: [string, 'null']
+        homeState:
+          type: [string, 'null']
+        showCity:
+          type: boolean
+        isPrivate:
+          type: boolean
         role:
           type: string
           enum: [user, tester, admin]
@@ -1031,6 +1055,25 @@ components:
           type: string
         lastName:
           type: string
+        profileImageUrl:
+          type: string
+        username:
+          type: string
+        bio:
+          type: string
+        jobTitle:
+          type: string
+        industry:
+          type: string
+        # Private self-profile fields; never use this schema for public members.
+        phoneNumber:
+          type: string
+        homeCity:
+          type: string
+        homeState:
+          type: string
+        showCity:
+          type: boolean
 
     CommunityPost:
       type: object

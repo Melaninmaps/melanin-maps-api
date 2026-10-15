@@ -11,6 +11,12 @@ export interface HealthStatus {
 export interface ApiError {
     error: string;
 }
+export type AuthUserRole = typeof AuthUserRole[keyof typeof AuthUserRole];
+export declare const AuthUserRole: {
+    readonly user: "user";
+    readonly tester: "tester";
+    readonly admin: "admin";
+};
 export interface AuthUser {
     id: string;
     /** @nullable */
@@ -21,9 +27,8 @@ export interface AuthUser {
     lastName: string | null;
     /** @nullable */
     profileImageUrl: string | null;
-    role: 'user' | 'tester' | 'admin';
+    role: AuthUserRole;
     approved?: boolean;
-    /** False until the member completes the Kinfolk onboarding wizard */
     profileSetupComplete?: boolean;
 }
 export interface AuthUserEnvelope {
@@ -213,6 +218,22 @@ export interface UserProfile {
     lastName?: string | null;
     /** @nullable */
     profileImageUrl?: string | null;
+    /** @nullable */
+    username?: string | null;
+    /** @nullable */
+    bio?: string | null;
+    /** @nullable */
+    jobTitle?: string | null;
+    /** @nullable */
+    industry?: string | null;
+    /** @nullable */
+    phoneNumber?: string | null;
+    /** @nullable */
+    homeCity?: string | null;
+    /** @nullable */
+    homeState?: string | null;
+    showCity?: boolean;
+    isPrivate?: boolean;
     /** The user's platform role. Determines access level and admin privileges. */
     role?: UserProfileRole;
     /** @nullable */
@@ -221,6 +242,15 @@ export interface UserProfile {
 export interface UserProfileUpdate {
     firstName?: string;
     lastName?: string;
+    profileImageUrl?: string;
+    username?: string;
+    bio?: string;
+    jobTitle?: string;
+    industry?: string;
+    phoneNumber?: string;
+    homeCity?: string;
+    homeState?: string;
+    showCity?: boolean;
 }
 export interface CommunityPost {
     id: string;

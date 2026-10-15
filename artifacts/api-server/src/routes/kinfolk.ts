@@ -1,4 +1,9 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import {
+  Router,
+  type IRouter,
+  type Request,
+  type Response,
+} from "express";
 import {
   openai,
   resolveOpenAIConfiguration,
@@ -395,6 +400,10 @@ import {
 } from "../kinfolk/companion-context";
 import { isAdmin } from "../lib/adminAuth";
 import {
+  createKinfolkAccountContextGuard,
+  resolveMemberAccountContext,
+} from "../lib/account-context";
+import {
   KINFOLK_CONTEXT_TRUTH_BLOCK,
   buildCompatibilityFallbackLog,
   buildKinfolkChatCompletionRequest,
@@ -774,6 +783,12 @@ const INTENT_TO_CATEGORY_MAP: Record<string, string[]> = {
 };
 
 const router: IRouter = Router();
+
+// Personal is backward-compatible when the header is absent. Any explicit
+// business/Admin workspace is fail-closed everywhere except the stateless chat
+// route below, so a client cannot use a business header to read its personal
+// sessions, memories, preferences, images, reminders, or saved history.
+router.use("/kinfolk", createKinfolkAccountContextGuard());
 const governedBusinessRepository =
   createGovernedKinfolkBusinessRepository(pool);
 const discoverySignalRepository = createPostgresDiscoverySignalRepository(pool);
@@ -7112,6 +7127,8 @@ async function findFounderApprovedProductAnswer(message: string): Promise<string
 async function persistDeterministicDiscoveryTurn(input: {
   userId: string;
   memoryEnabled: boolean;
+  /** Non-personal workspaces must never create durable or ephemeral member sessions. */
+  persistSession?: boolean;
   sessionId?: string;
   message: string;
   reply: string;
@@ -7122,6 +7139,7 @@ async function persistDeterministicDiscoveryTurn(input: {
   destination: string;
   vibes: string[];
 }): Promise<string | undefined> {
+  if (input.persistSession === false) return undefined;
   if (!input.memoryEnabled) {
     const currentEphemeralSession = readEphemeralKinfolkSession(
       input.userId,
@@ -7226,6 +7244,7 @@ async function tryAnswerAuthoritativeWeather(input: {
   message: string;
   vibes: string[];
   memoryEnabled: boolean;
+  persistSession?: boolean;
   cityHint?: string;
 }): Promise<boolean> {
   if (!isLiveWeatherQuestion(input.message)) return false;
@@ -7293,6 +7312,7 @@ async function tryAnswerAuthoritativeWeather(input: {
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
+    persistSession: input.persistSession,
     sessionId: input.sessionId,
     message: input.message,
     reply,
@@ -7484,6 +7504,7 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
   message: string;
   vibes: string[];
   memoryEnabled: boolean;
+  persistSession?: boolean;
   cityHint?: string;
   staffAudit?: boolean;
 }): Promise<boolean> {
@@ -7531,6 +7552,7 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
+    persistSession: input.persistSession,
     sessionId: input.sessionId,
     message: input.message,
     reply,
@@ -8370,7 +8392,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   });
 
   const {
-    sessionId,
+    sessionId: requestedSessionId,
     message,
     vibes = [],
     voiceMode: requestedVoiceMode,
@@ -8399,6 +8421,33 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     staffAudit?: unknown;
     clientTimeZone?: unknown;
   };
+
+  let accountContext: Awaited<ReturnType<typeof resolveMemberAccountContext>>;
+  try {
+    accountContext = await resolveMemberAccountContext(req);
+  } catch (err) {
+    req.log.error({ err }, "Could not resolve Kinfolk account context");
+    res.status(503).json({ error: "Kinfolk workspace access is temporarily unavailable." });
+    return;
+  }
+  if (accountContext.kind === "denied") {
+    res.status(403).json({ error: "This account workspace is not available." });
+    return;
+  }
+  const isPersonalAccountContext = accountContext.kind === "personal";
+  const sessionPersistenceAllowed = isPersonalAccountContext;
+  // Business and Admin workspaces start with a clean, server-validated prompt.
+  // A client cannot carry a personal session or assembled history across a switch.
+  if (!isPersonalAccountContext && (requestedSessionId || conversationContext !== undefined || requestedStaffAudit === true)) {
+    res.status(400).json({ error: "Business and Admin Kinfolk workspaces do not accept personal chat history." });
+    return;
+  }
+  if (!isPersonalAccountContext && /^\s*(remember|forget)\b/i.test(message ?? "")) {
+    res.status(400).json({ error: "Business and Admin Kinfolk workspaces do not retain personal memories." });
+    return;
+  }
+  if (!isPersonalAccountContext) res.setHeader("Cache-Control", "no-store");
+  const sessionId = isPersonalAccountContext ? requestedSessionId : undefined;
 
   if (!message?.trim()) {
     res.status(400).json({ error: "message is required" });
@@ -8548,7 +8597,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
   let resolvedMemoryEnabled = false;
-  if (!staffAuditPolicy) {
+  if (!staffAuditPolicy && isPersonalAccountContext) {
     // Staff audits must not read member memory settings; ordinary member chat
     // remains explicitly gated before every history or memory operation.
     const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
@@ -8559,7 +8608,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // A clear "remember …" statement is a first-party consent command, not an
   // ordinary chat turn. Save exactly the member's own words, acknowledge it,
   // and avoid sending their profile detail to a model unnecessarily.
-  const explicitMemory = staffAuditPolicy
+  const explicitMemory = staffAuditPolicy || !isPersonalAccountContext
     ? null
     : await persistExplicitMemberMemory({
         userId: req.user.id,
@@ -8655,6 +8704,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const directCalendarSessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       sessionId,
       message,
       reply: directCalendarDateReply,
@@ -8708,6 +8758,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       message,
       vibes,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       cityHint: typeof cityHint === "string" ? cityHint : undefined,
     })
   ) {
@@ -8723,6 +8774,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const arithmeticSessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       sessionId,
       message,
       reply: arithmetic,
@@ -8777,6 +8829,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const productIdentitySessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       sessionId,
       message,
       reply: productReply,
@@ -8825,6 +8878,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const culturalConsensusSessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       sessionId,
       message,
       reply: kendrickDrakeConsensus.reply,
@@ -8884,6 +8938,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const culturalConflictSessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       sessionId,
       message,
       reply: culturalConflictClarification,
@@ -8936,6 +8991,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
   const requestedImageAssetIds = normalizeKinfolkQuestionImageAssetIds(imageAssetIds);
+  if (!isPersonalAccountContext && requestedImageAssetIds.length > 0) {
+    res.status(400).json({ error: "Private member images are available only in Personal Kinfolk." });
+    return;
+  }
   if (
     (Array.isArray(imageAssetIds) && imageAssetIds.length > 2) ||
     (Array.isArray(imageAssetIds) && requestedImageAssetIds.length !== imageAssetIds.length)
@@ -8990,6 +9049,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       message,
       vibes,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       cityHint:
         typeof cityHint === "string" && cityHint.length <= 120
           ? cityHint
@@ -9070,6 +9130,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const careerSessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
       memoryEnabled,
+      persistSession: sessionPersistenceAllowed,
       sessionId,
       message,
       reply: careerResponse.reply,
@@ -9256,7 +9317,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedSupportLensDesignationIds: string[] = [];
     let savedMemberResearchContextTags: string[] = [];
 
-    if (req.user?.id && !staffAuditPolicy) {
+    if (req.user?.id && !staffAuditPolicy && isPersonalAccountContext) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
       // Drizzle round-trips at peak load. getCachedPrefs() is read-through and
       // never throws — falls back to null which Kinfolk handles gracefully.
@@ -9796,6 +9857,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       const clarificationSessionId = await persistDeterministicDiscoveryTurn({
         userId: req.user.id,
         memoryEnabled,
+        persistSession: sessionPersistenceAllowed,
         sessionId,
         message,
         reply: clarificationReply,
@@ -9882,6 +9944,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       const finalSessionId = await persistDeterministicDiscoveryTurn({
         userId: req.user.id,
         memoryEnabled,
+        persistSession: sessionPersistenceAllowed,
         sessionId,
         message,
         reply: directLocalTimeReply,
@@ -10039,7 +10102,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       evidence: evidenceRoute,
       lifeGuidance,
     });
-    const memberCtx = req.user?.id
+    const memberCtx = req.user?.id && isPersonalAccountContext
       ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
       : {
           audienceBand: "unknown" as const,
@@ -10097,6 +10160,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         const approvedSessionId = await persistDeterministicDiscoveryTurn({
           userId: req.user.id,
           memoryEnabled,
+          persistSession: sessionPersistenceAllowed,
           sessionId,
           message,
           reply: approvedLibraryAnswer.message,
@@ -10938,7 +11002,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (intentClass === "education_discovery") {
       try {
         // Fall back to saved home city if no destination was extracted from the message
-        if (!educationQueryCity && req.user?.id) {
+        if (!educationQueryCity && req.user?.id && isPersonalAccountContext) {
           const homeRes = await pool.query<{ home_city: string | null }>(
             `SELECT home_city FROM users WHERE id = $1 LIMIT 1`,
             [req.user.id],
@@ -11397,7 +11461,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Library Growth signal (fire-and-forget) ─────────────────────────────
     // Capture only when: user is authenticated, learningEligible, and message is
     // not excluded. Raw message text is NEVER stored — only derived canonical subject.
-    if (req.user?.id && !staffAuditPolicy) {
+    if (req.user?.id && !staffAuditPolicy && isPersonalAccountContext) {
       const sensitivityTier = classifyGrowthSensitivity(message);
       const growthSubject = deriveGrowthSubject(
         intentClass,
@@ -11552,6 +11616,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       catalogRequestedForTurn &&
       !destination &&
       req.user?.id &&
+      isPersonalAccountContext &&
       !businessCatalog.length
     ) {
       try {
@@ -11652,7 +11717,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       phases: JourneyPhase[];
       aiContext: string | null;
     } | null = null;
-    if (req.user?.id) {
+    if (req.user?.id && isPersonalAccountContext) {
       try {
         const [latestJourney] = await db
           .select()
@@ -11717,7 +11782,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     let topUserVibes: string[] = [];
     try {
-      if (req.user?.id) {
+      if (req.user?.id && isPersonalAccountContext) {
         const vibeTagsRes = await pool.query(
           `SELECT vibe FROM business_vibe_tags WHERE user_id = $1 GROUP BY vibe ORDER BY COUNT(*) DESC LIMIT 5`,
           [req.user.id],
@@ -11768,31 +11833,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    // Preserve owner-advisor behavior without bypassing the governed public catalog.
-    // A submitted business that is hidden, duplicated, staged, or outside the scoped
-    // catalog cannot enter the prompt through this path.
+    // Business advice is available only in an explicit, server-authorized selected
+    // workspace. Personal chat never silently infers an owner business, and the
+    // selected listing still must pass the governed catalog boundary before it can
+    // enter a prompt.
     let ownerBusinessContext = "";
-    if (req.user?.id) {
-      try {
-        const [ownedBusinessId] = await db
-          .select({ id: businessesTable.id })
-          .from(businessesTable)
-          .where(eq(businessesTable.submittedById, req.user.id))
-          .limit(1);
-        const ownedBusiness = ownedBusinessId
-          ? businessCatalog.find(
-              (business) => business.id === ownedBusinessId.id,
-            )
-          : null;
-        if (ownedBusiness) {
-          const bizTierDepth =
-            userTier === "navigator" || userTier === "trailblazer"
-              ? "Provide full-depth business guidance: detailed strategy, multi-step action plans, proactive growth recommendations."
-              : "Provide concise, actionable business guidance appropriate for the Explore tier. Cover the core need clearly — do not deliver premium-depth output such as full bundles, extensive multi-step strategy, or proactive enrichment reserved for paid tiers. Warmly mention that Navigator or Trailblazer unlocks deeper business tools if relevant.";
-          ownerBusinessContext = `\n\n--- BUSINESS OWNER CONTEXT ---\nThis user owns the governed public listing "${ownedBusiness.name}" (${ownedBusiness.category}) in ${ownedBusiness.city}, ${ownedBusiness.stateCode ?? ""}.\n\nACTIVE CONTEXT RULE: Business context is available but should not dominate unless the user's question is clearly about their business. If the intent is ambiguous (e.g. "help me plan Saturday"), ask: "Are you thinking about this for yourself or for ${ownedBusiness.name}?" before proceeding.\n\nWhen business context IS active: shift into business advisor mode. Give concrete, actionable guidance for minority business owners. Reference their business name when relevant. Personal and business finances must never be merged without the user's explicit direction.\n\nTIER DEPTH FOR BUSINESS GUIDANCE: ${bizTierDepth}`;
-        }
-      } catch {
-        /* non-fatal — owner context is enrichment only */
+    if (accountContext.kind === "business") {
+      const selectedBusiness = businessCatalog.find(
+        (business) => business.id === accountContext.businessId,
+      );
+      if (selectedBusiness) {
+        const bizTierDepth =
+          userTier === "navigator" || userTier === "trailblazer"
+            ? "Provide full-depth business guidance: detailed strategy, multi-step action plans, proactive growth recommendations."
+            : "Provide concise, actionable business guidance appropriate for the Explore tier. Cover the core need clearly — do not deliver premium-depth output such as full bundles, extensive multi-step strategy, or proactive enrichment reserved for paid tiers. Warmly mention that Navigator or Trailblazer unlocks deeper business tools if relevant.";
+        const managementBoundary = accountContext.managementRole === "owner"
+          ? "The active user is the approved owner. Do not imply that this grants access to another business, an unrelated member, or platform administration."
+          : "The active user is an approved manager. Do not imply ownership, change-management authority, or access to another business, an unrelated member, or platform administration.";
+        ownerBusinessContext = `\n\n--- SELECTED BUSINESS WORKSPACE ---\nThe active, server-authorized business is "${selectedBusiness.name}" (${selectedBusiness.category}) in ${selectedBusiness.city}, ${selectedBusiness.stateCode ?? ""}. ${managementBoundary}\n\nUse this business context only for the active business. Personal member preferences, memories, saved places, journeys, and prior personal conversations are unavailable in this workspace. Personal and business finances must never be merged without explicit direction.\n\nTIER DEPTH FOR BUSINESS GUIDANCE: ${bizTierDepth}`;
       }
     }
 
@@ -11841,7 +11899,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Fetch user's library interests for cross-pollination into KinfolkAI context
     // (skipped when sensitiveTopicDetected — non-leakage rule).
     let libraryInterests: string[] = [];
-    if (req.user?.id && !sensitiveTopicDetected) {
+    if (req.user?.id && isPersonalAccountContext && !sensitiveTopicDetected) {
       try {
         const liRes = await pool.query<{ topic_name: string }>(
           `SELECT topic_name FROM user_library_interests WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
@@ -11861,7 +11919,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       typeof (req.body as any).circleId === "number"
         ? ((req.body as any).circleId as number)
         : null;
-    if (bodyCircleId && req.user?.id) {
+    if (bodyCircleId && req.user?.id && isPersonalAccountContext) {
       try {
         const cRes = await pool.query<{ name: string; type: string }>(
           `SELECT k.name, k.type FROM kinfolk_circles k
@@ -12017,6 +12075,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       const finalSessionId = await persistDeterministicDiscoveryTurn({
         userId: req.user.id,
         memoryEnabled,
+        persistSession: sessionPersistenceAllowed,
         sessionId,
         message,
         reply,
@@ -12100,7 +12159,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // opt-out, and only relevant selected facts reach the response prompt.
     const explicitMemberMemoryEnabled = isExplicitMemberMemoryEnabled();
     const memberMemoryEnabled = memoryEnabled;
-    const activePrivateMemories = memberMemoryEnabled && req.user?.id
+    const activePrivateMemories = memberMemoryEnabled && isPersonalAccountContext && req.user?.id
         ? await db
             .select({
               content: kinfolkPrivateMemoriesTable.content,
@@ -12146,7 +12205,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // remain usable while ordinary continuity is off, without admitting any
     // other private memory into the prompt.
     const activePreferredNameMemory =
-      explicitMemberMemoryEnabled && req.user?.id
+      explicitMemberMemoryEnabled && isPersonalAccountContext && req.user?.id
         ? await findPreferredNameMemory(req.user.id).catch(() => null)
         : null;
     const promptPrivateMemories = mergeActivePreferredNameForPrompt({
@@ -12719,6 +12778,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       followUpSuggestions = [];
     }
 
+    // Business/Admin responses are intentionally stateless. They may explain a
+    // business or platform topic, but cannot offer a member's private reminder
+    // or task action that would later write to the personal workspace.
+    if (!isPersonalAccountContext) {
+      taskAction = null;
+    }
+
     // A general answer about an uncovered place may offer useful, general travel
     // tips. It must not entice a member into an itinerary, visit, or trip-plan
     // path that Kinfolk cannot actually deliver from governed MWM coverage.
@@ -12915,7 +12981,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     chatStage = "session_persist";
     let finalSessionId = memoryEnabled ? sessionId : undefined;
-    if (req.user?.id && memoryEnabled && sessionPersistenceAvailable) {
+    if (req.user?.id && sessionPersistenceAllowed && memoryEnabled && sessionPersistenceAvailable) {
       try {
         if (currentSession) {
           await db
@@ -12952,7 +13018,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         );
         finalSessionId = undefined;
       }
-    } else if (req.user?.id && !memoryEnabled && !staffAuditPolicy) {
+    } else if (req.user?.id && sessionPersistenceAllowed && !memoryEnabled && !staffAuditPolicy) {
       finalSessionId = writeEphemeralKinfolkSession(
         {
           userId: req.user.id,

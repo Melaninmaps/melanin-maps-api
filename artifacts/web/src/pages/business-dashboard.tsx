@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/button";
 import { BusinessOwnershipEditor } from "@/features/businesses/BusinessOwnershipEditor";
 import { BusinessExperienceEditor } from "@/features/businesses/BusinessExperienceEditor";
 import { BusinessVoiceProfileEditor } from "@/features/businesses/BusinessVoiceProfileEditor";
+import { SelectedBusinessProfileEditor } from "@/features/businesses/SelectedBusinessProfileEditor";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { useAccountContext } from "@/contexts/account-context";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -84,6 +86,7 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: s
 }
 
 export default function BusinessDashboard() {
+  const { activeContext, businessContexts, setActiveContext } = useAccountContext();
   const search = useSearch();
   const params = new URLSearchParams(search);
   const justActivated = params.get("growth_tool_activated") === "1";
@@ -123,6 +126,20 @@ export default function BusinessDashboard() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (activeContext.kind === "business") {
+      if (businesses.some((business) => business.id === activeContext.businessId) && selectedId !== activeContext.businessId) {
+        setSelectedId(activeContext.businessId);
+      }
+      return;
+    }
+    const selectedBusiness = businesses.find((business) => business.id === selectedId);
+    const selectedContext = selectedBusiness
+      ? businessContexts.find((business) => business.businessId === selectedBusiness.id)
+      : null;
+    if (selectedContext) setActiveContext(selectedContext);
+  }, [activeContext, businessContexts, businesses, selectedId, setActiveContext]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -249,7 +266,11 @@ export default function BusinessDashboard() {
               </div>
             )}
             {businesses.slice(0, 10).map((b) => (
-              <button key={b.id} onClick={() => setSelectedId(b.id === selectedId ? null : b.id)}
+              <button key={b.id} onClick={() => {
+                const selectedContext = businessContexts.find((business) => business.businessId === b.id);
+                if (selectedContext) setActiveContext(selectedContext);
+                setSelectedId(b.id);
+              }}
                 className={`w-full text-left bg-white rounded-2xl p-5 border mb-3 transition-all ${selectedId === b.id ? "border-[#CA922B] shadow-[0_0_0_2px_rgba(202,146,43,0.2)]" : "border-[#3A1F0E]/10 hover:border-[#CA922B]/40"}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -332,11 +353,11 @@ export default function BusinessDashboard() {
                             <Eye className="w-3 h-3 mr-1" /> View Public Listing
                           </Button>
                         </Link>
-                        <Link href={`/for-business-owners?claim=${selected.id}`}>
+                        <a href="#selected-business-profile-editor">
                           <Button size="sm" variant="outline" className="rounded-full border-[#CA922B]/40 text-[#CA922B] text-xs font-bold">
-                            <Edit3 className="w-3 h-3 mr-1" /> Edit Profile
+                            <Edit3 className="w-3 h-3 mr-1" /> Edit Selected Profile
                           </Button>
-                        </Link>
+                        </a>
                         {selected.managementRole === "owner" ? <Link href={`/business-team?businessId=${encodeURIComponent(selected.id)}`}>
                           <Button size="sm" variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] text-xs font-bold">
                             <Users className="w-3 h-3 mr-1" /> Manage Team
@@ -356,11 +377,14 @@ export default function BusinessDashboard() {
                       </div>
                     </div>
 
+                    <div id="selected-business-profile-editor">
+                      <SelectedBusinessProfileEditor businessId={selected.id} businessName={selected.name} />
+                    </div>
                     {selectedIsOwner ? <>
                       <BusinessOwnershipEditor businessId={selected.id} />
                       <BusinessExperienceEditor business={selected} />
                       <BusinessVoiceProfileEditor businessId={selected.id} />
-                    </> : <p className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E]/65">Your approved manager access can view this private dashboard and use ordinary selected-business editing tools. Ownership, team access, promotion, verification, and eligibility controls remain with the approved owner.</p>}
+                    </> : <p className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E]/65">Your approved manager access can edit ordinary details only for this selected business. Ownership, team access, promotion, verification, and eligibility controls remain with the approved owner.</p>}
 
                     <div>
                       <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-3">Recent Reviews</p>

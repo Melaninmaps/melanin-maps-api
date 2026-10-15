@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import BookstoreDiscoveryPanel from "@/components/BookstoreDiscoveryPanel";
 import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
 import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
+import { useAccountContext } from "@/contexts/account-context";
 
 const BASE = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -265,12 +266,13 @@ function CommunityOrgCard({ org }: { org: CommunityOrg }) {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-function EmptyState({ query, onClear, onShowAll, savedDesignations, onRemoveDesignation }: {
+function EmptyState({ query, onClear, onShowAll, savedDesignations, onRemoveDesignation, canAdjustSupportLens }: {
   query: string;
   onClear: () => void;
   onShowAll: () => void;
   savedDesignations: string[];
   onRemoveDesignation: (designation: string) => void;
+  canAdjustSupportLens: boolean;
 }) {
   return (
     <div className="col-span-full py-20 flex flex-col items-center text-center">
@@ -291,11 +293,11 @@ function EmptyState({ query, onClear, onShowAll, savedDesignations, onRemoveDesi
             <Button className="rounded-full bg-[#2B1507] text-white px-6 h-10 text-sm" onClick={() => {}}>
               Keep exact focus
             </Button>
-            {savedDesignations.length === 1 ? (
+            {canAdjustSupportLens && savedDesignations.length === 1 ? (
               <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-6 h-10 text-sm" onClick={() => onRemoveDesignation(savedDesignations[0])}>
                 Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === savedDesignations[0])?.label ?? "selection"}
               </Button>
-            ) : savedDesignations.length > 1 ? (
+            ) : canAdjustSupportLens && savedDesignations.length > 1 ? (
               <div className="flex flex-wrap gap-2 justify-center">
                 {savedDesignations.map((designation) => (
                   <Button key={designation} variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-4 h-9 text-xs" onClick={() => onRemoveDesignation(designation)}>
@@ -309,9 +311,11 @@ function EmptyState({ query, onClear, onShowAll, savedDesignations, onRemoveDesi
                 Choose another community
               </Button>
             </Link>
-            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-6 h-10 text-sm" onClick={onShowAll}>
-              Show all businesses
-            </Button>
+            {canAdjustSupportLens && (
+              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-6 h-10 text-sm" onClick={onShowAll}>
+                Show all businesses
+              </Button>
+            )}
           </>
         )}
         {query && (
@@ -344,6 +348,12 @@ function EmptyState({ query, onClear, onShowAll, savedDesignations, onRemoveDesi
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Businesses() {
+  const { activeContext } = useAccountContext();
+  const isPersonalAccountContext = activeContext.kind === "personal";
+  const isPersonalAccountContextRef = useRef(isPersonalAccountContext);
+  useEffect(() => {
+    isPersonalAccountContextRef.current = isPersonalAccountContext;
+  }, [isPersonalAccountContext]);
   // Directory state — loaded once on mount, used for browse mode
   const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(true);
@@ -387,15 +397,17 @@ export default function Businesses() {
   }, [directorySupportScope, directoryRefreshGeneration, activeOwnership]);
 
   const showAllBusinesses = useCallback(() => {
+    if (!isPersonalAccountContext) return;
     void (async () => {
       setSupportLensError(null);
       try {
         const response = await fetch(`${BASE}api/kinfolk/preferences`, {
       method: "PUT", credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-MWM-Account-Context": "personal" },
       body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
         });
         if (!response.ok) throw new Error("preference update failed");
+        if (!isPersonalAccountContextRef.current) return;
         setDirectorySupportScope("all_businesses");
         setActiveCategory("All");
         setActiveOwnership(null);
@@ -403,12 +415,17 @@ export default function Businesses() {
         setSupportLensError("Could not update Support Lens. Please try again.");
       }
     })();
-  }, [activeOwnership]);
+  }, [activeOwnership, isPersonalAccountContext]);
   const removeSavedDesignation = useCallback(async (designation: string) => {
+    if (!isPersonalAccountContext) return;
     setSupportLensError(null);
     const result = await persistReducedSupportLensRemoval({
-      baseUrl: BASE, savedDesignations, removeDesignation: designation,
+      baseUrl: BASE,
+      savedDesignations,
+      removeDesignation: designation,
+      accountContextHeader: "personal",
     });
+    if (!isPersonalAccountContextRef.current) return;
     if (result.error) {
       setSupportLensError(result.error);
     } else {
@@ -417,12 +434,22 @@ export default function Businesses() {
       setDirectorySupportScope(update.preferredOwnershipTypes.length ? null : "all_businesses");
       setDirectoryRefreshGeneration((generation) => generation + 1);
     }
-  }, [savedDesignations]);
+  }, [isPersonalAccountContext, savedDesignations]);
 
   useEffect(() => {
-    fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include" })
+    let active = true;
+    if (!isPersonalAccountContext) {
+      setSavedDesignations([]);
+      setDirectorySupportScope(null);
+      return () => { active = false; };
+    }
+    fetch(`${BASE}api/kinfolk/preferences`, {
+      credentials: "include",
+      headers: { "X-MWM-Account-Context": "personal" },
+    })
       .then((response) => response.ok ? response.json() : null)
       .then((payload) => {
+        if (!active) return;
         const prefs = payload?.preferences;
         const values = Array.isArray(prefs?.preferredOwnershipTypes)
           ? prefs.preferredOwnershipTypes
@@ -430,7 +457,8 @@ export default function Businesses() {
         if (prefs?.supportLensMode === "strict_documented_designations") setSavedDesignations(values);
       })
       .catch(() => {});
-  }, []);
+    return () => { active = false; };
+  }, [isPersonalAccountContext]);
 
   // Universal Search — fires on Enter or button click.
   // Architecture mirrors the Map page: geo-extract runs FIRST to detect any
@@ -741,7 +769,7 @@ export default function Businesses() {
                 {/* No results empty state */}
                 {!hasUniversalResults && (
                   <div className="grid grid-cols-1">
-                    <EmptyState query={searchedQuery} onClear={clearSearch} onShowAll={showAllBusinesses} savedDesignations={savedDesignations} onRemoveDesignation={removeSavedDesignation} />
+                    <EmptyState query={searchedQuery} onClear={clearSearch} onShowAll={showAllBusinesses} savedDesignations={savedDesignations} onRemoveDesignation={removeSavedDesignation} canAdjustSupportLens={isPersonalAccountContext} />
                   </div>
                 )}
 
@@ -807,7 +835,7 @@ export default function Businesses() {
                   </div>
                 ))
               ) : browseFiltered.length === 0 ? (
-                <EmptyState query="" onClear={() => { setActiveCategory("All"); setActiveOwnership(null); }} onShowAll={showAllBusinesses} savedDesignations={savedDesignations} onRemoveDesignation={removeSavedDesignation} />
+                <EmptyState query="" onClear={() => { setActiveCategory("All"); setActiveOwnership(null); }} onShowAll={showAllBusinesses} savedDesignations={savedDesignations} onRemoveDesignation={removeSavedDesignation} canAdjustSupportLens={isPersonalAccountContext} />
               ) : (
                 browseFiltered.map(biz => <BusinessCard key={biz.id} biz={biz} />)
               )}
