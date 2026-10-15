@@ -138,6 +138,10 @@ describe("Kinfolk Current profile enrichment manifest", () => {
   it("only identifies a closed list of generic imported descriptions as replaceable", () => {
     expect(isGenericProfileEnrichmentDescriptionPlaceholder("Barber")).toBe(true);
     expect(isGenericProfileEnrichmentDescriptionPlaceholder("Beauty & Hair")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned / Jamaican / Caribbean")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned directory listing: a comprehensive directory of Black-owned businesses.")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned neighborhood restaurant serving Jamaican comfort food.")).toBe(false);
     expect(isGenericProfileEnrichmentDescriptionPlaceholder("Neighborhood barbershop offering fades and beard care.")).toBe(false);
   });
 });
