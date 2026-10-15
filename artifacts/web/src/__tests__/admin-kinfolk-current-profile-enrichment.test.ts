@@ -33,4 +33,8 @@ describe("audited profile enrichment Admin control", () => {
     expect(adminSource).toContain("profileEnrichmentScope && bizStatusFilter");
     expect(adminSource).toContain("<KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope}");
   });
+
+  it("does not reload the page-wide inventory after a bounded enrichment request", () => {
+    expect(adminSource).not.toContain("onApplied={() => { void loadBusinesses({}); }}");
+  });
 });
