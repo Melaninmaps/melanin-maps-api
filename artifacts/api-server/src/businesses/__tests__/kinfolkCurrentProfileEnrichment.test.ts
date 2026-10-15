@@ -104,6 +104,24 @@ describe("Kinfolk Current profile enrichment manifest", () => {
     expect(parsed.candidates[0].patch).not.toHaveProperty("listingStatus");
   });
 
+  it("requires a matching confirmed-inactive website check before replacing a website", () => {
+    const input = nonCurrentManifest({
+      scope: "non_kinfolk_current_all",
+      candidates: [candidate({
+        expectedIdentity: { name: "Community Books", city: "Philadelphia", state: "PA", website: "https://old-communitybooks.example/" },
+        patch: { website: "https://new-communitybooks.example/" },
+        fieldModes: { website: "replace_verified_inactive" },
+        websiteRecovery: { priorWebsite: "https://old-communitybooks.example/", priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE", checkedAt: "2026-10-15" },
+        receipts: [{ field: "website", sourceUrl: "https://new-communitybooks.example/", sourceLabel: "Official home page", observedAt: "2026-10-15", confidence: "high", note: "The recovered official home page matches the business identity." }],
+      })],
+    });
+    expect(parseProfileEnrichmentManifest(input).candidates[0].websiteRecovery?.priorWebsite).toBe("https://old-communitybooks.example/");
+    const unsafe = nonCurrentManifest({
+      candidates: [candidate({ patch: { website: "https://new-communitybooks.example/" }, fieldModes: { website: "replace_verified_inactive" }, receipts: [{ field: "website", sourceUrl: "https://new-communitybooks.example/", sourceLabel: "Official home page", observedAt: "2026-10-15", confidence: "high", note: "The recovered official home page matches the business identity." }] })],
+    });
+    expect(() => parseProfileEnrichmentManifest(unsafe)).toThrow("websiteRecovery");
+  });
+
   it("rejects an unscoped manifest and unsafe replacement modes", () => {
     const unscoped = nonCurrentManifest({ scope: undefined });
     expect(() => parseProfileEnrichmentManifest(unscoped)).toThrow("scope");

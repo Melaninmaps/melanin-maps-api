@@ -35,6 +35,8 @@ describe("source-receipted profile enrichment route", () => {
     expect(route).toContain('manifest.scope === "non_kinfolk_current_all"');
     expect(route).toContain('["live_unclaimed", "live_claimed", "staged"]');
     expect(route).toContain("not an active live or staged record eligible for held-profile enrichment");
+    expect(route).toContain('mode === "replace_verified_inactive"');
+    expect(route).toContain('candidate.websiteRecovery?.priorWebsiteClassification === "REMOVE_CONFIRMED_INACTIVE"');
     expect(route).toContain("differs from the reviewed source snapshot");
     expect(route).toContain("HOLD_IDENTITY_OR_CONTACT_CONFLICT");
     expect(route).toContain("existingTags");

@@ -43,6 +43,28 @@ test("builds an audited held-profile manifest without lifecycle fields", () => {
   assert.equal("listingStatus" in manifests[0].candidates[0].patch, false);
 });
 
+test("replaces only a source-confirmed inactive website with a matched official website", () => {
+  const recovered = {
+    ...proposal,
+    website: "https://new-communitybooks.example/",
+    sourceSnapshot: { Website: "https://old-communitybooks.example/" },
+    websiteRecovery: {
+      priorWebsite: "https://old-communitybooks.example/",
+      priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE",
+      checkedAt: "2026-10-15",
+    },
+    accepted: [],
+  };
+  const { candidates } = buildManifests([recovered], [{ ...packet, websiteRecovery: recovered.websiteRecovery }], {
+    scope: "non_kinfolk_current_all",
+  });
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].expectedIdentity.website, "https://old-communitybooks.example/");
+  assert.equal(candidates[0].patch.website, "https://new-communitybooks.example/");
+  assert.equal(candidates[0].fieldModes.website, "replace_verified_inactive");
+  assert.deepEqual(candidates[0].websiteRecovery, recovered.websiteRecovery);
+});
+
 test("does not duplicate a stored social account", () => {
   const existingSocialPacket = { ...packet, sourceSnapshot: { Instagram: "https://www.instagram.com/communitybooks/" } };
   const { candidates } = buildManifests([{ ...proposal, accepted: [] }], [existingSocialPacket], { scope: "non_kinfolk_current" });

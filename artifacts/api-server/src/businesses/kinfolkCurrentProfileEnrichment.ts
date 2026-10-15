@@ -20,7 +20,7 @@ export const PROFILE_ENRICHMENT_FIELDS = [
  */
 export type ProfileEnrichmentScope = "kinfolk_current" | "non_kinfolk_current" | "non_kinfolk_current_all";
 export type EnrichmentPatchField = (typeof PROFILE_ENRICHMENT_FIELDS)[number];
-export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory";
+export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory" | "replace_verified_inactive";
 type ReceiptField = Extract<
   ProfileFieldReceiptName,
   "description" | "hours" | "phone" | "service_tags" | "website" |
@@ -43,6 +43,8 @@ export type ProfileEnrichmentCandidate = {
   patch: Partial<Record<EnrichmentPatchField, string | string[]>>;
   /** Description can replace only a known generic directory placeholder; tags append only new values. */
   fieldModes: Partial<Record<EnrichmentPatchField, EnrichmentPatchMode>>;
+  /** Required for replacing a nonempty website that was independently rechecked as inactive. */
+  websiteRecovery?: { priorWebsite: string; priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE"; checkedAt: string };
   receipts: ProfileEnrichmentReceipt[];
 };
 
@@ -147,10 +149,11 @@ function parseFieldModes(input: unknown, patch: ProfileEnrichmentCandidate["patc
   const fieldModes: ProfileEnrichmentCandidate["fieldModes"] = {};
   for (const field of Object.keys(patch) as EnrichmentPatchField[]) {
     const mode = input[field] ?? defaultMode(field);
-    if (mode !== "fill" && mode !== "append" && mode !== "replace_generic_directory") throw new Error(`Unsupported enrichment mode for ${field}`);
+    if (mode !== "fill" && mode !== "append" && mode !== "replace_generic_directory" && mode !== "replace_verified_inactive") throw new Error(`Unsupported enrichment mode for ${field}`);
     if (field === "tags" && mode !== "append") throw new Error("Service tags must use append mode");
     if (field !== "tags" && mode === "append") throw new Error(`${field} cannot use append mode`);
     if (field !== "description" && mode === "replace_generic_directory") throw new Error("Only descriptions may replace a generic directory placeholder");
+    if (field !== "website" && mode === "replace_verified_inactive") throw new Error("Only websites may replace a verified inactive URL");
     fieldModes[field] = mode;
   }
   for (const field of Object.keys(input)) {
@@ -184,6 +187,19 @@ function parseCandidate(input: unknown, allowedFields: readonly EnrichmentPatchF
   const changedFields = Object.keys(patch) as EnrichmentPatchField[];
   if (changedFields.length === 0) throw new Error("candidate patch must contain an allowed enrichment field");
   const fieldModes = parseFieldModes(input.fieldModes, patch);
+  let websiteRecovery: ProfileEnrichmentCandidate["websiteRecovery"];
+  if (fieldModes.website === "replace_verified_inactive") {
+    if (!isRecord(input.websiteRecovery)) throw new Error("websiteRecovery is required for a verified inactive website replacement");
+    const priorWebsite = cleanPublicUrl(input.websiteRecovery.priorWebsite, "websiteRecovery priorWebsite");
+    const priorWebsiteClassification = cleanText(input.websiteRecovery.priorWebsiteClassification, "websiteRecovery classification", 80) as string;
+    const checkedAt = cleanText(input.websiteRecovery.checkedAt, "websiteRecovery checkedAt", 10) as string;
+    if (priorWebsiteClassification !== "REMOVE_CONFIRMED_INACTIVE") throw new Error("websiteRecovery requires a confirmed inactive prior website");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checkedAt) || Number.isNaN(Date.parse(`${checkedAt}T00:00:00Z`))) throw new Error("websiteRecovery checkedAt must use YYYY-MM-DD");
+    if (!expectedIdentity.website || expectedIdentity.website !== priorWebsite) throw new Error("websiteRecovery prior website must match the expected current website");
+    websiteRecovery = { priorWebsite, priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE", checkedAt };
+  } else if (input.websiteRecovery !== undefined) {
+    throw new Error("websiteRecovery is only permitted for a verified inactive website replacement");
+  }
   if (!Array.isArray(input.receipts) || input.receipts.length !== changedFields.length) throw new Error("candidate receipts must contain exactly one receipt for each proposed field");
   const receipts = input.receipts.map((receipt): ProfileEnrichmentReceipt => {
     if (!isRecord(receipt)) throw new Error("candidate receipt must be an object");
@@ -207,7 +223,7 @@ function parseCandidate(input: unknown, allowedFields: readonly EnrichmentPatchF
   for (const field of changedFields) {
     if (!receiptFields.has(receiptFieldForPatch(field))) throw new Error(`candidate patch ${field} is missing its field receipt`);
   }
-  return { businessId, expectedIdentity, patch, fieldModes, receipts };
+  return { businessId, expectedIdentity, patch, fieldModes, ...(websiteRecovery ? { websiteRecovery } : {}), receipts };
 }
 
 function parseMetadata(input: Record<string, unknown>): Pick<ParsedProfileEnrichmentManifest, "batchId" | "generatedAt" | "contentFingerprint"> {
