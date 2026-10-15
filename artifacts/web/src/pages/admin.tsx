@@ -49,6 +49,7 @@ import {
   MapPinned,
   Search,
   Pencil,
+  ShieldCheck,
 } from "lucide-react";
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
@@ -60,6 +61,7 @@ import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideo
 import { KinfolkCurrentCityDuplicateReconciliation } from "@/components/KinfolkCurrentCityDuplicateReconciliation";
 import AdminBusinessReview from "@/pages/admin-business-review";
 import FounderDirectoryImports from "@/pages/founder-directory-imports";
+import { FounderSourceReconciliation } from "@/components/FounderSourceReconciliation";
 import {
   BarChart,
   Bar,
@@ -531,7 +533,8 @@ type Tab =
   | "library-growth"
   | "biz-review"
   | "business-videos"
-  | "directory-imports";
+  | "directory-imports"
+  | "founder-source-reconciliation";
 
 type ChecklistSection = {
   pre_launch: Record<string, boolean>;
@@ -3500,6 +3503,13 @@ Selected: ${summary}`,
       id: "directory-imports",
       label: "Founder Directory Review",
       icon: <BookOpen className="w-4 h-4" />,
+    });
+  }
+  if (isFounderOwner) {
+    tabs.push({
+      id: "founder-source-reconciliation",
+      label: "Latino / Hispanic Reconciliation",
+      icon: <ShieldCheck className="w-4 h-4" />,
     });
   }
   const quickDashboardTabs = tabs.filter((item) =>
@@ -8995,6 +9005,12 @@ Selected: ${summary}`,
       {tab === "directory-imports" && (
         <div className="p-6">
           <FounderDirectoryImports embedded />
+        </div>
+      )}
+
+      {tab === "founder-source-reconciliation" && isFounderOwner && (
+        <div className="p-6">
+          <FounderSourceReconciliation />
         </div>
       )}
 
