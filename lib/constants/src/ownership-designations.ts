@@ -194,6 +194,13 @@ export function ownershipDesignationFilterId(value: string): string {
   return OWNERSHIP_FILTER_ALIASES[normalized] ?? normalized;
 }
 
+/** Member-facing wording for a canonical stored designation. */
+export function ownershipDesignationDisplayLabel(value: string): string {
+  return ownershipDesignationFilterId(value) === "black-african-american"
+    ? "Black-owned"
+    : value;
+}
+
 export const OWNERSHIP_FILTER_OPTIONS = OWNERSHIP_DESIGNATIONS.map((label) => ({
   id: ownershipDesignationFilterId(label),
   label,
