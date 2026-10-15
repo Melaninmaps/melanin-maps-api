@@ -537,6 +537,11 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
     const state = text(req.query.state, 50)?.toUpperCase() ?? null;
     const batch = text(req.query.batch, 255);
     const cursor = text(req.query.cursor, 512);
+    const rawOwnershipScope = text(req.query.ownershipScope, 20)?.toLowerCase() ?? null;
+    if (rawOwnershipScope && rawOwnershipScope !== "black" && rawOwnershipScope !== "latino") {
+      return void res.status(400).json({ error: "ownershipScope must be black or latino." });
+    }
+    const ownershipScope = rawOwnershipScope as FounderSourceRequest["ownershipScope"];
     const rawLimit = Number(req.query.limit ?? 100);
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 100;
     if (!city && !batch) return void res.status(400).json({ error: "A source batch or city is required." });
@@ -544,6 +549,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       .filter((candidate) => !batch || candidate.batch === batch)
       .filter((candidate) => !city || normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(city))
       .filter((candidate) => !state || candidate.state?.trim().toUpperCase() === state)
+      .filter((candidate) => matchesRequestedOwnershipScope(candidate, ownershipScope))
       .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey));
     const selected = scope
       .filter((candidate) => !cursor || candidate.sourceRecordKey > cursor)
@@ -578,6 +584,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       }
       return void res.json({
         policyVersion: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
+        requestedOwnershipScope: ownershipScope,
         records: selected.map((candidate) => ({
           sourceRecordKey: candidate.sourceRecordKey,
           sourceIdentity: { name: candidate.name, city: candidate.city, state: candidate.state },
