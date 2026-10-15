@@ -552,6 +552,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
     const ownershipScope = rawOwnershipScope as FounderSourceRequest["ownershipScope"];
     const rawLimit = Number(req.query.limit ?? 100);
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 100;
+    const eligibleOnly = req.query.eligibleOnly === "true";
     if (!city && !batch) return void res.status(400).json({ error: "A source batch or city is required." });
     const scope = FOUNDER_SOURCE_CANDIDATES
       .filter((candidate) => !batch || candidate.batch === batch)
@@ -559,9 +560,9 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       .filter((candidate) => !state || candidate.state?.trim().toUpperCase() === state)
       .filter((candidate) => matchesRequestedOwnershipScope(candidate, ownershipScope))
       .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey));
-    const selected = scope
-      .filter((candidate) => !cursor || candidate.sourceRecordKey > cursor)
-      .slice(0, limit);
+    const selected = eligibleOnly
+      ? scope
+      : scope.filter((candidate) => !cursor || candidate.sourceRecordKey > cursor).slice(0, limit);
     try {
       const result = await pool.query<{
         source_record_key: string;
@@ -578,10 +579,15 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         eligibility_status: string | null;
         mapping_status: string;
         mapping_hold_reason: string | null;
+        kinfolk_current: boolean;
       }>(
         `SELECT r.source_record_key, r.business_id, b.name, b.city, b.state, b.status, b.listing_status,
                 b.website, b.instagram, b.tiktok, b.facebook,
-                e.eligibility_status, r.mapping_status, r.mapping_hold_reason
+                e.eligibility_status, r.mapping_status, r.mapping_hold_reason,
+                EXISTS (
+                  SELECT 1 FROM public.public_businesses AS current_kinfolk
+                   WHERE current_kinfolk.id = b.id
+                ) AS kinfolk_current
            FROM business_source_directory_receipts r
            JOIN businesses b ON b.id = r.business_id
            LEFT JOIN business_discovery_eligibility e ON e.business_id = b.id
@@ -594,6 +600,46 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         const rows = receiptsByKey.get(row.source_record_key) ?? [];
         rows.push(row);
         receiptsByKey.set(row.source_record_key, rows);
+      }
+      if (eligibleOnly) {
+        const eligibleProfiles: Array<{
+          businessId: string;
+          name: string;
+          city: string;
+          state: string;
+          website: string | null;
+          instagram: string | null;
+          facebook: string | null;
+          tiktok: string | null;
+        }> = [];
+        const seenBusinessIds = new Set<string>();
+        for (const candidate of selected) {
+          for (const profile of receiptsByKey.get(candidate.sourceRecordKey) ?? []) {
+            const exactIdentity = normalizeDirectoryIdentity(candidate.name) === normalizeDirectoryIdentity(profile.name)
+              && normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(profile.city)
+              && normalizeDirectoryIdentity(candidate.state) === normalizeDirectoryIdentity(profile.state);
+            if (!exactIdentity || profile.mapping_status !== "active" || profile.status !== "active"
+              || profile.listing_status === "archived" || profile.kinfolk_current || seenBusinessIds.has(profile.business_id)) continue;
+            seenBusinessIds.add(profile.business_id);
+            eligibleProfiles.push({
+              businessId: profile.business_id,
+              name: profile.name ?? "",
+              city: profile.city ?? "",
+              state: profile.state ?? "",
+              website: profile.website,
+              instagram: profile.instagram,
+              facebook: profile.facebook,
+              tiktok: profile.tiktok,
+            });
+          }
+        }
+        return void res.json({
+          policyVersion: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
+          requestedOwnershipScope: ownershipScope,
+          sourceRecordsInScope: selected.length,
+          eligibleProfiles,
+          nextCursor: null,
+        });
       }
       return void res.json({
         policyVersion: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
