@@ -253,21 +253,26 @@ export function FounderSourceReconciliation() {
           <p className="text-sm leading-6 text-teal-900">
             Only retained sources that explicitly designate a business <strong>Latino / Hispanic-Owned</strong> are in scope. The process is existing-profile-only: it never creates a business profile, map pin, or Kinfolk membership record, and it excludes Kinfolk Current both during planning and immediately before mutation.
           </p>
-          <label className="flex max-w-xl flex-col gap-1 text-sm font-medium text-teal-950">
-            Documented source batch
-            <select
-              value={scope.id}
-              disabled={running}
-              onChange={(event) => selectScope(event.target.value)}
-              className="h-10 rounded-md border border-teal-300 bg-white px-3 text-sm text-teal-950 shadow-sm outline-none focus:border-teal-700"
-            >
+          <div className="space-y-1" role="group" aria-label="Documented source batch">
+            <p className="text-sm font-medium text-teal-950">Documented source batch</p>
+            <div className="flex flex-wrap gap-2">
               {RECONCILIATION_SCOPES.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
+                <Button
+                  key={candidate.id}
+                  type="button"
+                  variant={scope.id === candidate.id ? "default" : "outline"}
+                  disabled={running}
+                  aria-pressed={scope.id === candidate.id}
+                  onClick={() => selectScope(candidate.id)}
+                  className={scope.id === candidate.id
+                    ? "bg-teal-800 text-white hover:bg-teal-900"
+                    : "border-teal-400 bg-white text-teal-950 hover:bg-teal-100"}
+                >
                   {candidate.label} — {candidate.recordCount.toLocaleString()} records
-                </option>
+                </Button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
           <p className="text-sm leading-6 text-teal-900">
             {scope.id === "founder-city"
               ? "This run resumes at page 23 after pages 1–22 were individually previewed and applied."
