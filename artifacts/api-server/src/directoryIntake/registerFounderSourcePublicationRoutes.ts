@@ -563,11 +563,16 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         state: string | null;
         status: string | null;
         listing_status: string | null;
+        website: string | null;
+        instagram: string | null;
+        tiktok: string | null;
+        facebook: string | null;
         eligibility_status: string | null;
         mapping_status: string;
         mapping_hold_reason: string | null;
       }>(
         `SELECT r.source_record_key, r.business_id, b.name, b.city, b.state, b.status, b.listing_status,
+                b.website, b.instagram, b.tiktok, b.facebook,
                 e.eligibility_status, r.mapping_status, r.mapping_hold_reason
            FROM business_source_directory_receipts r
            JOIN businesses b ON b.id = r.business_id
