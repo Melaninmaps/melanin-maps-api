@@ -6,6 +6,19 @@
 **Source commit:** `d9c1e1d2` — `feat: add member and business account contexts`
 **Scope boundary:** Persistent, authenticated **Personal**, **Business**, and **Admin** workspace selection for the Web application. This account-context commit adds no schema migration, provider activation, live account connection, production-data write, mobile build, or deployment. The rebased feature branch also retains the separate source-only claim-lifecycle migration at `50c2fd7b`; it remains review-only and has not run anywhere.
 
+## Founder acceptance and task closure — 2026-10-14
+
+| Closure item | Recorded state |
+|---|---|
+| Source implementation | **COMPLETE** |
+| Focused validation | **PASSED** — the reconciled API total is **18 tests** across the four listed account-context/privacy suites after the claim-lifecycle rebase. |
+| Integration | **PENDING** |
+| Live Web verification | **PENDING** |
+| Native parity | **NOT INCLUDED** |
+| Founder acceptance in the live application | **PENDING** |
+
+This independent task is closed. Preserve this branch, its source commits, the review-only claim-lifecycle migration, and its privacy regressions. Reopen only for a genuine regression identified during the final coordinated integration.
+
 ## What is implemented
 
 ### 1. Server-authorized account context
@@ -63,7 +76,7 @@
 
 | Area | Command / suite | Result |
 |---|---|---|
-| API context and privacy | `account-context-runtime`, `account-context-contract`, `member-business-owner-completion-contract`, `member-privacy-contract` | **17 tests passed** |
+| API context and privacy | `account-context-runtime`, `account-context-contract`, `member-business-owner-completion-contract`, `member-privacy-contract` | **18 tests passed** |
 | Web context and profile UX | `account-context-switcher`, `member-business-owner-completion-ui`, `profile-settings-viewport`, `kinfolk-chat-presentation`, `support-lens-actions` | **38 tests passed** |
 | Web map / Support Lens regression sweep | 10 focused map, search, viewport, profile-navigation, essential-services, and Support Lens suites | **60 tests passed** |
 | API TypeScript | `pnpm run typecheck` | **Passed** |
