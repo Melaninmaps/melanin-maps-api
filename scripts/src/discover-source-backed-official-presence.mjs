@@ -327,6 +327,7 @@ async function main() {
   const inputHash = createHash("sha256").update(source).digest("hex");
   const allRecords = source.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line))
     .filter((row) => ["MISSING", "REMOVE_CONFIRMED_INACTIVE", "HOLD_INCONCLUSIVE"].includes(row?.website?.classification))
+    .filter((row) => !["RETAIN_SOCIAL_ONLY", "RETAIN_SOCIAL_ONLY_WEBSITE_REMOVAL_PROPOSAL"].includes(row?.disposition?.disposition))
     .map((row) => ({
       businessId: row.businessId,
       businessName: row.businessName,

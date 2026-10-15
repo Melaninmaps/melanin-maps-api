@@ -18,6 +18,7 @@ test("extractDuckDuckGoResults retains public candidates without treating search
 
 test("targets only records without a verified website and never writes production data", () => {
   assert.match(script, /\["MISSING", "REMOVE_CONFIRMED_INACTIVE", "HOLD_INCONCLUSIVE"\]/);
+  assert.match(script, /RETAIN_SOCIAL_ONLY", "RETAIN_SOCIAL_ONLY_WEBSITE_REMOVAL_PROPOSAL/);
   assert.match(script, /productionWrite: false/);
   assert.match(script, /No candidate URL is written to a Mapping with Melanin profile/);
 });
