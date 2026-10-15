@@ -54,6 +54,24 @@ confirmed the queue count was **0** before execution. No website link, listing
 state, business, ownership field, or Delete Review record was changed during this
 deployment verification.
 
+## Approved production execution
+
+Following explicit founder approval, the authenticated Admin applied the reviewed
+manifest at **2026-10-15 16:21 UTC**. The guarded endpoint returned HTTP 200 in
+approximately three seconds and the live Admin result was:
+
+| Outcome | Result |
+|---|---:|
+| Inactive website links removed | **43** |
+| Businesses placed in reversible Delete Review | **639** |
+| Records skipped because their live identity or links had changed since screening | **21** |
+| Permanent deletions | **0** |
+
+The live **Kinfolk Current Delete Review** queue showed **639** records after the
+request, and sampled queued rows displayed **Restore exact prior state** with no
+permanent-delete action. The difference from the pre-apply plan (44 / 659) is the
+intentional live recheck: changed records were skipped rather than overwritten.
+
 ## Execution boundary
 
 The **44 social-preserving website removals** clear only a matching inactive
