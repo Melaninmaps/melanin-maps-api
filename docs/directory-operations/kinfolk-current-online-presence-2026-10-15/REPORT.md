@@ -41,6 +41,19 @@ The apply endpoint accepts only the exact fingerprinted plan above; modified bro
 
 `Kinfolk Current Delete Review` is a reversible public-discovery hold, not a deletion. Queued records are database-protected from permanent deletion and from lifecycle changes outside the dedicated apply/restore transaction. The dedicated restore returns the exact saved listing state and cancels any deletion hold in the same transaction.
 
+## Production deployment and pre-apply verification
+
+The reviewed workflow was deployed to Production at commit
+`0737d968e50a32286df245c7078e54b9fe221ff8` in Railway deployment
+`78b8f9c8-5f77-481c-8a6a-016f165fecab`. `/api/readyz` returned database-ready
+status and `/api/version` reported the same source commit with `stale_bundle: false`.
+
+An authenticated Admin-browser check opened **Businesses → Kinfolk Current Delete
+Review**, confirmed the manifest upload and **Apply verified plan** controls, and
+confirmed the queue count was **0** before execution. No website link, listing
+state, business, ownership field, or Delete Review record was changed during this
+deployment verification.
+
 ## Execution boundary
 
 The **44 social-preserving website removals** clear only a matching inactive
