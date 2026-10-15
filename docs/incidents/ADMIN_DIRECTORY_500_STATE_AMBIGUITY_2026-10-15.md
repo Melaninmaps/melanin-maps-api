@@ -66,3 +66,27 @@ This candidate is deliberately limited to:
 3. this incident record.
 
 It contains **no migration** and no record mutation. A fresh authenticated production `GET /api/admin/businesses` should be used to verify the corrected query after, and only after, explicit deployment approval.
+
+## Production deployment receipt
+
+**Approved source commit:** `8004396d034fcd9414635f08db5d2f09cf125ec8`
+**Rollback baseline:** `4be3cf33e2100b3b8c41a38b355bdedbdff93aa3`
+**Railway deployment:** `dd0bbb25-9ae7-495b-a48a-61b5759e1152`
+**Railway result:** `SUCCESS`
+
+### Live acceptance evidence
+
+- Railway confirms the Production API is live from the approved branch and exact commit, with no staged changes.
+- `https://api.melaninmaps.com/api/readyz` returned `{"status":"ok","db":"ok"}` after the rollout.
+- In the authenticated administrator browser, opening **Admin → Businesses** loaded the real inventory rather than an error or zero-row state:
+  - **35,616** retained business records;
+  - **8,542** live inventory records;
+  - **8,542** public Directory-searchable records;
+  - **7,502** current Kinfolk catalog records;
+  - **27,005** archived records; and
+  - **69** confirmed duplicates.
+- Railway HTTP logs confirm the previously failing route now succeeded twice: `GET /api/admin/businesses → 200` (4.2 s and 4.6 s) at 13:51 UTC.
+
+### Production safety confirmation
+
+No business record, ownership designation, Kinfolk qualification, map pin, account, credential, or database schema was changed by this release. The browser's legacy source-intake request received its deliberate `410 SOURCE_BACKED_INTAKE_V1_RETIRED` response. Its duplicate-reconciliation preview requests require `apply: true` and a fresh matching plan hash to write; neither was supplied during this verification.
