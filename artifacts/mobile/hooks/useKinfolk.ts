@@ -282,7 +282,10 @@ export function useKinfolk() {
           sessionId,
           message: text,
           vibes: opts?.vibes ?? [],
-          voiceMode: opts?.voiceMode ?? "community",
+          // Omit a mode unless this turn explicitly requests one. The server then
+          // applies the member's persisted Kinfolk Voice instead of silently
+          // resetting this entry point to Big Cousin.
+          ...(opts?.voiceMode ? { voiceMode: opts.voiceMode } : {}),
           imageUrls: opts?.imageUrls ?? [],
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
           cityHint,

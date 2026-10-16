@@ -18,7 +18,8 @@ describe("Kinfolk conversation modes", () => {
   ] as const)("normalizes and instructs %s", (value, label) => {
     expect(normalizeKinfolkConversationMode(value)).toBe(value);
     expect(buildKinfolkConversationModePrompt(value)).toContain(label);
-    expect(buildKinfolkConversationModeInstruction(value)).not.toMatch(/imitate an identity|accent|dialect/i);
+    expect(buildKinfolkConversationModeInstruction(value)).toContain("PERSONA BOUNDARY");
+    expect(buildKinfolkConversationModeInstruction(value)).toContain("not facts, safety, evidence standards, privacy");
   });
 
   it("safely maps legacy or invalid values to Big Cousin", () => {
@@ -52,10 +53,10 @@ describe("Kinfolk conversation modes", () => {
   });
 
   it("provides materially distinct ordinary-advice framing for all four voices", () => {
-    expect(buildKinfolkConversationModeInstruction("community")).toContain("here is how to go about it");
-    expect(buildKinfolkConversationModeInstruction("best_friend")).toContain("here is the move");
-    expect(buildKinfolkConversationModeInstruction("professor")).toContain("Answer, Why it matters, and Practice line");
-    expect(buildKinfolkConversationModeInstruction("business_manager")).toContain("Priority, Decision, and Next action");
+    expect(buildKinfolkConversationModeInstruction("community")).toContain("real-life implication");
+    expect(buildKinfolkConversationModeInstruction("best_friend")).toContain("current curiosity or feeling");
+    expect(buildKinfolkConversationModeInstruction("professor")).toContain("causes or mechanism");
+    expect(buildKinfolkConversationModeInstruction("business_manager")).toContain("Priority, Options or Trade-offs");
   });
 
   it("requires natural reference resolution without inventing prior history or dialect", () => {

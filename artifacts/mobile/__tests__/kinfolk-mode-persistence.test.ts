@@ -14,6 +14,10 @@ const preferencesSource = readFileSync(
   fileURLToPath(new URL("../hooks/useUserPreferences.ts", import.meta.url)),
   "utf8",
 );
+const kinfolkHookSource = readFileSync(
+  fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk mobile conversation modes", () => {
   it("uses the same four saved modes on settings and chat", () => {
@@ -41,5 +45,12 @@ describe("Kinfolk mobile conversation modes", () => {
     expect(settingsSource).toContain('value: "concise", label: "Direct"');
     expect(settingsSource).toContain('value: "lots", label: "Many"');
     expect(settingsSource).toContain('value: "playful", label: "Witty"');
+  });
+
+  it("does not force an unsupplied chat turn back to Big Cousin", () => {
+    expect(kinfolkHookSource).toContain(
+      "...(opts?.voiceMode ? { voiceMode: opts.voiceMode } : {}),",
+    );
+    expect(kinfolkHookSource).not.toContain('voiceMode: opts?.voiceMode ?? "community"');
   });
 });

@@ -45,7 +45,7 @@ describe("lean general Kinfolk chat", () => {
     expect(prompt).toContain("community input, ownership designations, and verification are kept distinct");
     expect(prompt).toContain("Do not claim that an unsupplied local result, community report, or current signal exists");
     expect(prompt).toContain("Do not answer with generic claims about being warm, capable, friendly, relatable");
-    expect(prompt).toContain("Big Cousin mode");
+    expect(prompt).toContain("Big Cousin MODE");
     expect(prompt).toContain("Do not invent facts, sources, business listings, addresses");
     expect(prompt).toContain("complete answer at the depth the question needs");
     expect(prompt).toContain("must never alter the factual answer or override a direct request");
@@ -56,10 +56,10 @@ describe("lean general Kinfolk chat", () => {
   });
 
   it("honors each selected conversation mode without identity imitation", () => {
-    expect(buildLeanGeneralChatPrompt("professor")).toContain("Professor mode");
-    expect(buildLeanGeneralChatPrompt("business_manager")).toContain("Business Manager mode");
-    expect(buildLeanGeneralChatPrompt("best_friend")).toContain("Best Friend mode");
-    expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin mode");
+    expect(buildLeanGeneralChatPrompt("professor")).toContain("Professor MODE");
+    expect(buildLeanGeneralChatPrompt("business_manager")).toContain("Business Manager MODE");
+    expect(buildLeanGeneralChatPrompt("best_friend")).toContain("Best Friend MODE");
+    expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin MODE");
   });
 
   it("keeps the solar-science core factual across all four conversational voices", () => {
