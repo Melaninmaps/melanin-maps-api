@@ -7498,6 +7498,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // Adds only delivery bookkeeping; it never changes task text, memory,
     // membership, or existing notification preferences.
     ["kinfolk reminder delivery v1", () => ensureKinfolkReminderDeliverySchema(log, warn)],
+    // ── Consent-first Meetup Verification ──────────────────────────────────
+    // Records only a public-meeting area/venue, voluntary consent, and bounded
+    // check-in metadata. It never stores a DOB, exact address, or coordinates.
+    ["consent-first meetup safety v1", () => ensureConsentFirstMeetupSafetySchema(log, warn)],
     // ── Completed cohort directory-only discovery audit ────────────────────
     // Allows receipt-backed records without verified coordinates to be searched
     // as public listings. The table records every idempotent activation without
@@ -19015,6 +19019,77 @@ async function ensureSaborWebsiteCorrection(
     warn(
       `ensureSaborWebsiteCorrection failed: ${err instanceof Error ? err.message : String(err)}`,
     );
+  }
+}
+
+// ── Consent-first Meetup Verification ───────────────────────────────────────
+// This adds only the constrained meeting-planning fields. Records never contain
+// exact addresses, device location, date of birth, or guardian contact details.
+async function ensureConsentFirstMeetupSafetySchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE meetup_verifications
+        ADD COLUMN IF NOT EXISTS city VARCHAR(120),
+        ADD COLUMN IF NOT EXISTS scheduled_for TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS declined_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS reschedule_requested_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS reschedule_note VARCHAR(300),
+        ADD COLUMN IF NOT EXISTS consent_acknowledged_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS policy_version VARCHAR(64),
+        ADD COLUMN IF NOT EXISTS retention_delete_at TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS minor_meetup_guardian_approvals (
+        user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        approved_by VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+        approved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        revoked_at TIMESTAMPTZ
+      );
+
+      -- Pairwise safety restrictions are deliberately minimal. An authorized
+      -- moderator records them only after manual review; this table exposes
+      -- only an active/restricted state to meetup eligibility and never returns
+      -- report content to either member.
+      CREATE TABLE IF NOT EXISTS meetup_member_safety_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        reporter_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        reported_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'dismissed')),
+        reviewed_by VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+        reviewed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (reporter_user_id <> reported_user_id)
+      );
+      CREATE INDEX IF NOT EXISTS meetup_member_safety_reports_pair_active_idx
+        ON meetup_member_safety_reports (reporter_user_id, reported_user_id)
+        WHERE status = 'active';
+
+      CREATE INDEX IF NOT EXISTS meetup_verifications_retention_cleanup_idx
+        ON meetup_verifications (retention_delete_at)
+        WHERE retention_delete_at IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS meetup_verifications_participant_active_idx
+        ON meetup_verifications (initiator_id, partner_id, expires_at DESC)
+        WHERE cleared_at IS NULL;
+
+      -- Existing records are never expanded or enriched here. Their visible
+      -- lifetime is only tightened to the fixed 90-day retention period.
+      UPDATE meetup_verifications
+         SET retention_delete_at = COALESCE(
+               retention_delete_at,
+               initiated_at + INTERVAL '90 days'
+             ),
+             expires_at = LEAST(
+               expires_at,
+               COALESCE(retention_delete_at, initiated_at + INTERVAL '90 days')
+             )
+       WHERE retention_delete_at IS NULL
+          OR expires_at > COALESCE(retention_delete_at, initiated_at + INTERVAL '90 days');
+    `);
+    log("ensureConsentFirstMeetupSafetySchema: consent, guardian gate, and fixed retention ready");
+  } catch (err: unknown) {
+    warn(`ensureConsentFirstMeetupSafetySchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

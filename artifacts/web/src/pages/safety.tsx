@@ -583,6 +583,16 @@ export default function Safety() {
   const [safetyArea, setSafetyArea] = useState<ResolvedArea | null>(null);
   const [alerts, setAlerts] = useState<Array<{id:string; type:string; description?:string; createdAt:string; confirmCount:number; distanceKm:number}>>([]);
   const [alertsState, setAlertsState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [meetupStatuses, setMeetupStatuses] = useState<Array<{ id: number; status: string; city: string | null; venueName: string | null; scheduledFor: string | null }>>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    authenticatedFetch(`${BASE}api/meetups`, { signal: controller.signal })
+      .then(async (response) => response.ok ? response.json() as Promise<{ verifications?: Array<{ id: number; status: string; city: string | null; venueName: string | null; scheduledFor: string | null }> }> : null)
+      .then((data) => setMeetupStatuses(data?.verifications ?? []))
+      .catch(() => { /* Safety Hub remains usable if meetup status is unavailable. */ });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     if (safetyArea?.latitude == null || safetyArea?.longitude == null) {
@@ -666,6 +676,20 @@ export default function Safety() {
           </div>
           <ChevronRight className="w-5 h-5 text-white/60" />
         </a>
+
+        <Link href="/connections">
+          <a className="block rounded-2xl border border-[#7C3AED]/25 bg-[#F6F0FF] p-4 hover:shadow-sm transition-shadow">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/15"><Users className="h-5 w-5 text-[#6D28D9]" /></div>
+              <div className="flex-1">
+                <p className="font-bold text-[#2B1507]">Meetup Verification</p>
+                {meetupStatuses.length === 0 ? <p className="mt-0.5 text-xs text-[#3A1F0E]/60">Plan a voluntary, public meetup with an accepted connection.</p> : <p className="mt-0.5 text-xs text-[#3A1F0E]/60">{meetupStatuses.length} retained meetup record{meetupStatuses.length === 1 ? "" : "s"} · records expire after 90 days.</p>}
+                {meetupStatuses.slice(0, 2).map((meetup) => <p key={meetup.id} className="mt-1 text-xs font-medium text-[#5B3B91]">{meetup.status.replace(/_/g, " ")} {meetup.venueName || meetup.city ? `· ${[meetup.venueName, meetup.city].filter(Boolean).join(" · ")}` : ""}</p>)}
+              </div>
+              <ChevronRight className="mt-2 h-5 w-5 text-[#6D28D9]" />
+            </div>
+          </a>
+        </Link>
 
         {/* Quick Report Buttons */}
         <div>

@@ -1052,7 +1052,7 @@ router.post("/cron/meetup-checkins", async (req, res): Promise<void> => {
         id: meetupVerificationsTable.id,
         initiatorId: meetupVerificationsTable.initiatorId,
         arrivalCheckAt: meetupVerificationsTable.arrivalCheckAt,
-        location: meetupVerificationsTable.location,
+        safetyWatcherId: meetupVerificationsTable.safetyWatcherId,
         safetyFriendEmail: meetupVerificationsTable.safetyFriendEmail,
         safetyFriendName: meetupVerificationsTable.safetyFriendName,
         firstName: usersTable.firstName,
@@ -1065,7 +1065,10 @@ router.post("/cron/meetup-checkins", async (req, res): Promise<void> => {
         lte(meetupVerificationsTable.arrivalCheckAt, alertThreshold),
         isNull(meetupVerificationsTable.arrivalAlertSentAt),
         isNull(meetupVerificationsTable.clearedAt),
-        isNotNull(meetupVerificationsTable.safetyFriendEmail),
+        or(
+          isNotNull(meetupVerificationsTable.safetyWatcherId),
+          isNotNull(meetupVerificationsTable.safetyFriendEmail),
+        ),
       ));
 
     // Find overdue home check-ins
@@ -1074,7 +1077,7 @@ router.post("/cron/meetup-checkins", async (req, res): Promise<void> => {
         id: meetupVerificationsTable.id,
         initiatorId: meetupVerificationsTable.initiatorId,
         homeCheckAt: meetupVerificationsTable.homeCheckAt,
-        location: meetupVerificationsTable.location,
+        safetyWatcherId: meetupVerificationsTable.safetyWatcherId,
         safetyFriendEmail: meetupVerificationsTable.safetyFriendEmail,
         safetyFriendName: meetupVerificationsTable.safetyFriendName,
         firstName: usersTable.firstName,
@@ -1087,65 +1090,75 @@ router.post("/cron/meetup-checkins", async (req, res): Promise<void> => {
         lte(meetupVerificationsTable.homeCheckAt, alertThreshold),
         isNull(meetupVerificationsTable.homeAlertSentAt),
         isNull(meetupVerificationsTable.clearedAt),
-        isNotNull(meetupVerificationsTable.safetyFriendEmail),
+        or(
+          isNotNull(meetupVerificationsTable.safetyWatcherId),
+          isNotNull(meetupVerificationsTable.safetyFriendEmail),
+        ),
       ));
 
     let arrivalAlerted = 0;
     let homeAlerted = 0;
 
     for (const row of overdueArrival) {
-      if (!row.safetyFriendEmail || !row.arrivalCheckAt) continue;
+      if (!row.arrivalCheckAt || (!row.safetyWatcherId && !row.safetyFriendEmail)) continue;
       try {
         const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your friend";
-        await sendMeetupCheckinMissedEmail(
-          row.safetyFriendEmail,
-          row.safetyFriendName,
-          memberName,
-          "arrival",
-          row.arrivalCheckAt,
-          row.location,
-          row.id,
-        );
+        // Legacy email recipients remain supported only for existing records.
+        // New consent-first records use an already-accepted in-app trusted contact
+        // and do not expose the public venue in a push notification.
+        if (row.safetyFriendEmail) {
+          await sendMeetupCheckinMissedEmail(
+            row.safetyFriendEmail,
+            row.safetyFriendName,
+            memberName,
+            "arrival",
+            row.arrivalCheckAt,
+            null,
+            row.id,
+          );
+        }
+        if (row.safetyWatcherId) {
+          void sendPushToUser(row.safetyWatcherId, {
+            title: "Meetup arrival check-in overdue",
+            body: `${memberName} has not completed their planned arrival check-in.`,
+            data: { screen: "safety-hub", meetupId: row.id, type: "meetup_arrival_overdue" },
+          });
+        }
         await db.update(meetupVerificationsTable)
           .set({ arrivalCheckStatus: "overdue", arrivalAlertSentAt: now })
           .where(eq(meetupVerificationsTable.id, row.id));
         arrivalAlerted++;
-        if (row.initiatorId) {
-          void sendPushToUser(row.initiatorId, {
-            title: "⚠️ Arrival Check-In Overdue",
-            body: "Your arrival check-in for your meetup is overdue. Your safety friend has been notified.",
-            data: { screen: "member-connections" },
-          });
-        }
       } catch (err) {
         logger.error({ err, id: row.id }, "Failed to send meetup arrival alert");
       }
     }
 
     for (const row of overdueHome) {
-      if (!row.safetyFriendEmail || !row.homeCheckAt) continue;
+      if (!row.homeCheckAt || (!row.safetyWatcherId && !row.safetyFriendEmail)) continue;
       try {
         const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your friend";
-        await sendMeetupCheckinMissedEmail(
-          row.safetyFriendEmail,
-          row.safetyFriendName,
-          memberName,
-          "home",
-          row.homeCheckAt,
-          row.location,
-          row.id,
-        );
+        if (row.safetyFriendEmail) {
+          await sendMeetupCheckinMissedEmail(
+            row.safetyFriendEmail,
+            row.safetyFriendName,
+            memberName,
+            "home",
+            row.homeCheckAt,
+            null,
+            row.id,
+          );
+        }
+        if (row.safetyWatcherId) {
+          void sendPushToUser(row.safetyWatcherId, {
+            title: "Meetup home check-in overdue",
+            body: `${memberName} has not completed their planned home check-in.`,
+            data: { screen: "safety-hub", meetupId: row.id, type: "meetup_home_overdue" },
+          });
+        }
         await db.update(meetupVerificationsTable)
           .set({ homeCheckStatus: "overdue", homeAlertSentAt: now })
           .where(eq(meetupVerificationsTable.id, row.id));
         homeAlerted++;
-        if (row.initiatorId) {
-          void sendPushToUser(row.initiatorId, {
-            title: "⚠️ Home Check-In Overdue",
-            body: "Your home check-in for your meetup is overdue. Your safety friend has been notified.",
-            data: { screen: "member-connections" },
-          });
-        }
       } catch (err) {
         logger.error({ err, id: row.id }, "Failed to send meetup home alert");
       }
@@ -1155,6 +1168,26 @@ router.post("/cron/meetup-checkins", async (req, res): Promise<void> => {
     res.json({ ok: true, arrivalAlerted, homeAlerted });
   } catch (err: unknown) {
     logger.error({ err }, "Meetup checkin cron failed");
+    res.status(500).json({ error: "Cron failed" });
+  }
+});
+
+// ─── POST /cron/meetup-retention ────────────────────────────────────────────
+// The fixed retention window is part of the consent record. At expiry, remove
+// the entire record rather than keeping public-venue, note, or safety-contact
+// fields indefinitely. This worker is protected by the standard cron secret.
+router.post("/cron/meetup-retention", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  try {
+    const result = await pool.query(
+      `DELETE FROM meetup_verifications
+        WHERE retention_delete_at IS NOT NULL
+          AND retention_delete_at <= now()`,
+    );
+    logger.info({ deleted: result.rowCount ?? 0 }, "Meetup retention cleanup completed");
+    res.json({ ok: true, deleted: result.rowCount ?? 0 });
+  } catch (err: unknown) {
+    logger.error({ err }, "Meetup retention cleanup failed");
     res.status(500).json({ error: "Cron failed" });
   }
 });

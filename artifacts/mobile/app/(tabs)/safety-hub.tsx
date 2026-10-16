@@ -59,7 +59,9 @@ type MeetupVerification = {
   initiatorId: string;
   partnerId: string;
   status: string;
-  location: string | null;
+  city: string | null;
+  venueName: string | null;
+  scheduledFor: string | null;
   initiatedAt: string;
   confirmedAt: string | null;
   partnerFirstName: string | null;
@@ -70,8 +72,6 @@ type MeetupVerification = {
   homeCheckAt: string | null;
   homeCheckedAt: string | null;
   homeCheckStatus: string | null;
-  safetyFriendName: string | null;
-  safetyFriendEmail: string | null;
 };
 
 type IntelAlert = {
@@ -112,7 +112,7 @@ const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["na
   { id: "tip",         icon: "alert-triangle", title: "Submit Safety Tip",           desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.",      color: "#DC2626", route: "/safety-tip" },
   { id: "checkin",     icon: "check-circle",   title: "Safety Check-In",             desc: "Schedule a check-in. Your contact is alerted if you don't confirm.",                                   color: "#16A34A", route: "/checkin" },
   { id: "location",    icon: "map-pin",        title: "Location Sharing",            desc: "Share your live location with a trusted contact temporarily.",                                          color: "#2563EB", route: "/location-share" },
-  { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Mutually verify in-person meetups with connections you trust.",                                         color: "#7C3AED", route: "/member-connections" },
+  { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Plan a voluntary public meetup with an accepted connection. This is not a safety guarantee.",             color: "#7C3AED", route: "/member-connections" },
   { id: "police",      icon: "shield-off",     title: "Report Police or ICE",        desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.",               color: "#991B1B", route: "/report-police" },
   { id: "report",      icon: "flag",           title: "Report a Safety Concern",     desc: "Report unsafe content or behavior without revealing your identity.",                                    color: "#DC2626", route: "/report-safety" },
   { id: "space",       icon: "alert-octagon",  title: "Report an Unsafe Space",      desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.",    color: "#7C2D12", route: "/report-space" },
@@ -426,7 +426,7 @@ export default function SafetyHubTab() {
                     <Feather name="user-check" size={18} color="#2563EB" />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.alertTitle, { color: "#1D4ED8" }]}>Meetup request from {name}</Text>
-                      <Text style={[styles.alertSub, { color: "#1E40AF" }]}>{m.location ?? "No location specified"}</Text>
+                      <Text style={[styles.alertSub, { color: "#1E40AF" }]}>{[m.venueName, m.city].filter(Boolean).join(" · ") || "No public meeting area specified"}</Text>
                     </View>
                     <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#2563EB" }]} onPress={() => router.push("/member-connections" as Parameters<typeof router.push>[0])} activeOpacity={0.85}>
                       <Text style={styles.imSafeBtnText}>Confirm</Text>
@@ -435,13 +435,13 @@ export default function SafetyHubTab() {
                 );
               })}
               {arrivalCheckinsDue.map((m) => {
-                const loc = m.location ?? "your meetup location";
+                const loc = [m.venueName, m.city].filter(Boolean).join(" · ") || "your public meetup plan";
                 return (
                   <View key={`arr-${m.id}`} style={[styles.alertCard, { backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }]}>
                     <Text style={{ fontSize: 18 }}>📍</Text>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.alertTitle, { color: "#92400E" }]}>Arrived at {loc}?</Text>
-                      <Text style={[styles.alertSub, { color: "#78350F" }]}>Tap to confirm arrival — or your safety friend will be alerted.</Text>
+                      <Text style={[styles.alertSub, { color: "#78350F" }]}>Tap to confirm arrival — or your selected trusted contact will be alerted.</Text>
                     </View>
                     <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#CA922B" }]} onPress={() => void handleArrivalCheckin(m.id)} activeOpacity={0.85}>
                       <Text style={styles.imSafeBtnText}>I Arrived ✓</Text>
@@ -454,7 +454,7 @@ export default function SafetyHubTab() {
                   <Text style={{ fontSize: 18 }}>🏠</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.alertTitle, { color: "#14532D" }]}>Home safe yet?</Text>
-                    <Text style={[styles.alertSub, { color: "#166534" }]}>Confirm you&apos;re home — or your safety friend will be alerted.</Text>
+                    <Text style={[styles.alertSub, { color: "#166534" }]}>Confirm you&apos;re home — or your selected trusted contact will be alerted.</Text>
                   </View>
                   <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#16A34A" }]} onPress={() => void handleHomeCheckin(m.id)} activeOpacity={0.85}>
                     <Text style={styles.imSafeBtnText}>I&apos;m Home ✓</Text>
