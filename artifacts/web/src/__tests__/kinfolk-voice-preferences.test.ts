@@ -78,4 +78,13 @@ describe("Kinfolk voice preference labels", () => {
     expect(travel).toContain("never infers a region, dialect, or identity from your location");
     expect(travel).toContain("This separate, opt-in regional setting");
   });
+
+  it("keeps web response length and format controls separate from voice and artifact preferences", () => {
+    const travel = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
+    expect(travel).toContain('data-testid={`kinfolk-response-length-${option.id}`}');
+    expect(travel).toContain('data-testid={`kinfolk-response-format-${option.id}`}');
+    expect(travel).toContain("api/kinfolk/preferences/response-presentation");
+    expect(travel).toContain("question complexity, safety context");
+    expect(travel).toContain("copyable writing all remain independent");
+  });
 });

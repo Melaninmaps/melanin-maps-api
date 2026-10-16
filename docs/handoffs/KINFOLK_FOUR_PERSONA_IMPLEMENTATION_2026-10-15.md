@@ -1807,3 +1807,29 @@ Next step:
 - Ownership, Directory, Map, taxonomy, and verification rules
 - Authentication, subscriptions, permissions, memory/privacy behavior, and navigation
 - Deployment configuration, runtime secrets, release state, production deployment, and mobile builds
+
+## Addendum — Targeted Independent-Audit Corrections (2026-10-16)
+
+This addendum addresses only the specific behavioral gaps returned by independent review. It does not restart persona development or alter unrelated Kinfolk, Directory, Map, taxonomy, ownership, or release work.
+
+### Source corrections
+
+1. **Conversational persona form:** Big Cousin and Best Friend now begin ordinary personal guidance in connected prose and reserve action lists for an explicit plan or a task that truly requires ordered steps. A server-side natural-format guard removes unsolicited model list scaffolding from direct conversational replies only.
+2. **Business Manager scope:** historical, factual, reflective, and explanatory questions retain ordinary historical prose. Manager decision labels and frameworks remain reserved for actual decisions or plans.
+3. **AAVE delivery:** level-two AAVE now includes a final quality gate requiring the selected natural register to be visible across at least two ordinary sentences, without token slang, caricature, profanity, identity inference, or reduced factual precision. The existing high-stakes plain-language override remains unchanged.
+4. **Regional delivery:** preserves the existing private, optional, at-most-one-expression behavior. No region, setting, selection process, or rejected expression may be exposed unless the member asks.
+5. **Generated writing facts:** underspecified professional and personal message requests continue to ask for the missing purpose or factual details rather than invent names, dates, times, recipients, meetings, or circumstances.
+6. **Shared consequential guidance:** all four personas retain the same evidence-based, conditional savings-and-card-debt response. Persona presentation cannot prescribe a dollar allocation, payoff period, or payment amount where material facts are missing.
+7. **Member response presentation:** saved and current-turn response-length and response-format preferences now control direct commentary without constraining artifacts. A **Brief + Structured** reply receives a scoped 450-token budget and preserves at most its first three essential points; a **Detailed + Natural** reply remains thorough prose; a **Detailed + Structured** technical/decision task retains its requested structure.
+
+### Validation
+
+- `pnpm exec vitest run src/kinfolk/__tests__/response-presentation.test.ts src/kinfolk/__tests__/conversation-mode.test.ts src/kinfolk/__tests__/persona-differentiation.test.ts src/kinfolk/__tests__/voice-personalization.test.ts src/kinfolk/__tests__/generated-content-style.test.ts src/kinfolk/__tests__/adaptive-response-depth.test.ts src/kinfolk/__tests__/kinfolk-route-wiring.test.ts`
+  - **7 files / 96 tests passed**
+- `pnpm typecheck` in `artifacts/api-server`
+  - **passed**
+- Live targeted evidence captured with **`gpt-5-mini`** through the **Manus Sandbox live OpenAI-compatible proxy**. The exact environment, raw before/after outputs, deterministic guard outputs, and member-visible response-presentation outputs are in [KINFOLK_TARGETED_CORRECTION_EVIDENCE_2026-10-16.md](evidence/KINFOLK_TARGETED_CORRECTION_EVIDENCE_2026-10-16.md).
+
+### Release boundary
+
+**TARGETED CORRECTIONS — SOURCE COMPLETE / AWAITING INTEGRATION REVIEW.** This source-only evidence does not substitute for the required staging rerun against the deployment-configured Kinfolk model. No merge, deployment, migration, production-data operation, or mobile build was performed.

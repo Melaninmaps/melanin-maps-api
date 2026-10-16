@@ -28,7 +28,7 @@ describe("Kinfolk four-persona differentiation contract", () => {
     expect(new Set(instructions).size).toBe(MODES.length);
     expect(instructions[0]).toContain("real-life implication");
     expect(instructions[1]).toContain("causes or mechanism");
-    expect(instructions[2]).toContain("Priority, Options or Trade-offs");
+    expect(instructions[2]).toContain("organize concise priorities, trade-offs");
     expect(instructions[3]).toContain("current curiosity or feeling");
 
     for (const instruction of instructions) {
@@ -42,7 +42,7 @@ describe("Kinfolk four-persona differentiation contract", () => {
     expect(KINFOLK_PERSONA_PROFILES.community).toMatchObject({
       label: "Big Cousin",
       identity: expect.stringContaining("practical guide"),
-      answerShape: expect.stringContaining("natural short paragraphs"),
+      answerShape: expect.stringContaining("response length and format"),
     });
     expect(KINFOLK_PERSONA_PROFILES.professor).toMatchObject({
       label: "Professor",
@@ -52,12 +52,12 @@ describe("Kinfolk four-persona differentiation contract", () => {
     expect(KINFOLK_PERSONA_PROFILES.business_manager).toMatchObject({
       label: "Business Manager",
       identity: expect.stringContaining("strategist"),
-      answerShape: expect.stringContaining("Priority, Options or Trade-offs"),
+      answerShape: expect.stringContaining("action, choice, or plan"),
     });
     expect(KINFOLK_PERSONA_PROFILES.best_friend).toMatchObject({
       label: "Best Friend",
       identity: expect.stringContaining("conversational companion"),
-      answerShape: expect.stringContaining("conversational paragraphs"),
+      answerShape: expect.stringContaining("response length and format"),
     });
     expect(KINFOLK_PERSONA_PROFILES.community.avoid).toContain(
       "long checklist",

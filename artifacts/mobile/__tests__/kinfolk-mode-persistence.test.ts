@@ -69,4 +69,16 @@ describe("Kinfolk mobile conversation modes", () => {
     expect(chatWidgetSource).toContain("/api/kinfolk/aave-level");
     expect(chatWidgetSource).not.toContain("Complete AAVE including profanity");
   });
+
+  it("provides separate saved response length and format controls", () => {
+    expect(settingsSource).toContain('value: "brief", label: "Brief"');
+    expect(settingsSource).toContain('value: "balanced", label: "Balanced"');
+    expect(settingsSource).toContain('value: "detailed", label: "Detailed"');
+    expect(settingsSource).toContain('value: "adaptive", label: "Adaptive"');
+    expect(settingsSource).toContain('value: "natural", label: "Natural conversation"');
+    expect(settingsSource).toContain('value: "structured", label: "Headings & lists when useful"');
+    expect(settingsSource).toContain("/api/kinfolk/preferences/response-presentation");
+    expect(settingsSource).toContain("not a rigid limit");
+    expect(settingsSource).toContain("not your persona, AAVE or regional settings");
+  });
 });

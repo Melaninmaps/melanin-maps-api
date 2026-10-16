@@ -47,6 +47,8 @@ describe("adaptive Kinfolk answer depth", () => {
   it("requires the model to return the complete answer without narrating hidden work", () => {
     const prompt = buildAdaptiveAnswerDepthPrompt("detailed");
     expect(prompt).toContain("self-contained, complete answer");
+    expect(prompt).toContain("selected Kinfolk persona remains the authority on conversational form");
+    expect(prompt).toContain("not a mandatory checklist, framework, or long advice article");
     expect(prompt).toContain("Do not narrate hidden work");
     expect(prompt).toContain("Return the useful answer in this turn");
   });

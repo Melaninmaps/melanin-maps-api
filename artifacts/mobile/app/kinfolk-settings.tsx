@@ -42,6 +42,11 @@ interface VoicePrefs {
   regionalFlavor: string;
 }
 
+interface ResponsePresentation {
+  responseLength: "brief" | "balanced" | "detailed" | "adaptive";
+  responseFormat: "natural" | "structured" | "adaptive";
+}
+
 const BEHAVIOR_DEFAULTS: BehaviorSettings = {
   personalisedSuggestions: true,
 };
@@ -53,6 +58,11 @@ const VOICE_DEFAULTS: VoicePrefs = {
   humorLevel: "light",
   aaveLevel: 0,
   regionalFlavor: "off",
+};
+
+const RESPONSE_PRESENTATION_DEFAULTS: ResponsePresentation = {
+  responseLength: "adaptive",
+  responseFormat: "adaptive",
 };
 
 const CAPABILITIES = [
@@ -86,6 +96,19 @@ const HUMOR_LEVELS: { value: string; label: string }[] = [
   { value: "none", label: "None" },
   { value: "light", label: "Light" },
   { value: "playful", label: "Witty" },
+];
+
+const RESPONSE_LENGTH_OPTIONS: { value: ResponsePresentation["responseLength"]; label: string; desc: string }[] = [
+  { value: "brief", label: "Brief", desc: "Concise and direct" },
+  { value: "balanced", label: "Balanced", desc: "Useful detail" },
+  { value: "detailed", label: "Detailed", desc: "Depth when useful" },
+  { value: "adaptive", label: "Adaptive", desc: "Fits the question" },
+];
+
+const RESPONSE_FORMAT_OPTIONS: { value: ResponsePresentation["responseFormat"]; label: string }[] = [
+  { value: "natural", label: "Natural conversation" },
+  { value: "structured", label: "Headings & lists when useful" },
+  { value: "adaptive", label: "Adaptive formatting" },
 ];
 
 const AAVE_LEVELS = [
@@ -145,12 +168,24 @@ function normalizeVoicePrefs(raw: Partial<VoicePrefs>): VoicePrefs {
   return { personalityMode, communicationStyle, emojiLevel, humorLevel, aaveLevel, regionalFlavor };
 }
 
+function normalizeResponsePresentation(raw: Partial<ResponsePresentation>): ResponsePresentation {
+  return {
+    responseLength: RESPONSE_LENGTH_OPTIONS.some((option) => option.value === raw.responseLength)
+      ? raw.responseLength!
+      : RESPONSE_PRESENTATION_DEFAULTS.responseLength,
+    responseFormat: RESPONSE_FORMAT_OPTIONS.some((option) => option.value === raw.responseFormat)
+      ? raw.responseFormat!
+      : RESPONSE_PRESENTATION_DEFAULTS.responseFormat,
+  };
+}
+
 export default function KinfolkSettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [behavior, setBehavior] = useState<BehaviorSettings>(BEHAVIOR_DEFAULTS);
   const [voice, setVoice] = useState<VoicePrefs>(VOICE_DEFAULTS);
+  const [responsePresentation, setResponsePresentation] = useState<ResponsePresentation>(RESPONSE_PRESENTATION_DEFAULTS);
   const [supportLens, setSupportLens] = useState<string[]>([]);
   // Separate, affirmative consent: this does not reuse the generic settings flag.
   const [continuityEnabled, setContinuityEnabled] = useState(false);
@@ -159,6 +194,7 @@ export default function KinfolkSettingsScreen() {
   const [resetting, setResetting] = useState(false);
   const behaviorSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const responsePresentationSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -182,11 +218,13 @@ export default function KinfolkSettingsScreen() {
       if (prefsRes.ok) {
         const data = await prefsRes.json() as {
           preferences?: Partial<VoicePrefs> & { ownershipTypes?: string[] };
+          responsePresentation?: Partial<ResponsePresentation>;
         };
         if (data.preferences) {
           setVoice(normalizeVoicePrefs(data.preferences));
           setSupportLens(Array.isArray(data.preferences.ownershipTypes) ? data.preferences.ownershipTypes : []);
         }
+        setResponsePresentation(normalizeResponsePresentation(data.responsePresentation ?? {}));
       }
       if (continuityRes.ok) {
         const data = await continuityRes.json() as { enabled?: boolean; disclosureRequired?: boolean };
@@ -277,6 +315,31 @@ export default function KinfolkSettingsScreen() {
     });
   };
 
+  const saveResponsePresentation = (next: ResponsePresentation) => {
+    if (responsePresentationSaveTimer.current) clearTimeout(responsePresentationSaveTimer.current);
+    responsePresentationSaveTimer.current = setTimeout(async () => {
+      try {
+        const token = await getAuthToken();
+        const base = getApiBase();
+        if (!token || !base) return;
+        await fetch(`${base}/api/kinfolk/preferences/response-presentation`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(next),
+        });
+      } catch {}
+    }, 600);
+  };
+
+  const updateResponsePresentation = (patch: Partial<ResponsePresentation>) => {
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+    setResponsePresentation((previous) => {
+      const next = { ...previous, ...patch };
+      saveResponsePresentation(next);
+      return next;
+    });
+  };
+
   const saveSupportLens = async (next: string[]) => {
     setSupportLens(next);
     try {
@@ -325,6 +388,7 @@ export default function KinfolkSettingsScreen() {
       setContinuityEnabled(false);
       setBehavior({ personalisedSuggestions: false });
       setVoice(VOICE_DEFAULTS);
+      setResponsePresentation(RESPONSE_PRESENTATION_DEFAULTS);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Kinfolk is fresh", "Memory and personalised suggestions are off until you choose to turn them back on.");
     } catch (cause) {
@@ -427,6 +491,51 @@ export default function KinfolkSettingsScreen() {
               </React.Fragment>
             );
           })}
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>RESPONSE PRESENTATION</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.languageSection}>
+            <Text style={[styles.rowLabel, { color: colors.foreground }]}>Response length</Text>
+            <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>A preference, not a rigid limit. Your current request and the question’s complexity always matter.</Text>
+            <View style={styles.chipRowWrap}>
+              {RESPONSE_LENGTH_OPTIONS.map((option) => {
+                const selected = responsePresentation.responseLength === option.value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    activeOpacity={0.8}
+                    accessibilityLabel={`Response length: ${option.label}`}
+                    style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + "15" : "transparent" }]}
+                    onPress={() => updateResponsePresentation({ responseLength: option.value })}
+                  >
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{option.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+          <View style={[styles.sep, { backgroundColor: colors.border }]} />
+          <View style={styles.languageSection}>
+            <Text style={[styles.rowLabel, { color: colors.foreground }]}>Response format</Text>
+            <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>This changes how Kinfolk’s conversation is presented, not your persona, AAVE or regional settings, factual standards, or copyable writing.</Text>
+            <View style={styles.chipRowWrap}>
+              {RESPONSE_FORMAT_OPTIONS.map((option) => {
+                const selected = responsePresentation.responseFormat === option.value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    activeOpacity={0.8}
+                    accessibilityLabel={`Response format: ${option.label}`}
+                    style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + "15" : "transparent" }]}
+                    onPress={() => updateResponsePresentation({ responseFormat: option.value })}
+                  >
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{option.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>LANGUAGE PREFERENCES</Text>

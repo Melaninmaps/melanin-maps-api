@@ -73,6 +73,16 @@ import {
   responseStyleToDelivery,
   type ResponseStyle,
 } from "../kinfolk/delivery-profile";
+import {
+  buildKinfolkResponsePresentationPrompt,
+  isKinfolkResponseFormat,
+  isKinfolkResponseLength,
+  normalizeKinfolkBriefStructuredReply,
+  normalizeKinfolkNaturalConversationReply,
+  resolveKinfolkResponsePresentation,
+  responsePresentationFromDeliveryProfile,
+  responsePresentationToDeliveryProfile,
+} from "../kinfolk/response-presentation";
 import { buildKinfolkResponseFeedbackPrompt } from "../kinfolk/response-feedback";
 import {
   classifyKinfolkRequest,
@@ -397,11 +407,16 @@ import {
   buildKinfolkEmotionalCheckInContract,
   buildKinfolkFormalResponseContract,
   buildKinfolkNaturalConversationContract,
+  buildKinfolkPersonaFinalFormInstruction,
+  buildKinfolkUnderSpecifiedSavingsDebtReply,
   isKinfolkFormalDocumentRequest,
   normalizeKinfolkFormalDocumentReply,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
-import { buildKinfolkGeneratedContentContract } from "../kinfolk/generated-content-style";
+import {
+  buildKinfolkGeneratedContentContract,
+  buildKinfolkGeneratedMessageClarification,
+} from "../kinfolk/generated-content-style";
 import {
   isKinfolkRaisePreparationRequest,
   renderKinfolkRaisePreparation,
@@ -4788,6 +4803,10 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     res.json({
       preferences: normalized,
       responseStyle,
+      responsePresentation: responsePresentationFromDeliveryProfile({
+        detailLevel: dp?.detail_level,
+        tonePreference: dp?.tone_preference,
+      }),
       ...(dp && {
         deliveryProfile: {
           detailLevel: dp.detail_level,
@@ -5044,6 +5063,13 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     // Mirror communicationStyle → kinfolk_delivery_profiles so the persisted
     // delivery profile survives hard-refresh (Manus audit fix #3).
     if (typeof communicationStyle === "string") {
+      const existingDeliveryProfile = await pool.query(
+        `SELECT tone_preference FROM kinfolk_delivery_profiles WHERE user_id = $1`,
+        [req.user.id],
+      );
+      const explicitPresentationIsSaved = /^format_(?:natural|structured|adaptive)$/.test(
+        String(existingDeliveryProfile.rows[0]?.tone_preference ?? ""),
+      );
       const styleMap: Record<
         string,
         { detail_level: string; tone_preference: string }
@@ -5058,7 +5084,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         conversational: { detail_level: "standard", tone_preference: "warm" },
       };
       const dp = styleMap[communicationStyle];
-      if (dp) {
+      if (dp && !explicitPresentationIsSaved) {
         await pool.query(
           `INSERT INTO kinfolk_delivery_profiles
              (user_id, detail_level, tone_preference, updated_at)
@@ -5094,6 +5120,55 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to update preferences" });
   }
 });
+
+// ─── PUT /api/kinfolk/preferences/response-presentation ────────────────────────
+// Stores explicit length and layout preferences in the existing delivery-profile
+// row. The current-message resolver may override these settings for one reply.
+router.put(
+  "/kinfolk/preferences/response-presentation",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+      return void res.status(401).json({ error: "Authentication required" });
+    }
+    const { responseLength, responseFormat } = req.body as {
+      responseLength?: unknown;
+      responseFormat?: unknown;
+    };
+    if (!isKinfolkResponseLength(responseLength) || !isKinfolkResponseFormat(responseFormat)) {
+      return void res.status(400).json({
+        error: "INVALID_RESPONSE_PRESENTATION",
+        validLengths: ["brief", "balanced", "detailed", "adaptive"],
+        validFormats: ["natural", "structured", "adaptive"],
+      });
+    }
+    const delivery = responsePresentationToDeliveryProfile({
+      responseLength,
+      responseFormat,
+    });
+    try {
+      await pool.query(
+        `INSERT INTO kinfolk_delivery_profiles
+           (user_id, detail_level, tone_preference, updated_at)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (user_id) DO UPDATE SET
+           detail_level = EXCLUDED.detail_level,
+           tone_preference = EXCLUDED.tone_preference,
+           updated_at = now()`,
+        [req.user.id, delivery.detailLevel, delivery.tonePreference],
+      );
+      res.json({
+        responsePresentation: { responseLength, responseFormat },
+        deliveryProfile: {
+          detailLevel: delivery.detailLevel,
+          tonePreference: delivery.tonePreference,
+        },
+      });
+    } catch (err) {
+      req.log.error(safeKinfolkErrorMetadata(err), "Failed to save response presentation");
+      res.status(500).json({ error: "KINFOLK_RESPONSE_PRESENTATION_SAVE_FAILED" });
+    }
+  },
+);
 
 // ─── PUT /api/kinfolk/preferences/response-style ───────────────────────────────
 // Transitional endpoint: saves the selected response-style button directly to
@@ -8140,6 +8215,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedSupportLensMode: string | null = null;
     let savedSupportLensDesignationIds: string[] = [];
     let savedMemberResearchContextTags: string[] = [];
+    let savedResponsePresentationProfile: {
+      detailLevel?: string;
+      tonePreference?: string;
+    } = {};
 
     if (req.user?.id && !staffAuditPolicy) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
@@ -8156,6 +8235,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         );
       } catch {
         /* non-critical — proceed without personalization prefs */
+      }
+
+      // Delivery presentation is an explicit Kinfolk setting, independent from
+      // taste-based recommendation personalization and the selected persona.
+      try {
+        const deliveryProfile = await pool.query(
+          `SELECT detail_level, tone_preference
+             FROM kinfolk_delivery_profiles
+            WHERE user_id = $1
+            LIMIT 1`,
+          [req.user.id],
+        );
+        const row = deliveryProfile.rows[0] as
+          | { detail_level?: string; tone_preference?: string }
+          | undefined;
+        savedResponsePresentationProfile = {
+          detailLevel: row?.detail_level,
+          tonePreference: row?.tone_preference,
+        };
+      } catch {
+        /* non-critical — use an adaptive default for this reply */
       }
 
       // Feedback history
@@ -10789,10 +10889,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       hasLocation: Boolean(destination),
       hasContextualResearch: Boolean(contextualEvidence) || Boolean(communityHashtagContext.promptBlock),
     });
-    const responseDepthPrompt = buildAdaptiveAnswerDepthPrompt(responseDepth);
+    const responsePresentation = resolveKinfolkResponsePresentation({
+      message,
+      savedDetailLevel: savedResponsePresentationProfile.detailLevel,
+      savedTonePreference: savedResponsePresentationProfile.tonePreference,
+    });
+    const responseDepthPrompt = `${buildAdaptiveAnswerDepthPrompt(responseDepth)}\n\n${buildKinfolkResponsePresentationPrompt(responsePresentation)}\n\n${buildKinfolkPersonaFinalFormInstruction(conversationVoiceMode)}`;
     const responseModelPolicy = {
       ...modelPolicy,
-      maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
+      maxOutputTokens: responsePresentation.responseLength === "brief"
+        ? Math.min(resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth), 450)
+        : resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
       ? `${buildLeanGeneralChatPrompt(conversationVoiceMode, communicationPreference.prompt)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
@@ -10804,7 +10911,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
     const generatedContentContract = buildKinfolkGeneratedContentContract(message);
-    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}${generatedContentContract ? `\n\n${generatedContentContract}` : ""}`;
+    const finalCommunicationPreference = generatedContentContract || !communicationPreference.prompt
+      ? ""
+      : `\n\nFINAL COMMUNICATION DELIVERY — NON-NEGOTIABLE:\n${communicationPreference.prompt}`;
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}${generatedContentContract ? `\n\n${generatedContentContract}` : ""}${finalCommunicationPreference}`;
+    const generatedMessageClarification = buildKinfolkGeneratedMessageClarification(message);
+    const underSpecifiedSavingsDebtReply = buildKinfolkUnderSpecifiedSavingsDebtReply(message);
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`
@@ -10965,7 +11077,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const rawContent = completion.choices[0]?.message?.content ?? "";
     const modelPayload = parseKinfolkModelPayload(rawContent);
 
-    let reply = modelPayload.reply;
+    let reply = underSpecifiedSavingsDebtReply ?? generatedMessageClarification ?? modelPayload.reply;
     recommendations = null;
     let followUpSuggestions: string[] = [];
     let smartPromotion: Record<string, unknown> | null = null;
@@ -11024,6 +11136,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // These two narrow guards intentionally replace only a model draft that
+    // would otherwise invent an unstated message purpose or financial split.
+    // They retain the normal response pipeline, audit telemetry, and session
+    // behavior while making the member-visible core answer persona-independent.
+    if (underSpecifiedSavingsDebtReply || generatedMessageClarification) {
+      recommendations = null;
+      followUpSuggestions = [];
+      smartPromotion = null;
+      taskAction = null;
+      itinerary = null;
+      proposedModelDestination = null;
+      contextualStructuredContent = null;
+      contextualMediaLinks = [];
+      contextualRelatedConnections = [];
+    }
+
     if (travelPlanning && hasGovernedItineraryCoverage && destination) {
       const parsedItinerary =
         modelPayload.valid && modelPayload.value ? modelPayload.value : null;
@@ -11041,6 +11169,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       recommendations = null;
       itinerary = null;
       followUpSuggestions = [];
+    }
+
+    if (
+      responsePresentation.responseFormat === "natural" &&
+      !generatedContentContract &&
+      !travelPlanning
+    ) {
+      reply = normalizeKinfolkNaturalConversationReply(reply);
+    } else if (
+      responsePresentation.responseLength === "brief" &&
+      responsePresentation.responseFormat === "structured" &&
+      !generatedContentContract &&
+      !travelPlanning
+    ) {
+      reply = normalizeKinfolkBriefStructuredReply(reply);
     }
 
     // A general answer about an uncovered place may offer useful, general travel

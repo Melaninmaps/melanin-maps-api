@@ -26,7 +26,7 @@ import { getMemberAgeBand, type AgeBand } from "../lib/audience-policy";
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 
-export type DetailLevel = "quick" | "standard" | "deep";
+export type DetailLevel = "quick" | "standard" | "deep" | "adaptive";
 export type TonePreference =
   | "default"
   | "warm"
@@ -179,7 +179,9 @@ export async function loadAdaptiveDeliveryProfile(
     ]);
     const data = r.rows[0] ?? null;
     return {
-      detailLevel: data?.detail_level ?? "standard",
+      detailLevel: ["quick", "standard", "deep", "adaptive"].includes(data?.detail_level)
+        ? data.detail_level as DetailLevel
+        : "standard",
       tonePreference: data?.tone_preference ?? "default",
       learningMode: data?.learning_mode ?? "guided",
       notificationCadence: data?.notification_cadence ?? "essential_only",
@@ -223,6 +225,12 @@ export function buildDeliveryInstructions(
   const highStakes = isHighStakes(plan);
   const minor = isMinor(profile.ageBand);
 
+  // The chat route resolves adaptive depth against the current question. This
+  // shared delivery helper uses the balanced baseline when invoked without that
+  // richer per-turn context, rather than treating “adaptive” as an empty value.
+  const effectiveDetailLevel = profile.detailLevel === "adaptive"
+    ? "standard"
+    : profile.detailLevel;
   const depth = {
     quick: { maxSections: 2, maxBullets: 3, includeCitationDetails: false },
     standard: {
@@ -231,7 +239,7 @@ export function buildDeliveryInstructions(
       includeCitationDetails: plan.citationMode === "required",
     },
     deep: { maxSections: 7, maxBullets: 8, includeCitationDetails: true },
-  }[profile.detailLevel];
+  }[effectiveDetailLevel];
 
   // Medical, legal, financial, emergency, or traumatic context always wins over
   // regional/slang preferences. Cultural fluency must never reduce clarity.

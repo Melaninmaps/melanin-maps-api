@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildKinfolkGeneratedContentContract,
+  buildKinfolkGeneratedMessageClarification,
   resolveKinfolkGeneratedContentStyle,
 } from "../generated-content-style";
 
@@ -70,6 +71,34 @@ describe("Kinfolk generated-content style boundary", () => {
     expect(buildKinfolkGeneratedContentContract(message)).toContain(
       "professional direct explanation",
     );
+  });
+
+  it("requires placeholders instead of invented writing details and avoids linguistic overclaims", () => {
+    const contract = buildKinfolkGeneratedContentContract(
+      "Write an email to my boss about a project concern.",
+    );
+    const languageContract = buildKinfolkGeneratedContentContract(
+      "Write a message to my cousin in AAVE, but explain your choices to me professionally.",
+    );
+    expect(contract).toContain("Do not invent a meeting time, date, deadline, address, recipient name");
+    expect(contract).toContain("Use a clearly labeled placeholder or neutral conditional language");
+    expect(contract).toContain("ask exactly one concise question about what they want the message to say or accomplish");
+    expect(contract).toContain("If a generic email can be drafted");
+    expect(contract).toContain("message but gives no purpose or situation");
+    expect(contract).toContain("never assume a check-in, support, meeting, food, relationship history");
+    expect(languageContract).toContain("Do not make unsupported claims about linguistic grammar");
+  });
+
+  it("asks for the purpose of an underspecified casual message instead of inventing a circumstance", () => {
+    expect(buildKinfolkGeneratedMessageClarification(
+      "Write a message to my cousin in AAVE.",
+    )).toBe("What would you like the message to say or accomplish?");
+    expect(buildKinfolkGeneratedMessageClarification(
+      "Write a message to my cousin saying happy birthday.",
+    )).toBeNull();
+    expect(buildKinfolkGeneratedMessageClarification(
+      "Explain why messages matter.",
+    )).toBeNull();
   });
 
   it("does not turn ordinary questions into artifact-writing mode", () => {

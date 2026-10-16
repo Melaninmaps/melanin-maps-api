@@ -233,6 +233,26 @@ interface Prefs {
 }
 
 type KinfolkMode = "community" | "professor" | "business_manager" | "best_friend";
+type ResponsePresentation = {
+  responseLength: "brief" | "balanced" | "detailed" | "adaptive";
+  responseFormat: "natural" | "structured" | "adaptive";
+};
+
+const DEFAULT_RESPONSE_PRESENTATION: ResponsePresentation = {
+  responseLength: "adaptive",
+  responseFormat: "adaptive",
+};
+const RESPONSE_LENGTH_OPTIONS: Array<{ id: ResponsePresentation["responseLength"]; label: string }> = [
+  { id: "brief", label: "Brief" },
+  { id: "balanced", label: "Balanced" },
+  { id: "detailed", label: "Detailed" },
+  { id: "adaptive", label: "Adaptive" },
+];
+const RESPONSE_FORMAT_OPTIONS: Array<{ id: ResponsePresentation["responseFormat"]; label: string }> = [
+  { id: "natural", label: "Natural conversation" },
+  { id: "structured", label: "Structured when useful" },
+  { id: "adaptive", label: "Adaptive formatting" },
+];
 
 const DEFAULT_PREFS: Prefs = {
   recommendationLifeStage: "unspecified",
@@ -443,19 +463,23 @@ function CommunityLanguageSuggestion() {
 }
 
 // ─── Preferences panel ────────────────────────────────────────────────────────
-function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
+function PreferencesPanel({ open, onClose, prefs, onSave, responsePresentation, onSaveResponsePresentation, hydrated }: {
   open: boolean; onClose: () => void; prefs: Prefs; onSave: (p: Prefs) => Promise<void>;
+  responsePresentation: ResponsePresentation;
+  onSaveResponsePresentation: (presentation: ResponsePresentation) => Promise<void>;
   /** True once loadPrefs has resolved; gates the buttons and save action. */
   hydrated: boolean;
 }) {
   const ageAssurance = useAgeAssurance(open);
   const [local, setLocal] = useState<Prefs>(prefs);
+  const [localResponsePresentation, setLocalResponsePresentation] = useState<ResponsePresentation>(responsePresentation);
   const [cityInput, setCityInput] = useState("");
   const [specificInterestInput, setSpecificInterestInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => { setLocal(prefs); }, [prefs]);
+  useEffect(() => { setLocalResponsePresentation(responsePresentation); }, [responsePresentation]);
   useEffect(() => {
     if (!ageAssurance.loading && ageAssurance.ageBand !== "18_plus") {
       setLocal(current => current.recommendationLifeStage === "unspecified"
@@ -488,7 +512,10 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
     setSaving(true);
     setSaveError(null);
     try {
-      await onSave(local);
+      await Promise.all([
+        onSave(local),
+        onSaveResponsePresentation(localResponsePresentation),
+      ]);
       setSaved(true);
       setTimeout(() => { setSaved(false); onClose(); }, 800);
     } catch {
@@ -696,6 +723,38 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
                     );
                   })}
                 </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Response length</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {RESPONSE_LENGTH_OPTIONS.map((option) => (
+                    <button key={option.id} type="button"
+                      data-testid={`kinfolk-response-length-${option.id}`}
+                      aria-pressed={localResponsePresentation.responseLength === option.id}
+                      disabled={!hydrated || saving}
+                      onClick={() => setLocalResponsePresentation((current) => ({ ...current, responseLength: option.id }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors disabled:opacity-40 ${localResponsePresentation.responseLength === option.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">A preference, not a hard limit: question complexity, safety context, and a current request such as “go deeper” or “keep it short” still govern this reply.</p>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Response format</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {RESPONSE_FORMAT_OPTIONS.map((option) => (
+                    <button key={option.id} type="button"
+                      data-testid={`kinfolk-response-format-${option.id}`}
+                      aria-pressed={localResponsePresentation.responseFormat === option.id}
+                      disabled={!hydrated || saving}
+                      onClick={() => setLocalResponsePresentation((current) => ({ ...current, responseFormat: option.id }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors disabled:opacity-40 ${localResponsePresentation.responseFormat === option.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">These controls affect Kinfolk’s direct conversation only. Your persona, AAVE or regional setting, factual standards, and copyable writing all remain independent.</p>
               </div>
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Emoji in responses</div>
@@ -1041,6 +1100,7 @@ function TravelPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showComposerControls, setShowComposerControls] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const [responsePresentation, setResponsePresentation] = useState<ResponsePresentation>(DEFAULT_RESPONSE_PRESENTATION);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
   const [modeSaveStatus, setModeSaveStatus] = useState<"idle" | "saving" | "error">("idle");
@@ -1169,6 +1229,7 @@ function TravelPage() {
             detailLevel?: string; detail_level?: string;
             tonePreference?: string; tone_preference?: string;
           };
+          responsePresentation?: Partial<ResponsePresentation>;
         };
         const raw = d.preferences ?? {};
         const ensureArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
@@ -1196,6 +1257,15 @@ function TravelPage() {
           aaveLevel:          Number.isInteger(raw.aaveLevel) && Number(raw.aaveLevel) >= 0 && Number(raw.aaveLevel) <= 3 ? Number(raw.aaveLevel) : 0,
         };
         setPrefs(hydratedPrefs);
+        const savedPresentation = d.responsePresentation;
+        setResponsePresentation({
+          responseLength: savedPresentation?.responseLength === "brief" || savedPresentation?.responseLength === "balanced" || savedPresentation?.responseLength === "detailed" || savedPresentation?.responseLength === "adaptive"
+            ? savedPresentation.responseLength
+            : DEFAULT_RESPONSE_PRESENTATION.responseLength,
+          responseFormat: savedPresentation?.responseFormat === "natural" || savedPresentation?.responseFormat === "structured" || savedPresentation?.responseFormat === "adaptive"
+            ? savedPresentation.responseFormat
+            : DEFAULT_RESPONSE_PRESENTATION.responseFormat,
+        });
         setKinfolkMode(normalizeSavedKinfolkMode(hydratedPrefs.personalityMode));
         setPreferencesHydrated(true);
       }
@@ -1215,6 +1285,17 @@ function TravelPage() {
     const saved = { ...p, personalityMode: normalizeSavedKinfolkMode(p.personalityMode) };
     setPrefs(saved);
     setKinfolkMode(normalizeSavedKinfolkMode(saved.personalityMode));
+  }, []);
+
+  const saveResponsePresentation = useCallback(async (presentation: ResponsePresentation) => {
+    const response = await fetch(`${BASE}api/kinfolk/preferences/response-presentation`, {
+      method: "PUT",
+      credentials: "include",
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(presentation),
+    });
+    if (!response.ok) throw new Error("RESPONSE_PRESENTATION_SAVE_FAILED");
+    setResponsePresentation(presentation);
   }, []);
 
   const selectKinfolkMode = useCallback(async (nextMode: KinfolkMode) => {
@@ -2203,6 +2284,7 @@ function TravelPage() {
 
       {/* Preferences panel */}
       {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={closePreferences} prefs={prefs} onSave={savePrefs}
+        responsePresentation={responsePresentation} onSaveResponsePresentation={saveResponsePresentation}
         hydrated={preferencesHydrated} />}
       <KinfolkContinuityDisclosure
         visible={isLoggedIn && kinfolkContinuityDisclosureRequired}

@@ -3,6 +3,8 @@ import {
   buildKinfolkConversationModeInstruction,
   buildKinfolkConversationModePrompt,
   buildKinfolkEmotionalCheckInContract,
+  buildKinfolkPersonaFinalFormInstruction,
+  buildKinfolkUnderSpecifiedSavingsDebtReply,
   buildKinfolkNaturalConversationContract,
   isKinfolkFormalDocumentRequest,
   normalizeKinfolkConversationMode,
@@ -56,7 +58,63 @@ describe("Kinfolk conversation modes", () => {
     expect(buildKinfolkConversationModeInstruction("community")).toContain("real-life implication");
     expect(buildKinfolkConversationModeInstruction("best_friend")).toContain("current curiosity or feeling");
     expect(buildKinfolkConversationModeInstruction("professor")).toContain("causes or mechanism");
-    expect(buildKinfolkConversationModeInstruction("business_manager")).toContain("Priority, Options or Trade-offs");
+    expect(buildKinfolkConversationModeInstruction("business_manager")).toContain("organize concise priorities, trade-offs");
+  });
+
+  it("keeps Big Cousin and Best Friend conversational while keeping manager frameworks decision-specific", () => {
+    expect(buildKinfolkConversationModeInstruction("community")).toContain(
+      "do not default to a checklist unless the member asks for a plan",
+    );
+    expect(buildKinfolkPersonaFinalFormInstruction("community")).toContain(
+      "Start ordinary personal advice with connected prose, not a checklist",
+    );
+    expect(buildKinfolkConversationModeInstruction("best_friend")).toContain(
+      "do not turn ordinary conversation into a generic advice article",
+    );
+    expect(buildKinfolkPersonaFinalFormInstruction("best_friend")).toContain(
+      "Start ordinary personal advice with connected prose, not a roadmap",
+    );
+    expect(buildKinfolkConversationModeInstruction("business_manager")).toContain(
+      "For factual, historical, explanatory, or reflective questions",
+    );
+    expect(buildKinfolkConversationModeInstruction("business_manager")).toContain(
+      "do not impose Objective, Priority, Options, Trade-offs, Recommended-next-action, Context, or Impact labels",
+    );
+  });
+
+  it("keeps consequential recommendations evidence-based across all personas", () => {
+    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+      const contract = buildKinfolkConversationModeInstruction(mode);
+      expect(contract).toContain("SHARED QUALITY AND RISK BOUNDARY");
+      expect(contract).toContain("same evidence-based core recommendation and uncertainty");
+      expect(contract).toContain("do not prescribe using all savings, keeping all savings, a dollar split");
+      expect(contract).toContain("APR, required expenses, upcoming bills, income stability");
+    }
+  });
+
+  it("does not let personas impose a fixed response length or format", () => {
+    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+      const finalForm = buildKinfolkPersonaFinalFormInstruction(mode);
+      expect(finalForm).toContain("never imposes a rigid word, paragraph, section, or bullet limit");
+    }
+    expect(buildKinfolkConversationModeInstruction("best_friend")).toContain(
+      "member’s requested or saved response length and format",
+    );
+    expect(buildKinfolkConversationModeInstruction("community")).toContain(
+      "member’s requested or saved response length and format",
+    );
+  });
+
+  it("returns the same safe clarification for underspecified savings-and-card-debt questions", () => {
+    const reply = buildKinfolkUnderSpecifiedSavingsDebtReply(
+      "I have $2,000 saved and $1,200 in credit card debt. What should I do?",
+    );
+    expect(reply).toContain("can’t responsibly tell you how much to move");
+    expect(reply).toContain("APR and minimum payment");
+    expect(reply).toContain("essential surprises");
+    expect(buildKinfolkUnderSpecifiedSavingsDebtReply(
+      "I have $2,000 saved, $1,200 in card debt at 30% APR, and rent due next week.",
+    )).toBeNull();
   });
 
   it("requires natural reference resolution without inventing prior history or dialect", () => {

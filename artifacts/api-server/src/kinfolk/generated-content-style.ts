@@ -57,6 +57,7 @@ const PLAYFUL = /\b(?:playful|funny|humorous|witty)\b/i;
 const FIRM = /\b(?:firm(?:er|ly)?|direct|assertive)\b/i;
 const DIPLOMATIC = /\b(?:diplomatic|less confrontational|softer|gentler)\b/i;
 const PROFESSIONAL_DIRECT_EXPLANATION = /\b(?:explain|talk|speak|address)[^.?!]{0,80}\b(?:to\s+me|me)\b[^.?!]{0,80}\bprofessional(?:ly)?\b/i;
+const MESSAGE_PURPOSE = /\b(?:about|saying|to say|that says|birthday|congratulat(?:e|ion)|apolog(?:y|ize)|thank(?:s|ing)?|invite|check[ -]?in|condolen(?:ce|ces)|celebrat(?:e|ion)|support|encourag(?:e|ement)|update|remind(?:er)?|ask(?:ing)?|request|confirm|cancel|reschedul(?:e|ing))\b/i;
 
 function normalize(value: unknown): string {
   return typeof value === "string"
@@ -132,6 +133,23 @@ export function resolveKinfolkGeneratedContentStyle(
   };
 }
 
+/**
+ * A bare request for a text or message has no honest audience-purpose draft.
+ * Ask once rather than making up a check-in, invitation, or relationship event.
+ */
+export function buildKinfolkGeneratedMessageClarification(value: unknown): string | null {
+  const message = normalize(value);
+  const resolution = resolveKinfolkGeneratedContentStyle(message);
+  if (
+    !resolution.isGeneratedContentRequest ||
+    resolution.kind !== "casual_text" ||
+    MESSAGE_PURPOSE.test(message)
+  ) {
+    return null;
+  }
+  return "What would you like the message to say or accomplish?";
+}
+
 function styleInstruction(style: KinfolkGeneratedContentStyle): string {
   switch (style) {
     case "professional":
@@ -181,6 +199,8 @@ The member asked Kinfolk to create a ${resolution.kind.replaceAll("_", " ")} for
 - Inside the artifact, style precedence is: the member's explicit artifact instruction; intended recipient or audience; purpose and context; requested format; relevant consented writing preference; then ordinary convention.
 - ${styleInstruction(resolution.style)}
 - ${artifactLanguage}
+- Do not invent a meeting time, date, deadline, address, recipient name, employer, project, relationship history, incident, purpose, or other circumstance that the member did not provide. Use a clearly labeled placeholder or neutral conditional language instead. If a generic email can be drafted, keep its subject, facts, and proposed next step in placeholders. If the member asks for a message but gives no purpose or situation, ask exactly one concise question about what they want the message to say or accomplish; never assume a check-in, support, meeting, food, relationship history, or other scenario.
+- When explaining an explicitly requested AAVE or regional-language artifact, describe only the requested audience, purpose, and high-level tone choices. Do not make unsupported claims about linguistic grammar, authenticity, or why a particular expression is supposedly used.
 - Do not make the member switch personas to create this artifact. Do not let the artifact change the persona used for commentary, revisions, or the next turn.
 - When it helps clarity, label the sections “Kinfolk:” for direct member commentary and “Draft:” for the actual artifact. Keep the artifact itself clean: do not insert coaching, commentary, persona labels, or explanation inside it.
 - If the member asks for both an explanation and an artifact, complete both in the same reply. Do not replace the requested artifact with commentary, and use clearly marked compact sections or placeholders rather than omitting a deliverable.

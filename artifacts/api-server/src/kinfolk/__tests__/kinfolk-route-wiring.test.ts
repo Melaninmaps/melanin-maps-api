@@ -480,7 +480,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("clientTimeZone,");
     expect(chatRoute).toContain("destinationLocalTimeContext,");
     expect(chatRoute).toContain("`\\n\\n${temporalContext}`");
-    expect(chatRoute).toContain("${buildLeanGeneralChatPrompt(conversationVoiceMode)}\\n\\n${temporalContext}");
+    expect(chatRoute).toContain("${buildLeanGeneralChatPrompt(conversationVoiceMode, communicationPreference.prompt)}\\n\\n${temporalContext}");
   });
 
   it("uses the shared natural-conversation contract in the full Kinfolk prompt", () => {

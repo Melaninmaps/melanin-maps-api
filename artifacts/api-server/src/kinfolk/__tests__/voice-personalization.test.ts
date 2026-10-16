@@ -76,6 +76,9 @@ describe("Kinfolk regional and AAVE prompt wiring", () => {
     });
     expect(followed).toContain('"jawn"');
     expect(followed).toContain("at most ONE");
+    expect(followed).toContain("private delivery preference");
+    expect(followed).toContain("expressions you considered");
+    expect(followed).toContain("If no expression fits naturally, use none");
     expect(followed).not.toContain("mane");
   });
 
@@ -104,6 +107,24 @@ describe("Kinfolk regional and AAVE prompt wiring", () => {
     }
     expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
       "in the response itself",
+    );
+    expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
+      "natural grammar, syntax, rhythm, and sentence construction",
+    );
+    expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
+      "stock greeting, isolated slang word, or a pile of familiar expressions",
+    );
+    expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
+      "if the draft is mostly formal standard English with a greeting or one substituted word, rewrite it",
+    );
+    expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
+      "FINAL QUALITY GATE",
+    );
+    expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
+      "at least two ordinary sentences visibly use the requested register",
+    );
+    expect(buildAaveRegisterPrompt(3, "general_knowledge")).toContain(
+      "without stacking stock slang",
     );
   });
 });
