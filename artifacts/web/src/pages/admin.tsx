@@ -55,6 +55,7 @@ import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
 import { KinfolkCatalogCohort } from "@/components/KinfolkCatalogCohort";
 import { KinfolkCurrentProfileEnrichment } from "@/components/KinfolkCurrentProfileEnrichment";
+import { ValidatedPresenceBatch } from "@/components/ValidatedPresenceBatch";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import { AdminAccessLedger } from "@/components/AdminAccessLedger";
 import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideoContributions";
@@ -5977,6 +5978,15 @@ export default function Admin() {
                 ? `Reconciliation ledger: ${businessReconciliationAccountedTotal.toLocaleString()} of ${businessInventoryTotal.toLocaleString()} inventory records are explicitly accounted for. Filter by a concrete reason code before taking a reconciliation action.`
                 : "Reconciliation ledger migration is pending. Existing inventory remains visible, but reconciliation filters intentionally return no records until the ledger is available."}
             </p>
+
+            {bizStatusFilter !== "kinfolk_current_delete_review" && bizStatusFilter !== "delete_queue" && (
+              <ValidatedPresenceBatch onApplied={() => applyBusinessInventoryFilters({
+                status: "active",
+                intakeCohort: "non_kinfolk_current",
+                link: "all",
+                sourceBatch: "",
+              })} />
+            )}
 
             {profileEnrichmentScope && bizStatusFilter !== "kinfolk_current_delete_review" && bizStatusFilter !== "delete_queue" && (
               <div id="profile-enrichment" className="mb-4">

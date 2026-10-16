@@ -177,6 +177,7 @@ import testerReportRouter from "./tester-report";
 import communityLanguageRouter from "./community-language";
 import officialPublicAlertsRouter from "./official-public-alerts";
 import { requireAuth } from "../middlewares/requireAuth";
+import { registerValidatedPresenceBatchRoutes } from "../businesses/registerValidatedPresenceBatchRoutes";
 
 const router: IRouter = Router();
 
@@ -247,6 +248,11 @@ router.get("/kinfolk/health", async (_req, res) => {
 router.use(requireAuth);
 
 // ── Everything below requires authentication ────────────────────────────────
+
+// This small, review-first pathway is mounted behind the member wall and also
+// checks administrator authorization inside each handler. It never accepts a
+// bulk import or performs an apply without a fresh preview and typed approval.
+registerValidatedPresenceBatchRoutes(router);
 
 // Normalizes cultural sites, recurring markets/events, and curated resources
 // without changing the existing cultural-site route ordering or legacy detail
