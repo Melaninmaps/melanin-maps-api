@@ -30,11 +30,20 @@ describe("Kinfolk first-use continuity disclosure", () => {
     expect(route).toContain("if (updatedExisting.length === 0)");
     expect(route).toContain("kinfolkMemoryEnabled: enabled");
     expect(route).toContain("PostgreSQL validates the VALUES clause before an");
+    expect(route).toContain('requestedDecision === "accepted" && enabled !== true');
+    expect(route).toContain('requestedDecision === "declined" && enabled !== false');
     for (const source of [webDisclosure, mobileDisclosure]) {
       expect(source).toContain(disclosureCopy);
       expect(source).toContain("Let Kinfolk remember");
       expect(source).toContain("Keep memory off");
     }
+  });
+
+  it("initializes all Kinfolk settings creation paths with opt-in Safety defaults", () => {
+    expect(route.match(/safetyAlertPolice: false/g)).toHaveLength(3);
+    expect(route.match(/safetyAlertIce: false/g)).toHaveLength(3);
+    expect(route).toContain("Continuity consent is independent from Safety alert consent.");
+    expect(route).toContain("Private-memory consent never creates a Safety alert subscription.");
   });
 
   it("requires a distinct sensitive save confirmation and preserves owner-only edit checks", () => {
