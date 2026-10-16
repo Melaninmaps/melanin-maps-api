@@ -231,7 +231,10 @@ export function UserProfileModal({ userId, visible, onClose }: Props) {
                         {[profile.firstName, profile.lastName].filter(Boolean).join(" ") || "Community Member"}
                       </Text>
                       {profile.identityVerified && (
-                        <Feather name="check-circle" size={16} color="#2D7A4F" />
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 3, borderRadius: 999, backgroundColor: "#2D7A4F12", paddingHorizontal: 7, paddingVertical: 3 }}>
+                          <Feather name="check-circle" size={13} color="#2D7A4F" />
+                          <Text style={{ color: "#2D7A4F", fontSize: 11, fontFamily: "Inter_600SemiBold" }}>Identity Verified</Text>
+                        </View>
                       )}
                       {profile.isPrivate && (
                         <View style={[s.privateBadge, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
