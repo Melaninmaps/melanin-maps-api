@@ -4670,7 +4670,7 @@ Selected: ${summary}`,
                   }}
                   placeholder="Search a business name or key phrase"
                   aria-label="Search business names and key phrases"
-                  title={'Use quotes for one exact phrase, for example "full wash and detangle".'}
+                  title="Search one exact phrase across the business name, ownership, and profile fields."
                   className="w-full rounded-xl border border-[#3A1F0E]/30 bg-white px-4 py-2.5 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/70 focus:outline-none focus:border-[#CA922B] sm:w-72"
                 />
                 <button
@@ -4693,7 +4693,7 @@ Selected: ${summary}`,
               </div>
             </div>
             <p className="-mt-3 mb-4 text-xs text-[#3A1F0E]/50">
-              Search checks business names, descriptions, categories, tags, vibes, website addresses, and social handles. Press Enter or select Search.
+              Searches one exact phrase, case-insensitively, across business names, ownership, and profile fields. For example, <strong>Black Women</strong> finds that phrase—not separate Black and Women matches. Press Enter or select Search.
             </p>
 
             {businessInventoryIsTruncated && (

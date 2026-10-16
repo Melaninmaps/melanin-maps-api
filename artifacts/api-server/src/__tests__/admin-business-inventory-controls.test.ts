@@ -14,6 +14,7 @@ const businessSchema = source("../../../../lib/db/src/schema/businesses.ts");
 const adminScreen = source("../../../web/src/pages/admin.tsx");
 const adminAddBusiness = source("../../../web/src/components/AdminAddBusiness.tsx");
 const adminEditBusiness = source("../../../web/src/components/AdminEditBusiness.tsx");
+const adminInventorySearch = source("../businesses/adminInventoryPhraseSearch.ts");
 const publicBusinessDetail = source("../../../web/src/pages/business-detail.tsx");
 const mobileBusinessHook = source("../../../mobile/hooks/useBusinesses.ts");
 const publicDirectory = source("../../../web/src/pages/businesses.tsx");
@@ -220,27 +221,34 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(publicDirectory).toContain("hasNoRecordedOwnershipTag");
   });
 
-  it("finds a listing by name, key phrase, tag, or public contact handle", () => {
+  it("searches one exact phrase across retained ownership and profile fields", () => {
     expect(adminScreen).toContain("Search a business name or key phrase");
     expect(adminScreen).toContain("Search business names and key phrases");
     expect(adminScreen).toContain("Press Enter or select Search");
     expect(adminScreen).toContain("placeholder:text-[#3A1F0E]/70");
     expect(adminScreen).toContain("[color-scheme:light]");
+    expect(adminRoute).toContain('from "../businesses/adminInventoryPhraseSearch"');
+    expect(adminRoute).toContain("buildAdminBusinessExactPhrasePredicate");
     for (const field of [
-      "COALESCE(description, '') ILIKE",
-      "COALESCE(tags::text, '') ILIKE",
-      "COALESCE(vibes::text, '') ILIKE",
-      "COALESCE(website, '') ILIKE",
-      "COALESCE(instagram, '') ILIKE",
-      "COALESCE(tiktok, '') ILIKE",
-      "COALESCE(facebook, '') ILIKE",
+      "COALESCE(description, '')",
+      "COALESCE(tags::text, '')",
+      "COALESCE(vibes::text, '')",
+      "COALESCE(website, '')",
+      "COALESCE(instagram, '')",
+      "COALESCE(tiktok, '')",
+      "COALESCE(facebook, '')",
+      "ownership_designations::text",
+      "verified_designations::text",
+      "ownership_claim",
+      "'Black-Owned Black / African American-Owned'",
     ]) {
-      expect(adminRoute).toContain(field);
+      expect(adminInventorySearch).toContain(field);
     }
-    expect(adminRoute).toContain("function parseAdminBusinessSearchTerms");
-    expect(adminRoute).toContain("function escapeAdminBusinessSearchTerm");
-    expect(adminRoute).toContain("ILIKE ${parameter} ESCAPE");
-    expect(adminScreen).toContain("Use quotes for one exact phrase");
+    expect(adminRoute).toContain("parseAdminBusinessSearchPhrase(search)");
+    expect(adminRoute).toContain("escapeAdminBusinessSearchPhrase(searchPhrase)");
+    expect(adminRoute).not.toContain("parseAdminBusinessSearchTerms");
+    expect(adminScreen).toContain("Searches one exact phrase, case-insensitively");
+    expect(adminScreen).toContain("Black Women");
   });
 
   it("publishes saved Admin links and profile categories to fresh web and mobile profile reads", () => {

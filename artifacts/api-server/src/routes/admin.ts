@@ -35,6 +35,11 @@ import {
   normalizeText as _normalizeText,
 } from "../lib/business-dedup.js";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import {
+  buildAdminBusinessExactPhrasePredicate,
+  escapeAdminBusinessSearchPhrase,
+  parseAdminBusinessSearchPhrase,
+} from "../businesses/adminInventoryPhraseSearch";
 import { COMPLETED_COHORT_MANIFEST_CHECKSUM } from "../directoryImport/cohortReconciliation";
 import {
   sourceBackedDirectoryCandidates,
@@ -869,25 +874,6 @@ function parseAdminCityFilters(value: unknown): string[] {
   ].slice(0, 50);
 }
 
-/**
- * Quotes preserve a single exact phrase for the inventory search. Unquoted
- * terms stay individually searchable so an administrator can still narrow a
- * list with ordinary words. LIKE metacharacters are escaped at query time.
- */
-function parseAdminBusinessSearchTerms(value: string): string[] {
-  const terms: string[] = [];
-  const matcher = /["“]([^"”]+)["”]|([^\s]+)/g;
-  for (const match of value.matchAll(matcher)) {
-    const term = (match[1] ?? match[2] ?? "").replace(/\s+/g, " ").trim();
-    if (term) terms.push(term);
-  }
-  return [...new Set(terms)].slice(0, 12);
-}
-
-function escapeAdminBusinessSearchTerm(value: string): string {
-  return value.replace(/[\\%_]/g, "\\$&");
-}
-
 type AdminBusinessInventoryQuery = Readonly<{
   search?: unknown;
   city?: unknown;
@@ -1025,13 +1011,10 @@ async function compileAdminBusinessInventoryFilters(
     filters.push(clause.replace("?", `$${filterParams.length}`));
   };
 
-  for (const term of parseAdminBusinessSearchTerms(search)) {
-    addFilter(
-      "(name ILIKE ? ESCAPE '\\' OR city ILIKE ? ESCAPE '\\' OR category ILIKE ? ESCAPE '\\' OR COALESCE(subcategory, '') ILIKE ? ESCAPE '\\' OR COALESCE(description, '') ILIKE ? ESCAPE '\\' OR COALESCE(tags::text, '') ILIKE ? ESCAPE '\\' OR COALESCE(vibes::text, '') ILIKE ? ESCAPE '\\' OR COALESCE(website, '') ILIKE ? ESCAPE '\\' OR COALESCE(instagram, '') ILIKE ? ESCAPE '\\' OR COALESCE(tiktok, '') ILIKE ? ESCAPE '\\' OR COALESCE(facebook, '') ILIKE ? ESCAPE '\\' OR COALESCE(twitter, '') ILIKE ? ESCAPE '\\' OR COALESCE(youtube, '') ILIKE ? ESCAPE '\\' OR COALESCE(pinterest, '') ILIKE ? ESCAPE '\\')",
-      `%${escapeAdminBusinessSearchTerm(term)}%`,
-    );
-    const parameter = `$${filterParams.length}`;
-    filters[filters.length - 1] = `(name ILIKE ${parameter} ESCAPE '\\' OR city ILIKE ${parameter} ESCAPE '\\' OR category ILIKE ${parameter} ESCAPE '\\' OR COALESCE(subcategory, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(description, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(tags::text, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(vibes::text, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(website, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(instagram, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(tiktok, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(facebook, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(twitter, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(youtube, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(pinterest, '') ILIKE ${parameter} ESCAPE '\\')`;
+  const searchPhrase = parseAdminBusinessSearchPhrase(search);
+  if (searchPhrase) {
+    filterParams.push(`%${escapeAdminBusinessSearchPhrase(searchPhrase)}%`);
+    filters.push(buildAdminBusinessExactPhrasePredicate(`$${filterParams.length}`));
   }
   if (cityFilters.length > 0) {
     filterParams.push(cityFilters);
