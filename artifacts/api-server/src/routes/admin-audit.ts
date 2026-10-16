@@ -19,11 +19,11 @@
  * Both endpoints require an authenticated admin session.
  */
 
-import { Router, type Request, type Response } from "express";
+import { Router, urlencoded, type Request, type Response } from "express";
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { pool } from "@workspace/db";
-import { isAdmin } from "../lib/adminAuth";
+import { isAdmin, isNamedAdmin } from "../lib/adminAuth";
 import {
   CAPACITY_TEST_CLEANUP_GUARD,
   CAPACITY_TEST_PROVISION_GUARD,
@@ -140,9 +140,11 @@ router.delete("/admin/audit-user/:userId", async (req: Request, res: Response) =
 // exact confirmation phrase while a temporary bcrypt hash is server-configured.
 
 function isCapacityLifecycleRequest(req: Request, expectedConfirmation: string): boolean {
-  return req.body?.confirmed === true
+  const confirmed = req.body?.confirmed === true || req.body?.confirmed === "true";
+  const count = req.body?.count === CAPACITY_TEST_USER_COUNT || req.body?.count === String(CAPACITY_TEST_USER_COUNT);
+  return confirmed
     && req.body?.confirmation === expectedConfirmation
-    && req.body?.count === CAPACITY_TEST_USER_COUNT;
+    && count;
 }
 
 function capacityLifecycleError(res: Response, error: unknown): void {
@@ -165,8 +167,26 @@ router.get("/admin/capacity-test-identities/verify", async (req: Request, res: R
   }
 });
 
-router.post("/admin/capacity-test-identities/provision", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+router.get("/admin/capacity-test-identities/provision", (req: Request, res: Response) => {
+  if (!isNamedAdmin(req)) return void res.status(403).type("text/plain").send("Forbidden");
+  const armed = isCapacityTestProvisionEnabled(process.env);
+  res.setHeader("Cache-Control", "no-store");
+  res.type("html").send(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MWM capacity test provisioning</title></head>
+<body><main><h1>Provision 200 isolated capacity-test identities</h1>
+<p>This operation creates only the fixed capacity-test namespace. It never changes an ordinary member, directory record, or production content.</p>
+<p><strong>Route status:</strong> ${armed ? "armed for one exact transaction" : "not armed — no action is available"}</p>
+${armed ? `<form method="post" action="/api/admin/capacity-test-identities/provision">
+<input type="hidden" name="confirmed" value="true">
+<input type="hidden" name="confirmation" value="${CAPACITY_TEST_PROVISION_GUARD}">
+<input type="hidden" name="count" value="${CAPACITY_TEST_USER_COUNT}">
+<button type="submit">Provision exactly 200 isolated test identities</button>
+</form>` : ""}
+</main></body></html>`);
+});
+
+router.post("/admin/capacity-test-identities/provision", urlencoded({ extended: false }), async (req: Request, res: Response) => {
+  if (!isNamedAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
   if (!isCapacityLifecycleRequest(req, CAPACITY_TEST_PROVISION_GUARD)) {
     return void res.status(400).json({
       error: "Exact provision confirmation, count=200, and confirmed=true are required.",
@@ -192,7 +212,7 @@ router.post("/admin/capacity-test-identities/provision", async (req: Request, re
 });
 
 router.post("/admin/capacity-test-identities/cleanup", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  if (!isNamedAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
   if (!isCapacityLifecycleRequest(req, CAPACITY_TEST_CLEANUP_GUARD)) {
     return void res.status(400).json({
       error: "Exact cleanup confirmation, count=200, and confirmed=true are required.",

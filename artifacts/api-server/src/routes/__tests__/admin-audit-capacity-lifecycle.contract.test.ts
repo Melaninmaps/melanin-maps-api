@@ -21,6 +21,9 @@ describe("guarded capacity-test identity lifecycle routes", () => {
     expect(routeSource).toContain('router.post("/admin/capacity-test-identities/provision"');
     expect(routeSource).toContain('router.post("/admin/capacity-test-identities/cleanup"');
     expect(routeSource).toContain('router.get("/admin/capacity-test-identities/verify"');
+    expect(routeSource).toContain('router.get("/admin/capacity-test-identities/provision"');
+    expect(routeSource).toContain("urlencoded({ extended: false })");
+    expect(routeSource).toContain("if (!isNamedAdmin(req))");
     expect(routeSource).toContain("if (!isAdmin(req))");
     expect(routeSource).toContain("req.body?.confirmed === true");
     expect(routeSource).toContain("req.body?.count === CAPACITY_TEST_USER_COUNT");
