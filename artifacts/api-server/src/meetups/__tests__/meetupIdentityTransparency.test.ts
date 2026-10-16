@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildMeetupIdentityTransparency,
   identityAcknowledgmentMatches,
+  meetupIdentityStatusChangeNotice,
   resolveMeetupIdentityStatus,
 } from "../meetupIdentityTransparency";
 
@@ -40,5 +41,20 @@ describe("meetup identity transparency", () => {
     expect(identityAcknowledgmentMatches("not_verified", "not_verified")).toBe(true);
     expect(identityAcknowledgmentMatches("not_verified", "verified")).toBe(false);
     expect(identityAcknowledgmentMatches("verified", "unavailable")).toBe(false);
+  });
+
+  it("notices a post-confirmation status change without exposing a reason or cancelling the meetup", () => {
+    expect(meetupIdentityStatusChangeNotice("verified", "not_verified")).toEqual({
+      changed: true,
+      notice: expect.stringContaining("status changed"),
+    });
+    expect(meetupIdentityStatusChangeNotice("verified", "verified")).toEqual({
+      changed: false,
+      notice: null,
+    });
+    expect(meetupIdentityStatusChangeNotice(null, "unavailable")).toEqual({
+      changed: false,
+      notice: null,
+    });
   });
 });

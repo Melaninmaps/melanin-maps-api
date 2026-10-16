@@ -67,4 +67,15 @@ describe("consent-first meetup route contract", () => {
     expect(routeSource).toContain("identityAcknowledgmentMatches");
     expect(routeSource).toContain("partnerIdentityAcknowledgedAt");
   });
+
+  it("recomputes the counterpart's current identity status when a confirmed meetup is reopened", () => {
+    const serializerSource = routeSource.slice(
+      routeSource.indexOf("function serializedMeetupWithIdentity"),
+      routeSource.indexOf("function invalidRequest"),
+    );
+    expect(routeSource).toContain("counterpartIdentity");
+    expect(routeSource).toContain("meetupIdentityStatusChangeNotice");
+    expect(serializerSource).toContain('verification.status === "confirmed"');
+    expect(serializerSource).not.toContain('status: "cancelled"');
+  });
 });

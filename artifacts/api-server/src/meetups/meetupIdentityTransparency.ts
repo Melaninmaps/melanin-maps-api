@@ -48,3 +48,20 @@ export function identityAcknowledgmentMatches(
 ): boolean {
   return acknowledgedStatus === currentStatus;
 }
+
+export function meetupIdentityStatusChangeNotice(
+  acknowledgedStatus: unknown,
+  currentStatus: MeetupIdentityStatus,
+): { changed: boolean; notice: string | null } {
+  const knownAcknowledgedStatus =
+    acknowledgedStatus === "verified"
+    || acknowledgedStatus === "not_verified"
+    || acknowledgedStatus === "unavailable";
+  if (!knownAcknowledgedStatus || acknowledgedStatus === currentStatus) {
+    return { changed: false, notice: null };
+  }
+  return {
+    changed: true,
+    notice: "This member's identity-verification status changed since you reviewed it. The meetup remains active; review the current status and use your safety options if needed.",
+  };
+}

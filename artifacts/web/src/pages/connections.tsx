@@ -41,6 +41,9 @@ interface MeetupVerification {
   rescheduleNote: string | null;
   initiatorIdentity: MeetupIdentityTransparency;
   partnerIdentity: MeetupIdentityTransparency;
+  counterpartIdentity: MeetupIdentityTransparency;
+  counterpartIdentityStatusChanged: boolean;
+  counterpartIdentityStatusChangeNotice: string | null;
 }
 
 interface MeetupIdentityTransparency {
@@ -411,7 +414,15 @@ export default function Connections() {
               <p className="text-xs font-bold uppercase tracking-wide text-[#6B4A2C]">Your meetup records</p>
               {meetups.filter((meetup) => !["declined", "cancelled"].includes(meetup.status)).map((meetup) => (
                 <div key={meetup.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-[#E8DDD0] bg-white p-3">
-                  <div className="min-w-40 flex-1"><p className="text-sm font-semibold capitalize text-[#2B1507]">{meetup.status.replace(/_/g, " ")}</p>{(meetup.venueName || meetup.city) && <p className="mt-0.5 text-xs text-[#5B4030]">{[meetup.venueName, meetup.city].filter(Boolean).join(" · ")}</p>}</div>
+                  <div className="min-w-40 flex-1"><p className="text-sm font-semibold capitalize text-[#2B1507]">{meetup.status.replace(/_/g, " ")}</p>{(meetup.venueName || meetup.city) && <p className="mt-0.5 text-xs text-[#5B4030]">{[meetup.venueName, meetup.city].filter(Boolean).join(" · ")}</p>}
+                    {meetup.status === "confirmed" && meetup.counterpartIdentity && <div className={`mt-2 rounded-lg border p-3 text-xs ${meetup.counterpartIdentityStatusChanged ? "border-[#FB923C50] bg-[#FFF7ED] text-[#9A3412]" : "border-[#BFDBFE] bg-[#EFF6FF] text-[#1E3A8A]"}`}>
+                      <p className="font-bold">{identityStatusLabel(meetup.counterpartIdentity)}</p>
+                      {meetup.counterpartIdentity.memberSince && <p className="mt-1">Member since {new Date(meetup.counterpartIdentity.memberSince).toLocaleDateString()}</p>}
+                      {meetup.counterpartIdentity.verifiedAt && <p className="mt-1">Identity verified {new Date(meetup.counterpartIdentity.verifiedAt).toLocaleDateString()}</p>}
+                      {meetup.counterpartIdentityStatusChangeNotice && <p className="mt-1 font-semibold">{meetup.counterpartIdentityStatusChangeNotice}</p>}
+                      <p className="mt-1">{meetup.counterpartIdentity.message}</p>
+                    </div>}
+                  </div>
                   <button onClick={() => void cancelMeetup(meetup.id)} disabled={actionLoading === `meetup-${meetup.id}`} className="rounded-full border border-[#C43B2F] px-3 py-2 text-xs font-bold text-[#A52820] disabled:opacity-50">Cancel</button>
                 </div>
               ))}

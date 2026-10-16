@@ -23,6 +23,7 @@ import {
 import {
   buildMeetupIdentityTransparency,
   identityAcknowledgmentMatches,
+  meetupIdentityStatusChangeNotice,
   type MeetupIdentityStatus,
 } from "../meetups/meetupIdentityTransparency";
 
@@ -60,6 +61,7 @@ function serializedVerification<T extends { clearCode?: string | null }>(verific
 
 function serializedMeetupWithIdentity(
   verification: Record<string, unknown> & { clearCode?: string | null },
+  viewerId: string,
 ) {
   const initiatorIdentity = buildMeetupIdentityTransparency({
     identityVerified: verification.initiatorIdentityVerified as boolean | null | undefined,
@@ -71,6 +73,14 @@ function serializedMeetupWithIdentity(
     identityVerifiedAt: verification.partnerIdentityVerifiedAt as Date | string | null | undefined,
     memberSince: verification.partnerMemberSince as Date | string | null | undefined,
   });
+  const viewerIsInitiator = verification.initiatorId === viewerId;
+  const counterpartIdentity = viewerIsInitiator ? partnerIdentity : initiatorIdentity;
+  const acknowledgedCounterpartStatus = viewerIsInitiator
+    ? verification.initiatorIdentityStatusAcknowledged
+    : verification.partnerIdentityStatusAcknowledged;
+  const identityStatusChange = verification.status === "confirmed"
+    ? meetupIdentityStatusChangeNotice(acknowledgedCounterpartStatus, counterpartIdentity.status)
+    : { changed: false, notice: null };
   const {
     initiatorIdentityVerified: _initiatorIdentityVerified,
     initiatorIdentityVerifiedAt: _initiatorIdentityVerifiedAt,
@@ -78,12 +88,17 @@ function serializedMeetupWithIdentity(
     partnerIdentityVerified: _partnerIdentityVerified,
     partnerIdentityVerifiedAt: _partnerIdentityVerifiedAt,
     partnerMemberSince: _partnerMemberSince,
+    initiatorIdentityStatusAcknowledged: _initiatorIdentityStatusAcknowledged,
+    partnerIdentityStatusAcknowledged: _partnerIdentityStatusAcknowledged,
     ...publicVerification
   } = verification;
   return {
     ...serializedVerification(publicVerification),
     initiatorIdentity,
     partnerIdentity,
+    counterpartIdentity,
+    counterpartIdentityStatusChanged: identityStatusChange.changed,
+    counterpartIdentityStatusChangeNotice: identityStatusChange.notice,
   };
 }
 
@@ -311,12 +326,14 @@ router.get("/meetups", async (req: Request, res: Response) => {
         initiatorIdentityVerified: initiatorUser.identityVerified,
         initiatorIdentityVerifiedAt: initiatorUser.identityVerifiedAt,
         initiatorMemberSince: initiatorUser.createdAt,
+        initiatorIdentityStatusAcknowledged: meetupVerificationsTable.initiatorIdentityStatusAcknowledged,
         partnerFirstName: partnerUser.firstName,
         partnerLastName: partnerUser.lastName,
         partnerUsername: partnerUser.username,
         partnerIdentityVerified: partnerUser.identityVerified,
         partnerIdentityVerifiedAt: partnerUser.identityVerifiedAt,
         partnerMemberSince: partnerUser.createdAt,
+        partnerIdentityStatusAcknowledged: meetupVerificationsTable.partnerIdentityStatusAcknowledged,
         watcherFirstName: watcherUser.firstName,
         watcherLastName: watcherUser.lastName,
         watcherUsername: watcherUser.username,
@@ -333,7 +350,7 @@ router.get("/meetups", async (req: Request, res: Response) => {
       .orderBy(desc(meetupVerificationsTable.initiatedAt))
       .limit(50);
 
-    res.json({ verifications: verifications.map(serializedMeetupWithIdentity) });
+    res.json({ verifications: verifications.map((verification) => serializedMeetupWithIdentity(verification, userId)) });
   } catch (err) {
     req.log.error({ err }, "GET /meetups error");
     res.status(500).json({ error: "Failed to load meetups" });
@@ -510,6 +527,9 @@ router.post("/meetups", async (req: Request, res: Response) => {
         {
         initiatorIdentity,
         partnerIdentity,
+        counterpartIdentity: partnerIdentity,
+        counterpartIdentityStatusChanged: false,
+        counterpartIdentityStatusChangeNotice: null,
         },
       ),
     });

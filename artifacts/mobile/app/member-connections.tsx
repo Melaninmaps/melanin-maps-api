@@ -73,6 +73,9 @@ type MeetupVerification = {
   homeCheckStatus: string | null;
   initiatorIdentity: MeetupIdentityTransparency;
   partnerIdentity: MeetupIdentityTransparency;
+  counterpartIdentity: MeetupIdentityTransparency;
+  counterpartIdentityStatusChanged: boolean;
+  counterpartIdentityStatusChangeNotice: string | null;
 };
 
 type MeetupIdentityTransparency = {
@@ -620,6 +623,19 @@ export default function MemberConnectionsScreen() {
                             📝 {m.note}
                           </Text>
                         )}
+                      </View>
+                    )}
+
+                    {m.status === "confirmed" && m.counterpartIdentity && (
+                      <View style={[styles.privacyNote, { marginTop: 10, backgroundColor: m.counterpartIdentityStatusChanged ? "#FFF7ED" : "#EFF6FF", borderColor: m.counterpartIdentityStatusChanged ? "#FB923C50" : "#BFDBFE" }]}>
+                        <Feather name={m.counterpartIdentityStatusChanged ? "alert-triangle" : (m.counterpartIdentity.status === "verified" ? "check-circle" : "info")} size={14} color={m.counterpartIdentityStatusChanged ? "#C2410C" : "#1D4ED8"} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.privacyNoteText, { color: m.counterpartIdentityStatusChanged ? "#9A3412" : "#1E3A8A" }]}>{identityStatusLabel(m.counterpartIdentity)}</Text>
+                          {m.counterpartIdentity.memberSince && <Text style={[styles.requestMeta, { color: colors.mutedForeground }]}>Member since {formatDate(m.counterpartIdentity.memberSince)}</Text>}
+                          {m.counterpartIdentity.verifiedAt && <Text style={[styles.requestMeta, { color: colors.mutedForeground }]}>Verified {formatDate(m.counterpartIdentity.verifiedAt)}</Text>}
+                          {m.counterpartIdentityStatusChangeNotice && <Text style={[styles.requestMeta, { color: "#9A3412" }]}>{m.counterpartIdentityStatusChangeNotice}</Text>}
+                          <Text style={[styles.requestMeta, { color: colors.mutedForeground }]}>{m.counterpartIdentity.message}</Text>
+                        </View>
                       </View>
                     )}
 
