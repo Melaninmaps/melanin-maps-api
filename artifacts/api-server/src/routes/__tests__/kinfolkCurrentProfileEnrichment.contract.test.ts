@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync(fileURLToPath(new URL("../businesses.ts", import.meta.url)), "utf8");
+const appSource = readFileSync(fileURLToPath(new URL("../../app.ts", import.meta.url)), "utf8");
 const route = source.slice(
   source.indexOf("async function applyProfileEnrichmentManifest"),
   source.indexOf("// ─── POST /admin/seed-known-businesses"),
@@ -28,10 +29,23 @@ describe("source-receipted profile enrichment route", () => {
     expect(route).toContain("business_admin_profile_edit_audit_events");
   });
 
+  it("rejects social share controls and supports exact-value remediation without widening profile scope", () => {
+    expect(route).toContain("isProfileEnrichmentOfficialSocialLink");
+    expect(route).toContain("rejectedNonProfileSocialFields");
+    expect(route).toContain('mode === "clear_invalid_social_link"');
+    expect(route).toContain("isProfileEnrichmentNonProfileSocialControlUrl");
+    expect(route).toContain("fillOnlyPatch[field] = null");
+  });
+
   it("holds scope, lifecycle, identity, and populated-value conflicts without overwriting", () => {
     expect(route).toContain("Business is already in Kinfolk Current and is outside the non-current enrichment scope.");
     expect(route).toContain("kinfolk_current_online_presence_reviews");
     expect(route).toContain("Business is not currently publicly listed.");
+    expect(route).toContain('manifest.scope === "non_kinfolk_current_all"');
+    expect(route).toContain('["live_unclaimed", "live_claimed", "staged"]');
+    expect(route).toContain("not an active live or staged record eligible for held-profile enrichment");
+    expect(route).toContain('mode === "replace_verified_inactive"');
+    expect(route).toContain('candidate.websiteRecovery?.priorWebsiteClassification === "REMOVE_CONFIRMED_INACTIVE"');
     expect(route).toContain("differs from the reviewed source snapshot");
     expect(route).toContain("HOLD_IDENTITY_OR_CONTACT_CONFLICT");
     expect(route).toContain("existingTags");
@@ -40,5 +54,10 @@ describe("source-receipted profile enrichment route", () => {
   it("keeps the legacy Current endpoint as an alias to the same audited handler", () => {
     expect(source).toContain('router.post("/admin/businesses/profile-enrichment-apply", applyProfileEnrichmentManifest)');
     expect(source).toContain('router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", applyProfileEnrichmentManifest)');
+  });
+
+  it("accepts receipt-bearing approved batches above Express's global default only at the protected apply route", () => {
+    expect(appSource).toContain('"/api/admin/businesses/profile-enrichment-apply"');
+    expect(appSource).toContain('express.json({ limit: "512kb" })');
   });
 });

@@ -373,6 +373,14 @@ app.use(
   "/api/admin/businesses/kinfolk-current/online-presence-apply",
   express.json({ limit: "3mb" }),
 );
+// Field-level profile enrichment batches retain source receipts for every
+// proposed fact. The largest approved 100-record envelope is 222,725 bytes,
+// so it must be parsed before Express's 100 KB global default; keep the
+// allowance tight to this authenticated, bounded manifest endpoint.
+app.use(
+  "/api/admin/businesses/profile-enrichment-apply",
+  express.json({ limit: "512kb" }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Structured request correlation — attaches x-request-id header to every

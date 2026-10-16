@@ -5895,8 +5895,8 @@ Selected: ${summary}`,
             </p>
 
             {profileEnrichmentScope && bizStatusFilter !== "kinfolk_current_delete_review" && (
-              <div className="mb-4">
-                <KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope} onApplied={() => { void loadBusinesses({}); }} />
+              <div id="profile-enrichment" className="mb-4">
+                <KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope} />
               </div>
             )}
 

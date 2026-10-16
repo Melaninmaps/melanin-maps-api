@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildManifests, manifestFingerprint } from "./build-kinfolk-current-profile-enrichment-manifests.mjs";
+import { buildManifests, manifestFingerprint, officialSocialProfileUrl } from "./build-kinfolk-current-profile-enrichment-manifests.mjs";
 
 const packet = {
   businessId: "business-1",
@@ -33,10 +33,58 @@ test("builds a scoped, source-receipted manifest with a stable fingerprint", () 
   assert.equal(manifests[0].contentFingerprint, manifestFingerprint(manifests[0]));
 });
 
+test("builds an audited held-profile manifest without lifecycle fields", () => {
+  const { candidates, manifests } = buildManifests([proposal], [packet], {
+    scope: "non_kinfolk_current_all",
+    generatedAt: "2026-10-15T19:00:00.000Z",
+  });
+  assert.equal(candidates.length, 1);
+  assert.equal(manifests[0].scope, "non_kinfolk_current_all");
+  assert.equal("listingStatus" in manifests[0].candidates[0].patch, false);
+});
+
+test("replaces only a source-confirmed inactive website with a matched official website", () => {
+  const recovered = {
+    ...proposal,
+    website: "https://new-communitybooks.example/",
+    sourceSnapshot: { Website: "https://old-communitybooks.example/" },
+    websiteRecovery: {
+      priorWebsite: "https://old-communitybooks.example/",
+      priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE",
+      checkedAt: "2026-10-15",
+    },
+    accepted: [],
+  };
+  const { candidates } = buildManifests([recovered], [{ ...packet, websiteRecovery: recovered.websiteRecovery }], {
+    scope: "non_kinfolk_current_all",
+  });
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].expectedIdentity.website, "https://old-communitybooks.example/");
+  assert.equal(candidates[0].patch.website, "https://new-communitybooks.example/");
+  assert.equal(candidates[0].fieldModes.website, "replace_verified_inactive");
+  assert.deepEqual(candidates[0].websiteRecovery, recovered.websiteRecovery);
+});
+
 test("does not duplicate a stored social account", () => {
   const existingSocialPacket = { ...packet, sourceSnapshot: { Instagram: "https://www.instagram.com/communitybooks/" } };
   const { candidates } = buildManifests([{ ...proposal, accepted: [] }], [existingSocialPacket], { scope: "non_kinfolk_current" });
   assert.equal(candidates.length, 0);
+});
+
+test("rejects social share widgets while retaining an actual official profile link", () => {
+  assert.equal(officialSocialProfileUrl("twitter", "https://twitter.com/intent/tweet?url=https%3A%2F%2Fcommunitybooks.example"), null);
+  assert.equal(officialSocialProfileUrl("facebook", "https://www.facebook.com/share/example/"), null);
+  assert.equal(officialSocialProfileUrl("pinterest", "https://pinterest.com/pin/create/button/?url=https%3A%2F%2Fcommunitybooks.example"), null);
+  assert.equal(officialSocialProfileUrl("instagram", "https://www.instagram.com/communitybooks/"), "https://www.instagram.com/communitybooks/");
+
+  const { candidates } = buildManifests([{ ...proposal, accepted: [] }], [{
+    ...packet,
+    officialSocialLinks: {
+      twitter: "https://twitter.com/share?url=https%3A%2F%2Fcommunitybooks.example",
+      instagram: "https://www.instagram.com/communitybooks/",
+    },
+  }], { scope: "non_kinfolk_current" });
+  assert.deepEqual(candidates[0].patch, { instagram: "https://www.instagram.com/communitybooks/" });
 });
 
 test("holds invalid factual fields while retaining a safe source-backed field", () => {

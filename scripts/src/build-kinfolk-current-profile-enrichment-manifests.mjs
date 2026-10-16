@@ -83,6 +83,35 @@ function publicHttpUrl(value) {
   }
 }
 
+/**
+ * A platform domain alone does not make an anchor an official profile. Sites
+ * commonly include Twitter/X, Facebook, and Pinterest share widgets, which
+ * must never be carried into a business profile as official social accounts.
+ */
+export function officialSocialProfileUrl(field, value) {
+  const url = publicHttpUrl(value);
+  if (!url || !SOCIAL_FIELDS.has(field)) return null;
+  const parsed = new URL(url);
+  const hostname = parsed.hostname.toLocaleLowerCase();
+  const allowedHosts = {
+    instagram: ["instagram.com"],
+    tiktok: ["tiktok.com"],
+    facebook: ["facebook.com", "fb.com"],
+    twitter: ["twitter.com", "x.com"],
+    youtube: ["youtube.com", "youtu.be"],
+    pinterest: ["pinterest.com"],
+  };
+  if (!(allowedHosts[field] ?? []).some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`))) return null;
+  const pathname = parsed.pathname.toLocaleLowerCase().replace(/\/+$/, "") || "/";
+  const nonProfileControl = {
+    facebook: [/^\/(?:share|sharer)(?:\/|$)/, /^\/dialog\/share(?:\/|$)/],
+    twitter: [/^\/(?:share|intent)(?:\/|$)/],
+    pinterest: [/^\/pin\/create(?:\/|$)/],
+  };
+  if (pathname === "/" || (nonProfileControl[field] ?? []).some((pattern) => pattern.test(pathname))) return null;
+  return url;
+}
+
 function observationDate(value) {
   const text = strictText(value, 10);
   return text && /^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(Date.parse(`${text}T00:00:00Z`)) ? text : null;
@@ -127,6 +156,23 @@ function socialReceipt(field, url, page, observedAt, sourceUrl) {
   };
 }
 
+function websiteReceipt(url, page, observedAt, sourceUrl, replacedInactive) {
+  return {
+    field: "website",
+    sourceUrl,
+    sourceLabel: displayText(`Verified official ${page.title?.trim() || "website"} page`, 255, "Verified official website"),
+    observedAt,
+    confidence: "high",
+    note: displayText(
+      replacedInactive
+        ? `A rechecked inactive stored website is replaced with this identity-matched official website: ${url}`
+        : `This identity-matched official website is the current first-party presence: ${url}`,
+      1000,
+      "Verified official website.",
+    ),
+  };
+}
+
 function sourceSnapshotValue(snapshot, field) {
   const candidates = {
     instagram: ["Instagram", "instagram"],
@@ -152,6 +198,7 @@ export function candidateFromProposal(proposal, pagePacket) {
   const city = strictText(proposal?.city, 100);
   const state = strictText(proposal?.state, 50);
   const website = proposal?.website ? publicHttpUrl(proposal.website) : null;
+  const expectedWebsite = publicHttpUrl(proposal?.sourceSnapshot?.Website ?? proposal?.websiteRecovery?.priorWebsite) ?? null;
   const observedAt = observationDate(proposal?.observedAt ?? pagePacket?.completedAt?.slice(0, 10));
   if (!identityConfirmed || !businessId || !name || !city || !state || !observedAt || (proposal?.website && !website)) return null;
 
@@ -179,8 +226,22 @@ export function candidateFromProposal(proposal, pagePacket) {
   }
   const socialPage = pages[0];
   const socialSourceUrl = publicHttpUrl(socialPage?.sourceUrl);
+  const recovery = proposal?.websiteRecovery ?? pagePacket?.websiteRecovery ?? null;
+  if (website && recovery && socialPage && socialSourceUrl && website !== expectedWebsite) {
+    if (!expectedWebsite) {
+      patch.website = website;
+      fieldModes.website = "fill";
+      receipts.push(websiteReceipt(website, socialPage, observedAt, socialSourceUrl, false));
+    } else if (recovery?.priorWebsiteClassification === "REMOVE_CONFIRMED_INACTIVE"
+      && publicHttpUrl(recovery.priorWebsite) === expectedWebsite
+      && observationDate(recovery.checkedAt)) {
+      patch.website = website;
+      fieldModes.website = "replace_verified_inactive";
+      receipts.push(websiteReceipt(website, socialPage, observedAt, socialSourceUrl, true));
+    }
+  }
   for (const [field, rawUrl] of Object.entries(pagePacket?.officialSocialLinks ?? {})) {
-    const url = publicHttpUrl(rawUrl);
+    const url = officialSocialProfileUrl(field, rawUrl);
     if (!SOCIAL_FIELDS.has(field) || !url || !socialSourceUrl || Object.hasOwn(patch, field)) continue;
     if (sourceSnapshotValue(pagePacket.sourceSnapshot, field)) continue;
     patch[field] = url;
@@ -190,9 +251,16 @@ export function candidateFromProposal(proposal, pagePacket) {
   if (Object.keys(patch).length === 0 || receipts.length !== Object.keys(patch).length) return null;
   return {
     businessId,
-    expectedIdentity: { name, city, state, website },
+    expectedIdentity: { name, city, state, website: expectedWebsite },
     patch,
     fieldModes,
+    ...(fieldModes.website === "replace_verified_inactive" ? {
+      websiteRecovery: {
+        priorWebsite: expectedWebsite,
+        priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE",
+        checkedAt: observationDate(recovery.checkedAt),
+      },
+    } : {}),
     receipts,
   };
 }
@@ -203,7 +271,9 @@ export function buildManifests(proposals, packets, {
   generatedAt = new Date().toISOString(),
   batchSize = 100,
 } = {}) {
-  if (!["kinfolk_current", "non_kinfolk_current"].includes(scope)) throw new Error("scope must be kinfolk_current or non_kinfolk_current");
+  if (!["kinfolk_current", "non_kinfolk_current", "non_kinfolk_current_all"].includes(scope)) {
+    throw new Error("scope must be kinfolk_current, non_kinfolk_current, or non_kinfolk_current_all");
+  }
   const packetById = new Map(packets.map((packet) => [packet.businessId, packet]));
   const candidates = proposals.map((proposal) => candidateFromProposal(proposal, packetById.get(proposal.businessId))).filter(Boolean);
   const manifests = [];

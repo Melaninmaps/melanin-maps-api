@@ -13,10 +13,17 @@ export const PROFILE_ENRICHMENT_FIELDS = [
   "description", "hours", "phone", "tags", "website",
   "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest",
 ] as const;
+export const PROFILE_ENRICHMENT_SOCIAL_FIELDS = [
+  "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest",
+] as const;
 
-export type ProfileEnrichmentScope = "kinfolk_current" | "non_kinfolk_current";
+/**
+ * `non_kinfolk_current_all` permits the same additive, audited field enrichment
+ * for retained staged records without changing their lifecycle or visibility.
+ */
+export type ProfileEnrichmentScope = "kinfolk_current" | "non_kinfolk_current" | "non_kinfolk_current_all";
 export type EnrichmentPatchField = (typeof PROFILE_ENRICHMENT_FIELDS)[number];
-export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory";
+export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory" | "replace_verified_inactive" | "clear_invalid_social_link";
 type ReceiptField = Extract<
   ProfileFieldReceiptName,
   "description" | "hours" | "phone" | "service_tags" | "website" |
@@ -39,6 +46,8 @@ export type ProfileEnrichmentCandidate = {
   patch: Partial<Record<EnrichmentPatchField, string | string[]>>;
   /** Description can replace only a known generic directory placeholder; tags append only new values. */
   fieldModes: Partial<Record<EnrichmentPatchField, EnrichmentPatchMode>>;
+  /** Required for replacing a nonempty website that was independently rechecked as inactive. */
+  websiteRecovery?: { priorWebsite: string; priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE"; checkedAt: string };
   receipts: ProfileEnrichmentReceipt[];
 };
 
@@ -99,6 +108,60 @@ function cleanPublicUrl(value: unknown, label: string): string {
   return url.toString();
 }
 
+function isProfileEnrichmentSocialField(field: EnrichmentPatchField): field is (typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number] {
+  return (PROFILE_ENRICHMENT_SOCIAL_FIELDS as readonly string[]).includes(field);
+}
+
+function isSupportedSocialHostname(field: (typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number], hostname: string): boolean {
+  const allowedHosts: Record<(typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number], string[]> = {
+    instagram: ["instagram.com"],
+    tiktok: ["tiktok.com"],
+    facebook: ["facebook.com", "fb.com"],
+    twitter: ["twitter.com", "x.com"],
+    youtube: ["youtube.com", "youtu.be"],
+    pinterest: ["pinterest.com"],
+  };
+  return allowedHosts[field].some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
+}
+
+/**
+ * Social anchors sometimes point to a platform share widget, rather than a
+ * business profile. Those URLs must never be published as an official account.
+ */
+export function isProfileEnrichmentNonProfileSocialControlUrl(field: EnrichmentPatchField, value: unknown): boolean {
+  if (!isProfileEnrichmentSocialField(field) || typeof value !== "string") return false;
+  try {
+    const url = new URL(value.trim());
+    const hostname = url.hostname.toLocaleLowerCase();
+    if (!/^https?:$/.test(url.protocol) || !isSupportedSocialHostname(field, hostname)) return false;
+    const pathname = url.pathname.toLocaleLowerCase().replace(/\/+$/, "") || "/";
+    const patterns: Partial<Record<(typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number], RegExp[]>> = {
+      facebook: [/^\/(?:share|sharer)(?:\/|$)/, /^\/dialog\/share(?:\/|$)/],
+      twitter: [/^\/(?:share|intent)(?:\/|$)/],
+      pinterest: [/^\/pin\/create(?:\/|$)/],
+    };
+    return (patterns[field] ?? []).some((pattern) => pattern.test(pathname));
+  } catch {
+    return false;
+  }
+}
+
+/** Permits a handle or an actual profile URL, but not a share/intent widget. */
+export function isProfileEnrichmentOfficialSocialLink(field: EnrichmentPatchField, value: unknown): boolean {
+  if (!isProfileEnrichmentSocialField(field) || typeof value !== "string") return false;
+  const text = value.trim();
+  if (/^@?[a-zA-Z0-9._-]{1,100}$/.test(text)) return true;
+  try {
+    const url = new URL(text);
+    const hostname = url.hostname.toLocaleLowerCase();
+    if (!/^https?:$/.test(url.protocol) || !isSupportedSocialHostname(field, hostname)) return false;
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
+    return pathname !== "/" && !isProfileEnrichmentNonProfileSocialControlUrl(field, text);
+  } catch {
+    return false;
+  }
+}
+
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (isRecord(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
@@ -143,10 +206,13 @@ function parseFieldModes(input: unknown, patch: ProfileEnrichmentCandidate["patc
   const fieldModes: ProfileEnrichmentCandidate["fieldModes"] = {};
   for (const field of Object.keys(patch) as EnrichmentPatchField[]) {
     const mode = input[field] ?? defaultMode(field);
-    if (mode !== "fill" && mode !== "append" && mode !== "replace_generic_directory") throw new Error(`Unsupported enrichment mode for ${field}`);
+    if (mode !== "fill" && mode !== "append" && mode !== "replace_generic_directory" && mode !== "replace_verified_inactive" && mode !== "clear_invalid_social_link") throw new Error(`Unsupported enrichment mode for ${field}`);
     if (field === "tags" && mode !== "append") throw new Error("Service tags must use append mode");
     if (field !== "tags" && mode === "append") throw new Error(`${field} cannot use append mode`);
     if (field !== "description" && mode === "replace_generic_directory") throw new Error("Only descriptions may replace a generic directory placeholder");
+    if (field !== "website" && mode === "replace_verified_inactive") throw new Error("Only websites may replace a verified inactive URL");
+    if (mode === "clear_invalid_social_link" && !isProfileEnrichmentSocialField(field)) throw new Error("Only social profile fields may clear an invalid social link");
+    if (mode === "clear_invalid_social_link" && !isProfileEnrichmentNonProfileSocialControlUrl(field, patch[field])) throw new Error("Invalid-social-link remediation must identify a social share or intent control URL");
     fieldModes[field] = mode;
   }
   for (const field of Object.keys(input)) {
@@ -180,6 +246,19 @@ function parseCandidate(input: unknown, allowedFields: readonly EnrichmentPatchF
   const changedFields = Object.keys(patch) as EnrichmentPatchField[];
   if (changedFields.length === 0) throw new Error("candidate patch must contain an allowed enrichment field");
   const fieldModes = parseFieldModes(input.fieldModes, patch);
+  let websiteRecovery: ProfileEnrichmentCandidate["websiteRecovery"];
+  if (fieldModes.website === "replace_verified_inactive") {
+    if (!isRecord(input.websiteRecovery)) throw new Error("websiteRecovery is required for a verified inactive website replacement");
+    const priorWebsite = cleanPublicUrl(input.websiteRecovery.priorWebsite, "websiteRecovery priorWebsite");
+    const priorWebsiteClassification = cleanText(input.websiteRecovery.priorWebsiteClassification, "websiteRecovery classification", 80) as string;
+    const checkedAt = cleanText(input.websiteRecovery.checkedAt, "websiteRecovery checkedAt", 10) as string;
+    if (priorWebsiteClassification !== "REMOVE_CONFIRMED_INACTIVE") throw new Error("websiteRecovery requires a confirmed inactive prior website");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checkedAt) || Number.isNaN(Date.parse(`${checkedAt}T00:00:00Z`))) throw new Error("websiteRecovery checkedAt must use YYYY-MM-DD");
+    if (!expectedIdentity.website || expectedIdentity.website !== priorWebsite) throw new Error("websiteRecovery prior website must match the expected current website");
+    websiteRecovery = { priorWebsite, priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE", checkedAt };
+  } else if (input.websiteRecovery !== undefined) {
+    throw new Error("websiteRecovery is only permitted for a verified inactive website replacement");
+  }
   if (!Array.isArray(input.receipts) || input.receipts.length !== changedFields.length) throw new Error("candidate receipts must contain exactly one receipt for each proposed field");
   const receipts = input.receipts.map((receipt): ProfileEnrichmentReceipt => {
     if (!isRecord(receipt)) throw new Error("candidate receipt must be an object");
@@ -203,7 +282,7 @@ function parseCandidate(input: unknown, allowedFields: readonly EnrichmentPatchF
   for (const field of changedFields) {
     if (!receiptFields.has(receiptFieldForPatch(field))) throw new Error(`candidate patch ${field} is missing its field receipt`);
   }
-  return { businessId, expectedIdentity, patch, fieldModes, receipts };
+  return { businessId, expectedIdentity, patch, fieldModes, ...(websiteRecovery ? { websiteRecovery } : {}), receipts };
 }
 
 function parseMetadata(input: Record<string, unknown>): Pick<ParsedProfileEnrichmentManifest, "batchId" | "generatedAt" | "contentFingerprint"> {
@@ -240,7 +319,9 @@ export function parseProfileEnrichmentManifest(input: unknown): ParsedProfileEnr
     return { ...legacy, scope: "kinfolk_current" };
   }
   if (input.version !== PROFILE_ENRICHMENT_MANIFEST_VERSION) throw new Error("Unsupported profile enrichment manifest version");
-  if (input.scope !== "kinfolk_current" && input.scope !== "non_kinfolk_current") throw new Error("manifest scope must be kinfolk_current or non_kinfolk_current");
+  if (input.scope !== "kinfolk_current" && input.scope !== "non_kinfolk_current" && input.scope !== "non_kinfolk_current_all") {
+    throw new Error("manifest scope must be kinfolk_current, non_kinfolk_current, or non_kinfolk_current_all");
+  }
   const { batchId, generatedAt, contentFingerprint } = parseMetadata(input);
   if (!Array.isArray(input.candidates)) throw new Error("manifest candidates are required");
   const candidates = input.candidates.map((candidate) => parseCandidate(candidate, PROFILE_ENRICHMENT_FIELDS));
@@ -308,5 +389,22 @@ export function isGenericProfileEnrichmentDescriptionPlaceholder(
     "tbd",
     "coming soon",
   ]);
-  return genericLabels.has(normalized);
+  if (genericLabels.has(normalized)) return true;
+
+  // Imported source cohorts sometimes placed a short ownership/cuisine label
+  // or a source-directory boilerplate sentence in `description`. Those are
+  // not business-specific profile copy, so a high-confidence first-party
+  // description may replace them. This remains a closed, deliberately narrow
+  // set; a descriptive sentence that happens to mention Black ownership is
+  // still preserved.
+  const genericOwnershipLabels = new Set([
+    "black owned",
+    "black owned jamaican caribbean",
+    "black american southern",
+  ]);
+  if (genericOwnershipLabels.has(normalized)) return true;
+  return [
+    /^black owned directory listing .+$/,
+    /^black owned black business ecosystem directory evidence (?:is )?current to \d{4} .+$/,
+  ].some((pattern) => pattern.test(normalized));
 }

@@ -4,6 +4,8 @@ import {
   PROFILE_ENRICHMENT_MANIFEST_VERSION,
   isEmptyProfileEnrichmentField,
   isGenericProfileEnrichmentDescriptionPlaceholder,
+  isProfileEnrichmentNonProfileSocialControlUrl,
+  isProfileEnrichmentOfficialSocialLink,
   kinfolkCurrentProfileEnrichmentFingerprint,
   parseKinfolkCurrentProfileEnrichmentManifest,
   parseProfileEnrichmentManifest,
@@ -98,6 +100,56 @@ describe("Kinfolk Current profile enrichment manifest", () => {
     expect(parsed.candidates[0].patch.instagram).toBe("https://www.instagram.com/communitybooks/");
   });
 
+  it("accepts a bounded exact-value remediation only for a non-profile social share control", () => {
+    const invalidTwitterShare = "https://twitter.com/intent/tweet?url=https%3A%2F%2Fcommunitybooks.example";
+    expect(isProfileEnrichmentNonProfileSocialControlUrl("twitter", invalidTwitterShare)).toBe(true);
+    expect(isProfileEnrichmentOfficialSocialLink("twitter", invalidTwitterShare)).toBe(false);
+    expect(isProfileEnrichmentOfficialSocialLink("instagram", "https://www.instagram.com/communitybooks/")).toBe(true);
+
+    const remediation = nonCurrentManifest({
+      scope: "kinfolk_current",
+      candidates: [candidate({
+        patch: { twitter: invalidTwitterShare },
+        fieldModes: { twitter: "clear_invalid_social_link" },
+        receipts: [{ field: "twitter", sourceUrl: "https://communitybooks.example/", sourceLabel: "Official website", observedAt: "2026-10-15", confidence: "high", note: "The source anchor is a Twitter share control, not a business profile." }],
+      })],
+    });
+    expect(parseProfileEnrichmentManifest(remediation).candidates[0].fieldModes.twitter).toBe("clear_invalid_social_link");
+
+    const unsafe = nonCurrentManifest({
+      candidates: [candidate({
+        patch: { instagram: "https://www.instagram.com/communitybooks/" },
+        fieldModes: { instagram: "clear_invalid_social_link" },
+        receipts: [{ field: "instagram", sourceUrl: "https://communitybooks.example/", sourceLabel: "Official website", observedAt: "2026-10-15", confidence: "high", note: "Not a supported remediation target." }],
+      })],
+    });
+    expect(() => parseProfileEnrichmentManifest(unsafe)).toThrow("share or intent");
+  });
+
+  it("accepts the held-profile scope without granting lifecycle mutation fields", () => {
+    const parsed = parseProfileEnrichmentManifest(nonCurrentManifest({ scope: "non_kinfolk_current_all" }));
+    expect(parsed.scope).toBe("non_kinfolk_current_all");
+    expect(parsed.candidates[0].patch).not.toHaveProperty("listingStatus");
+  });
+
+  it("requires a matching confirmed-inactive website check before replacing a website", () => {
+    const input = nonCurrentManifest({
+      scope: "non_kinfolk_current_all",
+      candidates: [candidate({
+        expectedIdentity: { name: "Community Books", city: "Philadelphia", state: "PA", website: "https://old-communitybooks.example/" },
+        patch: { website: "https://new-communitybooks.example/" },
+        fieldModes: { website: "replace_verified_inactive" },
+        websiteRecovery: { priorWebsite: "https://old-communitybooks.example/", priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE", checkedAt: "2026-10-15" },
+        receipts: [{ field: "website", sourceUrl: "https://new-communitybooks.example/", sourceLabel: "Official home page", observedAt: "2026-10-15", confidence: "high", note: "The recovered official home page matches the business identity." }],
+      })],
+    });
+    expect(parseProfileEnrichmentManifest(input).candidates[0].websiteRecovery?.priorWebsite).toBe("https://old-communitybooks.example/");
+    const unsafe = nonCurrentManifest({
+      candidates: [candidate({ patch: { website: "https://new-communitybooks.example/" }, fieldModes: { website: "replace_verified_inactive" }, receipts: [{ field: "website", sourceUrl: "https://new-communitybooks.example/", sourceLabel: "Official home page", observedAt: "2026-10-15", confidence: "high", note: "The recovered official home page matches the business identity." }] })],
+    });
+    expect(() => parseProfileEnrichmentManifest(unsafe)).toThrow("websiteRecovery");
+  });
+
   it("rejects an unscoped manifest and unsafe replacement modes", () => {
     const unscoped = nonCurrentManifest({ scope: undefined });
     expect(() => parseProfileEnrichmentManifest(unscoped)).toThrow("scope");
@@ -114,6 +166,10 @@ describe("Kinfolk Current profile enrichment manifest", () => {
   it("only identifies a closed list of generic imported descriptions as replaceable", () => {
     expect(isGenericProfileEnrichmentDescriptionPlaceholder("Barber")).toBe(true);
     expect(isGenericProfileEnrichmentDescriptionPlaceholder("Beauty & Hair")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned / Jamaican / Caribbean")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned directory listing: a comprehensive directory of Black-owned businesses.")).toBe(true);
+    expect(isGenericProfileEnrichmentDescriptionPlaceholder("Black-owned neighborhood restaurant serving Jamaican comfort food.")).toBe(false);
     expect(isGenericProfileEnrichmentDescriptionPlaceholder("Neighborhood barbershop offering fades and beard care.")).toBe(false);
   });
 });

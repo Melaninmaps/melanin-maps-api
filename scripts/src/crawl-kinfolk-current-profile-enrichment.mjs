@@ -178,6 +178,7 @@ export function inputRecords(source) {
         sourceKind: source.kind,
         sourceSnapshot: row.sourceSnapshot ?? {},
         currentSnapshotHash: row.currentSnapshotHash ?? null,
+        websiteRecovery: row.websiteRecovery ?? null,
         verifiedPresenceEvidence: {
           classification: source.evidence.classification,
           reason: source.evidence.reason,

@@ -84,7 +84,10 @@ import {
 import {
   isEmptyProfileEnrichmentField,
   isGenericProfileEnrichmentDescriptionPlaceholder,
+  isProfileEnrichmentNonProfileSocialControlUrl,
+  isProfileEnrichmentOfficialSocialLink,
   parseProfileEnrichmentManifest,
+  type EnrichmentPatchField,
   type ProfileEnrichmentCandidate,
 } from "../businesses/kinfolkCurrentProfileEnrichment";
 import { isAdmin as hasAdminAccess } from "../lib/adminAuth";
@@ -4511,9 +4514,19 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
         results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business no longer exists." });
         continue;
       }
-      if (!["live_unclaimed", "live_claimed"].includes(existing.listing_status ?? "")) {
+      const allowsStagedProfileEnrichment = manifest.scope === "non_kinfolk_current_all";
+      const allowedListingStatuses = allowsStagedProfileEnrichment
+        ? ["live_unclaimed", "live_claimed", "staged"]
+        : ["live_unclaimed", "live_claimed"];
+      if (!allowedListingStatuses.includes(existing.listing_status ?? "")) {
         await client.query("ROLLBACK");
-        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business is not currently publicly listed." });
+        results.push({
+          businessId: candidate.businessId,
+          status: "skipped",
+          reason: allowsStagedProfileEnrichment
+            ? "Business is not an active live or staged record eligible for held-profile enrichment."
+            : "Business is not currently publicly listed.",
+        });
         continue;
       }
       if (!profileEnrichmentIdentityMatches(existing, candidate)) {
@@ -4535,7 +4548,8 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
         youtube: existing.youtube,
         pinterest: existing.pinterest,
       };
-      const fillOnlyPatch: Record<string, string | string[]> = {};
+      const fillOnlyPatch: Record<string, string | string[] | null> = {};
+      const rejectedNonProfileSocialFields: string[] = [];
       let conflictField: string | null = null;
       for (const [field, proposedValue] of Object.entries(candidate.patch)) {
         const mode = candidate.fieldModes[field as keyof typeof candidate.fieldModes] ?? "fill";
@@ -4554,6 +4568,24 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
           : ["website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"].includes(field)
             ? normalizedProfileEnrichmentWebsite(currentText) === normalizedProfileEnrichmentWebsite(proposedText)
             : currentText.toLocaleLowerCase() === proposedText.toLocaleLowerCase();
+        if (mode === "clear_invalid_social_link") {
+          if (!isProfileEnrichmentNonProfileSocialControlUrl(field as EnrichmentPatchField, proposedText)) {
+            conflictField = field;
+            break;
+          }
+          if (isEmptyProfileEnrichmentField(field as "description" | "hours" | "phone" | "tags", currentValue)) continue;
+          if (!equivalent) {
+            conflictField = field;
+            break;
+          }
+          fillOnlyPatch[field] = null;
+          continue;
+        }
+        if (["instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"].includes(field)
+          && !isProfileEnrichmentOfficialSocialLink(field as EnrichmentPatchField, proposedText)) {
+          rejectedNonProfileSocialFields.push(field);
+          continue;
+        }
         if (equivalent) continue;
         if (isEmptyProfileEnrichmentField(field as "description" | "hours" | "phone" | "tags", currentValue)) {
           fillOnlyPatch[field] = proposedText;
@@ -4564,6 +4596,15 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
           && candidate.receipts.some((receipt) => receipt.field === "description" && receipt.confidence === "high")
           && isGenericProfileEnrichmentDescriptionPlaceholder(existing.description)) {
           fillOnlyPatch.description = proposedText;
+          continue;
+        }
+        if (field === "website"
+          && mode === "replace_verified_inactive"
+          && manifest.scope === "non_kinfolk_current_all"
+          && candidate.websiteRecovery?.priorWebsiteClassification === "REMOVE_CONFIRMED_INACTIVE"
+          && candidate.websiteRecovery.priorWebsite === candidate.expectedIdentity.website
+          && normalizedProfileEnrichmentWebsite(candidate.websiteRecovery.priorWebsite) === normalizedProfileEnrichmentWebsite(currentText)) {
+          fillOnlyPatch.website = proposedText;
           continue;
         }
         // A generic-replacement proposal never replaces substantive text. It is
@@ -4580,7 +4621,13 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
       }
       if (Object.keys(fillOnlyPatch).length === 0) {
         await client.query("ROLLBACK");
-        results.push({ businessId: candidate.businessId, status: "skipped", reason: "All proposed profile fields already match or contain no additive first-party value." });
+        results.push({
+          businessId: candidate.businessId,
+          status: "skipped",
+          reason: rejectedNonProfileSocialFields.length > 0
+            ? `No eligible profile fields remain after rejecting non-profile social share or intent link${rejectedNonProfileSocialFields.length === 1 ? "" : "s"}: ${rejectedNonProfileSocialFields.join(", ")}.`
+            : "All proposed profile fields already match or contain no additive first-party value.",
+        });
         continue;
       }
       const receiptFieldForPatchField: Record<string, string> = {
@@ -4602,7 +4649,7 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
       const validated = validateAdminBusinessProfilePatch({
         ...fillOnlyPatch,
         sourceReceipts,
-        changeNote: `Official first-party ${manifest.scope === "kinfolk_current" ? "Kinfolk Current" : "non-Kinfolk Current"} profile enrichment (${manifest.batchId}; ${manifest.contentFingerprint.slice(0, 12)})`,
+        changeNote: `Official first-party ${manifest.scope === "kinfolk_current" ? "Kinfolk Current" : manifest.scope === "non_kinfolk_current_all" ? "non-Kinfolk Current (including held staged profiles)" : "non-Kinfolk Current"} profile enrichment (${manifest.batchId}; ${manifest.contentFingerprint.slice(0, 12)})`,
       }, {
         name: existing.name,
         description: existing.description,

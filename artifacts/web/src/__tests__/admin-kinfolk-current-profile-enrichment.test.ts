@@ -20,11 +20,22 @@ describe("audited profile enrichment Admin control", () => {
     expect(componentSource).toContain("parsed.candidates.length > 100");
   });
 
+  it("provides an accessible, visible file input for a reviewed manifest", () => {
+    expect(componentSource).toContain('aria-label="Upload reviewed profile enrichment manifest"');
+    expect(componentSource).toContain('type="file"');
+    expect(componentSource).not.toContain('className="sr-only"');
+  });
+
   it("is available in the Current or noncurrent inventory selected by the Admin", () => {
     expect(adminSource).toContain('bizIntakeCohortFilter === "non_kinfolk_current"');
     expect(adminSource).toContain('get("profile_enrichment")');
     expect(adminSource).toContain('requested === "kinfolk_current" || requested === "non_kinfolk_current"');
     expect(adminSource).toContain("profileEnrichmentScope && bizStatusFilter");
+    expect(adminSource).toContain('id="profile-enrichment"');
     expect(adminSource).toContain("<KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope}");
+  });
+
+  it("does not reload the page-wide inventory after a bounded enrichment request", () => {
+    expect(adminSource).not.toContain("onApplied={() => { void loadBusinesses({}); }}");
   });
 });
