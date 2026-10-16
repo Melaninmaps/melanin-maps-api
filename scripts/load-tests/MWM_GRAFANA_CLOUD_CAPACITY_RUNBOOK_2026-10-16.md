@@ -25,8 +25,9 @@ It deliberately does **not** send messages, create a post, save a place, follow 
 |---|---|---|
 | `mwm-launch-capacity.k6.js` | Core member journey, 50–200 simultaneous VUs, strict stop thresholds | Prepared; not run |
 | `mwm-kinfolk-ai-capacity.k6.js` | One short KinfolkAI prompt per isolated account at 4, 8, then 12 concurrent turns | Prepared; not run |
-| `provisionCapacityTestUsers.ts` | Exact 200-account lifecycle with explicit provision, verify, and cleanup guards | Prepared; not run |
-| `profile-view-policy.ts` | Prevents test accounts from adding synthetic profile views to real business analytics | Source candidate only; not deployed |
+| `admin-audit.ts` capacity lifecycle routes | Exact 200-account provision, verify, and cleanup lifecycle with Admin authentication and explicit guards | Prepared; not run |
+| `provisionCapacityTestUsers.ts` | Local/manual wrapper around the same transaction-safe identity lifecycle | Prepared; not run |
+| `profile-view-policy.ts` | Prevents test accounts from adding synthetic profile views to real business analytics | Deployed in production preparation release `12113ec`; live test-account verification pending |
 
 The identity source uses only the tightly namespaced accounts `mwm-capacity-001@capacity.mwm.internal` through `mwm-capacity-200@capacity.mwm.internal`. It neither changes nor deletes the existing `mwm-loadtest-*` and `manus.tester.*` cohorts. The new cohort is necessary because the present source does not provide a safe, shared external-runner credential lifecycle for the old accounts. Existing test accounts remain available and unaffected.
 
@@ -35,12 +36,12 @@ The identity source uses only the tightly namespaced accounts `mwm-capacity-001@
 The following gates are deliberately separate. No one may interpret preparation as permission to run the test.
 
 1. **Deploy the narrow test-account profile-view safeguard.** Test users must return `recorded: false` from `POST /api/businesses/:id/view`, and a test-account business-detail request must not insert a profile-view row. This prevents test traffic from changing a real business's analytics.
-2. **Provision exactly 200 dedicated accounts in the new namespace.** The lifecycle script refuses to write unless `CAPACITY_TEST_IDENTITY_WRITE_APPROVED=PROVISION_200_ISOLATED_TEST_USERS` is present and the password has at least 16 characters. It rejects any collision with an ordinary user and sets `is_load_test=true` and `marketing_opt_out=true`.
-3. **Use one newly generated password only as a Grafana Cloud secret.** It must be supplied to the provisioning job as `CAPACITY_TEST_PASSWORD` and saved in Grafana Cloud as `mwm_capacity_200_password`. It must never be committed, pasted into chat, included in k6 environment variables, or emitted in results.
+2. **Provision exactly 200 dedicated accounts in the new namespace.** The authenticated Admin capacity route refuses to write unless `CAPACITY_TEST_IDENTITY_WRITE_APPROVED=PROVISION_200_ISOLATED_TEST_USERS`, an exact `count=200` confirmation, and a valid temporary bcrypt password hash are present. It rejects any ordinary-user collision, rejects a partial namespace, sets `is_load_test=true` and `marketing_opt_out=true`, and uses one serializable advisory-locked transaction.
+3. **Use one newly generated password only as a Grafana Cloud secret.** Its bcrypt hash is supplied temporarily to the production route as `CAPACITY_TEST_PASSWORD_HASH`; the raw value is saved in Grafana Cloud as `mwm_capacity_200_password`. The raw value must never be committed, pasted into chat, included in ordinary k6 environment variables, or emitted in results.
 4. **Run identity verification.** The script must report exactly 200 present accounts, 200 `is_load_test` accounts, and zero ordinary-account collisions before starting traffic.
 5. **Confirm live `/api/readyz` immediately before every stage.** A non-200 result cancels that stage.
 
-The provisioner is a manual script, not a startup migration. After an approved production release, it must run once in a Railway production one-off execution context so it uses the production database; it must not be run from a laptop or Sandbox with copied database credentials.
+The provisioner is neither a startup migration nor a laptop/Sandbox database script. The production service is in explicit feature-release mode, so boot-time writers are intentionally bypassed. The only supported production path is the authenticated Admin capacity route, which invokes the transaction-safe lifecycle against the existing production database and returns counts only.
 
 ## Grafana Cloud k6 configuration
 
@@ -115,7 +116,7 @@ MWM_AI_VUS=4 | 8 | 12
 
 ## Cleanup and evidence retention
 
-After the approved test sequence and result export are complete, run the lifecycle script in `--mode=cleanup` only with `CAPACITY_TEST_IDENTITY_CLEANUP_APPROVED=REMOVE_200_ISOLATED_TEST_USERS`. It deletes sessions and users only in the exact `mwm-capacity-###@capacity.mwm.internal` namespace and never touches existing test cohorts or ordinary accounts.
+After the approved test sequence and result export are complete, call the authenticated Admin cleanup route only with `CAPACITY_TEST_IDENTITY_CLEANUP_APPROVED=REMOVE_200_ISOLATED_TEST_USERS`, an exact `count=200` confirmation, and `confirmed=true`. It deletes sessions and users only in the exact `mwm-capacity-###@capacity.mwm.internal` namespace and never touches existing test cohorts or ordinary accounts.
 
 Keep these receipts:
 
@@ -134,10 +135,10 @@ If the configured Grafana plan cannot cover the staged test without payment, sto
 ## Current status
 
 - **Production infrastructure:** unchanged.
-- **Accounts:** no new accounts provisioned.
+- **Accounts:** no new accounts provisioned. A first boot-time attempt was blocked safely by explicit feature-release mode and made no database change; the boot-time writer was removed rather than bypassing that production safeguard.
 - **Grafana Cloud:** no project, secret, or test run created by this task.
 - **Core test source:** syntax-checked; not executed.
-- **Test-only profile-view isolation:** focused unit test passed; source candidate still requires its own reviewed production deployment before the core script can run.
+- **Test-only profile-view isolation:** deployed in the production preparation release; focused unit test passed, while live verification remains gated on the dedicated account cohort.
 
 ## References
 

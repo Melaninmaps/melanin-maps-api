@@ -73,11 +73,6 @@ import {
 } from "./library-evidence-seed.js";
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
-import {
-  buildCapacityTestAccounts,
-  isCapacityTestCleanupEnabled,
-  isCapacityTestProvisionEnabled,
-} from "../capacity/capacityTestIdentitySpec";
 
 const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
   SELECT COALESCE(p_status, 'active') NOT IN ('suspended', 'removed', 'deleted', 'permanently_hidden')
@@ -7182,10 +7177,6 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ? "complete"
     : "failed";
 
-  // This is inert on ordinary boots. The capacity-test lifecycle has a separate
-  // exact one-time guard and is isolated from all production member accounts.
-  await ensureGuardedCapacityTestIdentityLifecycle(log, warn);
-
   // Production startup is schema-only by default. Inventory, directory, and
   // content population must remain an explicit, reviewed operator action so a
   // deployment cannot publish, alter, or enrich listings without approval.
@@ -9674,127 +9665,6 @@ async function ensureLoadTestAccounts(
     warn(
       `Load-test account seed failed: ${err instanceof Error ? err.message : String(err)}`,
     );
-  }
-}
-
-/**
- * A manually armed lifecycle for the external capacity test. Unlike legacy
- * load-test seed helpers, this is inactive unless exactly one environment guard
- * is set. It never names, changes, or deletes an ordinary member account.
- */
-async function ensureGuardedCapacityTestIdentityLifecycle(
-  log: (msg: string) => void,
-  warn: (msg: string) => void,
-): Promise<void> {
-  const environment = {
-    CAPACITY_TEST_IDENTITY_WRITE_APPROVED: process.env.CAPACITY_TEST_IDENTITY_WRITE_APPROVED,
-    CAPACITY_TEST_IDENTITY_CLEANUP_APPROVED: process.env.CAPACITY_TEST_IDENTITY_CLEANUP_APPROVED,
-    CAPACITY_TEST_PASSWORD_HASH: process.env.CAPACITY_TEST_PASSWORD_HASH,
-  };
-  const provisionEnabled = isCapacityTestProvisionEnabled(environment);
-  const cleanupEnabled = isCapacityTestCleanupEnabled(environment);
-
-  if (!provisionEnabled && !cleanupEnabled) {
-    if (
-      environment.CAPACITY_TEST_IDENTITY_WRITE_APPROVED
-      || environment.CAPACITY_TEST_IDENTITY_CLEANUP_APPROVED
-      || environment.CAPACITY_TEST_PASSWORD_HASH
-    ) {
-      warn("Capacity test identity lifecycle ignored: exact mutually exclusive guard was not satisfied");
-    }
-    return;
-  }
-
-  const accounts = buildCapacityTestAccounts();
-  const emails = accounts.map((account) => account.email);
-  const client = await pool.connect();
-  try {
-    if (cleanupEnabled) {
-      await client.query("BEGIN");
-      try {
-        const sessions = await client.query(
-          `DELETE FROM sessions
-            WHERE COALESCE(sess->'user'->>'email', '') = ANY($1::text[])
-               OR COALESCE(sess->>'email', '') = ANY($1::text[])`,
-          [emails],
-        );
-        const users = await client.query(
-          `DELETE FROM users
-            WHERE email = ANY($1::text[])
-              AND COALESCE(is_load_test, false) = true`,
-          [emails],
-        );
-        await client.query("COMMIT");
-        log(`Capacity test identity cleanup complete: ${users.rowCount ?? 0} users and ${sessions.rowCount ?? 0} sessions removed`);
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
-      }
-      return;
-    }
-
-    const existing = await client.query<{ email: string; isLoadTest: boolean }>(
-      `SELECT email, COALESCE(is_load_test, false) AS "isLoadTest"
-         FROM users
-        WHERE email = ANY($1::text[])`,
-      [emails],
-    );
-    if (existing.rows.some((row) => !row.isLoadTest)) {
-      warn("Capacity test identity provisioning blocked: ordinary-account collision in the reserved namespace");
-      return;
-    }
-
-    await client.query("BEGIN");
-    try {
-      const priorSessions = await client.query(
-        `DELETE FROM sessions
-          WHERE COALESCE(sess->'user'->>'email', '') = ANY($1::text[])
-             OR COALESCE(sess->>'email', '') = ANY($1::text[])`,
-        [emails],
-      );
-      let created = 0;
-      let retained = 0;
-      for (const account of accounts) {
-        const result = await client.query<{ inserted: boolean }>(
-          `INSERT INTO users (
-             email, first_name, last_name, username, home_city, password_hash,
-             email_verified, approved, member_type, tester_status,
-             tester_access_source, is_load_test, marketing_opt_out,
-             created_at, updated_at
-           ) VALUES (
-             $1, 'Capacity', 'Test', $2, $3, $4,
-             true, true, 'free', 'active', 'admin_invite', true, true,
-             NOW(), NOW()
-           )
-           ON CONFLICT (email) DO UPDATE SET
-             password_hash = EXCLUDED.password_hash,
-             is_load_test = true,
-             marketing_opt_out = true,
-             approved = true,
-             email_verified = true,
-             updated_at = NOW()
-           WHERE users.is_load_test = true
-           RETURNING (xmax = 0) AS inserted`,
-          [
-            account.email,
-            account.username,
-            account.homeCity,
-            environment.CAPACITY_TEST_PASSWORD_HASH,
-          ],
-        );
-        if (result.rows[0]?.inserted) created += 1;
-        else retained += 1;
-      }
-      await client.query("COMMIT");
-      log(`Capacity test identities ready: ${created} created, ${retained} retained, ${priorSessions.rowCount ?? 0} prior sessions revoked`);
-    } catch (error) {
-      await client.query("ROLLBACK").catch(() => undefined);
-      throw error;
-    }
-  } catch (error: unknown) {
-    warn(`Capacity test identity lifecycle failed: ${error instanceof Error ? error.message : String(error)}`);
-  } finally {
-    client.release();
   }
 }
 

@@ -24,6 +24,19 @@ import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
+import {
+  CAPACITY_TEST_CLEANUP_GUARD,
+  CAPACITY_TEST_PROVISION_GUARD,
+  CAPACITY_TEST_USER_COUNT,
+  isBcryptPasswordHash,
+  isCapacityTestCleanupEnabled,
+  isCapacityTestProvisionEnabled,
+} from "../capacity/capacityTestIdentitySpec";
+import {
+  cleanupCapacityTestIdentities,
+  provisionFreshCapacityTestIdentities,
+  verifyCapacityTestIdentities,
+} from "../capacity/capacityTestIdentityLifecycle";
 
 const router = Router();
 
@@ -115,6 +128,95 @@ router.delete("/admin/audit-user/:userId", async (req: Request, res: Response) =
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     res.status(500).json({ error: "Failed to delete audit user", detail: msg });
+  }
+});
+
+// ── Guarded 200-user capacity-test lifecycle ─────────────────────────────────
+//
+// The production service intentionally runs in explicit feature-release mode,
+// which suppresses all boot-time writers. These authenticated one-time routes
+// are the only supported way to provision or remove the dedicated test cohort.
+// They do not accept or return a plaintext password; the caller supplies only an
+// exact confirmation phrase while a temporary bcrypt hash is server-configured.
+
+function isCapacityLifecycleRequest(req: Request, expectedConfirmation: string): boolean {
+  return req.body?.confirmed === true
+    && req.body?.confirmation === expectedConfirmation
+    && req.body?.count === CAPACITY_TEST_USER_COUNT;
+}
+
+function capacityLifecycleError(res: Response, error: unknown): void {
+  const message = error instanceof Error ? error.message : "Capacity identity lifecycle failed.";
+  const status = /collision|empty reserved namespace|complete isolated cohort/i.test(message) ? 409 : 500;
+  res.status(status).json({ error: message });
+}
+
+router.get("/admin/capacity-test-identities/verify", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+
+  const client = await pool.connect();
+  try {
+    const summary = await verifyCapacityTestIdentities(client);
+    res.json({ ok: true, mode: "verify", ...summary, credentialsLogged: false });
+  } catch (error) {
+    capacityLifecycleError(res, error);
+  } finally {
+    client.release();
+  }
+});
+
+router.post("/admin/capacity-test-identities/provision", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  if (!isCapacityLifecycleRequest(req, CAPACITY_TEST_PROVISION_GUARD)) {
+    return void res.status(400).json({
+      error: "Exact provision confirmation, count=200, and confirmed=true are required.",
+    });
+  }
+  if (!isCapacityTestProvisionEnabled(process.env)) {
+    return void res.status(503).json({ error: "Capacity-test provisioning is not armed." });
+  }
+  const passwordHash = process.env.CAPACITY_TEST_PASSWORD_HASH;
+  if (!isBcryptPasswordHash(passwordHash)) {
+    return void res.status(503).json({ error: "Capacity-test password hash is not configured." });
+  }
+
+  const client = await pool.connect();
+  try {
+    const summary = await provisionFreshCapacityTestIdentities(client, passwordHash);
+    res.json({ ok: true, mode: "provision", ...summary, credentialsLogged: false });
+  } catch (error) {
+    capacityLifecycleError(res, error);
+  } finally {
+    client.release();
+  }
+});
+
+router.post("/admin/capacity-test-identities/cleanup", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  if (!isCapacityLifecycleRequest(req, CAPACITY_TEST_CLEANUP_GUARD)) {
+    return void res.status(400).json({
+      error: "Exact cleanup confirmation, count=200, and confirmed=true are required.",
+    });
+  }
+  if (!isCapacityTestCleanupEnabled(process.env)) {
+    return void res.status(503).json({ error: "Capacity-test cleanup is not armed." });
+  }
+
+  const client = await pool.connect();
+  try {
+    const result = await cleanupCapacityTestIdentities(client);
+    res.json({
+      ok: true,
+      mode: "cleanup",
+      ...result.summaryBefore,
+      deletedUsers: result.deletedUsers,
+      deletedSessions: result.deletedSessions,
+      credentialsLogged: false,
+    });
+  } catch (error) {
+    capacityLifecycleError(res, error);
+  } finally {
+    client.release();
   }
 });
 
