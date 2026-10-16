@@ -3251,6 +3251,38 @@ export default function Admin() {
     }
   };
 
+  const makeBusinessKinfolkCurrent = async (business: Pick<AdminBusiness, "id" | "name">) => {
+    if (bulkBusinessUpdating) return;
+    if (!window.confirm(
+      `Make ${business.name} Kinfolk Current? This adds the business to the member-visible Kinfolk catalog without changing its profile, source receipts, ownership labels, or listing lifecycle.`,
+    )) return;
+    setBulkBusinessUpdating(true);
+    try {
+      const response = await authenticatedAdminFetch(`${BASE}api/admin/kinfolk-catalog/${encodeURIComponent(business.id)}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          state: "ready",
+          reason: "Administrator marked this live profile Kinfolk Current from the Non-Kinfolk Current inventory",
+        }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Could not make this business Kinfolk Current.");
+      setSelectedBusinessIds((current) => {
+        const next = new Set(current);
+        next.delete(business.id);
+        return next;
+      });
+      await loadBusinesses();
+      window.alert(`${business.name} is now Kinfolk Current and no longer appears in the Non-Kinfolk Current filter.`);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Could not make this business Kinfolk Current.");
+    } finally {
+      setBulkBusinessUpdating(false);
+    }
+  };
+
   const moveSelectedBusinessesToDeleteQueue = () => {
     const selectedRows = filteredBiz.filter((business) => selectedBusinessIds.has(business.id));
     void moveBusinessesToDeleteQueue(
@@ -5452,6 +5484,8 @@ export default function Admin() {
                           ? "A dedicated reversible, non-public retention folder. Records stay intact for at least 7 days; nothing auto-deletes. Permanent deletion requires a separate typed confirmation after eligibility."
                         : kinfolkCurrentCohortSelected
                           ? "The current public catalog available to Kinfolk. Use the same filters, checkboxes, full editor, and reversible archive action; this cohort does not publish, change source receipts, or alter ownership."
+                          : nonKinfolkCurrentCohortSelected
+                            ? "These public listings are outside the Kinfolk Current catalog. Use Make Kinfolk Current on a reviewed live row to add its audited catalog decision without changing the profile, source receipts, ownership labels, or listing lifecycle."
                           : bizStatusFilter === "all"
                             ? "Retained business records are together here; Delete Queue, Kinfolk Current Delete Review, and Permanently Closed have separate folders. The row status tells you whether it is live, archived, or a confirmed duplicate; those statuses still protect the actions available for that row."
                             : bizIntakeCohortFilter === "manus_created"
@@ -6464,6 +6498,19 @@ export default function Admin() {
                                 >
                                   Edit profile
                                 </button>
+                                {nonKinfolkCurrentCohortSelected &&
+                                  (biz.listingStatus === "live_unclaimed" || biz.listingStatus === "live_claimed") &&
+                                  !biz.isDuplicate && !biz.deleteQueueEntryId && !biz.kinfolkCurrentDeleteReview && (
+                                  <button
+                                    type="button"
+                                    onClick={() => void makeBusinessKinfolkCurrent(biz)}
+                                    className="flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 border border-emerald-200 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                                    disabled={bulkBusinessUpdating}
+                                    title="Add this reviewed live profile to the member-visible Kinfolk Current catalog without editing its business details"
+                                  >
+                                    <CheckCircle className="h-3.5 w-3.5" /> Make Kinfolk Current
+                                  </button>
+                                )}
                                 {!biz.deleteQueueEntryId && <button
                                   type="button"
                                   onClick={() => void moveBusinessesToDeleteQueue([biz.id], [biz.name], biz.kinfolkCurrentDeleteReview)}
