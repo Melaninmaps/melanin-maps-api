@@ -9,6 +9,10 @@ const adminRoute = readFileSync(
   new URL("../../routes/admin.ts", import.meta.url),
   "utf8",
 );
+const server = readFileSync(
+  new URL("../../index.ts", import.meta.url),
+  "utf8",
+);
 
 describe("international directory-only visibility schema", () => {
   it("is an additive, receipt-only, reversible schema", () => {
@@ -22,6 +26,14 @@ describe("international directory-only visibility schema", () => {
     expect(schema).toContain("revoked_at");
     expect(schema).toContain("ON DELETE CASCADE");
     expect(schema).not.toContain("UPDATE businesses");
+  });
+
+  it("creates the empty receipt schema before traffic in explicit-release mode", () => {
+    const bootstrap = server.indexOf("await ensureInternationalDirectoryOnlyVisibilitySchema(");
+    const listen = server.indexOf("const server = host");
+    expect(server).toContain("ensureInternationalDirectoryOnlyVisibilitySchema");
+    expect(bootstrap).toBeGreaterThan(-1);
+    expect(bootstrap).toBeLessThan(listen);
   });
 
   it("accepts only the fixed audit manifest and does not mutate business fields", () => {
