@@ -1,0 +1,218 @@
+{
+  "evaluatedAt": "2026-10-16T05:26:34.733Z",
+  "environment": "Manus Sandbox controlled prompt-assembly evaluation; no staging or production invocation",
+  "model": "gpt-5",
+  "source": "feat/kinfolk-four-persona-system working tree after first-call architecture revision",
+  "results": [
+    {
+      "id": "brief_simple",
+      "purpose": "Brief direct factual answer",
+      "message": "Briefly explain why the sun is hot.",
+      "mode": "professor",
+      "communicationSource": "settings",
+      "resolvedAaveLevel": 0,
+      "presentation": {
+        "responseLength": "brief",
+        "responseFormat": "natural",
+        "source": "current_message"
+      },
+      "depth": "standard",
+      "artifact": null,
+      "maxCompletionTokens": 750,
+      "initialModelResponse": "The sun is hot because hydrogen atoms in its core fuse into helium, releasing a huge amount of energy. Gravity squeezes the core so tightly that pressure and temperature stay high enough to keep fusion going. That energy travels outward and reaches us as light and heat. At its current rate, the sun will keep burning hydrogen in its core for roughly another five billion years.",
+      "finalMemberVisibleResponse": "The sun is hot because hydrogen atoms in its core fuse into helium, releasing a huge amount of energy. Gravity squeezes the core so tightly that pressure and temperature stay high enough to keep fusion going. That energy travels outward and reaches us as light and heat. At its current rate, the sun will keep burning hydrogen in its core for roughly another five billion years.",
+      "parsedModelPayload": false,
+      "subsequentCorrection": null,
+      "postProcessing": "None. The final member-visible response is the parsed reply field from the first model call; no AAVE, natural-format, or brief-response rewrite was invoked.",
+      "usage": {
+        "prompt_tokens": 71,
+        "completion_tokens": 91,
+        "total_tokens": 3106,
+        "prompt_tokens_details": {
+          "cached_tokens": 2944,
+          "cache_read_input_tokens": 2944
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "id": "brief_complex",
+      "purpose": "Brief but complete complex decision",
+      "message": "Briefly compare two job offers when one pays more but requires relocating away from family.",
+      "mode": "community",
+      "communicationSource": "settings",
+      "resolvedAaveLevel": 0,
+      "presentation": {
+        "responseLength": "brief",
+        "responseFormat": "natural",
+        "source": "current_message"
+      },
+      "depth": "standard",
+      "artifact": null,
+      "maxCompletionTokens": 750,
+      "initialModelResponse": "Here’s the trade-off in plain terms:\n\n- Money: Higher pay can speed up goals (debt, savings, homebuying). Run the after-tax difference and subtract new costs: moving, higher rent, travel back home, childcare gaps, and time off for visits. A smaller true gap changes the choice.\n\n- Support system: Being near family can mean built-in childcare, elder care help, emotional backup, and lower stress. Distance can raise burnout risk and out-of-pocket help costs.\n\n- Career arc: If the relocate role clearly levels you up (skills, title, brand, leadership), that compounding effect might outweigh short-term strain. If it’s just “more of the same,” the premium should be bigger to justify the move.\n\n- Quality of life: Consider your daily routine—commute, community, climate, safety, culturally familiar spaces. If you’ll spend your raise buying back peace, it’s not a true win.\n\n- Exit options: If you move, set a time-bound review (e.g., 12–18 months) and a budget for travel home. If you stay, ask the higher-paying company about remote/hybrid, a signing bonus, or a delayed start while you set up support.\n\nQuick gut-check: If the higher pay disappeared tomorrow, would you still want that role and location for what it builds? If no, the raise has to be clearly life-changing after real costs.",
+      "finalMemberVisibleResponse": "Here’s the trade-off in plain terms:\n\n- Money: Higher pay can speed up goals (debt, savings, homebuying). Run the after-tax difference and subtract new costs: moving, higher rent, travel back home, childcare gaps, and time off for visits. A smaller true gap changes the choice.\n\n- Support system: Being near family can mean built-in childcare, elder care help, emotional backup, and lower stress. Distance can raise burnout risk and out-of-pocket help costs.\n\n- Career arc: If the relocate role clearly levels you up (skills, title, brand, leadership), that compounding effect might outweigh short-term strain. If it’s just “more of the same,” the premium should be bigger to justify the move.\n\n- Quality of life: Consider your daily routine—commute, community, climate, safety, culturally familiar spaces. If you’ll spend your raise buying back peace, it’s not a true win.\n\n- Exit options: If you move, set a time-bound review (e.g., 12–18 months) and a budget for travel home. If you stay, ask the higher-paying company about remote/hybrid, a signing bonus, or a delayed start while you set up support.\n\nQuick gut-check: If the higher pay disappeared tomorrow, would you still want that role and location for what it builds? If no, the raise has to be clearly life-changing after real costs.",
+      "parsedModelPayload": false,
+      "subsequentCorrection": null,
+      "postProcessing": "None. The final member-visible response is the parsed reply field from the first model call; no AAVE, natural-format, or brief-response rewrite was invoked.",
+      "usage": {
+        "prompt_tokens": 148,
+        "completion_tokens": 306,
+        "total_tokens": 3398,
+        "prompt_tokens_details": {
+          "cached_tokens": 2944,
+          "cache_read_input_tokens": 2944
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "id": "balanced_simple",
+      "purpose": "Same saved Balanced preference on a simple question",
+      "message": "What is photosynthesis?",
+      "mode": "professor",
+      "communicationSource": "settings",
+      "resolvedAaveLevel": 0,
+      "presentation": {
+        "responseLength": "balanced",
+        "responseFormat": "natural",
+        "source": "saved"
+      },
+      "depth": "concise",
+      "artifact": null,
+      "maxCompletionTokens": 750,
+      "initialModelResponse": "Photosynthesis is the process plants, algae, and some bacteria use to turn light energy into chemical energy, making sugars from carbon dioxide and water while releasing oxygen. \n\nHow it works: chlorophyll absorbs light, powering reactions that split water to produce oxygen and energy carriers; those carriers drive the Calvin cycle, which fixes carbon dioxide into sugars. So what: it’s the base of most food chains and the main source of Earth’s oxygen, storing solar energy in a form living things can use.",
+      "finalMemberVisibleResponse": "Photosynthesis is the process plants, algae, and some bacteria use to turn light energy into chemical energy, making sugars from carbon dioxide and water while releasing oxygen. \n\nHow it works: chlorophyll absorbs light, powering reactions that split water to produce oxygen and energy carriers; those carriers drive the Calvin cycle, which fixes carbon dioxide into sugars. So what: it’s the base of most food chains and the main source of Earth’s oxygen, storing solar energy in a form living things can use.",
+      "parsedModelPayload": false,
+      "subsequentCorrection": null,
+      "postProcessing": "None. The final member-visible response is the parsed reply field from the first model call; no AAVE, natural-format, or brief-response rewrite was invoked.",
+      "usage": {
+        "prompt_tokens": 117,
+        "completion_tokens": 117,
+        "total_tokens": 3050,
+        "prompt_tokens_details": {
+          "cached_tokens": 2816,
+          "cache_read_input_tokens": 2816
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "id": "balanced_complex",
+      "purpose": "Same saved Balanced preference on a complex question",
+      "message": "Compare two job offers when one pays more but requires relocating away from family.",
+      "mode": "professor",
+      "communicationSource": "settings",
+      "resolvedAaveLevel": 0,
+      "presentation": {
+        "responseLength": "balanced",
+        "responseFormat": "natural",
+        "source": "saved"
+      },
+      "depth": "detailed",
+      "artifact": null,
+      "maxCompletionTokens": 1200,
+      "initialModelResponse": "Best way to compare them: start with your bottom line, then weigh tradeoffs you can’t “fix” later.\n\nDirect recommendation: make a side‑by‑side that converts both offers to your after‑tax, after‑cost, after‑stress picture for the next 2–3 years. Choose the role with the stronger total fit on money plus life alignment, not headline salary. If the higher pay is largely eaten by relocation costs, higher living expenses, and loss of family support you actively use, it may not be the better deal.\n\nWhat to calculate (money you keep)\n- True take‑home: estimate after‑tax pay in each location. Different states/cities can shift net pay a lot.\n- Cost of living gap: compare rent/mortgage, groceries, transportation, childcare, insurance, and likely travel back home.\n- Moving costs and support: who pays for relocation, temporary housing, lease break, home sale help, closing costs?\n- Benefits value: employer 401(k) match, equity refresh cadence, bonus target/likelihood, health premiums/out‑of‑pocket, HSA/FSA, commuter, tuition/pro development.\n- Risk and runway: contract vs. permanent, layoff history, probation, severance, visa needs. A riskier role might require keeping a larger emergency fund.\n\nWhat to weigh (life you live)\n- Family proximity as an actual support system: do you rely on them for childcare, school pickups, elder care, emotional support, or cultural/community life? Replacing that help has time and cash costs.\n- Commute and schedule control: hours, on‑call, travel frequency, autonomy, remote/hybrid flexibility.\n- Role trajectory: skills you’ll build, manager quality, internal mobility, brand or network effects, and how fast this gets you to the role you want next.\n- Community fit: neighborhood safety, vibe, faith/cultural community access, and how easy it is to make friends. If you’d be rebuilding your whole support web, factor the ramp.\n- Partner/kids considerations (if relevant): dual‑career prospects, school quality, IEP/services access, and timing with school years.\n\nHow to make it apples‑to‑apples\n1) Create a 2–3 year cash picture:\n- Start with base + likely bonus.\n- Subtract taxes for each locale.\n- Add employer match/equity at expected value (discount equity if unvested or volatile).\n- Subtract: rent/mortgage delta, transportation, childcare, healthcare premiums/OOP, and 4–6 family trips per year if you’d travel back.\n- Include one‑time moving costs that aren’t reimbursed and furniture/car changes.\nResult: net annual discretionary dollars.\n\n2) Score the non‑negotiables:\n- Put 0–2 points each on: manager fit, hours predictability, learning/growth, visa/security, commute, flexibility, and family/community proximity. Mark any deal‑breakers.\n\n3) Pressure test with futures:\n- If you accept Offer B today, what job can it unlock in 18–24 months that Offer A can’t? If that next step is 1–2 levels higher or opens your target industry, heavier short‑term tradeoffs may be worth it.\n- If the move fails, what’s your fallback in that city vs. staying put?\n\nCommon tradeoffs and how to handle them\n- Higher pay vs. childcare/family help: Price out equivalent paid support. If Grandma covers 10 hours/week plus backup sick days, that could be $6–10k/year plus reduced stress.\n- Equity vs. cash: Treat unvested equity with a haircut (e.g., 30–50%) unless it’s liquid, low‑volatility, and you’ll likely stay through vesting.\n- Prestige vs. manager: A strong manager and sane scope beat a fancy logo with churn or burnout for most people’s happiness and development.\n\nConcrete next step\n- If you share the two offers’ city, comp/benefit pieces, schedule expectations, relocation terms, and any family support you’d be giving up, I can help you build the net‑money table and a simple scorecard, and suggest what to negotiate (e.g., relocation stipend, extra PTO for family visits, sign‑on to offset moving, flexible travel back home, or a delayed start to align with school calendars).\n\nIf you’d like, I can drop in a short calculator outline you can copy to a spreadsheet.",
+      "finalMemberVisibleResponse": "Best way to compare them: start with your bottom line, then weigh tradeoffs you can’t “fix” later.\n\nDirect recommendation: make a side‑by‑side that converts both offers to your after‑tax, after‑cost, after‑stress picture for the next 2–3 years. Choose the role with the stronger total fit on money plus life alignment, not headline salary. If the higher pay is largely eaten by relocation costs, higher living expenses, and loss of family support you actively use, it may not be the better deal.\n\nWhat to calculate (money you keep)\n- True take‑home: estimate after‑tax pay in each location. Different states/cities can shift net pay a lot.\n- Cost of living gap: compare rent/mortgage, groceries, transportation, childcare, insurance, and likely travel back home.\n- Moving costs and support: who pays for relocation, temporary housing, lease break, home sale help, closing costs?\n- Benefits value: employer 401(k) match, equity refresh cadence, bonus target/likelihood, health premiums/out‑of‑pocket, HSA/FSA, commuter, tuition/pro development.\n- Risk and runway: contract vs. permanent, layoff history, probation, severance, visa needs. A riskier role might require keeping a larger emergency fund.\n\nWhat to weigh (life you live)\n- Family proximity as an actual support system: do you rely on them for childcare, school pickups, elder care, emotional support, or cultural/community life? Replacing that help has time and cash costs.\n- Commute and schedule control: hours, on‑call, travel frequency, autonomy, remote/hybrid flexibility.\n- Role trajectory: skills you’ll build, manager quality, internal mobility, brand or network effects, and how fast this gets you to the role you want next.\n- Community fit: neighborhood safety, vibe, faith/cultural community access, and how easy it is to make friends. If you’d be rebuilding your whole support web, factor the ramp.\n- Partner/kids considerations (if relevant): dual‑career prospects, school quality, IEP/services access, and timing with school years.\n\nHow to make it apples‑to‑apples\n1) Create a 2–3 year cash picture:\n- Start with base + likely bonus.\n- Subtract taxes for each locale.\n- Add employer match/equity at expected value (discount equity if unvested or volatile).\n- Subtract: rent/mortgage delta, transportation, childcare, healthcare premiums/OOP, and 4–6 family trips per year if you’d travel back.\n- Include one‑time moving costs that aren’t reimbursed and furniture/car changes.\nResult: net annual discretionary dollars.\n\n2) Score the non‑negotiables:\n- Put 0–2 points each on: manager fit, hours predictability, learning/growth, visa/security, commute, flexibility, and family/community proximity. Mark any deal‑breakers.\n\n3) Pressure test with futures:\n- If you accept Offer B today, what job can it unlock in 18–24 months that Offer A can’t? If that next step is 1–2 levels higher or opens your target industry, heavier short‑term tradeoffs may be worth it.\n- If the move fails, what’s your fallback in that city vs. staying put?\n\nCommon tradeoffs and how to handle them\n- Higher pay vs. childcare/family help: Price out equivalent paid support. If Grandma covers 10 hours/week plus backup sick days, that could be $6–10k/year plus reduced stress.\n- Equity vs. cash: Treat unvested equity with a haircut (e.g., 30–50%) unless it’s liquid, low‑volatility, and you’ll likely stay through vesting.\n- Prestige vs. manager: A strong manager and sane scope beat a fancy logo with churn or burnout for most people’s happiness and development.\n\nConcrete next step\n- If you share the two offers’ city, comp/benefit pieces, schedule expectations, relocation terms, and any family support you’d be giving up, I can help you build the net‑money table and a simple scorecard, and suggest what to negotiate (e.g., relocation stipend, extra PTO for family visits, sign‑on to offset moving, flexible travel back home, or a delayed start to align with school calendars).\n\nIf you’d like, I can drop in a short calculator outline you can copy to a spreadsheet.",
+      "parsedModelPayload": false,
+      "subsequentCorrection": null,
+      "postProcessing": "None. The final member-visible response is the parsed reply field from the first model call; no AAVE, natural-format, or brief-response rewrite was invoked.",
+      "usage": {
+        "prompt_tokens": 101,
+        "completion_tokens": 936,
+        "total_tokens": 3981,
+        "prompt_tokens_details": {
+          "cached_tokens": 2944,
+          "cache_read_input_tokens": 2944
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "id": "big_cousin_emotional",
+      "purpose": "Big Cousin emotional support",
+      "message": "I had a hard day and I feel like I am letting everybody down.",
+      "mode": "community",
+      "communicationSource": "settings",
+      "resolvedAaveLevel": 0,
+      "presentation": {
+        "responseLength": "balanced",
+        "responseFormat": "natural",
+        "source": "saved"
+      },
+      "depth": "standard",
+      "artifact": null,
+      "maxCompletionTokens": 750,
+      "initialModelResponse": "I’m really sorry today hit like that. You don’t have to dress it up here. Feeling like you’re letting folks down is heavy—and it usually shows up when you care a lot and you’re carrying more than people can see.\n\nTwo things to hold onto:\n- One hard day isn’t the full story of who you are or what you bring. It’s a snapshot, not the whole album.\n- “Letting people down” often lives in the gap between your standards and what’s humanly possible, not in actual failure.\n\nIf it helps, we can do one small thing to give you some air:\n- Option A: Vent it out—what happened, unfiltered.\n- Option B: Take a breath—pick one thing you can set down tonight or say “not today” to.\n- Option C: Figure one next step for tomorrow so you’re not carrying the whole mountain.\n\nWhichever you choose, I’m with you. You’re not alone in this.",
+      "finalMemberVisibleResponse": "I’m really sorry today hit like that. You don’t have to dress it up here. Feeling like you’re letting folks down is heavy—and it usually shows up when you care a lot and you’re carrying more than people can see.\n\nTwo things to hold onto:\n- One hard day isn’t the full story of who you are or what you bring. It’s a snapshot, not the whole album.\n- “Letting people down” often lives in the gap between your standards and what’s humanly possible, not in actual failure.\n\nIf it helps, we can do one small thing to give you some air:\n- Option A: Vent it out—what happened, unfiltered.\n- Option B: Take a breath—pick one thing you can set down tonight or say “not today” to.\n- Option C: Figure one next step for tomorrow so you’re not carrying the whole mountain.\n\nWhichever you choose, I’m with you. You’re not alone in this.",
+      "parsedModelPayload": false,
+      "subsequentCorrection": null,
+      "postProcessing": "None. The final member-visible response is the parsed reply field from the first model call; no AAVE, natural-format, or brief-response rewrite was invoked.",
+      "usage": {
+        "prompt_tokens": 64,
+        "completion_tokens": 217,
+        "total_tokens": 3225,
+        "prompt_tokens_details": {
+          "cached_tokens": 2944,
+          "cache_read_input_tokens": 2944
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "id": "best_friend_emotional",
+      "purpose": "Best Friend emotional support",
+      "message": "I had a hard day and I feel like I am letting everybody down.",
+      "mode": "best_friend",
+      "communicationSource": "settings",
+      "resolvedAaveLevel": 0,
+      "presentation": {
+        "responseLength": "balanced",
+        "responseFormat": "natural",
+        "source": "saved"
+      },
+      "depth": "standard",
+      "artifact": null,
+      "maxCompletionTokens": 750,
+      "initialModelResponse": "I’m really sorry today hit you like that. Feeling like you’re letting people down can be heavy—it piles on guilt and pressure and makes everything feel bigger than it is. I want you to know that feeling doesn’t mean it’s true. Often it shows up when you care a lot and you’re stretched thin.\n\nIf you’ve got a little room for it, try these quick resets:\n- Name one thing you actually did show up for today, even if it was small. That counts.\n- Pick one ball you can gently set down for now—something that can wait till tomorrow without real harm.\n- Give yourself a clean stopping point tonight and do one simple thing that soothes you: a hot shower, a short walk, or a mindless show. Your nervous system needs the message that you’re safe to rest.\n\nIf there’s a specific moment that’s sticking with you—an expectation you missed, a convo that went sideways—I’m here to sit with it or help you figure out a next step for tomorrow. What part of today feels heaviest right now?",
+      "finalMemberVisibleResponse": "I’m really sorry today hit you like that. Feeling like you’re letting people down can be heavy—it piles on guilt and pressure and makes everything feel bigger than it is. I want you to know that feeling doesn’t mean it’s true. Often it shows up when you care a lot and you’re stretched thin.\n\nIf you’ve got a little room for it, try these quick resets:\n- Name one thing you actually did show up for today, even if it was small. That counts.\n- Pick one ball you can gently set down for now—something that can wait till tomorrow without real harm.\n- Give yourself a clean stopping point tonight and do one simple thing that soothes you: a hot shower, a short walk, or a mindless show. Your nervous system needs the message that you’re safe to rest.\n\nIf there’s a specific moment that’s sticking with you—an expectation you missed, a convo that went sideways—I’m here to sit with it or help you figure out a next step for tomorrow. What part of today feels heaviest right now?",
+      "parsedModelPayload": false,
+      "subsequentCorrection": null,
+      "postProcessing": "None. The final member-visible response is the parsed reply field from the first model call; no AAVE, natural-format, or brief-response rewrite was invoked.",
+      "usage": {
+        "prompt_tokens": 85,
+        "completion_tokens": 235,
+        "total_tokens": 3264,
+        "prompt_tokens_details": {
+          "cached_tokens": 2944,
+          "cache_read_input_tokens": 2944
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ]
+}

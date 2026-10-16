@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   buildAaveRegisterPrompt,
+  buildKinfolkAaveDeliveryCheck,
   buildLanguagePersonalizationPrompt,
   buildRegionalLanguagePrompt,
   defaultVoicePreferences,
-  needsKinfolkAaveDeliveryRevision,
   normalizeKinfolkVoice,
   normalizeRegionalFlavor,
   resolveRegionalLanguageProfile,
+  shouldReviewKinfolkAaveDelivery,
   validateKinfolkPreferenceUpdate,
 } from "../voice-personalization";
 
@@ -110,45 +111,70 @@ describe("Kinfolk regional and AAVE prompt wiring", () => {
       "in the response itself",
     );
     expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
-      "natural grammar, syntax, rhythm, and sentence construction",
+      "grammar, syntax, rhythm, and sentence construction",
     );
     expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
-      "stock greeting, isolated slang word, or a pile of familiar expressions",
+      "stock greeting, stack familiar slang, or treat a phrasebook",
     );
     expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
-      "if the draft is mostly formal standard English with a greeting or one substituted word, rewrite it",
+      "one coherent human voice",
     );
     expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
-      "FINAL QUALITY GATE",
+      "Never manufacture nonstandard grammar, switch subject and object forms",
     );
     expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
-      "at least two ordinary sentences visibly use the requested register",
+      "do not silently fall back to mostly standard-English prose",
     );
     expect(buildAaveRegisterPrompt(3, "general_knowledge")).toContain(
       "without stacking stock slang",
     );
   });
 
-  it("requests one fact-preserving rewrite only when a level-two AAVE draft lacks visible delivery", () => {
+  it("uses first-call contextual AAVE guidance rather than marker-count rewrite heuristics", () => {
     const languagePrompt = buildLanguagePersonalizationPrompt({
       aaveLevel: 2,
       regionalFlavor: "off",
       intentClass: "general_knowledge",
     });
-    expect(needsKinfolkAaveDeliveryRevision({
+    expect(languagePrompt).toContain("explicit member language choice");
+    expect(languagePrompt).toContain("not merely a standard-English answer");
+    expect(languagePrompt).not.toContain("at least two ordinary sentences");
+    expect(languagePrompt).not.toContain("FINAL QUALITY GATE");
+  });
+
+  it("adds a final delivery confirmation only for an active level-two AAVE preference", () => {
+    const languagePrompt = buildLanguagePersonalizationPrompt({
+      aaveLevel: 2,
+      regionalFlavor: "off",
+      intentClass: "general_knowledge",
+    });
+    expect(buildKinfolkAaveDeliveryCheck({ aaveLevel: 2, languagePrompt })).toContain(
+      "externally visible delivery choice",
+    );
+    expect(buildKinfolkAaveDeliveryCheck({ aaveLevel: 0, languagePrompt })).toBe("");
+    expect(buildKinfolkAaveDeliveryCheck({ aaveLevel: 2, languagePrompt: "" })).toBe("");
+  });
+
+  it("limits native-quality AAVE review to an explicit direct-reply preference", () => {
+    const languagePrompt = buildLanguagePersonalizationPrompt({
+      aaveLevel: 2,
+      regionalFlavor: "off",
+      intentClass: "general_knowledge",
+    });
+    expect(shouldReviewKinfolkAaveDelivery({
       aaveLevel: 2,
       languagePrompt,
-      reply: "Nat Turner was an enslaved preacher who led a rebellion in 1831. The revolt changed slave laws across the South.",
+      isGeneratedArtifact: false,
     })).toBe(true);
-    expect(needsKinfolkAaveDeliveryRevision({
+    expect(shouldReviewKinfolkAaveDelivery({
       aaveLevel: 2,
       languagePrompt,
-      reply: "Turner had been preaching before he led the uprising. Folks wasn't simply accepting slavery quietly.",
+      isGeneratedArtifact: true,
     })).toBe(false);
-    expect(needsKinfolkAaveDeliveryRevision({
+    expect(shouldReviewKinfolkAaveDelivery({
       aaveLevel: 0,
-      languagePrompt: "",
-      reply: "Plain answer.",
+      languagePrompt,
+      isGeneratedArtifact: false,
     })).toBe(false);
   });
 });

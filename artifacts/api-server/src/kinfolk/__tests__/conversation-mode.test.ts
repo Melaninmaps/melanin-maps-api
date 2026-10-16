@@ -50,7 +50,7 @@ describe("Kinfolk conversation modes", () => {
     for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
       const contract = buildKinfolkEmotionalCheckInContract(mode);
       expect(contract).toContain("Do not turn a check-in into a business recommendation");
-      expect(contract).toContain("Ask at most one gentle follow-up question");
+      expect(contract).toContain("A follow-up question is optional, not a required support script");
     }
   });
 
@@ -63,13 +63,13 @@ describe("Kinfolk conversation modes", () => {
 
   it("keeps Big Cousin and Best Friend conversational while keeping manager frameworks decision-specific", () => {
     expect(buildKinfolkConversationModeInstruction("community")).toContain(
-      "rather than turning the answer into a checklist unless the member asks for a plan",
+      "do not turn ordinary advice into a checklist unless the member asks for a plan",
     );
     expect(buildKinfolkPersonaFinalFormInstruction("community")).toContain(
       "Start ordinary personal advice with connected prose, not a checklist",
     );
     expect(buildKinfolkConversationModeInstruction("best_friend")).toContain(
-      "make room for feeling, reflection, and a realistic next thought before offering any plan",
+      "Make room for reflection, ambivalence, or encouragement before advice",
     );
     expect(buildKinfolkPersonaFinalFormInstruction("best_friend")).toContain(
       "Start ordinary personal advice with connected prose, not a roadmap",

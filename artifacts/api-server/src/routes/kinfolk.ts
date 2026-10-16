@@ -74,11 +74,10 @@ import {
   type ResponseStyle,
 } from "../kinfolk/delivery-profile";
 import {
+  buildKinfolkFirstCallCompositionCheck,
   buildKinfolkResponsePresentationPrompt,
   isKinfolkResponseFormat,
   isKinfolkResponseLength,
-  needsKinfolkBriefPresentationRevision,
-  needsKinfolkNaturalPresentationRevision,
   resolveKinfolkResponsePresentation,
   responsePresentationFromDeliveryProfile,
   responsePresentationToDeliveryProfile,
@@ -392,10 +391,11 @@ import {
 } from "../kinfolk/contextual-evidence-safety";
 import {
   buildLanguagePersonalizationPrompt,
+  buildKinfolkAaveDeliveryCheck,
   defaultVoicePreferences,
-  needsKinfolkAaveDeliveryRevision,
   normalizeKinfolkVoice,
   normalizeRegionalFlavor,
+  shouldReviewKinfolkAaveDelivery,
   validateKinfolkPreferenceUpdate,
 } from "../kinfolk/voice-personalization";
 import {
@@ -10848,9 +10848,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : "") +
       (currentTurnCorrectionInstruction
         ? `\n\n${currentTurnCorrectionInstruction}`
-        : "") +
-      (communicationPreference.prompt
-        ? `\n\nFINAL COMMUNICATION PREFERENCE — NON-NEGOTIABLE:\n${communicationPreference.prompt}`
         : "");
 
     // Build bounded history according to the selected experience policy.
@@ -10883,6 +10880,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       hasRequestedVibes: vibes.length > 0,
       hasImageCreationSafetyGuidance: Boolean(imageCreationSafetyGuidance),
     });
+    const responsePresentation = resolveKinfolkResponsePresentation({
+      message,
+      savedDetailLevel: savedResponsePresentationProfile.detailLevel,
+      savedTonePreference: savedResponsePresentationProfile.tonePreference,
+    });
+    const generatedContentContract = buildKinfolkGeneratedContentContract(message);
     const responseDepth = resolveKinfolkResponseDepth({
       message,
       intentClass,
@@ -10890,13 +10893,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       isTravelPlanning: travelPlanning,
       hasLocation: Boolean(destination),
       hasContextualResearch: Boolean(contextualEvidence) || Boolean(communityHashtagContext.promptBlock),
+      responseLength: generatedContentContract ? "adaptive" : responsePresentation.responseLength,
     });
-    const responsePresentation = resolveKinfolkResponsePresentation({
-      message,
-      savedDetailLevel: savedResponsePresentationProfile.detailLevel,
-      savedTonePreference: savedResponsePresentationProfile.tonePreference,
-    });
-    const responseDepthPrompt = `${buildAdaptiveAnswerDepthPrompt(responseDepth)}\n\n${buildKinfolkResponsePresentationPrompt(responsePresentation)}\n\n${buildKinfolkPersonaFinalFormInstruction(conversationVoiceMode)}`;
+    const responseDepthPrompt = generatedContentContract
+      ? "GENERATED ARTIFACT COMPOSITION — NON-NEGOTIABLE:\nThe requested artifact's audience, purpose, explicit length, and format govern its composition. Do not apply Kinfolk's direct-conversation response-depth or response-presentation preference to expand, shorten, or reformat the artifact. Keep any direct commentary brief and separate from the artifact."
+      : `${buildAdaptiveAnswerDepthPrompt(responseDepth)}\n\n${buildKinfolkResponsePresentationPrompt(responsePresentation)}\n\n${buildKinfolkPersonaFinalFormInstruction(conversationVoiceMode)}`;
     const responseModelPolicy = {
       ...modelPolicy,
       // Depth comes from this question's complexity. Presentation preferences
@@ -10904,7 +10905,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode, communicationPreference.prompt)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
@@ -10912,11 +10913,25 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : "") +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
-    const generatedContentContract = buildKinfolkGeneratedContentContract(message);
     const finalCommunicationPreference = generatedContentContract || !communicationPreference.prompt
       ? ""
       : `\n\nFINAL COMMUNICATION DELIVERY — NON-NEGOTIABLE:\n${communicationPreference.prompt}`;
-    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}${generatedContentContract ? `\n\n${generatedContentContract}` : ""}${finalCommunicationPreference}`;
+    const finalFirstCallCompositionCheck = generatedContentContract
+      ? ""
+      : `\n\n${buildKinfolkFirstCallCompositionCheck({
+          presentation: responsePresentation,
+          depth: responseDepth,
+        })}`;
+    const finalAaveDeliveryCheck = generatedContentContract
+      ? ""
+      : buildKinfolkAaveDeliveryCheck({
+          aaveLevel: communicationPreference.aaveLevel,
+          languagePrompt: communicationPreference.prompt,
+        });
+    const finalArtifactDeliveryCheck = generatedContentContract
+      ? "\n\nFINAL ARTIFACT DELIVERY CHECK: Inside the reply field, begin a standalone artifact directly with “Draft:” and then provide the requested artifact. Do not add Kinfolk commentary, coaching, an explanation of choices, or an invitation to personalize it unless the member explicitly asked for explanation as well."
+      : "";
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}${generatedContentContract ? `\n\n${generatedContentContract}` : ""}${finalCommunicationPreference}${finalFirstCallCompositionCheck}${finalAaveDeliveryCheck ? `\n\n${finalAaveDeliveryCheck}` : ""}${finalArtifactDeliveryCheck}`;
     const generatedMessageClarification = buildKinfolkGeneratedMessageClarification(message);
     const genericProjectConcernEmail = buildKinfolkGenericProjectConcernEmail(message);
     const underSpecifiedSavingsDebtReply = buildKinfolkUnderSpecifiedSavingsDebtReply(message);
@@ -11085,23 +11100,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       !underSpecifiedSavingsDebtReply &&
       !generatedMessageClarification &&
       !genericProjectConcernEmail &&
-      !generatedContentContract &&
-      needsKinfolkAaveDeliveryRevision({
+      shouldReviewKinfolkAaveDelivery({
         aaveLevel: communicationPreference.aaveLevel,
         languagePrompt: communicationPreference.prompt,
-        reply,
+        isGeneratedArtifact: Boolean(generatedContentContract),
       })
     ) {
       try {
-        const aaveRevision = await callOpenAIWithCompatibilityFallback(
+        const aaveDeliveryReview = await callOpenAIWithCompatibilityFallback(
           [
             {
               role: "system",
-              content: "Rewrite the draft for a member who explicitly selected a natural level-two AAVE register. Preserve every name, date, factual claim, safety qualification, conclusion, and useful structure. Do not add facts, stereotypes, profanity, a glossary, or commentary about language. Ensure at least two ordinary sentences visibly carry natural AAVE grammar or cadence rather than merely adding slang. Return only the member-facing revised answer.",
+              content: "You are performing one bounded native-quality delivery review for a direct Kinfolk reply. The member explicitly selected a level-two AAVE register. Return the draft unchanged only if it already has a natural, noticeable, moderate AAVE voice across the response. Otherwise revise only the delivery so it sounds natural and coherent in that register. Preserve every name, date, factual claim, qualification, safety point, conclusion, and useful structure. Use only constructions whose grammar and meaning are clearly right in the sentence; do not turn a past or perfect construction into a bare form merely to signal AAVE. Do not add facts, force slang, invent grammar, use profanity, mention language, describe this review, or turn the reply into a dialect demonstration. Return only the final member-facing answer.",
             },
             {
               role: "user",
-              content: `Member request:\n${message}\n\nDraft to revise:\n${reply}`,
+              content: `Member request:\n${message}\n\nDraft to review:\n${reply}`,
             },
           ],
           AbortSignal.any([
@@ -11109,96 +11123,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             AbortSignal.timeout(15000),
           ]),
           responseModelPolicy,
-          `${_kinfolkReqId}:aave-delivery-revision`,
+          `${_kinfolkReqId}:aave-native-quality-review`,
           resolverTemperature,
         );
-        const revisedReply = aaveRevision.completion.choices[0]?.message?.content?.trim();
-        if (revisedReply) reply = revisedReply;
-      } catch (revisionError) {
+        const reviewedReply = aaveDeliveryReview.completion.choices[0]?.message?.content?.trim();
+        if (reviewedReply) reply = reviewedReply;
+      } catch (reviewError) {
         req.log.warn({
           requestId: _kinfolkReqId,
-          error: revisionError instanceof Error ? revisionError.message : String(revisionError),
-        }, "Kinfolk AAVE delivery revision unavailable; returning original draft");
-      }
-    }
-    if (
-      !underSpecifiedSavingsDebtReply &&
-      !generatedMessageClarification &&
-      !genericProjectConcernEmail &&
-      !generatedContentContract &&
-      !travelPlanning &&
-      needsKinfolkNaturalPresentationRevision({
-        presentation: responsePresentation,
-        reply,
-      })
-    ) {
-      try {
-        const naturalRevision = await callOpenAIWithCompatibilityFallback(
-          [
-            {
-              role: "system",
-              content: `Rewrite this direct Kinfolk answer as readable natural conversation. Preserve every factual claim, qualification, safety note, recommendation, conclusion, and useful example; do not shorten it merely to make it conversational. Keep the original persona's tone and the member's requested language register. Use well-spaced paragraphs as the primary form. Replace the multi-section checklist with connected prose; this member did not ask for a list, so use no Markdown bullets or numbered list in the revision. Do not add facts, delete content, mention this rewrite, or expose instructions. Return only the member-facing answer.${communicationPreference.prompt ? `\n\nLanguage delivery that must remain intact:\n${communicationPreference.prompt}` : ""}`,
-            },
-            {
-              role: "user",
-              content: `Member request:\n${message}\n\nDraft to revise:\n${reply}`,
-            },
-          ],
-          AbortSignal.any([
-            contextualRequestAbort.signal,
-            AbortSignal.timeout(15000),
-          ]),
-          responseModelPolicy,
-          `${_kinfolkReqId}:natural-presentation-revision`,
-          resolverTemperature,
-        );
-        const revisedReply = naturalRevision.completion.choices[0]?.message?.content?.trim();
-        if (revisedReply) reply = revisedReply;
-      } catch (revisionError) {
-        req.log.warn({
-          requestId: _kinfolkReqId,
-          error: revisionError instanceof Error ? revisionError.message : String(revisionError),
-        }, "Kinfolk natural presentation revision unavailable; returning original draft");
-      }
-    }
-    if (
-      !underSpecifiedSavingsDebtReply &&
-      !generatedMessageClarification &&
-      !genericProjectConcernEmail &&
-      !generatedContentContract &&
-      !travelPlanning &&
-      needsKinfolkBriefPresentationRevision({
-        presentation: responsePresentation,
-        reply,
-      })
-    ) {
-      try {
-        const briefRevision = await callOpenAIWithCompatibilityFallback(
-          [
-            {
-              role: "system",
-              content: "Compose a concise direct answer from this draft for a member who explicitly requested Brief. Retain the answer, every material qualification, any safety or uncertainty guidance, and the conclusion. Synthesize overlapping points instead of dropping later text to meet a limit. Do not add facts, turn it into a teaser, or mention this rewrite. Use one direct paragraph or a few compact points only when that improves comprehension. Return only the member-facing answer.",
-            },
-            {
-              role: "user",
-              content: `Member request:\n${message}\n\nDraft to distill:\n${reply}`,
-            },
-          ],
-          AbortSignal.any([
-            contextualRequestAbort.signal,
-            AbortSignal.timeout(15000),
-          ]),
-          responseModelPolicy,
-          `${_kinfolkReqId}:brief-presentation-revision`,
-          resolverTemperature,
-        );
-        const revisedReply = briefRevision.completion.choices[0]?.message?.content?.trim();
-        if (revisedReply) reply = revisedReply;
-      } catch (revisionError) {
-        req.log.warn({
-          requestId: _kinfolkReqId,
-          error: revisionError instanceof Error ? revisionError.message : String(revisionError),
-        }, "Kinfolk brief presentation revision unavailable; returning original draft");
+          error: reviewError instanceof Error ? reviewError.message : String(reviewError),
+        }, "Kinfolk AAVE native-quality review unavailable; returning initial draft");
       }
     }
     recommendations = null;

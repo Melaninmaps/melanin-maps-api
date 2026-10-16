@@ -113,7 +113,7 @@ export function buildKinfolkResponsePresentationPrompt(
   presentation: KinfolkResponsePresentation,
 ): string {
   const lengthGuidance: Record<KinfolkResponseLength, string> = {
-    brief: "Start with a direct, concise answer and retain every qualification, safety consideration, and conclusion needed for it to remain accurate. A simple question should be short; a complex, consequential, or multi-part question may need more explanation. Do not omit meaning merely to be brief.",
+    brief: "Start with the answer and use only the reasoning needed to make it accurate and usable. Synthesize related support instead of expanding every supporting fact into its own section or point. Retain every material qualification, safety consideration, and conclusion. A simple question should be short; a complex, consequential, or multi-part question may need a compact explanation. Do not omit meaning merely to be brief.",
     balanced: "Give a useful explanation with moderate detail, selecting only the context and examples that help this question.",
     detailed: "When the question benefits from depth, provide a thorough explanation with relevant context, distinctions, and examples; do not add repetitive paragraphs or depth the question does not need.",
     adaptive: "Choose useful depth from the question, complexity, active context, and safety needs rather than from a fixed response size.",
@@ -133,33 +133,31 @@ export function buildKinfolkResponsePresentationPrompt(
 }
 
 /**
- * Natural formatting permits occasional structure but should not turn a member's
- * ordinary conversation into a multi-section checklist. This guard is used only
- * to request one model rewrite that retains all content in readable paragraphs.
+ * This final first-call check reconciles response depth and member presentation
+ * before generation. It deliberately describes an editorial judgment rather
+ * than a word, sentence, heading, or marker quota, so it cannot flatten a
+ * consequential answer or force every conversational answer into one shape.
  */
-export function needsKinfolkNaturalPresentationRevision(input: {
-  presentation: Pick<KinfolkResponsePresentation, "responseFormat">;
-  reply: string;
-}): boolean {
-  if (input.presentation.responseFormat !== "natural") return false;
-  const listItems = input.reply
-    .split("\n")
-    .filter((line) => /^\s*(?:[-*•]|\d+[.)])\s+/.test(line)).length;
-  return listItems > 4;
-}
-
-/**
- * Brief is a semantic preference, not a word cap. A crowded multi-section
- * response receives one model distillation so it can keep the core answer and
- * material caveats without mechanically dropping trailing text.
- */
-export function needsKinfolkBriefPresentationRevision(input: {
-  presentation: Pick<KinfolkResponsePresentation, "responseLength">;
-  reply: string;
-}): boolean {
-  if (input.presentation.responseLength !== "brief") return false;
-  const listItems = input.reply
-    .split("\n")
-    .filter((line) => /^\s*(?:[-*•]|\d+[.)])\s+/.test(line)).length;
-  return listItems > 5 || /\n\s*(?:what|why|how|so what|limitations?|conclusion)\b[^\n]*:/i.test(input.reply) && input.reply.length > 1_400;
+export function buildKinfolkFirstCallCompositionCheck(input: {
+  presentation: Pick<KinfolkResponsePresentation, "responseLength" | "responseFormat">;
+  depth: "concise" | "standard" | "detailed";
+}): string {
+  const lengthCheck = input.presentation.responseLength === "brief"
+    ? "The member chose Brief. Give the answer and its material reasoning in the smallest complete shape that fits this question. Combine related support rather than expanding it into a multi-part framework; preserve every safety, uncertainty, and decision-relevant qualification."
+    : input.presentation.responseLength === "detailed"
+      ? "The member chose Detailed. Give the question enough context, distinctions, and examples to be self-contained, but stop when the useful explanation is complete; do not repeat the same point in a new label or section."
+      : input.presentation.responseLength === "balanced"
+        ? "The member chose Balanced. Give a direct answer and the context that makes it useful, leaving out optional depth and repetition."
+        : "The member chose Adaptive length. Let the actual question, active context, and safety needs decide the useful amount of explanation."
+  const formatCheck = input.presentation.responseFormat === "natural"
+    ? "The member chose Natural format. For an ordinary explanation, conversation, or emotional check-in, use connected paragraphs as the primary shape. Do not default to headings, a numbered plan, or a multi-bullet checklist. A compact list is appropriate only when the member asks for one or when several independent options, comparisons, or ordered actions genuinely become clearer that way."
+    : input.presentation.responseFormat === "structured"
+      ? "The member chose Structured format. Organize only the distinctions that materially improve scanning; do not create empty headings or a framework just to look organized."
+      : "The member chose Adaptive format. Select paragraphs, headings, or a compact list only when that shape makes this exact answer clearer."
+  const depthCheck = input.depth === "concise"
+    ? "This is a simple question: lead with one clear answer and do not add an unsolicited mini-lesson, script, or follow-up invitation."
+    : input.depth === "detailed"
+      ? "This needs real depth: keep the explanation readable and proportionate, using paragraphs first and structure only where it clarifies a genuine distinction or sequence."
+      : "This needs a complete but compact answer: include the answer and the context needed to use it, without turning it into a guidebook."
+  return `FINAL FIRST-CALL RESPONSE CHECK — APPLY BEFORE RETURNING:\n${lengthCheck}\n${formatCheck}\n${depthCheck}\nThis is an instruction to compose the correct answer on this first call, not a request for a later rewrite. Preserve the selected persona and any active language preference while applying it.`;
 }

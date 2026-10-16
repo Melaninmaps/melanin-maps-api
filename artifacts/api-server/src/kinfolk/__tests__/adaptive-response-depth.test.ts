@@ -35,6 +35,20 @@ describe("adaptive Kinfolk answer depth", () => {
     })).toBe("detailed");
   });
 
+  it("keeps an explicit Brief preference compact before generation without weakening consequential depth", () => {
+    expect(resolveKinfolkResponseDepth({
+      ...ordinaryTurn,
+      message: "Briefly explain why the sun is hot and how it stays hot.",
+      responseLength: "brief",
+    })).toBe("standard");
+    expect(resolveKinfolkResponseDepth({
+      ...ordinaryTurn,
+      message: "Briefly explain the legal tradeoffs in this contract.",
+      intentClass: "legal",
+      responseLength: "brief",
+    })).toBe("detailed");
+  });
+
   it("uses a larger bounded token budget only when a detailed answer is warranted", () => {
     const standard = { mode: "standard" as const, maxOutputTokens: 600 };
     const staff = { mode: "staff_demo" as const, maxOutputTokens: 900 };

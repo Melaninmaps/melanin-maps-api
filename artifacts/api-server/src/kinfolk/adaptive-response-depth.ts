@@ -1,4 +1,5 @@
 import type { KinfolkModelPolicy } from "./staff-demo-policy";
+import type { KinfolkResponseLength } from "./response-presentation";
 
 export type KinfolkResponseDepth = "concise" | "standard" | "detailed";
 
@@ -9,6 +10,7 @@ export type KinfolkResponseDepthInput = Readonly<{
   isTravelPlanning: boolean;
   hasLocation: boolean;
   hasContextualResearch: boolean;
+  responseLength?: KinfolkResponseLength;
 }>;
 
 const DETAIL_INTENTS = new Set([
@@ -40,12 +42,26 @@ export function resolveKinfolkResponseDepth(input: KinfolkResponseDepthInput): K
   const hasMultipleQuestions = (text.match(/\?/g) ?? []).length > 1;
   const hasMultipleClauses = /[,;:]|\band\b|\bor\b/i.test(text);
 
-  if (
+  const needsDetailedDepth =
     input.requiresCurrentEvidence ||
     input.isTravelPlanning ||
     input.hasLocation ||
     input.hasContextualResearch ||
-    DETAIL_INTENTS.has(input.intentClass ?? "") ||
+    DETAIL_INTENTS.has(input.intentClass ?? "");
+
+  if (needsDetailedDepth) {
+    return "detailed";
+  }
+
+  // Brief is a member-controlled composition preference, not a fixed word cap.
+  // For an otherwise ordinary explanation it selects a compact complete answer
+  // before the first model call; consequential/current/researched answers above
+  // still retain the detailed depth they need.
+  if (input.responseLength === "brief") {
+    return wordCount <= 8 && DIRECT_FACT_PATTERN.test(text) ? "concise" : "standard";
+  }
+
+  if (
     asksForDetail ||
     hasMultipleQuestions ||
     (wordCount >= 18 && hasMultipleClauses)

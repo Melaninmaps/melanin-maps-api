@@ -83,17 +83,21 @@ describe("Kinfolk generated-content style boundary", () => {
     );
     expect(contract).toContain("Do not invent a meeting time, date, deadline, address, recipient name");
     expect(contract).toContain("Use a clearly labeled placeholder or neutral conditional language");
-    expect(contract).toContain("ask exactly one concise question about what they want the message to say or accomplish");
-    expect(contract).toContain("If a generic email can be drafted");
-    expect(contract).toContain("message but gives no purpose or situation");
+    expect(contract).toContain("Ask one concise purpose question only when a placeholder scaffold would not be meaningful");
+    expect(contract).toContain("If a generic email or message can be drafted");
+    expect(contract).toContain("placeholder scaffold would not be meaningful");
+    expect(contract).toContain("Do not turn a short message, email, caption, or note into a long essay");
+    expect(contract).toContain("Do not preface it with coaching, a persona response, an explanation of choices, or an invitation to personalize it");
+    expect(contract).toContain("Do not lead with a request for optional names, dates, or background");
+    expect(contract).toContain("For a standalone artifact request, begin directly with “Draft:”");
     expect(contract).toContain("never assume a check-in, support, meeting, food, relationship history");
     expect(languageContract).toContain("Do not make unsupported claims about linguistic grammar");
   });
 
-  it("asks for the purpose of an underspecified casual message instead of inventing a circumstance", () => {
+  it("uses a placeholder scaffold for an underspecified casual message instead of inventing a circumstance", () => {
     expect(buildKinfolkGeneratedMessageClarification(
       "Write a message to my cousin in AAVE.",
-    )).toBe("What would you like the message to say or accomplish?");
+    )).toBe("Hi [Name],\n\n[Start with why you are writing.] [Add your main point, request, or update.]\n\nTake care,\n[Your Name]");
     expect(buildKinfolkGeneratedMessageClarification(
       "Write a message to my cousin saying happy birthday.",
     )).toBeNull();

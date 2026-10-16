@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildKinfolkFirstCallCompositionCheck,
   buildKinfolkResponsePresentationPrompt,
-  needsKinfolkBriefPresentationRevision,
-  needsKinfolkNaturalPresentationRevision,
   resolveKinfolkResponsePresentation,
   responsePresentationFromDeliveryProfile,
   responsePresentationToDeliveryProfile,
@@ -83,7 +82,7 @@ describe("Kinfolk response presentation preferences", () => {
     });
 
     expect(brief).toContain("Do not omit meaning merely to be brief");
-    expect(brief).toContain("complex, consequential, or multi-part question may need more explanation");
+    expect(brief).toContain("A simple question should be short; a complex, consequential, or multi-part question may need a compact explanation");
     expect(natural).toContain("Preserve readable paragraph breaks");
     expect(natural).toContain("small descriptive heading, compact list, or short copyable script");
   });
@@ -102,33 +101,31 @@ describe("Kinfolk response presentation preferences", () => {
     }
   });
 
-  it("requests a readability rewrite only for list-heavy natural conversation", () => {
-    expect(needsKinfolkNaturalPresentationRevision({
-      presentation: { responseFormat: "natural" },
-      reply: "A paragraph.\n\n- One\n- Two\n- Three\n- Four\n- Five",
-    })).toBe(true);
-    expect(needsKinfolkNaturalPresentationRevision({
-      presentation: { responseFormat: "natural" },
-      reply: "A paragraph.\n\n- One\n- Two\n- Three",
-    })).toBe(false);
-    expect(needsKinfolkNaturalPresentationRevision({
-      presentation: { responseFormat: "structured" },
-      reply: "- One\n- Two\n- Three\n- Four\n- Five",
-    })).toBe(false);
+  it("guides the first model call to synthesize brief answers instead of triggering a fixed post-generation rewrite", () => {
+    const brief = buildKinfolkResponsePresentationPrompt({
+      responseLength: "brief",
+      responseFormat: "natural",
+      source: "current_message",
+    });
+
+    expect(brief).toContain("Synthesize related support");
+    expect(brief).toContain("Do not omit meaning merely to be brief");
+    expect(brief).not.toContain("rewrite");
   });
 
-  it("distills only crowded brief replies without discarding their trailing text mechanically", () => {
-    expect(needsKinfolkBriefPresentationRevision({
-      presentation: { responseLength: "brief" },
-      reply: "Answer\n- One\n- Two\n- Three\n- Four\n- Five\n- Six",
-    })).toBe(true);
-    expect(needsKinfolkBriefPresentationRevision({
-      presentation: { responseLength: "brief" },
-      reply: "Direct answer with one material limitation.",
-    })).toBe(false);
-    expect(needsKinfolkBriefPresentationRevision({
-      presentation: { responseLength: "detailed" },
-      reply: "- One\n- Two\n- Three\n- Four\n- Five\n- Six",
-    })).toBe(false);
+  it("uses a context-sensitive first-call check instead of fixed list or word rules", () => {
+    const naturalBrief = buildKinfolkFirstCallCompositionCheck({
+      presentation: { responseLength: "brief", responseFormat: "natural" },
+      depth: "standard",
+    });
+    const detailedStructured = buildKinfolkFirstCallCompositionCheck({
+      presentation: { responseLength: "detailed", responseFormat: "structured" },
+      depth: "detailed",
+    });
+
+    expect(naturalBrief).toContain("Do not default to headings, a numbered plan, or a multi-bullet checklist");
+    expect(naturalBrief).toContain("smallest complete shape");
+    expect(detailedStructured).toContain("distinctions that materially improve scanning");
+    expect(naturalBrief).not.toContain("word limit");
   });
 });

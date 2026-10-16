@@ -62,16 +62,10 @@ describe("lean general Kinfolk chat", () => {
     expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin MODE");
   });
 
-  it("layers a member-selected language preference without replacing the persona", () => {
-    const prompt = buildLeanGeneralChatPrompt(
-      "professor",
-      "COMMUNICATION STYLE LAYER (current_message): use a natural AAVE register; preserve the selected persona.",
-    );
+  it("leaves member language layering to the shared final route layer without replacing the persona", () => {
+    const prompt = buildLeanGeneralChatPrompt("professor");
     expect(prompt).toContain("Professor MODE");
-    expect(prompt).toContain("COMMUNICATION STYLE LAYER (current_message)");
-    expect(prompt).toContain("preserve the selected persona");
-    expect(prompt.indexOf("FINAL COMMUNICATION PREFERENCE — NON-NEGOTIABLE"))
-      .toBeGreaterThan(prompt.indexOf("Rules:"));
+    expect(prompt).not.toContain("FINAL COMMUNICATION PREFERENCE — NON-NEGOTIABLE");
   });
 
   it("keeps the solar-science core factual across all four conversational voices", () => {
@@ -90,7 +84,7 @@ describe("lean general Kinfolk chat", () => {
       const prompt = buildLeanGeneralChatPrompt(mode);
       expect(prompt).toContain("EMOTIONAL CHECK-INS");
       expect(prompt).toContain("Do not turn a check-in into a business recommendation");
-      expect(prompt).toContain("Ask at most one gentle follow-up question");
+      expect(prompt).toContain("A follow-up question is optional, not a required support script");
     }
   });
 

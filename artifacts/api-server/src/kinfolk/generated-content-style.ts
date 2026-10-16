@@ -135,8 +135,9 @@ export function resolveKinfolkGeneratedContentStyle(
 }
 
 /**
- * A bare request for a text or message has no honest audience-purpose draft.
- * Ask once rather than making up a check-in, invitation, or relationship event.
+ * A bare request for a text or message can still receive a useful neutral
+ * scaffold. Placeholders preserve the member's control without inventing a
+ * check-in, invitation, relationship event, or other hidden circumstance.
  */
 export function buildKinfolkGeneratedMessageClarification(value: unknown): string | null {
   const message = normalize(value);
@@ -148,7 +149,7 @@ export function buildKinfolkGeneratedMessageClarification(value: unknown): strin
   ) {
     return null;
   }
-  return "What would you like the message to say or accomplish?";
+  return "Hi [Name],\n\n[Start with why you are writing.] [Add your main point, request, or update.]\n\nTake care,\n[Your Name]";
 }
 
 /**
@@ -211,10 +212,12 @@ The member asked Kinfolk to create a ${resolution.kind.replaceAll("_", " ")} for
 - Inside the artifact, style precedence is: the member's explicit artifact instruction; intended recipient or audience; purpose and context; requested format; relevant consented writing preference; then ordinary convention.
 - ${styleInstruction(resolution.style)}
 - ${artifactLanguage}
-- Do not invent a meeting time, date, deadline, address, recipient name, employer, project, relationship history, incident, purpose, or other circumstance that the member did not provide. Use a clearly labeled placeholder or neutral conditional language instead. If a generic email can be drafted, keep its subject, facts, and proposed next step in placeholders. If the member asks for a message but gives no purpose or situation, ask exactly one concise question about what they want the message to say or accomplish; never assume a check-in, support, meeting, food, relationship history, or other scenario.
+- Match the artifact's length to the member's actual request and usable substance. Do not turn a short message, email, caption, or note into a long essay, and do not add coaching around the artifact unless the member asked for it.
+- Return the artifact directly, using one compact “Draft:” label only when it improves clarity. Do not preface it with coaching, a persona response, an explanation of choices, or an invitation to personalize it. Do not lead with a request for optional names, dates, or background when clear placeholders already preserve the member's control.
+- Do not invent a meeting time, date, deadline, address, recipient name, employer, project, relationship history, incident, purpose, or other circumstance that the member did not provide. Use a clearly labeled placeholder or neutral conditional language instead. If a generic email or message can be drafted, keep its subject, facts, purpose, and proposed next step in placeholders. Ask one concise purpose question only when a placeholder scaffold would not be meaningful; never assume a check-in, support, meeting, food, relationship history, or other scenario.
 - When explaining an explicitly requested AAVE or regional-language artifact, describe only the requested audience, purpose, and high-level tone choices. Do not make unsupported claims about linguistic grammar, authenticity, or why a particular expression is supposedly used.
 - Do not make the member switch personas to create this artifact. Do not let the artifact change the persona used for commentary, revisions, or the next turn.
-- When it helps clarity, label the sections “Kinfolk:” for direct member commentary and “Draft:” for the actual artifact. Keep the artifact itself clean: do not insert coaching, commentary, persona labels, or explanation inside it.
+- For a standalone artifact request, begin directly with “Draft:” and then the artifact. When the member explicitly asks for both an explanation and an artifact, use a compact “Kinfolk:” explanation followed by “Draft:”. Keep the artifact itself clean: do not insert coaching, commentary, persona labels, or explanation inside it.
 - If the member asks for both an explanation and an artifact, complete both in the same reply. Do not replace the requested artifact with commentary, and use clearly marked compact sections or placeholders rather than omitting a deliverable.
 - A revision request such as “make it firmer,” “less confrontational,” or “rewrite the message in AAVE” changes the artifact only unless the member separately changes how Kinfolk should address them. When the active conversation contains the earlier draft, revise it directly instead of asking the member to paste it again. Do not save a one-time writing instruction as memory without the existing explicit consent flow.`;
 }

@@ -1856,3 +1856,72 @@ This source-only addendum addresses the remaining independent-review findings wi
 ### Release boundary
 
 **FINAL FOCUSED CORRECTIONS — SOURCE COMPLETE / AWAITING INTEGRATION REVIEW.** No merge, deployment, staging invocation, migration, production-data operation, mobile build, or device test was performed. The existing staging validation against the deployment-configured Kinfolk model remains required before release authorization.
+
+
+## Final focused correction — first-call composition, AAVE delivery, and artifact boundaries
+
+### Scope and status
+
+**SOURCE COMPLETE / READY FOR CUMULATIVE INTEGRATION / AWAITING RELEASE AUTHORIZATION**
+
+This final focused correction supersedes only the earlier response-presentation and AAVE-delivery descriptions where they conflict. It preserves the completed persona, consent-memory, response-style, and generated-writing boundaries. No merge, deployment, migration, production-data change, browser operation, or mobile build was performed.
+
+### Corrected architecture
+
+| Review finding | Source correction | Boundary preserved |
+|---|---|---|
+| Response preferences were at risk of acting like fixed caps | `resolveKinfolkResponseDepth` applies the member’s **Brief** preference before ordinary explanation expansion while retaining detailed depth for consequential, researched, travel, legal, financial, health, and other high-context requests. | No character, sentence, or word-count truncation is used. Material qualifications, safety information, and conclusions remain model-authored. |
+| Natural formatting still tended toward generic frameworks | `buildKinfolkFirstCallCompositionCheck` is appended at the final prompt layer for direct replies. It makes paragraph-first versus structure a contextual editorial choice, not a forced checklist rule. | Lists remain available when a member requests them or when independent comparisons, options, or sequences truly scan better. No natural-format rewrite runs after generation. |
+| Selected persona and presentation preferences could compete | Lean chat now supplies only the persona contract; the route applies communication, response-depth, presentation, and final composition layers exactly once in a defined order. | Persona changes conversational character, not factual standards, capabilities, or safety guidance. Big Cousin and Best Friend may still give long answers when the question warrants it. |
+| Level-two AAVE could resolve correctly yet surface as mostly standard prose | The first call receives strengthened contextual AAVE guidance and a final active-language check. A single **bounded native-quality review** is now allowed only for an explicit level-two AAVE preference on a low-stakes, direct reply. | This replaces the earlier “no extra runtime model call” statement only for this consented setting. It is not marker-count based, never runs for generated artifacts or high-stakes language overrides, preserves facts and safety content, and falls back to the initial draft if unavailable. |
+| Standalone artifacts still attracted conversational prefaces | Generated-content policy and a final artifact check require the reply field to begin directly with `Draft:` for a standalone artifact. | Professional emails, personal messages, and revisions remain governed by audience and requested purpose—not the selected persona, response-length preference, AAVE setting, or regional setting. |
+
+### Targeted regression evidence
+
+```bash
+cd artifacts/api-server
+pnpm exec vitest run \
+  src/kinfolk/__tests__/adaptive-response-depth.test.ts \
+  src/kinfolk/__tests__/response-presentation.test.ts \
+  src/kinfolk/__tests__/voice-personalization.test.ts \
+  src/kinfolk/__tests__/conversation-mode.test.ts \
+  src/kinfolk/__tests__/generated-content-style.test.ts \
+  src/kinfolk/__tests__/lean-general-chat.test.ts \
+  src/kinfolk/__tests__/kinfolk-route-wiring.test.ts
+pnpm typecheck
+```
+
+**Result:** **7 files / 106 tests passed**; API TypeScript typecheck passed. `git diff --check` passed.
+
+The regressions cover: direct versus complex response depth; Brief without semantic truncation; Balanced across simple, complex, and emotional turns; natural and structured presentation boundaries; persona form; factual-core consistency; level-two AAVE precedence and high-stakes/artifact exclusions; direct standalone artifact delivery; and route ordering.
+
+### Raw live-model evidence for independent review
+
+**Classification:** controlled source-prompt evaluation in Manus Sandbox—not a deployed API, staging, web, iOS, Android, or production-member test.
+
+- **Environment:** `sandbox:root:S9iVHR3fQY0fcmRMQKLpOO`
+- **Branch under test:** `feat/kinfolk-four-persona-system` working tree after this correction
+- **Model:** live-catalog `gpt-5`, `reasoning: minimal`
+- **Production model configuration:** unchanged; source fallback remains `gpt-4o-mini`
+- **Runtime scope:** no production/staging API call, account data, private member data, migration, or deploy
+
+The following committed evidence files contain the **exact, unedited initial model responses, any subsequent correction output, final member-visible response, selected persona, resolved preference source, depth, and explicit post-processing disclosure**:
+
+1. `docs/handoffs/evidence/KINFOLK_FIRST_CALL_AAVE_ARTIFACT_EVIDENCE_2026-10-16.json`
+   - Saved level-two AAVE: Nat Turner history explanation
+   - Saved level-two AAVE: practical raise guidance
+   - Professional email with AAVE + regional settings active (artifact remains professional)
+   - Personal birthday message (artifact begins directly with `Draft:`)
+   - The two AAVE cases record the sole bounded language-quality review; the artifact cases record no correction.
+2. `docs/handoffs/evidence/KINFOLK_FIRST_CALL_ADAPTIVE_PREFERENCE_EVIDENCE_2026-10-16.json`
+   - Brief direct factual answer and Brief complex decision answer
+   - Same saved Balanced/Natural preference across simple factual, complex decision, Big Cousin emotional, and Best Friend emotional turns
+   - Every case records `subsequentCorrection: null`: the final response is the original first model output.
+
+The raw artifacts intentionally preserve all model wording, including any choices an independent reviewer may wish to assess. They do not paraphrase, clean up, or claim human-authenticated linguistic quality. Before release, re-run the affected evidence through the deployment-configured model in the approved staging environment and obtain a qualified human review of level-two AAVE naturalness.
+
+### Integration and release boundary
+
+- Integrate this branch cumulatively; do not overwrite completed Kinfolk, Directory, Map, Business Dashboard, taxonomy, or Black-capitalization repairs.
+- Include web and native preference surfaces only in the next already-authorized consolidated release/build; **do not create a separate mobile build** for this correction.
+- Do not deploy, migrate, modify production data, or create a build without founder authorization.

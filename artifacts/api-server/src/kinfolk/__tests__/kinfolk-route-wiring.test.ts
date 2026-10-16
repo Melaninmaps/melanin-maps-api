@@ -480,13 +480,28 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("clientTimeZone,");
     expect(chatRoute).toContain("destinationLocalTimeContext,");
     expect(chatRoute).toContain("`\\n\\n${temporalContext}`");
-    expect(chatRoute).toContain("${buildLeanGeneralChatPrompt(conversationVoiceMode, communicationPreference.prompt)}\\n\\n${temporalContext}");
+    expect(chatRoute).toContain("${buildLeanGeneralChatPrompt(conversationVoiceMode)}\\n\\n${temporalContext}");
   });
 
   it("uses the shared natural-conversation contract in the full Kinfolk prompt", () => {
     expect(routeSource).toContain("buildKinfolkNaturalConversationContract,");
     expect(routeSource).toContain("const naturalConversationContract = buildKinfolkNaturalConversationContract();");
     expect(routeSource).toContain("${naturalConversationContract}");
+  });
+
+  it("applies one final first-call composition check after the communication layer", () => {
+    const communication = chatRoute.indexOf("FINAL COMMUNICATION DELIVERY — NON-NEGOTIABLE");
+    const firstCallCheck = chatRoute.indexOf("buildKinfolkFirstCallCompositionCheck({");
+
+    expect(firstCallCheck).toBeGreaterThan(-1);
+    expect(firstCallCheck).toBeGreaterThan(communication);
+    expect(chatRoute).toContain("buildKinfolkAaveDeliveryCheck({");
+    expect(chatRoute).toContain("shouldReviewKinfolkAaveDelivery({");
+    expect(chatRoute).toContain("aave-native-quality-review");
+    expect(chatRoute).toContain("FINAL ARTIFACT DELIVERY CHECK");
+    expect(chatRoute).not.toContain("aave-delivery-revision");
+    expect(chatRoute).not.toContain("natural-presentation-revision");
+    expect(chatRoute).not.toContain("brief-presentation-revision");
   });
 
   it("keeps promotion-versus-community policy questions out of the business catalog and card prompt", () => {

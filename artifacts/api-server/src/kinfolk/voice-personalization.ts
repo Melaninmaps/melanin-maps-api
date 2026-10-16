@@ -174,7 +174,7 @@ export function buildAaveRegisterPrompt(
     return "";
   const guidance: Record<Exclude<AaveLevel, 0>, string> = {
     1: "Keep the response mostly in plain standard English, with only a light, natural conversational cadence.",
-    2: "This is an explicit member language choice: use a natural, context-appropriate AAVE register in the response itself—not merely a standard-English answer that mentions the preference. Let natural grammar, syntax, rhythm, and sentence construction carry the change across at least two ordinary sentences when they genuinely fit; do not treat a stock greeting, isolated slang word, or a pile of familiar expressions as compliance. For practical advice, use sustained, plainspoken cadence such as “You already got the receipts—now make the case” or “You do not have to over-explain your worth” as a reference for rhythm only; do not copy either sentence blindly and do not substitute token slang. For factual history, keep the facts plain but carry the register in the explanation—for example, a sentence may naturally frame resistance as something people “had been doing” or say a system “wasn’t something folks simply accepted”; do not quote these examples mechanically. FINAL QUALITY GATE: before returning, verify that at least two ordinary sentences visibly use the requested register through grammar or cadence, not merely vocabulary; if the draft is mostly formal standard English with a greeting or one substituted word, rewrite it. The response should visibly differ from the standard-English version without becoming a performance or a glossary. Do not default to standard English solely because the explanation is historical, academic, or practical. Keep names, dates, facts, and safety guidance precise and easy to understand.",
+    2: "This is an explicit member language choice: use a noticeable but measured, context-appropriate AAVE register in the response itself—not merely a standard-English answer with one informal phrase. Let grammar, syntax, rhythm, and sentence construction carry the voice where they fit the member's topic and selected persona; the whole response should read as one coherent human voice, not a standard-English draft with substitutions. Use only constructions that sound natural in the full sentence. Never manufacture nonstandard grammar, switch subject and object forms, use a stock greeting, stack familiar slang, or treat a phrasebook as proof of compliance. Historical, academic, and practical answers still need factual precision and should not become a performance. Before returning, read the whole reply for naturalness, clarity, and consistency with the selected register, persona, and requested format; do not silently fall back to mostly standard-English prose because the topic is serious or explanatory.",
     3: "Use the member-selected full AAVE register consistently in the response itself through natural grammar, syntax, cadence, and vocabulary where they fit. It must visibly differ from a standard-English answer without stacking stock slang, performing an identity, or turning the reply into a dialect demonstration. Prioritize clarity, factual precision, and natural phrasing over intensity.",
   };
   return `AAVE REGISTER — MEMBER SELECTED LEVEL ${level}:\n${guidance[level as Exclude<AaveLevel, 0>]} Use no profanity. Never perform, exaggerate, caricature, stereotype, imitate an accent, or infer identity. Do not mix registers to signal who you think the member is; follow only this explicit setting.`;
@@ -197,26 +197,39 @@ export function buildLanguagePersonalizationPrompt(options: {
     .join("\n\n");
 }
 
-const DISTINCT_AAVE_DELIVERY_MARKERS = /\b(?:ain['’]t|gon['’]?|y['’]all|gotta|finna|steady|done|been|’cause|cause|wasn['’]t|weren['’]t)\b/i;
-
 /**
- * A level-two choice is explicit. If the first draft is entirely standard
- * explanatory prose, request one bounded fact-preserving rewrite instead of
- * silently delivering a response that failed the member's stated preference.
+ * Keeps an explicit level-two setting visible at the final first-call layer
+ * without inspecting generated text for slang, markers, or a quota of dialect
+ * features. High-stakes contexts have no AAVE prompt and therefore return no
+ * delivery check.
  */
-export function needsKinfolkAaveDeliveryRevision(input: {
+export function buildKinfolkAaveDeliveryCheck(input: {
   aaveLevel: unknown;
   languagePrompt: string;
-  reply: string;
-}): boolean {
-  if (input.aaveLevel !== 2 || !input.languagePrompt.includes("AAVE REGISTER — MEMBER SELECTED LEVEL 2")) {
-    return false;
+}): string {
+  if (
+    input.aaveLevel !== 2 ||
+    !input.languagePrompt.includes("AAVE REGISTER — MEMBER SELECTED LEVEL 2")
+  ) {
+    return "";
   }
-  const sentences = input.reply
-    .split(/[.!?]+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-  return sentences.filter((sentence) => DISTINCT_AAVE_DELIVERY_MARKERS.test(sentence)).length < 2;
+  return "FINAL ACTIVE LANGUAGE CHECK — MEMBER-SELECTED AAVE LEVEL 2: This is an externally visible delivery choice for this direct reply. Do not return mostly standard-English prose with one informal word. Use a natural, moderate AAVE voice where it belongs in the full answer, while keeping every fact, qualification, and safety point clear. Do not force slang or a construction that does not fit the sentence, and do not mention this setting.";
+}
+
+/**
+ * A level-two setting is an explicit, low-stakes language preference. The
+ * provider receives one bounded native-quality review only for that setting;
+ * this is intentionally not a marker-count heuristic and never runs for an
+ * artifact or a high-stakes language override.
+ */
+export function shouldReviewKinfolkAaveDelivery(input: {
+  aaveLevel: unknown;
+  languagePrompt: string;
+  isGeneratedArtifact: boolean;
+}): boolean {
+  return input.aaveLevel === 2 &&
+    !input.isGeneratedArtifact &&
+    input.languagePrompt.includes("AAVE REGISTER — MEMBER SELECTED LEVEL 2");
 }
 
 const ENUM_FIELDS: Record<string, readonly string[]> = {
