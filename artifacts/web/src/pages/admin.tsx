@@ -62,7 +62,6 @@ import { KinfolkCurrentCityDuplicateReconciliation } from "@/components/KinfolkC
 import AdminBusinessReview from "@/pages/admin-business-review";
 import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import { FounderSourceReconciliation } from "@/components/FounderSourceReconciliation";
-import { VerifiedSourceProfileCreation } from "@/components/VerifiedSourceProfileCreation";
 import {
   BarChart,
   Bar,
@@ -9030,7 +9029,6 @@ Selected: ${summary}`,
       {tab === "founder-source-reconciliation" && isFounderOwner && (
         <div className="p-6">
           <FounderSourceReconciliation />
-          <VerifiedSourceProfileCreation onCreated={() => { void loadBusinesses({}); }} />
         </div>
       )}
 
