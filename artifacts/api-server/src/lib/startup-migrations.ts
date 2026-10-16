@@ -6737,6 +6737,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       "business permanent-deletion audit v1",
       () => ensureBusinessPermanentDeletionAuditSchema(log, warn),
     ],
+    [
+      "business delete queue v1",
+      () => ensureBusinessDeleteQueueSchema(log, warn),
+    ],
     // ── Admin intake provenance and full-inventory filters ─────────────────
     // A source/batch/rationale survives an archive so duplicate cleanup is
     // reversible without re-researching a business.
@@ -17905,6 +17909,47 @@ async function ensureBusinessPermanentDeletionAuditSchema(
     log("ensureBusinessPermanentDeletionAuditSchema: table ready");
   } catch (err: unknown) {
     warn(`ensureBusinessPermanentDeletionAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Administrator Delete Queue ───────────────────────────────────────────────
+// A hold is intentionally separate from permanent deletion. It preserves the
+// source record in its Archive/Duplicate state for seven days and never starts
+// an automatic deletion job. After the hold, a typed administrator confirmation
+// is still required by the route before a deletion can occur.
+async function ensureBusinessDeleteQueueSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_delete_queue_entries (
+        id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id           TEXT NOT NULL,
+        source_vault          TEXT NOT NULL CHECK (source_vault IN ('archive', 'duplicates')),
+        queued_by_user_id     TEXT,
+        reason                TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+        queued_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        eligible_at           TIMESTAMPTZ NOT NULL,
+        removed_at            TIMESTAMPTZ,
+        removed_by_user_id    TEXT,
+        removal_reason        TEXT CHECK (removal_reason IS NULL OR char_length(removal_reason) BETWEEN 3 AND 1000),
+        permanent_deleted_at  TIMESTAMPTZ
+      )
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS business_delete_queue_active_business_idx
+        ON business_delete_queue_entries(business_id)
+        WHERE removed_at IS NULL AND permanent_deleted_at IS NULL
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS business_delete_queue_eligible_idx
+        ON business_delete_queue_entries(eligible_at, queued_at)
+        WHERE removed_at IS NULL AND permanent_deleted_at IS NULL
+    `);
+    log("ensureBusinessDeleteQueueSchema: table ready");
+  } catch (err: unknown) {
+    warn(`ensureBusinessDeleteQueueSchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

@@ -40,6 +40,11 @@ import {
   escapeAdminBusinessSearchPhrase,
   parseAdminBusinessSearchPhrase,
 } from "../businesses/adminInventoryPhraseSearch";
+import {
+  deleteQueueConfirmation,
+  getDeleteQueueEligibleAt,
+  removeFromDeleteQueueConfirmation,
+} from "../businesses/deleteQueue";
 import { COMPLETED_COHORT_MANIFEST_CHECKSUM } from "../directoryImport/cohortReconciliation";
 import {
   sourceBackedDirectoryCandidates,
@@ -895,6 +900,7 @@ type AdminBusinessInventoryFilters = Readonly<{
   orderBy: string;
   where: string;
   filterParams: unknown[];
+  activeDeleteQueuePredicate: string;
   cityFilters: string[];
   completedCohortPredicate: string;
   nationalMasterPredicate: string;
@@ -909,6 +915,10 @@ type AdminBusinessInventoryFilters = Readonly<{
 async function compileAdminBusinessInventoryFilters(
   query: AdminBusinessInventoryQuery,
 ): Promise<AdminBusinessInventoryFilters> {
+  // Keep this additive table available before using it in every Admin inventory
+  // predicate. A Delete Queue entry is a reversible hold, not a background job
+  // that removes data.
+  await ensureBusinessDeleteQueueSchema(pool);
   const search = String(query.search ?? "").trim();
   // Repeated `city` query parameters intentionally mean OR: an Admin can
   // review Philadelphia plus a known spelling variant in one result set.
@@ -1006,6 +1016,13 @@ async function compileAdminBusinessInventoryFilters(
   )`;
   const filters: string[] = [];
   const filterParams: unknown[] = [];
+  const activeDeleteQueuePredicate = `EXISTS (
+    SELECT 1
+      FROM business_delete_queue_entries AS delete_queue
+     WHERE delete_queue.business_id = businesses.id
+       AND delete_queue.removed_at IS NULL
+       AND delete_queue.permanent_deleted_at IS NULL
+  )`;
   const addFilter = (clause: string, value: string) => {
     filterParams.push(value);
     filters.push(clause.replace("?", `$${filterParams.length}`));
@@ -1039,18 +1056,26 @@ async function compileAdminBusinessInventoryFilters(
   if (sourceBatch) {
     addFilter("COALESCE(intake_batch_reference, '') = ?", sourceBatch);
   }
-  if (status === "duplicates") {
-    // Confirmed duplicate records are retained for evidence and reversible
-    // merge restoration, but review them in their own all-status vault rather
-    // than mixing them into ordinary or Archive-vault inventory.
-    filters.push("COALESCE(is_duplicate, false) = true");
-  } else if (status === "archived") {
-    filters.push("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
-  } else if (status !== "all") {
-    // All ordinary review modes exclude the reversible archive. `all` is used
-    // only by the explicit Admin CSV inventory download. Confirmed duplicates
-    // are intentionally reviewed only in the dedicated Duplicate vault.
-    filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false");
+  if (status === "delete_queue") {
+    filters.push(activeDeleteQueuePredicate);
+  } else {
+    // Delete Queue records must be reviewed in their dedicated seven-day hold
+    // folder. This keeps the ordinary Archive, Duplicate, live, and all-record
+    // screens from becoming a path around the hold.
+    filters.push(`NOT (${activeDeleteQueuePredicate})`);
+    if (status === "duplicates") {
+      // Confirmed duplicate records are retained for evidence and reversible
+      // merge restoration, but review them in their own all-status vault rather
+      // than mixing them into ordinary or Archive-vault inventory.
+      filters.push("COALESCE(is_duplicate, false) = true");
+    } else if (status === "archived") {
+      filters.push("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
+    } else if (status !== "all") {
+      // All ordinary review modes exclude the reversible archive. `all` is used
+      // only by the explicit Admin CSV inventory download. Confirmed duplicates
+      // are intentionally reviewed only in the dedicated Duplicate vault.
+      filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false");
+    }
   }
   if (status === "permanently_closed") {
     filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
@@ -1105,6 +1130,7 @@ async function compileAdminBusinessInventoryFilters(
     orderBy,
     where: filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "",
     filterParams,
+    activeDeleteQueuePredicate,
     cityFilters,
     completedCohortPredicate,
     nationalMasterPredicate,
@@ -1195,6 +1221,40 @@ async function ensureBusinessPermanentDeletionAuditSchema(client: ListingAuditQu
   await client.query(`
     CREATE INDEX IF NOT EXISTS business_permanent_deletion_audit_business_created_idx
       ON business_permanent_deletion_audit_events(business_id, created_at DESC)
+  `);
+}
+
+/**
+ * The Delete Queue keeps a record in its originating Archive/Duplicate state
+ * while it is held. It never schedules an automatic deletion: after seven full
+ * days, the entry is merely eligible for the existing separately-confirmed
+ * permanent-delete action.
+ */
+async function ensureBusinessDeleteQueueSchema(client: ListingAuditQueryClient): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS business_delete_queue_entries (
+      id                    UUID PRIMARY KEY,
+      business_id           TEXT NOT NULL,
+      source_vault          TEXT NOT NULL CHECK (source_vault IN ('archive', 'duplicates')),
+      queued_by_user_id     TEXT,
+      reason                TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      queued_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      eligible_at           TIMESTAMPTZ NOT NULL,
+      removed_at            TIMESTAMPTZ,
+      removed_by_user_id    TEXT,
+      removal_reason        TEXT CHECK (removal_reason IS NULL OR char_length(removal_reason) BETWEEN 3 AND 1000),
+      permanent_deleted_at  TIMESTAMPTZ
+    )
+  `);
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS business_delete_queue_active_business_idx
+      ON business_delete_queue_entries(business_id)
+      WHERE removed_at IS NULL AND permanent_deleted_at IS NULL
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS business_delete_queue_eligible_idx
+      ON business_delete_queue_entries(eligible_at, queued_at)
+      WHERE removed_at IS NULL AND permanent_deleted_at IS NULL
   `);
 }
 
@@ -1423,6 +1483,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       orderBy,
       where,
       filterParams,
+      activeDeleteQueuePredicate,
       cityFilters,
       completedCohortPredicate,
       nationalMasterPredicate,
@@ -1433,18 +1494,21 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     // Use to_jsonb for the optional, additive intake fields. The older records
     // predate those fields, and an incomplete startup-migration retry must not
     // make the entire administrator inventory unavailable.
-    const liveInventoryWhere = "COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false";
-    const archivedInventoryWhere = "listing_status = 'archived' AND COALESCE(is_duplicate, false) = false";
-    const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true";
-    // The master owner inventory deliberately includes every retained row.
-    // Its controls remain status-aware; this only removes the view-level wall
-    // between live, archived, and duplicate records.
+    const reviewableInventoryWhere = `NOT (${activeDeleteQueuePredicate})`;
+    const liveInventoryWhere = `${reviewableInventoryWhere} AND COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false`;
+    const archivedInventoryWhere = `${reviewableInventoryWhere} AND listing_status = 'archived' AND COALESCE(is_duplicate, false) = false`;
+    const duplicateInventoryWhere = `${reviewableInventoryWhere} AND COALESCE(is_duplicate, false) = true`;
+    const deleteQueueInventoryWhere = activeDeleteQueuePredicate;
+    // Delete Queue records remain retained but have a dedicated seven-day-hold
+    // folder. They are intentionally excluded from all routine review scopes.
     const inventoryScopeWhere = status === "duplicates"
       ? duplicateInventoryWhere
       : status === "archived"
         ? archivedInventoryWhere
+        : status === "delete_queue"
+          ? deleteQueueInventoryWhere
         : status === "all"
-          ? "TRUE"
+          ? reviewableInventoryWhere
           : liveInventoryWhere;
     const [
       businesses,
@@ -1452,6 +1516,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       liveInventoryCount,
       archivedInventoryCount,
       duplicateInventoryCount,
+      deleteQueueCount,
       publicDirectoryCount,
       kinfolkRecommendableCount,
       permanentlyClosedCount,
@@ -1494,6 +1559,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       research_source_url: string | null;
       kinfolk_recommendation_reason: string | null;
       intake_batch_reference: string | null;
+      delete_queue_queued_at: string | null;
+      delete_queue_eligible_at: string | null;
+      delete_queue_reason: string | null;
+      delete_queue_source_vault: "archive" | "duplicates" | null;
       intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
       manus_created: boolean;
       }>(
@@ -1505,6 +1574,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               to_jsonb(businesses)->>'research_source_url' AS research_source_url,
               to_jsonb(businesses)->>'kinfolk_recommendation_reason' AS kinfolk_recommendation_reason,
               to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference,
+              delete_queue.queued_at AS delete_queue_queued_at,
+              delete_queue.eligible_at AS delete_queue_eligible_at,
+              delete_queue.reason AS delete_queue_reason,
+              delete_queue.source_vault AS delete_queue_source_vault,
               CASE
                 WHEN ${completedCohortPredicate} THEN 'protected_historical_cohort'
                 WHEN ${nationalMasterPredicate} THEN 'user_national_master'
@@ -1512,6 +1585,15 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               END AS intake_cohort,
               CASE WHEN ${manusCreatedPredicate} THEN true ELSE false END AS manus_created
        FROM businesses
+       LEFT JOIN LATERAL (
+         SELECT queued_at, eligible_at, reason, source_vault
+           FROM business_delete_queue_entries
+          WHERE business_id = businesses.id
+            AND removed_at IS NULL
+            AND permanent_deleted_at IS NULL
+          ORDER BY queued_at DESC
+          LIMIT 1
+       ) AS delete_queue ON TRUE
        ${where}
        ORDER BY ${orderBy}
        LIMIT $${filterParams.length + 1}
@@ -1527,6 +1609,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       ),
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total FROM businesses WHERE ${duplicateInventoryWhere}`,
+      ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM businesses WHERE ${deleteQueueInventoryWhere}`,
       ),
       // The public view is the canonical answer to "how many can members find
       // through normal Directory/category/city search?" It excludes archived,
@@ -1601,6 +1686,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const liveInventoryTotal = Number(liveInventoryCount.rows[0]?.total ?? 0);
     const archivedInventoryTotal = Number(archivedInventoryCount.rows[0]?.total ?? 0);
     const duplicateInventoryTotal = Number(duplicateInventoryCount.rows[0]?.total ?? 0);
+    const deleteQueueTotal = Number(deleteQueueCount.rows[0]?.total ?? 0);
     const publicDirectoryTotal = Number(publicDirectoryCount.rows[0]?.total ?? 0);
     const kinfolkRecommendableTotal = Number(kinfolkRecommendableCount.rows[0]?.total ?? 0);
     const permanentlyClosedTotal = Number(permanentlyClosedCount.rows[0]?.total ?? 0);
@@ -1649,6 +1735,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       researchSourceUrl: b.research_source_url,
       kinfolkRecommendationReason: b.kinfolk_recommendation_reason,
       intakeBatchReference: b.intake_batch_reference,
+      deleteQueueQueuedAt: b.delete_queue_queued_at,
+      deleteQueueEligibleAt: b.delete_queue_eligible_at,
+      deleteQueueReason: b.delete_queue_reason,
+      deleteQueueSourceVault: b.delete_queue_source_vault,
       permanentlyClosed:
         b.enrichment_note?.toLowerCase().includes("permanently closed") ??
         false,
@@ -1682,9 +1772,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       // and Kinfolk recommendation counts. These answer different operator
       // questions and prevent an archived duplicate from looking active.
       inventoryTotal,
+      reviewableInventoryTotal: Math.max(0, inventoryTotal - deleteQueueTotal),
       liveInventoryTotal,
       archivedInventoryTotal,
       duplicateInventoryTotal,
+      deleteQueueTotal,
       publicDirectoryTotal,
       kinfolkRecommendableTotal,
       permanentlyClosedTotal,
@@ -1790,6 +1882,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
   const client = await pool.connect();
   try {
     await ensureListingStatusAuditSchema(client);
+    await ensureBusinessDeleteQueueSchema(client);
     await client.query("BEGIN");
     const currentResult = await client.query<{
       id: string;
@@ -1819,6 +1912,24 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
         error: "Bulk restore accepts only selected records from the Archive vault. Refresh the vault selection and try again.",
       });
       return;
+    }
+    if (!removing) {
+      const held = await client.query<{ business_id: string }>(
+        `SELECT business_id
+           FROM business_delete_queue_entries
+          WHERE business_id = ANY($1::text[])
+            AND removed_at IS NULL
+            AND permanent_deleted_at IS NULL
+          FOR UPDATE`,
+        [uniqueIds],
+      );
+      if (held.rows.length > 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          error: "Remove the record from the Delete Queue before restoring public discovery. It remains in its Archive or Duplicate vault while held.",
+        });
+        return;
+      }
     }
     for (const current of currentResult.rows) {
       const beforeState = {
@@ -1897,7 +2008,184 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
   }
 });
 
-// DELETE /admin/businesses/permanent — audited, non-cascading deletion from Archive/Duplicate vaults only.
+// POST /admin/businesses/delete-queue — place archived or duplicate records into
+// an explicit, reversible seven-day retention hold. This route never deletes or
+// changes the record's archive/duplicate state.
+router.post("/admin/businesses/delete-queue", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set(req.body.ids.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  if (ids.length === 0 || ids.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 Archive or Duplicate vault businesses." });
+    return;
+  }
+  if (reason.length < 3 || reason.length > 1_000) {
+    res.status(400).json({ error: "A 3–1,000 character Delete Queue reason is required." });
+    return;
+  }
+  if (req.body?.confirmation !== deleteQueueConfirmation(ids.length)) {
+    res.status(400).json({ error: `Type ${deleteQueueConfirmation(ids.length)} to start the seven-day hold.` });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await ensureBusinessDeleteQueueSchema(client);
+    await client.query("BEGIN");
+    const current = await client.query<{
+      id: string;
+      name: string;
+      listing_status: string | null;
+      is_duplicate: boolean;
+    }>(
+      `SELECT id, name, listing_status, COALESCE(is_duplicate, false) AS is_duplicate
+         FROM businesses
+        WHERE id = ANY($1::text[])
+        FOR UPDATE`,
+      [ids],
+    );
+    if (current.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected businesses were not found." });
+      return;
+    }
+    const notInVault = current.rows.filter(
+      (row) => row.listing_status !== "archived" && !row.is_duplicate,
+    );
+    if (notInVault.length > 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "Move a record to Archive or Duplicate vault before placing it in the Delete Queue.",
+      });
+      return;
+    }
+    const alreadyQueued = await client.query<{ business_id: string }>(
+      `SELECT business_id
+         FROM business_delete_queue_entries
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL
+        FOR UPDATE`,
+      [ids],
+    );
+    if (alreadyQueued.rows.length > 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "One or more selected businesses are already in the Delete Queue." });
+      return;
+    }
+
+    const queuedAt = new Date();
+    const eligibleAt = getDeleteQueueEligibleAt(queuedAt);
+    for (const row of current.rows) {
+      await client.query(
+        `INSERT INTO business_delete_queue_entries
+           (id, business_id, source_vault, queued_by_user_id, reason, queued_at, eligible_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          randomUUID(),
+          row.id,
+          row.is_duplicate ? "duplicates" : "archive",
+          req.user?.id ?? null,
+          reason,
+          queuedAt.toISOString(),
+          eligibleAt.toISOString(),
+        ],
+      );
+    }
+    await client.query("COMMIT");
+    req.log?.info(
+      { selectedCount: ids.length, eligibleAt: eligibleAt.toISOString(), by: req.user?.id },
+      "Admin moved businesses into the reversible seven-day Delete Queue",
+    );
+    res.json({
+      ok: true,
+      queuedCount: ids.length,
+      eligibleAt: eligibleAt.toISOString(),
+      guarantee: "No business was deleted. Nothing is deleted automatically after the hold.",
+    });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log?.error({ err }, "Failed to queue selected businesses for delayed deletion");
+    res.status(500).json({ error: "The selected businesses were not moved to the Delete Queue." });
+  } finally {
+    client.release();
+  }
+});
+
+// POST /admin/businesses/delete-queue/remove — leave the Delete Queue and
+// return the record to its unchanged Archive/Duplicate vault state.
+router.post("/admin/businesses/delete-queue/remove", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set(req.body.ids.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  if (ids.length === 0 || ids.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 Delete Queue businesses." });
+    return;
+  }
+  if (reason.length < 3 || reason.length > 1_000) {
+    res.status(400).json({ error: "A 3–1,000 character removal reason is required." });
+    return;
+  }
+  if (req.body?.confirmation !== removeFromDeleteQueueConfirmation(ids.length)) {
+    res.status(400).json({ error: `Type ${removeFromDeleteQueueConfirmation(ids.length)} to remove the hold.` });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await ensureBusinessDeleteQueueSchema(client);
+    await client.query("BEGIN");
+    const held = await client.query<{ business_id: string }>(
+      `SELECT business_id
+         FROM business_delete_queue_entries
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL
+        FOR UPDATE`,
+      [ids],
+    );
+    if (held.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Each selected record must still be in the active Delete Queue." });
+      return;
+    }
+    await client.query(
+      `UPDATE business_delete_queue_entries
+          SET removed_at = NOW(),
+              removed_by_user_id = $2,
+              removal_reason = $3
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL`,
+      [ids, req.user?.id ?? null, reason],
+    );
+    await client.query("COMMIT");
+    res.json({
+      ok: true,
+      removedCount: ids.length,
+      guarantee: "No public listing was restored. Records returned only to their previous Archive or Duplicate vault state.",
+    });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log?.error({ err }, "Failed to remove selected businesses from the Delete Queue");
+    res.status(500).json({ error: "The selected businesses remain in the Delete Queue." });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE /admin/businesses/permanent — audited, non-cascading deletion from an
+// eligible Delete Queue entry only. The seven-day hold never auto-deletes.
 router.delete("/admin/businesses/permanent", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
@@ -1909,7 +2197,7 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
     : [];
   const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
   if (ids.length === 0 || ids.length > 500) {
-    res.status(400).json({ error: "Select between 1 and 500 archived or duplicate businesses." });
+    res.status(400).json({ error: "Select between 1 and 500 eligible Delete Queue businesses." });
     return;
   }
   if (reason.length < 3 || reason.length > 1_000) {
@@ -1924,6 +2212,7 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
   const client = await pool.connect();
   try {
     await ensureBusinessPermanentDeletionAuditSchema(client);
+    await ensureBusinessDeleteQueueSchema(client);
     await client.query("BEGIN");
     const current = await client.query<{
       id: string;
@@ -1944,11 +2233,30 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
       res.status(404).json({ error: "One or more selected businesses were not found." });
       return;
     }
-    const blocked = current.rows.filter((row) => row.listing_status !== "archived" && !row.is_duplicate);
-    if (blocked.length > 0) {
+    const held = await client.query<{
+      business_id: string;
+      eligible_at: string;
+    }>(
+      `SELECT business_id, eligible_at
+         FROM business_delete_queue_entries
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL
+        FOR UPDATE`,
+      [ids],
+    );
+    if (held.rows.length !== ids.length) {
       await client.query("ROLLBACK");
       res.status(409).json({
-        error: "Permanent deletion is allowed only for records already in Archive vault or Duplicate vault. Archive any live record first.",
+        error: "Permanent deletion is allowed only from the active Delete Queue after the seven-day hold. Move an Archive or Duplicate vault record into the Delete Queue first.",
+      });
+      return;
+    }
+    const stillHeld = held.rows.filter((row) => new Date(row.eligible_at).getTime() > Date.now());
+    if (stillHeld.length > 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "One or more selected records are still within the required seven-day Delete Queue hold. Nothing was deleted.",
       });
       return;
     }
@@ -1997,11 +2305,22 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
       "DELETE FROM business_inventory_cohort_receipts WHERE business_id = ANY($1::text[])",
       [ids],
     );
+    // Retain the hold receipt even after the business row is gone. This update
+    // occurs in the same transaction as the guarded deletion, so a foreign-key
+    // failure leaves both the business and its hold untouched.
+    await client.query(
+      `UPDATE business_delete_queue_entries
+          SET permanent_deleted_at = NOW()
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL`,
+      [ids],
+    );
     // Deliberately no CASCADE. If this record has linked data protected by a
     // foreign key, PostgreSQL rejects the transaction and preserves everything.
     await client.query("DELETE FROM businesses WHERE id = ANY($1::text[])", [ids]);
     await client.query("COMMIT");
-    req.log?.info({ selectedCount: ids.length, by: req.user?.id }, "Admin permanently deleted archived/duplicate businesses with audit snapshots");
+    req.log?.info({ selectedCount: ids.length, by: req.user?.id }, "Admin permanently deleted eligible Delete Queue businesses with audit snapshots");
     res.json({ ok: true, deletedCount: ids.length });
   } catch (err: unknown) {
     await client.query("ROLLBACK").catch(() => undefined);
@@ -2052,6 +2371,7 @@ router.patch(
     const client = await pool.connect();
     try {
       await ensureListingStatusAuditSchema(client);
+      await ensureBusinessDeleteQueueSchema(client);
       await client.query("BEGIN");
       const currentResult = await client.query<{
         id: string;
@@ -2084,6 +2404,22 @@ router.patch(
       let restoredFrom: typeof beforeState | null = null;
 
       if (!removing) {
+        const held = await client.query<{ business_id: string }>(
+          `SELECT business_id
+             FROM business_delete_queue_entries
+            WHERE business_id = $1
+              AND removed_at IS NULL
+              AND permanent_deleted_at IS NULL
+            FOR UPDATE`,
+          [id],
+        );
+        if (held.rows.length > 0) {
+          await client.query("ROLLBACK");
+          res.status(409).json({
+            error: "Remove this record from the Delete Queue before restoring public discovery. It remains safely in its current vault while held.",
+          });
+          return;
+        }
         const removalAudit = await client.query<{ before_state: typeof beforeState }>(
           `SELECT before_state
              FROM business_listing_status_audit_events
@@ -5151,6 +5487,9 @@ router.get(
         research_source_url: string | null;
         kinfolk_recommendation_reason: string | null;
         intake_batch_reference: string | null;
+        delete_queue_queued_at: string | null;
+        delete_queue_eligible_at: string | null;
+        delete_queue_source_vault: "archive" | "duplicates" | null;
         intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
         manus_created: boolean;
       }>(
@@ -5161,6 +5500,9 @@ router.get(
                 to_jsonb(businesses)->>'research_source_url' AS research_source_url,
                 to_jsonb(businesses)->>'kinfolk_recommendation_reason' AS kinfolk_recommendation_reason,
                 to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference,
+                delete_queue.queued_at AS delete_queue_queued_at,
+                delete_queue.eligible_at AS delete_queue_eligible_at,
+                delete_queue.source_vault AS delete_queue_source_vault,
                 CASE
                   WHEN ${completedCohortPredicate} THEN 'protected_historical_cohort'
                   WHEN ${nationalMasterPredicate} THEN 'user_national_master'
@@ -5168,6 +5510,15 @@ router.get(
                 END AS intake_cohort,
                 CASE WHEN ${manusCreatedPredicate} THEN true ELSE false END AS manus_created
            FROM businesses
+           LEFT JOIN LATERAL (
+             SELECT queued_at, eligible_at, source_vault
+               FROM business_delete_queue_entries
+              WHERE business_id = businesses.id
+                AND removed_at IS NULL
+                AND permanent_deleted_at IS NULL
+              ORDER BY queued_at DESC
+              LIMIT 1
+           ) AS delete_queue ON TRUE
            ${where}
            ORDER BY ${orderBy}`,
         filterParams,
@@ -5223,6 +5574,9 @@ router.get(
         "Research source label",
         "Research source URL",
         "Kinfolk recommendation context",
+        "Delete Queue source vault",
+        "Delete Queue held since",
+        "Delete Queue eligible after",
         "Outreach Status",
         "Outreach Handle",
         "Outreach Date",
@@ -5253,6 +5607,9 @@ router.get(
           b.research_source_label ?? "",
           b.research_source_url ?? "",
           b.kinfolk_recommendation_reason ?? "",
+          b.delete_queue_source_vault ?? "",
+          b.delete_queue_queued_at ? new Date(b.delete_queue_queued_at).toISOString() : "",
+          b.delete_queue_eligible_at ? new Date(b.delete_queue_eligible_at).toISOString() : "",
           out?.status ?? "Not contacted",
           out?.socialHandle ?? "",
           out ? new Date(out.createdAt).toLocaleDateString() : "",
@@ -5266,6 +5623,8 @@ router.get(
       const date = new Date().toISOString().slice(0, 10);
       const scope = status === "archived"
         ? "archive-vault"
+        : status === "delete_queue"
+          ? "delete-queue"
         : status === "all"
           ? "all-inventory-including-archive"
           : "filtered-live-inventory";

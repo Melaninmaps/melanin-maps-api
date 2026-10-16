@@ -32,7 +32,9 @@ describe("administrator public-discovery removal governance", () => {
     expect(startupMigrations).toContain("ensureBusinessListingStatusAuditSchema");
     expect(startupMigrations).toContain("business_listing_status_audit_events");
     expect(adminRoute).toContain("business_permanent_deletion_audit_events");
-    expect(adminRoute).toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
+    expect(adminRoute).toContain("Permanent deletion is allowed only from the active Delete Queue after the seven-day hold.");
+    expect(adminRoute).toContain("business_delete_queue_entries");
+    expect(startupMigrations).toContain("ensureBusinessDeleteQueueSchema");
     expect(adminRoute).toContain('DELETE FROM businesses WHERE id = ANY($1::text[])');
     expect(adminRoute).toContain("Deliberately no CASCADE");
   });

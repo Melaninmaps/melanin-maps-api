@@ -126,7 +126,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("const liveInventoryWhere");
     expect(adminRoute).toContain("const archivedInventoryWhere");
     expect(adminRoute).toContain('status === "all"');
-    expect(adminRoute).toContain('? "TRUE"');
+    expect(adminRoute).toContain("reviewableInventoryWhere");
     expect(adminRoute).toContain("listing_status, is_duplicate, phone");
     expect(adminRoute).toContain("isDuplicate: b.is_duplicate");
     expect(adminRoute).toContain("liveInventoryTotal");
@@ -136,9 +136,9 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("FROM public.public_businesses");
     expect(adminScreen).toContain('>("all")');
     expect(adminScreen).toContain('status: "all" as typeof bizStatusFilter');
-    expect(adminScreen).toContain("All retained business records");
+    expect(adminScreen).toContain("All reviewable business records");
     expect(adminScreen).toContain("All businesses (");
-    expect(adminScreen).toContain('const selectableBusinessRows = bizStatusFilter === "duplicates"');
+    expect(adminScreen).toContain('const selectableBusinessRows = bizStatusFilter === "delete_queue"');
     expect(adminScreen).toContain("disabled={!selectableBusinessRows.some((business) => business.id === biz.id)}");
     expect(adminScreen).toContain("Select all visible live listings");
     expect(adminScreen).toContain("Edit profile");
@@ -147,26 +147,28 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).not.toContain("Status-specific actions remain protected");
     expect(adminScreen).toContain("Duplicate vault");
     expect(adminScreen).toContain("Archive vault");
+    expect(adminScreen).toContain("Delete Queue — 7-day hold");
     expect(adminScreen).toContain("Public Directory searchable");
     expect(adminScreen).toContain("Current Kinfolk catalog");
     expect(adminScreen).toContain("Archived records in master list");
     expect(adminScreen).toContain("Unhide / restore public listing");
   });
 
-  it("keeps confirmed duplicates in their own all-status vault with guarded deletion only", () => {
+  it("keeps confirmed duplicates in their own all-status vault before a guarded Delete Queue hold", () => {
     expect(adminRoute).toContain('status === "duplicates"');
-    expect(adminRoute).toContain('const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true"');
+    expect(adminRoute).toContain("const duplicateInventoryWhere = `${reviewableInventoryWhere}");
     expect(adminRoute).toContain("duplicateInventoryTotal");
     expect(adminRoute).toContain("COALESCE(is_duplicate, false) = false");
     expect(adminScreen).toContain("Duplicate vault");
     expect(adminScreen).toContain("Duplicates &amp; review");
-    expect(adminScreen).toContain("Permanently delete selected");
+    expect(adminScreen).toContain("Permanently delete eligible");
     expect(adminScreen).toContain("Outreach unavailable for retained duplicates");
     expect(adminScreen).toContain('tab !== "reviews" && tab !== "biz-review"');
     expect(adminScreen).toContain("<AdminBusinessReview embedded />");
     expect(adminRoute).toContain('router.delete("/admin/businesses/permanent"');
     expect(adminRoute).toContain("business_permanent_deletion_audit_events");
-    expect(adminRoute).toContain("row.listing_status !== \"archived\" && !row.is_duplicate");
+    expect(adminRoute).toContain("business_delete_queue_entries");
+    expect(adminRoute).toContain("permanent_deleted_at = NOW()");
     expect(adminRoute).toContain("permanentDeletionConfirmation");
     expect(adminRoute).toContain("Deliberately no CASCADE");
   });
@@ -264,17 +266,24 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(mobileBusinessHook).toContain("/api/businesses/${id}");
   });
 
-  it("keeps ordinary bulk removal reversible while permanent deletion is vault-only and audited", () => {
+  it("keeps ordinary bulk removal reversible while permanent deletion is delete-queue-only and audited", () => {
     expect(adminRoute).toContain("Select between 1 and 500 businesses.");
     expect(adminRoute).toContain("business_listing_status_audit_events");
     expect(adminRoute).toContain("remove_public_discovery");
     expect(adminScreen).toContain("research, source, or Kinfolk context");
-    expect(adminRoute).toContain("Select between 1 and 500 archived or duplicate businesses.");
-    expect(adminRoute).toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
+    expect(adminRoute).toContain("Select between 1 and 500 eligible Delete Queue businesses.");
+    expect(adminRoute).toContain("Permanent deletion is allowed only from the active Delete Queue after the seven-day hold.");
+    expect(adminRoute).toContain('router.post("/admin/businesses/delete-queue"');
+    expect(adminRoute).toContain('router.post("/admin/businesses/delete-queue/remove"');
+    expect(adminRoute).toContain("getDeleteQueueEligibleAt");
+    expect(adminRoute).toContain("Nothing is deleted automatically after the hold.");
+    expect(adminRoute).toContain("Remove the record from the Delete Queue before restoring public discovery.");
+    expect(adminRoute).toContain("Remove this record from the Delete Queue before restoring public discovery.");
     expect(adminRoute).toContain("business_permanent_deletion_audit_events");
     expect(adminRoute).toContain('DELETE FROM businesses WHERE id = ANY($1::text[])');
     expect(adminRoute).not.toContain("DELETE FROM businesses CASCADE");
     expect(migrations).toContain("ensureBusinessPermanentDeletionAuditSchema");
+    expect(migrations).toContain("ensureBusinessDeleteQueueSchema");
   });
 
   it("retains a source cohort receipt in the private deletion audit before removing only its restrictive link", () => {
