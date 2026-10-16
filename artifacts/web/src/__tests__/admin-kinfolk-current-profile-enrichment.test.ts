@@ -31,6 +31,7 @@ describe("audited profile enrichment Admin control", () => {
     expect(adminSource).toContain('get("profile_enrichment")');
     expect(adminSource).toContain('requested === "kinfolk_current" || requested === "non_kinfolk_current"');
     expect(adminSource).toContain("profileEnrichmentScope && bizStatusFilter");
+    expect(adminSource).toContain('id="profile-enrichment"');
     expect(adminSource).toContain("<KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope}");
   });
 
