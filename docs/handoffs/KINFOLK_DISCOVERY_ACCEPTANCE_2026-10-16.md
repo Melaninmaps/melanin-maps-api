@@ -1,6 +1,6 @@
 # Kinfolk Focused Business-Discovery Acceptance — 2026-10-16
 
-**Status:** SOURCE COMPLETE / SOURCE REVIEW
+**Status:** SOURCE COMPLETE / MEMBER ACCEPTANCE PENDING
 
 ## Scope
 
@@ -34,6 +34,13 @@ pnpm typecheck  # artifacts/api-server
 
 All selected acceptance tests pass and API TypeScript typechecking passes.
 
-## Remaining member-visible testing
+## Release-gated member acceptance
 
-A real member session still needs release-authorized testing against live, published directory data to verify coverage and data completeness in the selected city. That testing must confirm actual profile classifications, owner-published schedules, and qualifying community feedback—not inferred real-time waits. No staging invocation has been performed for this source review.
+When an integrated release is separately authorized, test through a real authenticated Kinfolk session and record the actual business IDs, retrieved evidence, exclusions, ranks, and displayed recommendations for:
+
+1. Exact-name lookup.
+2. Friday-night dinner with no-wait preference.
+3. Romantic but not loud dining.
+4. Wig installation with shampoo and detangling.
+
+Exercise exact-name and natural-language paths in Web, iOS, and Android where each client is applicable. Verify that incomplete descriptions, absent VIBES, and absent published hours produce a clear evidence limitation—not a fabricated fact or irrelevant recommendation. No staging invocation, deployment, migration, production-data change, or mobile build has been performed for this source review.
