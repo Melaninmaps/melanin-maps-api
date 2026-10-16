@@ -538,6 +538,13 @@ type Tab =
   | "directory-imports"
   | "founder-source-reconciliation";
 
+function initialAdminTab(): Tab {
+  if (typeof window === "undefined") return "waitlist";
+  return new URLSearchParams(window.location.search).get("admin_section") === "businesses"
+    ? "businesses"
+    : "waitlist";
+}
+
 type ChecklistSection = {
   pre_launch: Record<string, boolean>;
   community: Record<string, boolean>;
@@ -942,7 +949,7 @@ export default function Admin() {
     .trim()
     .toLowerCase();
   const isFounderOwner = FOUNDER_OWNER_ADMIN_EMAILS.has(currentAdminEmail);
-  const [tab, setTab] = useState<Tab>("waitlist");
+  const [tab, setTab] = useState<Tab>(initialAdminTab);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [requireApproval, setRequireApproval] = useState(false);
 
@@ -2929,6 +2936,15 @@ export default function Admin() {
     : nonKinfolkCurrentCohortSelected
       ? "non_kinfolk_current" as const
       : requestedProfileEnrichmentScope;
+
+  useEffect(() => {
+    if (tab !== "businesses" || !profileEnrichmentScope) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("profile-enrichment")?.scrollIntoView({ block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [profileEnrichmentScope, tab]);
+
   const selectableBusinessRows = filteredBiz;
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
   const businessInventoryExportHref = (() => {
