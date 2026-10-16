@@ -6,10 +6,10 @@ import {
   getAiUsage,
   getFamilyCircleId,
   getFamilyMemberCount,
-  getTierFromMemberType,
   formatLimit,
   formatCents,
 } from "../constants/membershipTiers";
+import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
@@ -36,14 +36,9 @@ router.get("/membership/plan", async (req: Request, res: Response): Promise<void
   try {
     const userId = req.user!.id;
 
-    // Get user info
-    const userRow = await pool.query(
-      `SELECT member_type, stripe_subscription_id, trial_ends_at FROM users WHERE id = $1 LIMIT 1`,
-      [userId]
-    );
-    const user = userRow.rows[0] as { member_type: string | null; stripe_subscription_id: string | null; trial_ends_at: Date | null } | undefined;
-
-    const tier = getTierFromMemberType(user?.member_type);
+    // Use the central resolver so a cancelled or expired provider subscription
+    // cannot keep showing its historical tier or limits.
+    const tier = await getUserTier(userId);
     const limits = TIER_LIMITS[tier];
     const display = TIER_DISPLAY[tier] ?? TIER_DISPLAY.free;
 
@@ -142,11 +137,7 @@ router.get("/membership/family/ai-usage", async (req: Request, res: Response): P
   if (!requireAuth(req, res)) return;
   try {
     const userId = req.user!.id;
-    const userRow = await pool.query(
-      `SELECT member_type FROM users WHERE id = $1 LIMIT 1`,
-      [userId]
-    );
-    const tier = getTierFromMemberType((userRow.rows[0] as { member_type: string | null } | undefined)?.member_type);
+    const tier = await getUserTier(userId);
     const usage = await getAiUsage(userId, tier);
 
     res.json({
@@ -171,16 +162,16 @@ router.post("/membership/family/add-seat", async (req: Request, res: Response): 
     const userId = req.user!.id;
 
     const userRow = await pool.query(
-      `SELECT member_type, email FROM users WHERE id = $1 LIMIT 1`,
+      `SELECT email FROM users WHERE id = $1 LIMIT 1`,
       [userId]
     );
-    const user = userRow.rows[0] as { member_type: string | null; email: string } | undefined;
+    const user = userRow.rows[0] as { email: string } | undefined;
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    const tier = getTierFromMemberType(user.member_type);
+    const tier = await getUserTier(userId);
     const limits = TIER_LIMITS[tier];
 
     if (limits.familySeatsIncluded === 0) {

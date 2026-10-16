@@ -11,6 +11,18 @@ describe("membership price integrity", () => {
     expect(billingSource).toContain('trailblazer:  { monthly: 1499, annual: 14999');
   });
 
+  it("keeps the founder-approved 30-day trial consistent between checkout and member copy", () => {
+    expect(billingSource).toContain("const MEMBERSHIP_TRIAL_DAYS = 30");
+    expect(billingSource).toContain("trial_period_days: MEMBERSHIP_TRIAL_DAYS");
+    expect(billingSource).toContain('missing_payment_method: "cancel"');
+    expect(billingSource).toContain('payment_method_collection: "if_required"');
+    expect(websiteSource).toContain("30-Day Free Trial");
+    expect(websiteSource).toContain('trial: "30-day free trial", price: "$7.99/month after"');
+    expect(websiteSource).toContain('trial: "30-day free trial", price: "$14.99/month after"');
+    expect(websiteSource).not.toContain("14-Day Free Trial");
+    expect(websiteSource).not.toContain('trial: "14-day free trial"');
+  });
+
   it("matches every member-facing website and family-plan price label to checkout", () => {
     expect(familySource).toContain('navigator: { name: "Navigator", monthlyPrice: 7.99, annualPrice: 79.99');
     expect(familySource).toContain('trailblazer: { name: "Trailblazer", monthlyPrice: 14.99, annualPrice: 149.99');
