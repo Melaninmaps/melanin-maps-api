@@ -29,6 +29,14 @@ describe("source-receipted profile enrichment route", () => {
     expect(route).toContain("business_admin_profile_edit_audit_events");
   });
 
+  it("rejects social share controls and supports exact-value remediation without widening profile scope", () => {
+    expect(route).toContain("isProfileEnrichmentOfficialSocialLink");
+    expect(route).toContain("rejectedNonProfileSocialFields");
+    expect(route).toContain('mode === "clear_invalid_social_link"');
+    expect(route).toContain("isProfileEnrichmentNonProfileSocialControlUrl");
+    expect(route).toContain("fillOnlyPatch[field] = null");
+  });
+
   it("holds scope, lifecycle, identity, and populated-value conflicts without overwriting", () => {
     expect(route).toContain("Business is already in Kinfolk Current and is outside the non-current enrichment scope.");
     expect(route).toContain("kinfolk_current_online_presence_reviews");

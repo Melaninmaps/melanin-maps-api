@@ -4,6 +4,8 @@ import {
   PROFILE_ENRICHMENT_MANIFEST_VERSION,
   isEmptyProfileEnrichmentField,
   isGenericProfileEnrichmentDescriptionPlaceholder,
+  isProfileEnrichmentNonProfileSocialControlUrl,
+  isProfileEnrichmentOfficialSocialLink,
   kinfolkCurrentProfileEnrichmentFingerprint,
   parseKinfolkCurrentProfileEnrichmentManifest,
   parseProfileEnrichmentManifest,
@@ -96,6 +98,32 @@ describe("Kinfolk Current profile enrichment manifest", () => {
     expect(parsed.scope).toBe("non_kinfolk_current");
     expect(parsed.candidates[0].fieldModes).toEqual({ description: "replace_generic_directory", tags: "append", instagram: "fill" });
     expect(parsed.candidates[0].patch.instagram).toBe("https://www.instagram.com/communitybooks/");
+  });
+
+  it("accepts a bounded exact-value remediation only for a non-profile social share control", () => {
+    const invalidTwitterShare = "https://twitter.com/intent/tweet?url=https%3A%2F%2Fcommunitybooks.example";
+    expect(isProfileEnrichmentNonProfileSocialControlUrl("twitter", invalidTwitterShare)).toBe(true);
+    expect(isProfileEnrichmentOfficialSocialLink("twitter", invalidTwitterShare)).toBe(false);
+    expect(isProfileEnrichmentOfficialSocialLink("instagram", "https://www.instagram.com/communitybooks/")).toBe(true);
+
+    const remediation = nonCurrentManifest({
+      scope: "kinfolk_current",
+      candidates: [candidate({
+        patch: { twitter: invalidTwitterShare },
+        fieldModes: { twitter: "clear_invalid_social_link" },
+        receipts: [{ field: "twitter", sourceUrl: "https://communitybooks.example/", sourceLabel: "Official website", observedAt: "2026-10-15", confidence: "high", note: "The source anchor is a Twitter share control, not a business profile." }],
+      })],
+    });
+    expect(parseProfileEnrichmentManifest(remediation).candidates[0].fieldModes.twitter).toBe("clear_invalid_social_link");
+
+    const unsafe = nonCurrentManifest({
+      candidates: [candidate({
+        patch: { instagram: "https://www.instagram.com/communitybooks/" },
+        fieldModes: { instagram: "clear_invalid_social_link" },
+        receipts: [{ field: "instagram", sourceUrl: "https://communitybooks.example/", sourceLabel: "Official website", observedAt: "2026-10-15", confidence: "high", note: "Not a supported remediation target." }],
+      })],
+    });
+    expect(() => parseProfileEnrichmentManifest(unsafe)).toThrow("share or intent");
   });
 
   it("accepts the held-profile scope without granting lifecycle mutation fields", () => {

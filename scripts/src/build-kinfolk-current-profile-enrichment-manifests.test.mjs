@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildManifests, manifestFingerprint } from "./build-kinfolk-current-profile-enrichment-manifests.mjs";
+import { buildManifests, manifestFingerprint, officialSocialProfileUrl } from "./build-kinfolk-current-profile-enrichment-manifests.mjs";
 
 const packet = {
   businessId: "business-1",
@@ -69,6 +69,22 @@ test("does not duplicate a stored social account", () => {
   const existingSocialPacket = { ...packet, sourceSnapshot: { Instagram: "https://www.instagram.com/communitybooks/" } };
   const { candidates } = buildManifests([{ ...proposal, accepted: [] }], [existingSocialPacket], { scope: "non_kinfolk_current" });
   assert.equal(candidates.length, 0);
+});
+
+test("rejects social share widgets while retaining an actual official profile link", () => {
+  assert.equal(officialSocialProfileUrl("twitter", "https://twitter.com/intent/tweet?url=https%3A%2F%2Fcommunitybooks.example"), null);
+  assert.equal(officialSocialProfileUrl("facebook", "https://www.facebook.com/share/example/"), null);
+  assert.equal(officialSocialProfileUrl("pinterest", "https://pinterest.com/pin/create/button/?url=https%3A%2F%2Fcommunitybooks.example"), null);
+  assert.equal(officialSocialProfileUrl("instagram", "https://www.instagram.com/communitybooks/"), "https://www.instagram.com/communitybooks/");
+
+  const { candidates } = buildManifests([{ ...proposal, accepted: [] }], [{
+    ...packet,
+    officialSocialLinks: {
+      twitter: "https://twitter.com/share?url=https%3A%2F%2Fcommunitybooks.example",
+      instagram: "https://www.instagram.com/communitybooks/",
+    },
+  }], { scope: "non_kinfolk_current" });
+  assert.deepEqual(candidates[0].patch, { instagram: "https://www.instagram.com/communitybooks/" });
 });
 
 test("holds invalid factual fields while retaining a safe source-backed field", () => {

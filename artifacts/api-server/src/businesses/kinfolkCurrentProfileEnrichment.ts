@@ -13,6 +13,9 @@ export const PROFILE_ENRICHMENT_FIELDS = [
   "description", "hours", "phone", "tags", "website",
   "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest",
 ] as const;
+export const PROFILE_ENRICHMENT_SOCIAL_FIELDS = [
+  "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest",
+] as const;
 
 /**
  * `non_kinfolk_current_all` permits the same additive, audited field enrichment
@@ -20,7 +23,7 @@ export const PROFILE_ENRICHMENT_FIELDS = [
  */
 export type ProfileEnrichmentScope = "kinfolk_current" | "non_kinfolk_current" | "non_kinfolk_current_all";
 export type EnrichmentPatchField = (typeof PROFILE_ENRICHMENT_FIELDS)[number];
-export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory" | "replace_verified_inactive";
+export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory" | "replace_verified_inactive" | "clear_invalid_social_link";
 type ReceiptField = Extract<
   ProfileFieldReceiptName,
   "description" | "hours" | "phone" | "service_tags" | "website" |
@@ -105,6 +108,60 @@ function cleanPublicUrl(value: unknown, label: string): string {
   return url.toString();
 }
 
+function isProfileEnrichmentSocialField(field: EnrichmentPatchField): field is (typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number] {
+  return (PROFILE_ENRICHMENT_SOCIAL_FIELDS as readonly string[]).includes(field);
+}
+
+function isSupportedSocialHostname(field: (typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number], hostname: string): boolean {
+  const allowedHosts: Record<(typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number], string[]> = {
+    instagram: ["instagram.com"],
+    tiktok: ["tiktok.com"],
+    facebook: ["facebook.com", "fb.com"],
+    twitter: ["twitter.com", "x.com"],
+    youtube: ["youtube.com", "youtu.be"],
+    pinterest: ["pinterest.com"],
+  };
+  return allowedHosts[field].some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
+}
+
+/**
+ * Social anchors sometimes point to a platform share widget, rather than a
+ * business profile. Those URLs must never be published as an official account.
+ */
+export function isProfileEnrichmentNonProfileSocialControlUrl(field: EnrichmentPatchField, value: unknown): boolean {
+  if (!isProfileEnrichmentSocialField(field) || typeof value !== "string") return false;
+  try {
+    const url = new URL(value.trim());
+    const hostname = url.hostname.toLocaleLowerCase();
+    if (!/^https?:$/.test(url.protocol) || !isSupportedSocialHostname(field, hostname)) return false;
+    const pathname = url.pathname.toLocaleLowerCase().replace(/\/+$/, "") || "/";
+    const patterns: Partial<Record<(typeof PROFILE_ENRICHMENT_SOCIAL_FIELDS)[number], RegExp[]>> = {
+      facebook: [/^\/(?:share|sharer)(?:\/|$)/, /^\/dialog\/share(?:\/|$)/],
+      twitter: [/^\/(?:share|intent)(?:\/|$)/],
+      pinterest: [/^\/pin\/create(?:\/|$)/],
+    };
+    return (patterns[field] ?? []).some((pattern) => pattern.test(pathname));
+  } catch {
+    return false;
+  }
+}
+
+/** Permits a handle or an actual profile URL, but not a share/intent widget. */
+export function isProfileEnrichmentOfficialSocialLink(field: EnrichmentPatchField, value: unknown): boolean {
+  if (!isProfileEnrichmentSocialField(field) || typeof value !== "string") return false;
+  const text = value.trim();
+  if (/^@?[a-zA-Z0-9._-]{1,100}$/.test(text)) return true;
+  try {
+    const url = new URL(text);
+    const hostname = url.hostname.toLocaleLowerCase();
+    if (!/^https?:$/.test(url.protocol) || !isSupportedSocialHostname(field, hostname)) return false;
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
+    return pathname !== "/" && !isProfileEnrichmentNonProfileSocialControlUrl(field, text);
+  } catch {
+    return false;
+  }
+}
+
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (isRecord(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
@@ -149,11 +206,13 @@ function parseFieldModes(input: unknown, patch: ProfileEnrichmentCandidate["patc
   const fieldModes: ProfileEnrichmentCandidate["fieldModes"] = {};
   for (const field of Object.keys(patch) as EnrichmentPatchField[]) {
     const mode = input[field] ?? defaultMode(field);
-    if (mode !== "fill" && mode !== "append" && mode !== "replace_generic_directory" && mode !== "replace_verified_inactive") throw new Error(`Unsupported enrichment mode for ${field}`);
+    if (mode !== "fill" && mode !== "append" && mode !== "replace_generic_directory" && mode !== "replace_verified_inactive" && mode !== "clear_invalid_social_link") throw new Error(`Unsupported enrichment mode for ${field}`);
     if (field === "tags" && mode !== "append") throw new Error("Service tags must use append mode");
     if (field !== "tags" && mode === "append") throw new Error(`${field} cannot use append mode`);
     if (field !== "description" && mode === "replace_generic_directory") throw new Error("Only descriptions may replace a generic directory placeholder");
     if (field !== "website" && mode === "replace_verified_inactive") throw new Error("Only websites may replace a verified inactive URL");
+    if (mode === "clear_invalid_social_link" && !isProfileEnrichmentSocialField(field)) throw new Error("Only social profile fields may clear an invalid social link");
+    if (mode === "clear_invalid_social_link" && !isProfileEnrichmentNonProfileSocialControlUrl(field, patch[field])) throw new Error("Invalid-social-link remediation must identify a social share or intent control URL");
     fieldModes[field] = mode;
   }
   for (const field of Object.keys(input)) {

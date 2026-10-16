@@ -83,6 +83,35 @@ function publicHttpUrl(value) {
   }
 }
 
+/**
+ * A platform domain alone does not make an anchor an official profile. Sites
+ * commonly include Twitter/X, Facebook, and Pinterest share widgets, which
+ * must never be carried into a business profile as official social accounts.
+ */
+export function officialSocialProfileUrl(field, value) {
+  const url = publicHttpUrl(value);
+  if (!url || !SOCIAL_FIELDS.has(field)) return null;
+  const parsed = new URL(url);
+  const hostname = parsed.hostname.toLocaleLowerCase();
+  const allowedHosts = {
+    instagram: ["instagram.com"],
+    tiktok: ["tiktok.com"],
+    facebook: ["facebook.com", "fb.com"],
+    twitter: ["twitter.com", "x.com"],
+    youtube: ["youtube.com", "youtu.be"],
+    pinterest: ["pinterest.com"],
+  };
+  if (!(allowedHosts[field] ?? []).some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`))) return null;
+  const pathname = parsed.pathname.toLocaleLowerCase().replace(/\/+$/, "") || "/";
+  const nonProfileControl = {
+    facebook: [/^\/(?:share|sharer)(?:\/|$)/, /^\/dialog\/share(?:\/|$)/],
+    twitter: [/^\/(?:share|intent)(?:\/|$)/],
+    pinterest: [/^\/pin\/create(?:\/|$)/],
+  };
+  if (pathname === "/" || (nonProfileControl[field] ?? []).some((pattern) => pattern.test(pathname))) return null;
+  return url;
+}
+
 function observationDate(value) {
   const text = strictText(value, 10);
   return text && /^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(Date.parse(`${text}T00:00:00Z`)) ? text : null;
@@ -212,7 +241,7 @@ export function candidateFromProposal(proposal, pagePacket) {
     }
   }
   for (const [field, rawUrl] of Object.entries(pagePacket?.officialSocialLinks ?? {})) {
-    const url = publicHttpUrl(rawUrl);
+    const url = officialSocialProfileUrl(field, rawUrl);
     if (!SOCIAL_FIELDS.has(field) || !url || !socialSourceUrl || Object.hasOwn(patch, field)) continue;
     if (sourceSnapshotValue(pagePacket.sourceSnapshot, field)) continue;
     patch[field] = url;
