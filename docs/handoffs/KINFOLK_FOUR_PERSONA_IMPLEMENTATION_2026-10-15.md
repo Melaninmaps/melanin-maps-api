@@ -2,7 +2,7 @@
 
 ## Status
 
-**SOURCE REVIEW / NOT ACCEPTED FOR INTEGRATION OR RELEASE**
+**SOURCE CORRECTIONS COMPLETE — FOUNDER ACCEPTED AT SOURCE LEVEL / RUNTIME ACCEPTANCE PENDING**
 
 This handoff covers a focused Kinfolk source correction only. No deployment, migration, production-data change, account change, browser operation, or mobile build was performed.
 
@@ -1832,7 +1832,7 @@ This addendum addresses only the specific behavioral gaps returned by independen
 
 ### Release boundary
 
-**TARGETED CORRECTIONS — SOURCE COMPLETE / AWAITING INTEGRATION REVIEW.** This source-only evidence does not substitute for the required staging rerun against the deployment-configured Kinfolk model. No merge, deployment, migration, production-data operation, or mobile build was performed.
+**TARGETED CORRECTIONS — SOURCE-LEVEL ACCEPTANCE RECORDED / RUNTIME ACCEPTANCE PENDING.** This source-only evidence does not substitute for the required staging rerun against the deployment-configured Kinfolk model. No merge, deployment, migration, production-data operation, or mobile build was performed.
 
 ## Addendum — Final Focused Corrections Before Integration Review (2026-10-16)
 
@@ -1855,14 +1855,14 @@ This source-only addendum addresses the remaining independent-review findings wi
 
 ### Release boundary
 
-**FINAL FOCUSED CORRECTIONS — SOURCE COMPLETE / AWAITING INTEGRATION REVIEW.** No merge, deployment, staging invocation, migration, production-data operation, mobile build, or device test was performed. The existing staging validation against the deployment-configured Kinfolk model remains required before release authorization.
+**FINAL FOCUSED CORRECTIONS — SOURCE-LEVEL ACCEPTANCE RECORDED / RUNTIME ACCEPTANCE PENDING.** No merge, deployment, staging invocation, migration, production-data operation, mobile build, or device test was performed. The existing staging validation against the deployment-configured Kinfolk model remains required before release authorization.
 
 
 ## Final focused correction — first-call composition, AAVE delivery, and artifact boundaries
 
 ### Scope and status
 
-**SOURCE COMPLETE / READY FOR CUMULATIVE INTEGRATION / AWAITING RELEASE AUTHORIZATION**
+**SOURCE CORRECTIONS COMPLETE — FOUNDER ACCEPTED AT SOURCE LEVEL / RUNTIME ACCEPTANCE PENDING**
 
 This final focused correction supersedes only the earlier response-presentation and AAVE-delivery descriptions where they conflict. It preserves the completed persona, consent-memory, response-style, and generated-writing boundaries. No merge, deployment, migration, production-data change, browser operation, or mobile build was performed.
 
@@ -1874,7 +1874,7 @@ This final focused correction supersedes only the earlier response-presentation 
 | Natural formatting still tended toward generic frameworks | `buildKinfolkFirstCallCompositionCheck` is appended at the final prompt layer for direct replies. It makes paragraph-first versus structure a contextual editorial choice, not a forced checklist rule. | Lists remain available when a member requests them or when independent comparisons, options, or sequences truly scan better. No natural-format rewrite runs after generation. |
 | Selected persona and presentation preferences could compete | Lean chat now supplies only the persona contract; the route applies communication, response-depth, presentation, and final composition layers exactly once in a defined order. | Persona changes conversational character, not factual standards, capabilities, or safety guidance. Big Cousin and Best Friend may still give long answers when the question warrants it. |
 | Level-two AAVE could resolve correctly yet surface as mostly standard prose | The first call receives strengthened contextual AAVE guidance and a final active-language check. A single **bounded native-quality review** is now allowed only for an explicit level-two AAVE preference on a low-stakes, direct reply. | This replaces the earlier “no extra runtime model call” statement only for this consented setting. It is not marker-count based, never runs for generated artifacts or high-stakes language overrides, preserves facts and safety content, and falls back to the initial draft if unavailable. |
-| Standalone artifacts still attracted conversational prefaces | Generated-content policy and a final artifact check require the reply field to begin directly with `Draft:` for a standalone artifact. | Professional emails, personal messages, and revisions remain governed by audience and requested purpose—not the selected persona, response-length preference, AAVE setting, or regional setting. |
+| Standalone artifacts still attracted conversational prefaces | Generated-content policy and a final artifact check return copy-ready artifact content without a forced `Draft:` label in the copied text. | Professional emails, personal messages, and revisions remain governed by audience and requested purpose—not the selected persona, response-length preference, AAVE setting, or regional setting. |
 
 ### Targeted regression evidence
 
@@ -1911,7 +1911,7 @@ The following committed evidence files contain the **exact, unedited initial mod
    - Saved level-two AAVE: Nat Turner history explanation
    - Saved level-two AAVE: practical raise guidance
    - Professional email with AAVE + regional settings active (artifact remains professional)
-   - Personal birthday message (artifact begins directly with `Draft:`)
+   - Personal birthday message (historical evidence from before the subsequent copy-ready-label correction)
    - The two AAVE cases record the sole bounded language-quality review; the artifact cases record no correction.
 2. `docs/handoffs/evidence/KINFOLK_FIRST_CALL_ADAPTIVE_PREFERENCE_EVIDENCE_2026-10-16.json`
    - Brief direct factual answer and Brief complex decision answer
@@ -1922,14 +1922,14 @@ The raw artifacts intentionally preserve all model wording, including any choice
 
 ### Integration and release boundary
 
-- Integrate this branch cumulatively; do not overwrite completed Kinfolk, Directory, Map, Business Dashboard, taxonomy, or Black-capitalization repairs.
-- Include web and native preference surfaces only in the next already-authorized consolidated release/build; **do not create a separate mobile build** for this correction.
+- Do **not** integrate this branch until separately authorized; preserve completed Kinfolk, Directory, Map, Business Dashboard, taxonomy, and Black-capitalization repairs.
+- Runtime validation and any web/native release remain separately authorized work; **do not create a separate mobile build** for this correction.
 - Do not deploy, migrate, modify production data, or create a build without founder authorization.
 
 
 ## Follow-up — copy-ready artifacts and explicit response preferences
 
-**Status: SOURCE REVIEW / NOT ACCEPTED FOR INTEGRATION OR RELEASE.**
+**Status: SOURCE CORRECTIONS COMPLETE — FOUNDER ACCEPTED AT SOURCE LEVEL / RUNTIME ACCEPTANCE PENDING.**
 
 This focused follow-up removes the forced literal `Draft:` prefix from standalone generated artifacts. Kinfolk now returns the email, personal message, proposal, or other artifact as clean **copy-ready content**. A presentation surface may label the artifact outside of the copied text; the server does not insert a label or title into the content. When a member explicitly requests an explanation as well as an artifact, the explanation remains available but is kept separate from the clean artifact content.
 
@@ -1964,3 +1964,20 @@ pnpm typecheck
 No existing model evidence was regenerated for this follow-up. The requested JSON evidence files remain unchanged. For convenience, [KINFOLK_FIRST_CALL_EVIDENCE_READOUT_2026-10-16.md](evidence/KINFOLK_FIRST_CALL_EVIDENCE_READOUT_2026-10-16.md) is a lossless Markdown projection of the two existing files and includes all **10 exact initial raw model responses, subsequent corrections where present, final member-visible responses, and post-processing disclosures**.
 
 No merge, deploy, staging invocation, migration, production-data operation, or mobile build was performed.
+
+
+## Founder source disposition — 2026-10-16
+
+**SOURCE CORRECTIONS COMPLETE — FOUNDER ACCEPTED AT SOURCE LEVEL / RUNTIME ACCEPTANCE PENDING**
+
+| Boundary | Current disposition |
+|---|---|
+| Source implementation | **Completed and preserved.** Includes all four personas; Brief, Balanced, Detailed, and Adaptive presentation preferences; question-sensitive depth; natural/structured formatting; consented/on-demand language preferences; first-call composition; and copy-ready generated writing. |
+| Latest accepted source commit | `56b61468731ab971bb78bcc5049b267145a190fd` — `fix(kinfolk): keep artifacts copy-ready` |
+| Automated validation | **Passed.** Focused Kinfolk API suite: **7 files / 107 tests**; `pnpm typecheck` and `git diff --check` passed. |
+| Actual model responses | **Captured.** The original exact raw/final model evidence is retained in the two JSON files and the lossless Markdown readout linked above. It is source-prompt evidence, not deployed-runtime evidence. |
+| Human qualitative review | **Still outstanding where applicable,** including final authenticity assessment of level-two AAVE response quality on the deployment-configured model. |
+| Deployment-configured model | **Not validated.** Any staging validation requires separate founder authorization. |
+| Web/iOS/Android member experience | **Not accepted.** No browser/device acceptance test, mobile build, staging run, or release was performed. |
+
+No additional Kinfolk development is opened by this disposition. Preserve the implementation, commits, tests, and evidence; return to the next already-authorized cumulative Mapping with Melanin/Kinfolk priority. No merge, integration, staging, deployment, migration, production-data change, mobile build, or new paid provider is authorized by this source-level acceptance.
