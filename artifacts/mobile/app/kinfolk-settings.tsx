@@ -38,6 +38,8 @@ interface VoicePrefs {
   communicationStyle: string;
   emojiLevel: string;
   humorLevel: string;
+  aaveLevel: number;
+  regionalFlavor: string;
 }
 
 const BEHAVIOR_DEFAULTS: BehaviorSettings = {
@@ -49,6 +51,8 @@ const VOICE_DEFAULTS: VoicePrefs = {
   communicationStyle: "friendly",
   emojiLevel: "some",
   humorLevel: "light",
+  aaveLevel: 0,
+  regionalFlavor: "off",
 };
 
 const CAPABILITIES = [
@@ -84,6 +88,30 @@ const HUMOR_LEVELS: { value: string; label: string }[] = [
   { value: "playful", label: "Witty" },
 ];
 
+const AAVE_LEVELS = [
+  { value: 0, label: "Off" },
+  { value: 1, label: "Light" },
+  { value: 2, label: "Conversational" },
+  { value: 3, label: "Full" },
+] as const;
+
+const REGIONAL_LANGUAGE_OPTIONS = [
+  { value: "off", label: "Off" },
+  { value: "follow_destination", label: "Follow conversation city" },
+  { value: "philadelphia", label: "Philadelphia" },
+  { value: "memphis", label: "Memphis" },
+  { value: "new_york", label: "New York City" },
+  { value: "washington_dc", label: "Washington, DC" },
+  { value: "atlanta", label: "Atlanta" },
+  { value: "new_orleans", label: "New Orleans" },
+  { value: "chicago", label: "Chicago" },
+  { value: "houston", label: "Houston" },
+  { value: "miami", label: "Miami" },
+  { value: "detroit", label: "Detroit" },
+  { value: "oakland", label: "Oakland" },
+  { value: "baltimore", label: "Baltimore" },
+] as const;
+
 function normalizeVoicePrefs(raw: Partial<VoicePrefs>): VoicePrefs {
   const personalityMode = VOICE_MODES.some((mode) => mode.value === raw.personalityMode)
     ? raw.personalityMode!
@@ -107,8 +135,14 @@ function normalizeVoicePrefs(raw: Partial<VoicePrefs>): VoicePrefs {
     : HUMOR_LEVELS.some((level) => level.value === raw.humorLevel)
       ? raw.humorLevel!
       : VOICE_DEFAULTS.humorLevel;
+  const aaveLevel = Number.isInteger(raw.aaveLevel) && raw.aaveLevel! >= 0 && raw.aaveLevel! <= 3
+    ? raw.aaveLevel!
+    : VOICE_DEFAULTS.aaveLevel;
+  const regionalFlavor = REGIONAL_LANGUAGE_OPTIONS.some((option) => option.value === raw.regionalFlavor)
+    ? raw.regionalFlavor!
+    : VOICE_DEFAULTS.regionalFlavor;
 
-  return { personalityMode, communicationStyle, emojiLevel, humorLevel };
+  return { personalityMode, communicationStyle, emojiLevel, humorLevel, aaveLevel, regionalFlavor };
 }
 
 export default function KinfolkSettingsScreen() {
@@ -395,6 +429,50 @@ export default function KinfolkSettingsScreen() {
           })}
         </View>
 
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>LANGUAGE PREFERENCES</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.languageSection}>
+            <Text style={[styles.rowLabel, { color: colors.foreground }]}>AAVE register</Text>
+            <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>A saved preference for Kinfolk’s written language. “Tell me in AAVE” in chat is temporary unless you explicitly ask Kinfolk to remember it.</Text>
+            <View style={styles.chipRowWrap}>
+              {AAVE_LEVELS.map((option) => {
+                const selected = voice.aaveLevel === option.value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    activeOpacity={0.8}
+                    style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + "15" : "transparent" }]}
+                    onPress={() => updateVoice({ aaveLevel: option.value })}
+                  >
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{option.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Kinfolk keeps the selected persona, factual meaning, and safety guidance. It never performs an accent, stereotypes, or uses forced slang.</Text>
+          </View>
+          <View style={[styles.sep, { backgroundColor: colors.border }]} />
+          <View style={styles.languageSection}>
+            <Text style={[styles.rowLabel, { color: colors.foreground }]}>Regional language</Text>
+            <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>An explicit language choice, not an inference from your location. Regional language is independent from the AAVE register.</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.regionChoiceRow}>
+              {REGIONAL_LANGUAGE_OPTIONS.map((option) => {
+                const selected = voice.regionalFlavor === option.value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    activeOpacity={0.8}
+                    style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + "15" : "transparent" }]}
+                    onPress={() => updateVoice({ regionalFlavor: option.value })}
+                  >
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{option.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>VOICE CHECK</Text>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity
@@ -640,6 +718,8 @@ const styles = StyleSheet.create({
   chipRowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 14 },
   chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5 },
   chipText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  languageSection: { padding: 16, gap: 8 },
+  regionChoiceRow: { gap: 8, paddingVertical: 4, paddingRight: 16 },
   supportSelectors: { padding: 14 },
   clearLens: { paddingHorizontal: 16, paddingBottom: 14, paddingTop: 4 },
   detailRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12 },

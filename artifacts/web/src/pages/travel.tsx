@@ -731,7 +731,7 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
                     </button>
                   ))}
                 </div>
-                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">One member-selected register. Kinfolk never uses profanity, performs, stereotypes, or imitates an accent.</p>
+                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">A saved language preference. “Tell me in AAVE” in chat is temporary unless you explicitly ask Kinfolk to remember it. Kinfolk never uses profanity, performs, stereotypes, or imitates an accent.</p>
               </div>
               <div>
                 <label htmlFor="kinfolk-regional-language" className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2 block">Regional Language</label>
@@ -740,7 +740,7 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
                   className="w-full h-10 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 text-xs text-[#3A1F0E]">
                   {REGIONAL_LANGUAGE_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
                 </select>
-                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">With your opt-in, Kinfolk may use one occasional local word such as Philadelphia “jawn” or Memphis “mane.” Voice timbre stays the same everywhere.</p>
+                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">This separate, opt-in regional setting may add one natural local word when it fits. Kinfolk never infers a region, dialect, or identity from your location. Voice timbre stays the same everywhere.</p>
               </div>
               <CommunityLanguageSuggestion />
             </div>

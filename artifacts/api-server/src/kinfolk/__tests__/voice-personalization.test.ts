@@ -102,5 +102,8 @@ describe("Kinfolk regional and AAVE prompt wiring", () => {
       expect(prompt).toContain("infer identity");
       expect(prompt).not.toMatch(/profanity (?:is )?allowed|casual profanity/i);
     }
+    expect(buildAaveRegisterPrompt(2, "general_knowledge")).toContain(
+      "in the response itself",
+    );
   });
 });

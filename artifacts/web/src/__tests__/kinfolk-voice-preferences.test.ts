@@ -71,4 +71,11 @@ describe("Kinfolk voice preference labels", () => {
     expect(REGIONAL_LANGUAGE_OPTIONS.map((option) => option.label)).toEqual(expect.arrayContaining(["Philadelphia", "Memphis"]));
     expect(normalizeWebRegionalFlavor("standard")).toBe("off");
   });
+
+  it("distinguishes saved language settings from temporary chat requests", () => {
+    const travel = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
+    expect(travel).toContain('“Tell me in AAVE” in chat is temporary unless you explicitly ask Kinfolk to remember it');
+    expect(travel).toContain("never infers a region, dialect, or identity from your location");
+    expect(travel).toContain("This separate, opt-in regional setting");
+  });
 });

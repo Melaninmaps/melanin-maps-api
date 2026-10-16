@@ -18,6 +18,10 @@ const kinfolkHookSource = readFileSync(
   fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
   "utf8",
 );
+const chatWidgetSource = readFileSync(
+  fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk mobile conversation modes", () => {
   it("uses the same four saved modes on settings and chat", () => {
@@ -52,5 +56,17 @@ describe("Kinfolk mobile conversation modes", () => {
       "...(opts?.voiceMode ? { voiceMode: opts.voiceMode } : {}),",
     );
     expect(kinfolkHookSource).not.toContain('voiceMode: opts?.voiceMode ?? "community"');
+  });
+
+  it("shares saved AAVE and regional language controls across native settings and chat", () => {
+    expect(settingsSource).toContain('aaveLevel: 0');
+    expect(settingsSource).toContain('regionalFlavor: "off"');
+    expect(settingsSource).toContain('value: "philadelphia", label: "Philadelphia"');
+    expect(settingsSource).toContain('value: "new_york", label: "New York City"');
+    expect(settingsSource).toContain("Tell me in AAVE");
+    expect(settingsSource).toContain("not an inference from your location");
+    expect(chatWidgetSource).toContain("getVoicePreferences");
+    expect(chatWidgetSource).toContain("/api/kinfolk/aave-level");
+    expect(chatWidgetSource).not.toContain("Complete AAVE including profanity");
   });
 });

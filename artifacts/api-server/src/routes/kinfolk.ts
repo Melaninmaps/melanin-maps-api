@@ -388,6 +388,11 @@ import {
   validateKinfolkPreferenceUpdate,
 } from "../kinfolk/voice-personalization";
 import {
+  COMMUNICATION_PREFERENCE_PREFIX,
+  isCommunicationPreferenceRevocationRequest,
+  resolveKinfolkCommunicationPreference,
+} from "../kinfolk/communication-preferences";
+import {
   buildKinfolkConversationModePrompt,
   buildKinfolkEmotionalCheckInContract,
   buildKinfolkFormalResponseContract,
@@ -4013,6 +4018,7 @@ function buildSystemPrompt(opts: {
   destination?: string | null;
   voiceMode?: string;
   aaveLevel?: number;
+  regionalFlavor?: unknown;
   businessCatalog?: BusinessCatalogEntry[];
   activeJourney?: {
     title: string;
@@ -4081,7 +4087,7 @@ function buildSystemPrompt(opts: {
   const tier = opts.tier ?? "free";
   const languagePersonalization = buildLanguagePersonalizationPrompt({
     aaveLevel,
-    regionalFlavor: prefs?.regionalFlavor,
+    regionalFlavor: opts.regionalFlavor ?? prefs?.regionalFlavor,
     destination,
     intentClass: opts.intentClass,
   });
@@ -7381,6 +7387,84 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
   const memoryEnabled = resolvedMemoryEnabled;
 
+  // A direct request to forget AAVE, regional-language, or communication-style
+  // memory revokes only that authenticated member's consented language entries.
+  // It never reaches the model and it does not touch their broader profile,
+  // location, session history, or persona setting.
+  if (
+    !staffAuditPolicy &&
+    isCommunicationPreferenceRevocationRequest(message)
+  ) {
+    if (!memoryEnabled) {
+      return void res.json({
+        sessionId,
+        reply:
+          "Kinfolk chat memory is off, so there is no saved communication preference to remove. I will still follow what you ask for in this conversation.",
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "personalization",
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: "memory_revocation",
+        remembered: false,
+        structuredContent: null,
+        mediaLinks: [],
+        relatedConnections: [],
+      });
+    }
+    try {
+      const revoked = await db
+        .update(kinfolkPrivateMemoriesTable)
+        .set({ revokedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+            isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            ilike(
+              kinfolkPrivateMemoriesTable.content,
+              `${COMMUNICATION_PREFERENCE_PREFIX}%`,
+            ),
+          ),
+        )
+        .returning({ id: kinfolkPrivateMemoriesTable.id });
+      return void res.json({
+        sessionId,
+        reply:
+          revoked.length > 0
+            ? "I cleared your saved communication preference. I will use your current request or your Kinfolk settings going forward."
+            : "I do not have a saved communication preference to clear. I will still follow what you ask for in this conversation.",
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "personalization",
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: "memory_revocation",
+        remembered: false,
+        structuredContent: null,
+        mediaLinks: [],
+        relatedConnections: [],
+      });
+    } catch (err) {
+      req.log.error(
+        safeKinfolkErrorMetadata(err),
+        "Failed to revoke Kinfolk communication preference",
+      );
+      return void res.status(500).json({
+        error: "Kinfolk could not remove that communication preference.",
+      });
+    }
+  }
+
   // A clear "remember …" statement is a first-party consent command, not an
   // ordinary chat turn. Save exactly the member's own words, acknowledge it,
   // and avoid sending their profile detail to a model unnecessarily.
@@ -10437,6 +10521,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             .limit(12)
             .catch(() => [])
         : [];
+    const communicationPreference = resolveKinfolkCommunicationPreference({
+      message,
+      history: existingMessages,
+      memories: activePrivateMemories,
+      persistedAaveLevel: prefs?.aaveLevel,
+      persistedRegionalFlavor: prefs?.regionalFlavor,
+      intentClass,
+    });
     const relevantPrivateMemories = activePrivateMemories.filter(
       (memory) =>
         (memory.purpose === "planning_context"
@@ -10506,7 +10598,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         savedPlaces,
         destination: promptDestination,
         voiceMode: conversationVoiceMode,
-        aaveLevel: prefs?.aaveLevel ?? 0,
+        aaveLevel: communicationPreference.aaveLevel,
+        regionalFlavor: communicationPreference.regionalFlavor,
         businessCatalog,
         activeJourney: currentRequestUsesLocation ? activeJourney : null,
         crossCityBridge: currentRequestUsesLocation ? crossCityBridge : null,
@@ -10652,6 +10745,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : "") +
       (currentTurnCorrectionInstruction
         ? `\n\n${currentTurnCorrectionInstruction}`
+        : "") +
+      (communicationPreference.prompt
+        ? `\n\nFINAL COMMUNICATION PREFERENCE — NON-NEGOTIABLE:\n${communicationPreference.prompt}`
         : "");
 
     // Build bounded history according to the selected experience policy.
@@ -10698,7 +10794,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode, communicationPreference.prompt)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +

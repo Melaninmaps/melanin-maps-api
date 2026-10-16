@@ -127,6 +127,97 @@ pnpm typecheck
 
 **Result:** 2 files passed, 8 tests passed; web typecheck passed.
 
+## AAVE, regional language, and consented communication memory addendum
+
+### Completed source behavior
+
+This addendum is integrated into the same four-persona branch and handoff; no separate project, worktree, mobile build, migration, deployment, or production-data operation was created.
+
+`artifacts/api-server/src/kinfolk/communication-preferences.ts` resolves communication preferences in the founder-specified order:
+
+1. Explicit current-message instruction
+2. Temporary conversation-level instruction
+3. Consented saved communication memory
+4. Saved member AAVE and regional-language settings
+5. Selected Kinfolk persona
+6. Default behavior
+
+The resolver is shared by the normal and lean response paths. Its final prompt block is deliberately placed after the persona rules so language settings change wording without replacing **Big Cousin**, **Professor**, **Business Manager**, or **Best Friend** behavior. High-consequence health, legal, financial, emergency, and safety intents retain the existing calm plain-language override.
+
+| Capability | Source status | Behavior |
+|---|---|---|
+| On-demand AAVE | **Complete** | “Tell me in AAVE,” “Explain that in AAVE,” and “Say it how we would say it” apply to the current turn only. They do not alter account preferences or create memory. “Explain this answer in standard English” suppresses AAVE and regional language for that reply. |
+| Regional language | **Complete** | AAVE level and regional selection remain separate. Explicit member settings support Philadelphia, New York City, Atlanta, and the existing supported cities. A city mentioned in a question never selects a regional setting; a regional reference must itself be an explicit language request or a saved setting. Regional vocabulary is optional and capped at one appropriate expression, never random. |
+| Consented communication memory | **Complete** | Durable requests are converted into an existing, reviewable `Kinfolk communication preference:` private-memory item and presented through the current memory-consent flow. This covers history-AAVE, regional casual language, professional/standard English, step-by-step delivery, “only use AAVE when I ask,” and consent-reviewed “remember that style.” |
+| Corrections and revocation | **Complete** | A newer consented preference takes precedence over an older one. “Forget/revoke/clear my AAVE/communication language preference” revokes only the authenticated member’s consented language-memory entries; it does not affect persona selection, ordinary profile memory, location, chat history, or account settings. |
+| Web and native settings | **Complete** | Web clarifies saved versus current-turn behavior. Native settings now expose account-backed AAVE and regional-language controls; the native chat widget reads AAVE level from the API instead of a divergent local-only cache. |
+| Voice compatibility | **Complete for source / device validation not performed** | The server-owned TTS path continues to use the approved synthetic base voice and reads the returned text. It does not accept a client accent/voice or claim accent/timbre changes. No real-device voice inflection or accent test was performed. |
+
+No communication style is inferred from a member’s current location, identity, or ethnicity. The request uses no new provider, paid language service, or extra runtime model call.
+
+### Actual response evidence
+
+A nine-case fresh-context response matrix ran against the live Manus `gpt-5-mini` catalog model using the exact lean Kinfolk prompt composition. It covered the founder A–J cases except the memory-consent/revocation interaction, which is deterministic and separately covered by the API contract test.
+
+| Case | Resolved source and observed result |
+|---|---|
+| A. Professor + standard Nat Turner | `settings`; educational **What / Why / So What** structure, no language-layer instruction. |
+| B. Professor + on-demand AAVE Nat Turner | `current_message`; AAVE instruction and Professor structure both present. The sampled model response remained academically organized and restrained rather than falling into a caricature. |
+| C. Big Cousin + standard Xbox/Call of Duty | `settings`; direct cross-play answer and practical next step. |
+| D. Big Cousin + on-demand AAVE Xbox/Call of Duty | `current_message`; direct practical answer with natural conversational wording, including “folks” and “you don’t gotta,” while preserving the cross-play facts. |
+| E. Best Friend + saved Philadelphia | `settings`; relaxed planning response with Philadelphia selected. No regional term was forced, as required. |
+| F. Business Manager + saved New York City | `settings`; objective, prioritized checklist and trade-offs remained intact; no random regional term was inserted. |
+| G. Saved history-AAVE memory | `saved_memory`; the history preference resolved without changing persona or stored account settings. |
+| H. Saved history-AAVE + current standard-English request | `current_message`; AAVE and regional setting were suppressed for that response only. |
+| J. Persona switch with saved history-AAVE | `saved_memory`; Business Manager organization persisted alongside the saved communication layer. |
+
+Representative before/after excerpts from the matrix:
+
+> **Standard Big Cousin:** “Call of Duty supports cross-play across platforms … One quick next step: link your Activision/Call of Duty account …”
+
+> **Current-turn AAVE Big Cousin:** “That means you don’t gotta own the same console to squad up or face off … make sure everyone enables cross-play …”
+
+> **Saved preference overridden for one answer:** the resolver returned `aaveLevel: 0`, `regionalFlavor: "off"`, `source: "current_message"` for “Explain this answer in standard English.”
+
+### Validation status and release evidence boundary
+
+- **Automated source and integration contracts: COMPLETE.** The tests below verify precedence, on-demand versus durable behavior, consent planning, save correction/revocation routing, regional independence, four-persona prompt layering, native settings, web guidance, and the server-owned voice boundary.
+- **Actual response evidence: COMPLETE for source-level matrix; staging confirmation still required.** The sampled `gpt-5-mini` matrix showed the intended source resolution and persona structures. The deployment fallback model is separately configured, so release evidence must repeat the same matrix through the approved staging model and record representative outputs before release. This is especially important for Professor and Business Manager, where natural language-register differences should be reviewed by a human for authenticity rather than inferred from a prompt alone.
+- **Real-device voice test: NOT TESTED.** Text is passed to the existing synthetic TTS delivery path; no claim is made about an AAVE accent, voice identity, or inflection.
+
+### Addendum regression evidence
+
+```bash
+cd artifacts/api-server
+pnpm exec vitest run \
+  src/kinfolk/__tests__/communication-preferences.test.ts \
+  src/kinfolk/__tests__/explicit-memory-consent.test.ts \
+  src/kinfolk/__tests__/conversation-mode.test.ts \
+  src/kinfolk/__tests__/persona-differentiation.test.ts \
+  src/kinfolk/__tests__/lean-general-chat.test.ts \
+  src/kinfolk/__tests__/voice-personalization.test.ts \
+  src/kinfolk/__tests__/voice-delivery.test.ts \
+  src/__tests__/kinfolk-server-voice-contract.test.ts \
+  src/kinfolk/__tests__/kinfolk-chat-and-preferences.api.test.ts
+pnpm typecheck
+
+cd artifacts/mobile
+pnpm exec vitest run \
+  __tests__/kinfolk-mode-persistence.test.ts \
+  __tests__/kinfolk-preference-attainability.test.ts \
+  __tests__/kinfolk-audit-repairs.test.ts
+pnpm typecheck
+
+cd artifacts/web
+pnpm exec vitest run \
+  src/__tests__/kinfolk-voice-preferences.test.ts \
+  src/__tests__/kinfolk-preference-attainability.test.ts \
+  src/__tests__/kinfolk-audit-repairs.test.ts
+pnpm typecheck
+```
+
+**Result:** API **9 files / 57 tests** passed plus typecheck; native **3 files / 18 tests** passed plus typecheck; web **3 files / 15 tests** passed plus typecheck.
+
 ## Cumulative integration instructions
 
 1. Confirm the source commit is not already present in the authoritative Kinfolk candidate.

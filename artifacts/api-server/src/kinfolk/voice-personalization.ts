@@ -174,8 +174,8 @@ export function buildAaveRegisterPrompt(
     return "";
   const guidance: Record<Exclude<AaveLevel, 0>, string> = {
     1: "Keep the response mostly in plain standard English, with only a light, natural conversational cadence.",
-    2: "Use a natural conversational AAVE register while keeping every sentence clear and easy to understand.",
-    3: "Use the member-selected full AAVE register consistently but naturally, prioritizing clarity over intensity.",
+    2: "Use a natural conversational AAVE register in the response itself—not merely a standard-English answer that mentions the preference. Use several natural AAVE grammar, syntax, and cadence choices across a full response where they fit; at this level, include at least two visible, nonprofane AAVE or culturally natural cadence choices in an ordinary-length answer. Choose them for the topic rather than using a fixed phrase or piling on slang. If the response could be exchanged unchanged with the standard-English version, revise it. Do not default to standard English solely because the explanation is historical, academic, or practical. Keep names, dates, facts, and safety guidance precise and easy to understand.",
+    3: "Use the member-selected full AAVE register consistently in the response itself. It must visibly differ in natural grammar, syntax, and cadence from a standard-English answer while prioritizing clarity, factual precision, and natural phrasing over intensity.",
   };
   return `AAVE REGISTER — MEMBER SELECTED LEVEL ${level}:\n${guidance[level as Exclude<AaveLevel, 0>]} Use no profanity. Never perform, exaggerate, caricature, stereotype, imitate an accent, or infer identity. Do not mix registers to signal who you think the member is; follow only this explicit setting.`;
 }

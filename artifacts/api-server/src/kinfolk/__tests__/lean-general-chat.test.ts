@@ -62,6 +62,18 @@ describe("lean general Kinfolk chat", () => {
     expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin MODE");
   });
 
+  it("layers a member-selected language preference without replacing the persona", () => {
+    const prompt = buildLeanGeneralChatPrompt(
+      "professor",
+      "COMMUNICATION STYLE LAYER (current_message): use a natural AAVE register; preserve the selected persona.",
+    );
+    expect(prompt).toContain("Professor MODE");
+    expect(prompt).toContain("COMMUNICATION STYLE LAYER (current_message)");
+    expect(prompt).toContain("preserve the selected persona");
+    expect(prompt.indexOf("FINAL COMMUNICATION PREFERENCE — NON-NEGOTIABLE"))
+      .toBeGreaterThan(prompt.indexOf("Rules:"));
+  });
+
   it("keeps the solar-science core factual across all four conversational voices", () => {
     for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
       const prompt = buildLeanGeneralChatPrompt(mode);

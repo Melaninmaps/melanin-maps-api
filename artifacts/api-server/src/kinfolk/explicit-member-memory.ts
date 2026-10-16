@@ -1,5 +1,6 @@
 import { permittedIdentityContext } from "./permitted-identity-context";
 import { sensitiveMemoryTopic } from "./sensitive-memory";
+import { buildConsentedCommunicationPreferenceMemory } from "./communication-preferences";
 
 export type ExplicitMemberMemory = Readonly<{
   content: string;
@@ -48,6 +49,15 @@ export function parseExplicitMemberMemory(
 ): ExplicitMemberMemory | null {
   if (typeof value !== "string") return null;
   const normalized = value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+  const communicationPreference =
+    buildConsentedCommunicationPreferenceMemory(normalized);
+  if (communicationPreference) {
+    return {
+      content: communicationPreference,
+      purpose: "profile_context",
+      isSensitive: false,
+    };
+  }
   const match = MEMORY_COMMANDS.map((command) => command.exec(normalized)).find(
     (candidate): candidate is RegExpExecArray => candidate !== null,
   );

@@ -6,6 +6,7 @@ import {
   sensitiveMemoryTopic,
   type SensitiveMemoryTopic,
 } from "./sensitive-memory";
+import { COMMUNICATION_PREFERENCE_PREFIX } from "./communication-preferences";
 
 type ConsentSensitiveTopic = SensitiveMemoryTopic | "birthday_age";
 
@@ -67,6 +68,9 @@ function sensitiveLabel(topic: ConsentSensitiveTopic): string {
 }
 
 function ordinaryLabel(content: string): string {
+  if (content.toLowerCase().startsWith(COMMUNICATION_PREFERENCE_PREFIX.toLowerCase())) {
+    return "Communication preference";
+  }
   if (/\b(?:prefer|support|owned\s+business|minority[-\s]?owned)\b/i.test(content)) {
     return "Support preference";
   }
@@ -100,7 +104,11 @@ export function buildExplicitMemoryConsentPlan(value: unknown): ExplicitMemoryCo
   const parsed = parseExplicitMemberMemory(value);
   if (!parsed) return null;
 
-  const clauses = splitMemoryClauses(parsed.content);
+  const clauses = parsed.content
+    .toLowerCase()
+    .startsWith(COMMUNICATION_PREFERENCE_PREFIX.toLowerCase())
+    ? [parsed.content]
+    : splitMemoryClauses(parsed.content);
   const ordinary: ExplicitMemoryConsentItem[] = [];
   const sensitive: ExplicitMemoryConsentItem[] = [];
 

@@ -32,4 +32,16 @@ describe("buildExplicitMemoryConsentPlan", () => {
   it("returns null when the member did not explicitly ask Kinfolk to remember", () => {
     expect(buildExplicitMemoryConsentPlan("I enjoy food and travel.")).toBeNull();
   });
+
+  it("requires the existing consent review before saving a durable AAVE preference", () => {
+    const plan = buildExplicitMemoryConsentPlan(
+      "Always explain history to me in AAVE.",
+    );
+
+    expect(plan?.ordinary).toHaveLength(1);
+    expect(plan?.ordinary[0]).toMatchObject({
+      label: "Communication preference",
+      content: expect.stringContaining("Kinfolk communication preference:"),
+    });
+  });
 });
