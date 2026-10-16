@@ -21,6 +21,9 @@ describe("Stripe membership entitlement policy", () => {
     expect(legacyCheckoutSource).toContain('res.status(410).json({');
     expect(legacyCheckoutSource).not.toContain("updateUserStripeInfo(user.id, { memberType, trialEndsAt })");
     expect(billingCheckoutOnly).not.toContain("memberType:");
+    expect(billingCheckoutOnly).toContain("trial_period_days: MEMBERSHIP_TRIAL_DAYS");
+    expect(billingCheckoutOnly).toContain('missing_payment_method: "cancel"');
+    expect(billingCheckoutOnly).toContain('payment_method_collection: "if_required"');
   });
 
   it("grants Navigator or Trailblazer only for active or provider-managed trial subscriptions", () => {

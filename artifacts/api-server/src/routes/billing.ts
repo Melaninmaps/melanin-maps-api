@@ -14,6 +14,7 @@ const PLAN_PRICES_CENTS: Record<string, Record<string, number>> = {
   navigator:    { monthly: 799,  annual: 7999  },
   trailblazer:  { monthly: 1499, annual: 14999 },
 };
+const MEMBERSHIP_TRIAL_DAYS = 30;
 const PLAN_LABELS: Record<string, string> = {
   navigator:   "Navigator — Community Membership",
   trailblazer: "Trailblazer — Premium Membership",
@@ -159,11 +160,21 @@ router.post("/billing/checkout", async (req: any, res): Promise<void> => {
           userId: user.id,
           planType: plan,
         },
+        trial_period_days: MEMBERSHIP_TRIAL_DAYS,
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: "cancel",
+          },
+        },
       },
       success_url: successUrl,
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
+      // The member-facing offer does not require card details to start its
+      // founder-approved 30-day trial. Stripe cancels the subscription at the
+      // trial end if the member has not supplied a payment method.
+      payment_method_collection: "if_required",
     });
 
     req.log.info({ userId: user.id, plan, interval: billingInterval }, "Stripe checkout session created");

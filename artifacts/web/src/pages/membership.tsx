@@ -427,7 +427,7 @@ export default function Membership() {
             </p>
             <div className="inline-flex items-center gap-1.5 bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-full px-3 py-1 mb-6 w-fit">
               <Clock className="w-3 h-3 text-[#CA922B]" />
-              <span className="text-xs font-bold text-[#CA922B]">14-Day Free Trial</span>
+              <span className="text-xs font-bold text-[#CA922B]">30-Day Free Trial</span>
             </div>
 
             <p className="text-[9px] font-bold uppercase tracking-widest text-[#CA922B] mb-2">✦ Enhanced Discovery</p>
@@ -933,8 +933,8 @@ export default function Membership() {
           <div className="space-y-4">
             {[
               { label: "Explorer (Individual)", trial: "Always free", price: "$0 — no trial needed", icon: "🧭" },
-              { label: "Navigator (Individual)", trial: "14-day free trial", price: "$7.99/month after", icon: "🌍" },
-              { label: "Trailblazer (Individual)", trial: "14-day free trial", price: "$14.99/month after", icon: "👑" },
+              { label: "Navigator (Individual)", trial: "30-day free trial", price: "$7.99/month after", icon: "🌍" },
+              { label: "Trailblazer (Individual)", trial: "30-day free trial", price: "$14.99/month after", icon: "👑" },
               { label: "Founding Member (first 500)", trial: "90-day free trial", price: "Locked-in intro rate after", icon: "🏅" },
               { label: "Business Community Listing", trial: "Always free", price: "$0 — no trial needed", icon: "🏢" },
               { label: "Business Growth", trial: "30-day free trial", price: "$19.99/month after", icon: "📈" },
