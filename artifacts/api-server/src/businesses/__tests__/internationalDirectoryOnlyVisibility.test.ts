@@ -5,6 +5,7 @@ import {
   INTERNATIONAL_DIRECTORY_ONLY_SCOPE,
   internationalDirectoryOnlyEvidence,
   internationalDirectoryOnlyManifestFingerprint,
+  matchesInternationalDirectoryOnlyAuditedCoordinate,
   matchesInternationalDirectoryOnlyManifest,
   parseInternationalDirectoryOnlyManifest,
 } from "../internationalDirectoryOnlyVisibility";
@@ -72,5 +73,13 @@ describe("reviewed international directory-only visibility", () => {
     });
     expect(evidence).not.toHaveProperty("ownershipDesignations");
     expect(evidence).not.toHaveProperty("kinfolkCatalogState");
+  });
+
+  it("compares audited map pins safely when PostgreSQL returns a numeric string", () => {
+    expect(matchesInternationalDirectoryOnlyAuditedCoordinate("17.9870000", 17.987)).toBe(true);
+    expect(matchesInternationalDirectoryOnlyAuditedCoordinate("-76.7713000", -76.7713)).toBe(true);
+    expect(matchesInternationalDirectoryOnlyAuditedCoordinate("not-a-coordinate", 17.987)).toBe(false);
+    expect(matchesInternationalDirectoryOnlyAuditedCoordinate("17.988", 17.987)).toBe(false);
+    expect(matchesInternationalDirectoryOnlyAuditedCoordinate(null, 17.987)).toBe(false);
   });
 });

@@ -88,6 +88,7 @@ import {
   INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_SHA256,
   INTERNATIONAL_DIRECTORY_ONLY_VALIDITY_DAYS,
   internationalDirectoryOnlyEvidence,
+  matchesInternationalDirectoryOnlyAuditedCoordinate,
   matchesInternationalDirectoryOnlyManifest,
   parseInternationalDirectoryOnlyManifest,
 } from "../businesses/internationalDirectoryOnlyVisibility";
@@ -380,16 +381,10 @@ type InternationalDirectoryOnlyBusiness = Readonly<{
   listing_status: string | null;
   status: string | null;
   website: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
   is_duplicate: boolean | null;
 }>;
-
-function sameAuditedCoordinate(current: number | null, expected: number | null): boolean {
-  return typeof current === "number"
-    && typeof expected === "number"
-    && Math.abs(current - expected) < 0.000_001;
-}
 
 /**
  * Founder-authorized one-purpose activation for the reviewed international
@@ -459,8 +454,8 @@ router.post("/admin/public-directory-only/international-activate", async (req: R
       const verifiedWebsiteMatches = item.restoreReasons.includes("verified_official_website")
         && business.website === item.expectedWebsite;
       const countryConsistentPinMatches = item.restoreReasons.includes("country_consistent_map_pin")
-        && sameAuditedCoordinate(business.latitude, item.expectedLatitude)
-        && sameAuditedCoordinate(business.longitude, item.expectedLongitude);
+        && matchesInternationalDirectoryOnlyAuditedCoordinate(business.latitude, item.expectedLatitude)
+        && matchesInternationalDirectoryOnlyAuditedCoordinate(business.longitude, item.expectedLongitude);
       if (!verifiedWebsiteMatches && !countryConsistentPinMatches) {
         conflicts.push({ id: item.id, reason: "audited_presence_or_pin_no_longer_matches" });
       }
