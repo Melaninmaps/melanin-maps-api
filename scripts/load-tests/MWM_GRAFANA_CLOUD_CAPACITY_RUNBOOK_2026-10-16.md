@@ -1,6 +1,6 @@
 # MWM distributed capacity test runbook — 2026-10-16
 
-This is the **preparation record only**. It does not provision accounts, deploy code, create a Grafana account, configure a paid service, or run traffic against production.
+This is the preparation and execution record for the controlled capacity-test setup. It records only approved account provisioning and encrypted test-secret configuration; it does not run production load traffic or KinfolkAI.
 
 ## Purpose and boundaries
 
@@ -37,7 +37,7 @@ The following gates are deliberately separate. No one may interpret preparation 
 
 1. **Deploy the narrow test-account profile-view safeguard.** Test users must return `recorded: false` from `POST /api/businesses/:id/view`, and a test-account business-detail request must not insert a profile-view row. This prevents test traffic from changing a real business's analytics.
 2. **Provision exactly 200 dedicated accounts in the new namespace.** The authenticated Admin capacity route refuses to write unless `CAPACITY_TEST_IDENTITY_WRITE_APPROVED=PROVISION_200_ISOLATED_TEST_USERS`, an exact `count=200` confirmation, and a valid temporary bcrypt password hash are present. It rejects any ordinary-user collision, rejects a partial namespace, sets `is_load_test=true` and `marketing_opt_out=true`, and uses one serializable advisory-locked transaction.
-3. **Use one newly generated password only as a Grafana Cloud secret.** Its bcrypt hash is supplied temporarily to the production route as `CAPACITY_TEST_PASSWORD_HASH`; the raw value is saved in Grafana Cloud as `mwm_capacity_200_password`. The raw value must never be committed, pasted into chat, included in ordinary k6 environment variables, or emitted in results.
+3. **Use one newly generated password only as a Grafana Cloud secret.** Its bcrypt hash is supplied temporarily to the production route as `CAPACITY_TEST_PASSWORD_HASH`; the raw value is saved in Grafana Cloud as `mwm-capacity-200-password`. The raw value must never be committed, pasted into chat, included in ordinary k6 environment variables, or emitted in results.
 4. **Run identity verification.** The script must report exactly 200 present accounts, 200 `is_load_test` accounts, and zero ordinary-account collisions before starting traffic.
 5. **Confirm live `/api/readyz` immediately before every stage.** A non-200 result cancels that stage.
 
@@ -49,7 +49,7 @@ Use a Grafana Cloud k6 **scripted** performance project, not browser testing. Gr
 
 Create one secret:
 
-- **Name:** `mwm_capacity_200_password`
+- **Name:** `mwm-capacity-200-password` (Grafana secret identifiers permit letters, numbers, hyphens, and periods; underscores are rejected.)
 - **Value:** the same new password used during the isolated-account provisioning gate
 - **Labels:** `mwm`, `capacity-test`, `non-production-identity`
 
@@ -134,11 +134,12 @@ If the configured Grafana plan cannot cover the staged test without payment, sto
 
 ## Current status
 
-- **Production infrastructure:** unchanged.
-- **Accounts:** no new accounts provisioned. A first boot-time attempt was blocked safely by explicit feature-release mode and made no database change; the boot-time writer was removed rather than bypassing that production safeguard.
-- **Grafana Cloud:** no project, secret, or test run created by this task.
-- **Core test source:** syntax-checked; not executed.
-- **Test-only profile-view isolation:** deployed in the production preparation release; focused unit test passed, while live verification remains gated on the dedicated account cohort.
+- **Production infrastructure:** unchanged; no Railway capacity, DNS, proxy, cache, database-limit, or timeout setting was changed.
+- **Accounts:** exactly 200 isolated `mwm-capacity-*` accounts were provisioned through the authenticated Admin route. The post-write count receipt reports 200 present, 200 load-test accounts, and zero ordinary-account collisions. The one-time route is now disarmed.
+- **Grafana Cloud:** the encrypted k6-only secret `mwm-capacity-200-password` was created. No paid plan, project, or traffic run was created.
+- **Core test source:** the secret reference now matches Grafana's accepted identifier; the staged 50–200 VU core test remains unexecuted.
+- **Test-only profile-view isolation:** live-verified after provisioning: a controlled test-account `POST /api/businesses/:id/view` returned `recorded: false`.
+- **KinfolkAI:** not configured or invoked.
 
 ## References
 

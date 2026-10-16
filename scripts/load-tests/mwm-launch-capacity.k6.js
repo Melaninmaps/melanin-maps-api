@@ -192,9 +192,9 @@ function continueCoreJourney() {
 }
 
 export async function setup() {
-  const password = await secrets.get("mwm_capacity_200_password");
+  const password = await secrets.get("mwm-capacity-200-password");
   if (!password || password.length < 16) {
-    throw new Error("Grafana Cloud secret mwm_capacity_200_password is missing or too short.");
+    throw new Error("Grafana Cloud secret mwm-capacity-200-password is missing or too short.");
   }
   const ready = http.get(`${BASE_URL}/api/readyz`, requestParams("readyz"));
   if (ready.status !== 200) {
