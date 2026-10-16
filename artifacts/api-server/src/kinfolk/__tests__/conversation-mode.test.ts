@@ -63,13 +63,13 @@ describe("Kinfolk conversation modes", () => {
 
   it("keeps Big Cousin and Best Friend conversational while keeping manager frameworks decision-specific", () => {
     expect(buildKinfolkConversationModeInstruction("community")).toContain(
-      "do not default to a checklist unless the member asks for a plan",
+      "rather than turning the answer into a checklist unless the member asks for a plan",
     );
     expect(buildKinfolkPersonaFinalFormInstruction("community")).toContain(
       "Start ordinary personal advice with connected prose, not a checklist",
     );
     expect(buildKinfolkConversationModeInstruction("best_friend")).toContain(
-      "do not turn ordinary conversation into a generic advice article",
+      "make room for feeling, reflection, and a realistic next thought before offering any plan",
     );
     expect(buildKinfolkPersonaFinalFormInstruction("best_friend")).toContain(
       "Start ordinary personal advice with connected prose, not a roadmap",

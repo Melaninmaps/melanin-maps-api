@@ -113,13 +113,13 @@ export function buildKinfolkResponsePresentationPrompt(
   presentation: KinfolkResponsePresentation,
 ): string {
   const lengthGuidance: Record<KinfolkResponseLength, string> = {
-    brief: "Give the direct answer and only the essential supporting context. In ordinary low-risk conversation, this normally means one to three concise paragraphs or, if structured formatting is requested, no more than three compact supporting points; add more only when safety, accuracy, or an explicit task makes it necessary.",
+    brief: "Start with a direct, concise answer and retain every qualification, safety consideration, and conclusion needed for it to remain accurate. A simple question should be short; a complex, consequential, or multi-part question may need more explanation. Do not omit meaning merely to be brief.",
     balanced: "Give a useful explanation with moderate detail, selecting only the context and examples that help this question.",
     detailed: "When the question benefits from depth, provide a thorough explanation with relevant context, distinctions, and examples; do not add repetitive paragraphs or depth the question does not need.",
     adaptive: "Choose useful depth from the question, complexity, active context, and safety needs rather than from a fixed response size.",
   };
   const formatGuidance: Record<KinfolkResponseFormat, string> = {
-    natural: "REQUIRED FINAL FORM: use flowing natural conversational paragraphs. For ordinary personal advice, reflection, historical explanation, or general explanation, do not turn the answer into headings, a roadmap, a matrix, bullets, or a numbered list unless the member explicitly asks; keep the full detail in coherent prose even when Detailed is selected. A short copyable script or a technical/procedural list remains appropriate only when the task itself needs it.",
+    natural: "Use flowing natural conversational paragraphs as the primary shape. Preserve readable paragraph breaks and explain related decision factors in prose, not as a multi-section checklist. A single small descriptive heading, compact list, or short copyable script is appropriate only when the member explicitly asks for steps or an inherently sequential task would otherwise become unclear. Do not make an ordinary conversation primarily a roadmap, matrix, checklist, or repeated headings.",
     structured: "Use descriptive headings, comparisons, or lists where they materially improve scanning; do not impose a business, academic, or checklist template on an unrelated question.",
     adaptive: "Choose natural paragraphs or structure based on what makes this exact answer easiest to understand; do not add formatting as decoration.",
   };
@@ -133,31 +133,33 @@ export function buildKinfolkResponsePresentationPrompt(
 }
 
 /**
- * Models sometimes preserve a planning-shaped list despite a saved natural
- * conversation preference. This intentionally light cleanup only removes list
- * scaffolding; it never edits facts, recommendations, artifact writing, or a
- * member-requested structured answer.
+ * Natural formatting permits occasional structure but should not turn a member's
+ * ordinary conversation into a multi-section checklist. This guard is used only
+ * to request one model rewrite that retains all content in readable paragraphs.
  */
-export function normalizeKinfolkNaturalConversationReply(reply: string): string {
-  const normalized = reply
-    .replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "")
-    .replace(/^(?:#{1,6}\s*)?[^\n.:]{1,96}:\s*$/gm, "")
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.replace(/\n+/g, " ").replace(/\s{2,}/g, " ").trim())
-    .filter(Boolean)
-    .join("\n\n");
-  return normalized || reply.trim();
+export function needsKinfolkNaturalPresentationRevision(input: {
+  presentation: Pick<KinfolkResponsePresentation, "responseFormat">;
+  reply: string;
+}): boolean {
+  if (input.presentation.responseFormat !== "natural") return false;
+  const listItems = input.reply
+    .split("\n")
+    .filter((line) => /^\s*(?:[-*•]|\d+[.)])\s+/.test(line)).length;
+  return listItems > 4;
 }
 
-/** A member-selected brief structured reply keeps only its essential first points. */
-export function normalizeKinfolkBriefStructuredReply(reply: string): string {
-  const lines = reply.split("\n");
-  let points = 0;
-  const kept: string[] = [];
-  for (const line of lines) {
-    if (/^\s*(?:[-*•]|\d+[.)])\s+/.test(line)) points += 1;
-    if (points > 3) break;
-    kept.push(line);
-  }
-  return kept.join("\n").replace(/\n{3,}/g, "\n\n").trim() || reply.trim();
+/**
+ * Brief is a semantic preference, not a word cap. A crowded multi-section
+ * response receives one model distillation so it can keep the core answer and
+ * material caveats without mechanically dropping trailing text.
+ */
+export function needsKinfolkBriefPresentationRevision(input: {
+  presentation: Pick<KinfolkResponsePresentation, "responseLength">;
+  reply: string;
+}): boolean {
+  if (input.presentation.responseLength !== "brief") return false;
+  const listItems = input.reply
+    .split("\n")
+    .filter((line) => /^\s*(?:[-*•]|\d+[.)])\s+/.test(line)).length;
+  return listItems > 5 || /\n\s*(?:what|why|how|so what|limitations?|conclusion)\b[^\n]*:/i.test(input.reply) && input.reply.length > 1_400;
 }

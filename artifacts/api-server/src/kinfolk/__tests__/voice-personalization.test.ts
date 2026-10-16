@@ -4,6 +4,7 @@ import {
   buildLanguagePersonalizationPrompt,
   buildRegionalLanguagePrompt,
   defaultVoicePreferences,
+  needsKinfolkAaveDeliveryRevision,
   normalizeKinfolkVoice,
   normalizeRegionalFlavor,
   resolveRegionalLanguageProfile,
@@ -126,5 +127,28 @@ describe("Kinfolk regional and AAVE prompt wiring", () => {
     expect(buildAaveRegisterPrompt(3, "general_knowledge")).toContain(
       "without stacking stock slang",
     );
+  });
+
+  it("requests one fact-preserving rewrite only when a level-two AAVE draft lacks visible delivery", () => {
+    const languagePrompt = buildLanguagePersonalizationPrompt({
+      aaveLevel: 2,
+      regionalFlavor: "off",
+      intentClass: "general_knowledge",
+    });
+    expect(needsKinfolkAaveDeliveryRevision({
+      aaveLevel: 2,
+      languagePrompt,
+      reply: "Nat Turner was an enslaved preacher who led a rebellion in 1831. The revolt changed slave laws across the South.",
+    })).toBe(true);
+    expect(needsKinfolkAaveDeliveryRevision({
+      aaveLevel: 2,
+      languagePrompt,
+      reply: "Turner had been preaching before he led the uprising. Folks wasn't simply accepting slavery quietly.",
+    })).toBe(false);
+    expect(needsKinfolkAaveDeliveryRevision({
+      aaveLevel: 0,
+      languagePrompt: "",
+      reply: "Plain answer.",
+    })).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildKinfolkGeneratedContentContract,
+  buildKinfolkGenericProjectConcernEmail,
   buildKinfolkGeneratedMessageClarification,
   resolveKinfolkGeneratedContentStyle,
 } from "../generated-content-style";
@@ -98,6 +99,15 @@ describe("Kinfolk generated-content style boundary", () => {
     )).toBeNull();
     expect(buildKinfolkGeneratedMessageClarification(
       "Explain why messages matter.",
+    )).toBeNull();
+  });
+
+  it("uses a neutral placeholder email for a generic project concern without requesting nonessential details", () => {
+    expect(buildKinfolkGenericProjectConcernEmail(
+      "Write an email to my boss about a project concern.",
+    )).toBe(`Subject: [Project] — [brief concern]\n\nHi [Manager Name],\n\nI want to flag a concern about [Project]. [Briefly describe the concern and its impact.] Could we discuss [the decision, support, or next step you need] when you have a moment?\n\nI’m happy to share the details and help identify a workable path forward.\n\nThanks,\n[Your Name]`);
+    expect(buildKinfolkGenericProjectConcernEmail(
+      "Write an email to my boss about the missed March 1 launch deadline.",
     )).toBeNull();
   });
 

@@ -1814,13 +1814,13 @@ This addendum addresses only the specific behavioral gaps returned by independen
 
 ### Source corrections
 
-1. **Conversational persona form:** Big Cousin and Best Friend now begin ordinary personal guidance in connected prose and reserve action lists for an explicit plan or a task that truly requires ordered steps. A server-side natural-format guard removes unsolicited model list scaffolding from direct conversational replies only.
+1. **Conversational persona form:** Big Cousin and Best Friend now begin ordinary personal guidance in connected prose and reserve action lists for an explicit plan or a task that truly requires ordered steps. The final focused addendum below supersedes the former list-stripping guard with a content-preserving natural-readability rewrite.
 2. **Business Manager scope:** historical, factual, reflective, and explanatory questions retain ordinary historical prose. Manager decision labels and frameworks remain reserved for actual decisions or plans.
 3. **AAVE delivery:** level-two AAVE now includes a final quality gate requiring the selected natural register to be visible across at least two ordinary sentences, without token slang, caricature, profanity, identity inference, or reduced factual precision. The existing high-stakes plain-language override remains unchanged.
 4. **Regional delivery:** preserves the existing private, optional, at-most-one-expression behavior. No region, setting, selection process, or rejected expression may be exposed unless the member asks.
 5. **Generated writing facts:** underspecified professional and personal message requests continue to ask for the missing purpose or factual details rather than invent names, dates, times, recipients, meetings, or circumstances.
 6. **Shared consequential guidance:** all four personas retain the same evidence-based, conditional savings-and-card-debt response. Persona presentation cannot prescribe a dollar allocation, payoff period, or payment amount where material facts are missing.
-7. **Member response presentation:** saved and current-turn response-length and response-format preferences now control direct commentary without constraining artifacts. A **Brief + Structured** reply receives a scoped 450-token budget and preserves at most its first three essential points; a **Detailed + Natural** reply remains thorough prose; a **Detailed + Structured** technical/decision task retains its requested structure.
+7. **Member response presentation:** saved and current-turn response-length and response-format preferences now control direct commentary without constraining artifacts. The final focused addendum below supersedes the former 450-token/three-point approach with question-sensitive depth and content-preserving semantic distillation.
 
 ### Validation
 
@@ -1833,3 +1833,26 @@ This addendum addresses only the specific behavioral gaps returned by independen
 ### Release boundary
 
 **TARGETED CORRECTIONS — SOURCE COMPLETE / AWAITING INTEGRATION REVIEW.** This source-only evidence does not substitute for the required staging rerun against the deployment-configured Kinfolk model. No merge, deployment, migration, production-data operation, or mobile build was performed.
+
+## Addendum — Final Focused Corrections Before Integration Review (2026-10-16)
+
+This source-only addendum addresses the remaining independent-review findings without reopening the broader personality, AAVE, consented-memory, or generated-writing workstreams.
+
+### Completed source behavior
+
+1. **Question-sensitive response depth:** Brief, Balanced, Detailed, and Adaptive remain member preferences, while the actual question derives concise, standard, or detailed depth. The same saved **Balanced + Natural** preference is exercised against a simple factual question, a complex decision, and an emotional conversation.
+2. **No mechanical cutting:** the former brief token cap and first-three-point trimming were removed. A crowded Brief draft can receive one bounded semantic distillation that retains its answer, material limitations, safety/uncertainty content, and conclusion rather than dropping later lines.
+3. **Readable natural form:** the former formatting-flattening transform was removed. A multi-section, list-heavy Natural draft can receive one bounded model rewrite into well-spaced prose that preserves claims, qualifications, conclusions, and persona tone; it does not truncate content or collapse paragraphs.
+4. **AAVE delivery:** a level-two AAVE draft that does not visibly carry the selected register across two sentences receives one fact-preserving model rewrite. The guard is disabled for high-stakes language contexts and keeps names, dates, factual claims, safety content, and conclusions intact.
+5. **Persona depth:** Big Cousin and Best Friend retain different conversational character without a rigid length limitation. Big Cousin is protective and practical; Best Friend starts from emotional acknowledgement and relational support. Shared factual and consequential guidance remains unchanged.
+6. **Writing defaults:** a generic project-concern email now returns a professional draft with neutral, clearly labeled placeholders instead of requesting the manager name, date, and other nonessential details before helping.
+
+### Validation and evidence
+
+- **6 API/server files / 94 tests passed**; API TypeScript check passed.
+- The exact raw and final delivered responses, every model rewrite, source-only server guard, preference-resolution context, and post-processing disclosure are in [KINFOLK_FINAL_FOCUSED_CORRECTION_EVIDENCE_2026-10-16.md](evidence/KINFOLK_FINAL_FOCUSED_CORRECTION_EVIDENCE_2026-10-16.md).
+- Live evidence model: **`gpt-5`**, run through the **Manus Sandbox live OpenAI-compatible proxy**. This is not a staging or production-model result.
+
+### Release boundary
+
+**FINAL FOCUSED CORRECTIONS — SOURCE COMPLETE / AWAITING INTEGRATION REVIEW.** No merge, deployment, staging invocation, migration, production-data operation, mobile build, or device test was performed. The existing staging validation against the deployment-configured Kinfolk model remains required before release authorization.

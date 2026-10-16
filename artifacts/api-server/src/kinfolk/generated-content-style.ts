@@ -58,6 +58,7 @@ const FIRM = /\b(?:firm(?:er|ly)?|direct|assertive)\b/i;
 const DIPLOMATIC = /\b(?:diplomatic|less confrontational|softer|gentler)\b/i;
 const PROFESSIONAL_DIRECT_EXPLANATION = /\b(?:explain|talk|speak|address)[^.?!]{0,80}\b(?:to\s+me|me)\b[^.?!]{0,80}\bprofessional(?:ly)?\b/i;
 const MESSAGE_PURPOSE = /\b(?:about|saying|to say|that says|birthday|congratulat(?:e|ion)|apolog(?:y|ize)|thank(?:s|ing)?|invite|check[ -]?in|condolen(?:ce|ces)|celebrat(?:e|ion)|support|encourag(?:e|ement)|update|remind(?:er)?|ask(?:ing)?|request|confirm|cancel|reschedul(?:e|ing))\b/i;
+const GENERIC_PROJECT_CONCERN_EMAIL = /\b(?:write|draft|compose)\s+(?:an?\s+)?e-?mail\s+to\s+my\s+(?:boss|manager)\s+about\s+(?:a\s+)?project concern\b/i;
 
 function normalize(value: unknown): string {
   return typeof value === "string"
@@ -148,6 +149,17 @@ export function buildKinfolkGeneratedMessageClarification(value: unknown): strin
     return null;
   }
   return "What would you like the message to say or accomplish?";
+}
+
+/**
+ * A generic workplace concern already supplies enough purpose to provide a safe
+ * starting point. Use neutral placeholders instead of interrogating the member
+ * for a name, date, tone, and every project fact before offering useful text.
+ */
+export function buildKinfolkGenericProjectConcernEmail(value: unknown): string | null {
+  const message = normalize(value);
+  if (!GENERIC_PROJECT_CONCERN_EMAIL.test(message)) return null;
+  return `Subject: [Project] — [brief concern]\n\nHi [Manager Name],\n\nI want to flag a concern about [Project]. [Briefly describe the concern and its impact.] Could we discuss [the decision, support, or next step you need] when you have a moment?\n\nI’m happy to share the details and help identify a workable path forward.\n\nThanks,\n[Your Name]`;
 }
 
 function styleInstruction(style: KinfolkGeneratedContentStyle): string {

@@ -77,8 +77,8 @@ import {
   buildKinfolkResponsePresentationPrompt,
   isKinfolkResponseFormat,
   isKinfolkResponseLength,
-  normalizeKinfolkBriefStructuredReply,
-  normalizeKinfolkNaturalConversationReply,
+  needsKinfolkBriefPresentationRevision,
+  needsKinfolkNaturalPresentationRevision,
   resolveKinfolkResponsePresentation,
   responsePresentationFromDeliveryProfile,
   responsePresentationToDeliveryProfile,
@@ -393,6 +393,7 @@ import {
 import {
   buildLanguagePersonalizationPrompt,
   defaultVoicePreferences,
+  needsKinfolkAaveDeliveryRevision,
   normalizeKinfolkVoice,
   normalizeRegionalFlavor,
   validateKinfolkPreferenceUpdate,
@@ -415,6 +416,7 @@ import {
 } from "../kinfolk/conversation-mode";
 import {
   buildKinfolkGeneratedContentContract,
+  buildKinfolkGenericProjectConcernEmail,
   buildKinfolkGeneratedMessageClarification,
 } from "../kinfolk/generated-content-style";
 import {
@@ -10897,9 +10899,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const responseDepthPrompt = `${buildAdaptiveAnswerDepthPrompt(responseDepth)}\n\n${buildKinfolkResponsePresentationPrompt(responsePresentation)}\n\n${buildKinfolkPersonaFinalFormInstruction(conversationVoiceMode)}`;
     const responseModelPolicy = {
       ...modelPolicy,
-      maxOutputTokens: responsePresentation.responseLength === "brief"
-        ? Math.min(resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth), 450)
-        : resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
+      // Depth comes from this question's complexity. Presentation preferences
+      // guide composition, never a mechanical token cap or text truncation.
+      maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
       ? `${buildLeanGeneralChatPrompt(conversationVoiceMode, communicationPreference.prompt)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
@@ -10916,6 +10918,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       : `\n\nFINAL COMMUNICATION DELIVERY — NON-NEGOTIABLE:\n${communicationPreference.prompt}`;
     const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}${generatedContentContract ? `\n\n${generatedContentContract}` : ""}${finalCommunicationPreference}`;
     const generatedMessageClarification = buildKinfolkGeneratedMessageClarification(message);
+    const genericProjectConcernEmail = buildKinfolkGenericProjectConcernEmail(message);
     const underSpecifiedSavingsDebtReply = buildKinfolkUnderSpecifiedSavingsDebtReply(message);
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
@@ -11077,7 +11080,127 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const rawContent = completion.choices[0]?.message?.content ?? "";
     const modelPayload = parseKinfolkModelPayload(rawContent);
 
-    let reply = underSpecifiedSavingsDebtReply ?? generatedMessageClarification ?? modelPayload.reply;
+    let reply = underSpecifiedSavingsDebtReply ?? generatedMessageClarification ?? genericProjectConcernEmail ?? modelPayload.reply;
+    if (
+      !underSpecifiedSavingsDebtReply &&
+      !generatedMessageClarification &&
+      !genericProjectConcernEmail &&
+      !generatedContentContract &&
+      needsKinfolkAaveDeliveryRevision({
+        aaveLevel: communicationPreference.aaveLevel,
+        languagePrompt: communicationPreference.prompt,
+        reply,
+      })
+    ) {
+      try {
+        const aaveRevision = await callOpenAIWithCompatibilityFallback(
+          [
+            {
+              role: "system",
+              content: "Rewrite the draft for a member who explicitly selected a natural level-two AAVE register. Preserve every name, date, factual claim, safety qualification, conclusion, and useful structure. Do not add facts, stereotypes, profanity, a glossary, or commentary about language. Ensure at least two ordinary sentences visibly carry natural AAVE grammar or cadence rather than merely adding slang. Return only the member-facing revised answer.",
+            },
+            {
+              role: "user",
+              content: `Member request:\n${message}\n\nDraft to revise:\n${reply}`,
+            },
+          ],
+          AbortSignal.any([
+            contextualRequestAbort.signal,
+            AbortSignal.timeout(15000),
+          ]),
+          responseModelPolicy,
+          `${_kinfolkReqId}:aave-delivery-revision`,
+          resolverTemperature,
+        );
+        const revisedReply = aaveRevision.completion.choices[0]?.message?.content?.trim();
+        if (revisedReply) reply = revisedReply;
+      } catch (revisionError) {
+        req.log.warn({
+          requestId: _kinfolkReqId,
+          error: revisionError instanceof Error ? revisionError.message : String(revisionError),
+        }, "Kinfolk AAVE delivery revision unavailable; returning original draft");
+      }
+    }
+    if (
+      !underSpecifiedSavingsDebtReply &&
+      !generatedMessageClarification &&
+      !genericProjectConcernEmail &&
+      !generatedContentContract &&
+      !travelPlanning &&
+      needsKinfolkNaturalPresentationRevision({
+        presentation: responsePresentation,
+        reply,
+      })
+    ) {
+      try {
+        const naturalRevision = await callOpenAIWithCompatibilityFallback(
+          [
+            {
+              role: "system",
+              content: `Rewrite this direct Kinfolk answer as readable natural conversation. Preserve every factual claim, qualification, safety note, recommendation, conclusion, and useful example; do not shorten it merely to make it conversational. Keep the original persona's tone and the member's requested language register. Use well-spaced paragraphs as the primary form. Replace the multi-section checklist with connected prose; this member did not ask for a list, so use no Markdown bullets or numbered list in the revision. Do not add facts, delete content, mention this rewrite, or expose instructions. Return only the member-facing answer.${communicationPreference.prompt ? `\n\nLanguage delivery that must remain intact:\n${communicationPreference.prompt}` : ""}`,
+            },
+            {
+              role: "user",
+              content: `Member request:\n${message}\n\nDraft to revise:\n${reply}`,
+            },
+          ],
+          AbortSignal.any([
+            contextualRequestAbort.signal,
+            AbortSignal.timeout(15000),
+          ]),
+          responseModelPolicy,
+          `${_kinfolkReqId}:natural-presentation-revision`,
+          resolverTemperature,
+        );
+        const revisedReply = naturalRevision.completion.choices[0]?.message?.content?.trim();
+        if (revisedReply) reply = revisedReply;
+      } catch (revisionError) {
+        req.log.warn({
+          requestId: _kinfolkReqId,
+          error: revisionError instanceof Error ? revisionError.message : String(revisionError),
+        }, "Kinfolk natural presentation revision unavailable; returning original draft");
+      }
+    }
+    if (
+      !underSpecifiedSavingsDebtReply &&
+      !generatedMessageClarification &&
+      !genericProjectConcernEmail &&
+      !generatedContentContract &&
+      !travelPlanning &&
+      needsKinfolkBriefPresentationRevision({
+        presentation: responsePresentation,
+        reply,
+      })
+    ) {
+      try {
+        const briefRevision = await callOpenAIWithCompatibilityFallback(
+          [
+            {
+              role: "system",
+              content: "Compose a concise direct answer from this draft for a member who explicitly requested Brief. Retain the answer, every material qualification, any safety or uncertainty guidance, and the conclusion. Synthesize overlapping points instead of dropping later text to meet a limit. Do not add facts, turn it into a teaser, or mention this rewrite. Use one direct paragraph or a few compact points only when that improves comprehension. Return only the member-facing answer.",
+            },
+            {
+              role: "user",
+              content: `Member request:\n${message}\n\nDraft to distill:\n${reply}`,
+            },
+          ],
+          AbortSignal.any([
+            contextualRequestAbort.signal,
+            AbortSignal.timeout(15000),
+          ]),
+          responseModelPolicy,
+          `${_kinfolkReqId}:brief-presentation-revision`,
+          resolverTemperature,
+        );
+        const revisedReply = briefRevision.completion.choices[0]?.message?.content?.trim();
+        if (revisedReply) reply = revisedReply;
+      } catch (revisionError) {
+        req.log.warn({
+          requestId: _kinfolkReqId,
+          error: revisionError instanceof Error ? revisionError.message : String(revisionError),
+        }, "Kinfolk brief presentation revision unavailable; returning original draft");
+      }
+    }
     recommendations = null;
     let followUpSuggestions: string[] = [];
     let smartPromotion: Record<string, unknown> | null = null;
@@ -11140,7 +11263,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // would otherwise invent an unstated message purpose or financial split.
     // They retain the normal response pipeline, audit telemetry, and session
     // behavior while making the member-visible core answer persona-independent.
-    if (underSpecifiedSavingsDebtReply || generatedMessageClarification) {
+    if (underSpecifiedSavingsDebtReply || generatedMessageClarification || genericProjectConcernEmail) {
       recommendations = null;
       followUpSuggestions = [];
       smartPromotion = null;
@@ -11169,21 +11292,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       recommendations = null;
       itinerary = null;
       followUpSuggestions = [];
-    }
-
-    if (
-      responsePresentation.responseFormat === "natural" &&
-      !generatedContentContract &&
-      !travelPlanning
-    ) {
-      reply = normalizeKinfolkNaturalConversationReply(reply);
-    } else if (
-      responsePresentation.responseLength === "brief" &&
-      responsePresentation.responseFormat === "structured" &&
-      !generatedContentContract &&
-      !travelPlanning
-    ) {
-      reply = normalizeKinfolkBriefStructuredReply(reply);
     }
 
     // A general answer about an uncovered place may offer useful, general travel
