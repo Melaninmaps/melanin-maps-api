@@ -10929,7 +10929,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           languagePrompt: communicationPreference.prompt,
         });
     const finalArtifactDeliveryCheck = generatedContentContract
-      ? "\n\nFINAL ARTIFACT DELIVERY CHECK: Inside the reply field, begin a standalone artifact directly with “Draft:” and then provide the requested artifact. Do not add Kinfolk commentary, coaching, an explanation of choices, or an invitation to personalize it unless the member explicitly asked for explanation as well."
+      ? "\n\nFINAL ARTIFACT DELIVERY CHECK: Inside the reply field, return a standalone artifact as copy-ready content with no forced “Draft:” label, title, or preface. Do not add Kinfolk commentary, coaching, an explanation of choices, or an invitation to personalize it unless the member explicitly asked for explanation as well. If explanation is requested, keep it separate from the clean artifact content."
       : "";
     const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}${generatedContentContract ? `\n\n${generatedContentContract}` : ""}${finalCommunicationPreference}${finalFirstCallCompositionCheck}${finalAaveDeliveryCheck ? `\n\n${finalAaveDeliveryCheck}` : ""}${finalArtifactDeliveryCheck}`;
     const generatedMessageClarification = buildKinfolkGeneratedMessageClarification(message);

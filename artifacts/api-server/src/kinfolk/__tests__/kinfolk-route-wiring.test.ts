@@ -499,6 +499,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("shouldReviewKinfolkAaveDelivery({");
     expect(chatRoute).toContain("aave-native-quality-review");
     expect(chatRoute).toContain("FINAL ARTIFACT DELIVERY CHECK");
+    expect(chatRoute).toContain("no forced “Draft:” label, title, or preface");
     expect(chatRoute).not.toContain("aave-delivery-revision");
     expect(chatRoute).not.toContain("natural-presentation-revision");
     expect(chatRoute).not.toContain("brief-presentation-revision");

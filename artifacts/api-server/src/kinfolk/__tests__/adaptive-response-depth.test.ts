@@ -49,6 +49,35 @@ describe("adaptive Kinfolk answer depth", () => {
     })).toBe("detailed");
   });
 
+  it("makes Balanced and Detailed preferences meaningful without weakening direct or consequential answers", () => {
+    expect(resolveKinfolkResponseDepth({
+      ...ordinaryTurn,
+      message: "What is photosynthesis?",
+      responseLength: "adaptive",
+    })).toBe("concise");
+    expect(resolveKinfolkResponseDepth({
+      ...ordinaryTurn,
+      message: "What is photosynthesis?",
+      responseLength: "balanced",
+    })).toBe("standard");
+    expect(resolveKinfolkResponseDepth({
+      ...ordinaryTurn,
+      message: "What is photosynthesis?",
+      responseLength: "detailed",
+    })).toBe("standard");
+    expect(resolveKinfolkResponseDepth({
+      ...ordinaryTurn,
+      message: "Explain photosynthesis in detail, including its two stages.",
+      responseLength: "detailed",
+    })).toBe("detailed");
+    expect(resolveKinfolkResponseDepth({
+      ...ordinaryTurn,
+      message: "What is photosynthesis?",
+      intentClass: "health",
+      responseLength: "brief",
+    })).toBe("detailed");
+  });
+
   it("uses a larger bounded token budget only when a detailed answer is warranted", () => {
     const standard = { mode: "standard" as const, maxOutputTokens: 600 };
     const staff = { mode: "staff_demo" as const, maxOutputTokens: 900 };

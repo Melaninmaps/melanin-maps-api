@@ -2,7 +2,7 @@
 
 ## Status
 
-**SOURCE COMPLETE / READY FOR CUMULATIVE INTEGRATION / AWAITING RELEASE AUTHORIZATION**
+**SOURCE REVIEW / NOT ACCEPTED FOR INTEGRATION OR RELEASE**
 
 This handoff covers a focused Kinfolk source correction only. No deployment, migration, production-data change, account change, browser operation, or mobile build was performed.
 
@@ -1925,3 +1925,42 @@ The raw artifacts intentionally preserve all model wording, including any choice
 - Integrate this branch cumulatively; do not overwrite completed Kinfolk, Directory, Map, Business Dashboard, taxonomy, or Black-capitalization repairs.
 - Include web and native preference surfaces only in the next already-authorized consolidated release/build; **do not create a separate mobile build** for this correction.
 - Do not deploy, migrate, modify production data, or create a build without founder authorization.
+
+
+## Follow-up — copy-ready artifacts and explicit response preferences
+
+**Status: SOURCE REVIEW / NOT ACCEPTED FOR INTEGRATION OR RELEASE.**
+
+This focused follow-up removes the forced literal `Draft:` prefix from standalone generated artifacts. Kinfolk now returns the email, personal message, proposal, or other artifact as clean **copy-ready content**. A presentation surface may label the artifact outside of the copied text; the server does not insert a label or title into the content. When a member explicitly requests an explanation as well as an artifact, the explanation remains available but is kept separate from the clean artifact content.
+
+Response-depth selection now gives every explicit length preference meaningful first-call effect:
+
+- **Brief:** compact complete reply, with safety, uncertainty, and material qualifications retained.
+- **Balanced:** reserves room for useful context beyond the shortest possible answer.
+- **Detailed:** reserves room for a fuller explanation even on an ordinary question, without converting a simple answer into an essay.
+- **Adaptive:** follows actual question complexity, current context, direct instructions, and safety needs.
+
+Consequential, researched, current-information, travel, legal, financial, health, and multi-part requests still retain the depth necessary for a complete answer regardless of a Brief setting.
+
+### Focused follow-up validation
+
+```bash
+cd artifacts/api-server
+pnpm exec vitest run \
+  src/kinfolk/__tests__/adaptive-response-depth.test.ts \
+  src/kinfolk/__tests__/response-presentation.test.ts \
+  src/kinfolk/__tests__/generated-content-style.test.ts \
+  src/kinfolk/__tests__/kinfolk-route-wiring.test.ts \
+  src/kinfolk/__tests__/conversation-mode.test.ts \
+  src/kinfolk/__tests__/voice-personalization.test.ts \
+  src/kinfolk/__tests__/lean-general-chat.test.ts
+pnpm typecheck
+```
+
+**Result:** **7 files / 107 tests passed**; API TypeScript typecheck and `git diff --check` passed.
+
+### Exact requested existing-model evidence
+
+No existing model evidence was regenerated for this follow-up. The requested JSON evidence files remain unchanged. For convenience, [KINFOLK_FIRST_CALL_EVIDENCE_READOUT_2026-10-16.md](evidence/KINFOLK_FIRST_CALL_EVIDENCE_READOUT_2026-10-16.md) is a lossless Markdown projection of the two existing files and includes all **10 exact initial raw model responses, subsequent corrections where present, final member-visible responses, and post-processing disclosures**.
+
+No merge, deploy, staging invocation, migration, production-data operation, or mobile build was performed.

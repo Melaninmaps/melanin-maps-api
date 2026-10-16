@@ -61,6 +61,21 @@ export function resolveKinfolkResponseDepth(input: KinfolkResponseDepthInput): K
     return wordCount <= 8 && DIRECT_FACT_PATTERN.test(text) ? "concise" : "standard";
   }
 
+  // Balanced and Detailed are meaningful member preferences for ordinary
+  // questions too. They do not turn a simple factual answer into an essay, but
+  // they reserve room for respectively useful context or a fuller explanation.
+  if (input.responseLength === "detailed") {
+    return asksForDetail || hasMultipleQuestions || (wordCount >= 18 && hasMultipleClauses)
+      ? "detailed"
+      : "standard";
+  }
+
+  if (input.responseLength === "balanced") {
+    return asksForDetail || hasMultipleQuestions || (wordCount >= 18 && hasMultipleClauses)
+      ? "detailed"
+      : "standard";
+  }
+
   if (
     asksForDetail ||
     hasMultipleQuestions ||

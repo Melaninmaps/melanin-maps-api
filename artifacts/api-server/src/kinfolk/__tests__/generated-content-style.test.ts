@@ -87,9 +87,10 @@ describe("Kinfolk generated-content style boundary", () => {
     expect(contract).toContain("If a generic email or message can be drafted");
     expect(contract).toContain("placeholder scaffold would not be meaningful");
     expect(contract).toContain("Do not turn a short message, email, caption, or note into a long essay");
-    expect(contract).toContain("Do not preface it with coaching, a persona response, an explanation of choices, or an invitation to personalize it");
+    expect(contract).toContain("no forced “Draft:” label, title, coaching, persona response");
+    expect(contract).toContain("A surface may present an optional label outside the copyable artifact");
     expect(contract).toContain("Do not lead with a request for optional names, dates, or background");
-    expect(contract).toContain("For a standalone artifact request, begin directly with “Draft:”");
+    expect(contract).toContain("For a standalone artifact request, return the artifact itself with no forced label");
     expect(contract).toContain("never assume a check-in, support, meeting, food, relationship history");
     expect(languageContract).toContain("Do not make unsupported claims about linguistic grammar");
   });

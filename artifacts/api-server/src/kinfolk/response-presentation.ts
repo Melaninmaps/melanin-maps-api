@@ -114,8 +114,8 @@ export function buildKinfolkResponsePresentationPrompt(
 ): string {
   const lengthGuidance: Record<KinfolkResponseLength, string> = {
     brief: "Start with the answer and use only the reasoning needed to make it accurate and usable. Synthesize related support instead of expanding every supporting fact into its own section or point. Retain every material qualification, safety consideration, and conclusion. A simple question should be short; a complex, consequential, or multi-part question may need a compact explanation. Do not omit meaning merely to be brief.",
-    balanced: "Give a useful explanation with moderate detail, selecting only the context and examples that help this question.",
-    detailed: "When the question benefits from depth, provide a thorough explanation with relevant context, distinctions, and examples; do not add repetitive paragraphs or depth the question does not need.",
+    balanced: "Give a useful explanation with moderate detail, selecting only the context and examples that help this question. This preference reserves room for useful context beyond the shortest possible reply.",
+    detailed: "When the question benefits from depth, provide a thorough explanation with relevant context, distinctions, and examples; for a simple question, add the useful context a Detailed preference asks for without turning it into an essay. Do not add repetitive paragraphs or depth the question does not need.",
     adaptive: "Choose useful depth from the question, complexity, active context, and safety needs rather than from a fixed response size.",
   };
   const formatGuidance: Record<KinfolkResponseFormat, string> = {
