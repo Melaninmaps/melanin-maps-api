@@ -25,6 +25,8 @@ export const COMPLETED_COHORT_MANIFEST_CHECKSUM =
   "ca576aeb92b6cd0e73a7b967bf510f7e26b6a3ceb909c5511a222c25d862469a" as const;
 export const NATIONAL_MASTER_DIRECTORY_SOURCE =
   "national_diaspora_master_18294" as const;
+export const INTERNATIONAL_DIRECTORY_ONLY_VISIBILITY_POLICY =
+  "international_directory_only_visibility_v1" as const;
 
 /**
  * The compatibility signal is permanently enabled. A config value cannot
@@ -146,6 +148,26 @@ export function sourceBackedGeneralDirectorySqlPredicate(
 }
 
 /**
+ * A fixed, administrator-applied international audit can make a live profile
+ * searchable in the ordinary Directory when the profile had a verified
+ * first-party website or a country-consistent existing pin. This is strictly a
+ * Directory rule: it never grants Kinfolk, Discovery, ownership-filter, or map
+ * eligibility, and the receipt expires unless it is revalidated.
+ */
+export function internationalDirectoryOnlySqlPredicate(
+  businessIdExpression: string,
+): string {
+  return `EXISTS (
+    SELECT 1
+      FROM public.international_directory_only_visibility_receipts AS international_directory_receipt
+     WHERE international_directory_receipt.business_id::text = ${businessIdExpression}::text
+       AND international_directory_receipt.policy_version = '${INTERNATIONAL_DIRECTORY_ONLY_VISIBILITY_POLICY}'
+       AND international_directory_receipt.revoked_at IS NULL
+       AND international_directory_receipt.valid_until > CURRENT_TIMESTAMP
+  )`;
+}
+
+/**
  * Public directory browse can use source-backed general eligibility, while the
  * documented Diaspora predicate remains mandatory for ownership-filtered
  * results, Kinfolk, Discovery, and map surfaces.
@@ -154,7 +176,8 @@ export function mwmPublicDirectorySqlPredicate(
   businessIdExpression: string,
 ): string {
   return `(${documentedDiscoveryEligibilitySqlPredicate(businessIdExpression, "discovery")}
-    OR ${sourceBackedGeneralDirectorySqlPredicate(businessIdExpression)})`;
+    OR ${sourceBackedGeneralDirectorySqlPredicate(businessIdExpression)}
+    OR ${internationalDirectoryOnlySqlPredicate(businessIdExpression)})`;
 }
 
 export type MwmCoreReceiptCandidate = DocumentedDiscoveryEligibilityCandidate & {

@@ -7506,6 +7506,14 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       "completed cohort directory discovery audit v1",
       () => ensureCompletedCohortDirectoryDiscoverySchema(log, warn),
     ],
+    // ── International directory-only visibility receipts ───────────────────
+    // A bounded audit receipt makes an already-live international profile
+    // searchable in ordinary Directory browse only. It cannot create a
+    // Kinfolk, map, ownership, or source-intake eligibility record.
+    [
+      "international directory-only visibility receipts v1",
+      () => ensureInternationalDirectoryOnlyVisibilitySchema(log, warn),
+    ],
     // ── Universal non-business map entities ────────────────────────────────
     // One published source supplies the map pin, panel row, and canonical place URL.
     [
@@ -18993,6 +19001,52 @@ async function ensureCompletedCohortDirectoryDiscoverySchema(
   }
 }
 
+// ── Founder-approved international directory-only visibility ───────────────
+// This additive, schema-only migration holds a reviewed receipt; it neither
+// updates business fields nor seeds any record. A receipt can be revoked or
+// allowed to expire, and the member-facing effect is limited to ordinary
+// directory browse by the policy predicate.
+async function ensureInternationalDirectoryOnlyVisibilitySchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS international_directory_only_visibility_receipts (
+        business_id     VARCHAR PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
+        policy_version  TEXT NOT NULL CHECK (policy_version = 'international_directory_only_visibility_v1'),
+        manifest_sha256 TEXT NOT NULL CHECK (manifest_sha256 ~ '^[a-f0-9]{64}$'),
+        evidence        JSONB NOT NULL DEFAULT '{}'::jsonb,
+        activated_by    TEXT,
+        activated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        valid_until     TIMESTAMPTZ NOT NULL,
+        revoked_at      TIMESTAMPTZ,
+        revoked_by      TEXT,
+        revoke_reason   TEXT
+      );
+      CREATE INDEX IF NOT EXISTS international_directory_only_visibility_active_idx
+        ON international_directory_only_visibility_receipts (valid_until)
+        WHERE revoked_at IS NULL;
+      CREATE TABLE IF NOT EXISTS international_directory_only_visibility_audit_events (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id     VARCHAR NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+        action          TEXT NOT NULL CHECK (action IN ('activated', 'reaffirmed', 'revoked')),
+        actor_user_id   TEXT,
+        manifest_sha256 TEXT NOT NULL CHECK (manifest_sha256 ~ '^[a-f0-9]{64}$'),
+        before_state    JSONB NOT NULL DEFAULT '{}'::jsonb,
+        after_state     JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS international_directory_only_visibility_audit_business_idx
+        ON international_directory_only_visibility_audit_events (business_id, created_at DESC);
+    `);
+    log("ensureInternationalDirectoryOnlyVisibilitySchema: bounded directory-only receipt schema ready");
+  } catch (err: unknown) {
+    warn(
+      `ensureInternationalDirectoryOnlyVisibilitySchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
 async function ensureSaborWebsiteCorrection(
   log: (msg: string) => void,
   warn: (msg: string) => void,

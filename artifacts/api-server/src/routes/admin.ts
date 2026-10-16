@@ -83,6 +83,14 @@ import {
   recordKinfolkCurrentOnlinePresenceReviewEvent,
   type ActiveOfficialSocial,
 } from "../businesses/kinfolkCurrentOnlinePresenceReview";
+import {
+  INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_COUNT,
+  INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_SHA256,
+  INTERNATIONAL_DIRECTORY_ONLY_VALIDITY_DAYS,
+  internationalDirectoryOnlyEvidence,
+  matchesInternationalDirectoryOnlyManifest,
+  parseInternationalDirectoryOnlyManifest,
+} from "../businesses/internationalDirectoryOnlyVisibility";
 
 const router: IRouter = Router();
 
@@ -364,6 +372,181 @@ router.put("/admin/kinfolk/city-safety-sources/:sourceId", async (req: Request, 
     res.json({ source: result.rows[0] });
   } catch {
     res.status(503).json({ error: "Safety source registry is temporarily unavailable." });
+  }
+});
+
+type InternationalDirectoryOnlyBusiness = Readonly<{
+  id: string;
+  listing_status: string | null;
+  status: string | null;
+  website: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_duplicate: boolean | null;
+}>;
+
+function sameAuditedCoordinate(current: number | null, expected: number | null): boolean {
+  return typeof current === "number"
+    && typeof expected === "number"
+    && Math.abs(current - expected) < 0.000_001;
+}
+
+/**
+ * Founder-authorized one-purpose activation for the reviewed international
+ * archive audit. The fixed manifest hash prevents this route from becoming a
+ * general publication control. It creates only a time-bounded ordinary
+ * Directory receipt; it never changes a business row or any Kinfolk, map,
+ * Discovery, ownership, social, or profile-content state.
+ */
+router.post("/admin/public-directory-only/international-activate", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+
+  const rawManifest = req.body?.manifest;
+  const manifest = parseInternationalDirectoryOnlyManifest(rawManifest);
+  if (!manifest || !matchesInternationalDirectoryOnlyManifest(rawManifest)) {
+    return void res.status(400).json({
+      error: "The supplied international Directory-only manifest is not the approved audit artifact.",
+    });
+  }
+
+  if (req.body?.apply !== true) {
+    return void res.json({
+      ok: true,
+      preview: true,
+      fixedManifest: INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_SHA256,
+      records: manifest.items.length,
+      validityDays: INTERNATIONAL_DIRECTORY_ONLY_VALIDITY_DAYS,
+      effect: "ordinary_public_directory_only",
+      prohibited: ["Kinfolk Current", "Discovery", "map", "ownership", "website", "social", "profile content"],
+    });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const tableProbe = await client.query<{ table_name: string | null }>(
+      "SELECT to_regclass('public.international_directory_only_visibility_receipts')::text AS table_name",
+    );
+    if (!tableProbe.rows[0]?.table_name) {
+      await client.query("ROLLBACK");
+      return void res.status(503).json({
+        error: "Directory-only receipt schema is not available yet; no record was changed.",
+      });
+    }
+
+    const ids = manifest.items.map((item) => item.id);
+    const current = await client.query<InternationalDirectoryOnlyBusiness>(
+      `SELECT id, listing_status, status, website, latitude, longitude,
+              COALESCE(is_duplicate, false) AS is_duplicate
+         FROM businesses
+        WHERE id = ANY($1::varchar[])
+        FOR UPDATE`,
+      [ids],
+    );
+    const currentById = new Map(current.rows.map((row) => [row.id, row]));
+    const conflicts: Array<{ id: string; reason: string }> = [];
+
+    for (const item of manifest.items) {
+      const business = currentById.get(item.id);
+      if (!business) {
+        conflicts.push({ id: item.id, reason: "record_missing" });
+        continue;
+      }
+      if (business.listing_status !== "live_unclaimed" || business.status !== "active" || business.is_duplicate) {
+        conflicts.push({ id: item.id, reason: "record_is_not_current_live_nonduplicate" });
+        continue;
+      }
+      const verifiedWebsiteMatches = item.restoreReasons.includes("verified_official_website")
+        && business.website === item.expectedWebsite;
+      const countryConsistentPinMatches = item.restoreReasons.includes("country_consistent_map_pin")
+        && sameAuditedCoordinate(business.latitude, item.expectedLatitude)
+        && sameAuditedCoordinate(business.longitude, item.expectedLongitude);
+      if (!verifiedWebsiteMatches && !countryConsistentPinMatches) {
+        conflicts.push({ id: item.id, reason: "audited_presence_or_pin_no_longer_matches" });
+      }
+    }
+
+    if (conflicts.length > 0 || current.rows.length !== INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_COUNT) {
+      await client.query("ROLLBACK");
+      return void res.status(409).json({
+        error: "The international audit no longer matches the current records; no receipt was written.",
+        expectedRecords: INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_COUNT,
+        foundRecords: current.rows.length,
+        conflicts,
+      });
+    }
+
+    let activated = 0;
+    let reaffirmed = 0;
+    for (const item of manifest.items) {
+      const prior = await client.query<{
+        business_id: string;
+        evidence: Record<string, unknown>;
+        valid_until: string;
+        revoked_at: string | null;
+      }>(
+        `SELECT business_id, evidence, valid_until, revoked_at
+           FROM international_directory_only_visibility_receipts
+          WHERE business_id = $1
+          FOR UPDATE`,
+        [item.id],
+      );
+      const priorState = prior.rows[0] ?? null;
+      const evidence = internationalDirectoryOnlyEvidence(item);
+      const afterState = {
+        policyVersion: "international_directory_only_visibility_v1",
+        manifestSha256: INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_SHA256,
+        evidence,
+        validForDays: INTERNATIONAL_DIRECTORY_ONLY_VALIDITY_DAYS,
+      };
+      await client.query(
+        `INSERT INTO international_directory_only_visibility_receipts
+           (business_id, policy_version, manifest_sha256, evidence, activated_by, activated_at, valid_until, revoked_at, revoked_by, revoke_reason)
+         VALUES ($1, 'international_directory_only_visibility_v1', $2, $3::jsonb, $4, NOW(), NOW() + INTERVAL '180 days', NULL, NULL, NULL)
+         ON CONFLICT (business_id) DO UPDATE
+           SET policy_version = EXCLUDED.policy_version,
+               manifest_sha256 = EXCLUDED.manifest_sha256,
+               evidence = EXCLUDED.evidence,
+               activated_by = EXCLUDED.activated_by,
+               activated_at = NOW(),
+               valid_until = NOW() + INTERVAL '180 days',
+               revoked_at = NULL,
+               revoked_by = NULL,
+               revoke_reason = NULL`,
+        [item.id, INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_SHA256, JSON.stringify(evidence), req.user?.id ?? null],
+      );
+      await client.query(
+        `INSERT INTO international_directory_only_visibility_audit_events
+           (business_id, action, actor_user_id, manifest_sha256, before_state, after_state)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
+        [
+          item.id,
+          priorState ? "reaffirmed" : "activated",
+          req.user?.id ?? null,
+          INTERNATIONAL_DIRECTORY_ONLY_MANIFEST_SHA256,
+          JSON.stringify(priorState ?? {}),
+          JSON.stringify(afterState),
+        ],
+      );
+      if (priorState) reaffirmed += 1;
+      else activated += 1;
+    }
+    await client.query("COMMIT");
+    return void res.json({
+      ok: true,
+      effect: "ordinary_public_directory_only",
+      activated,
+      reaffirmed,
+      total: manifest.items.length,
+      validityDays: INTERNATIONAL_DIRECTORY_ONLY_VALIDITY_DAYS,
+      prohibited: ["Kinfolk Current", "Discovery", "map", "ownership", "website", "social", "profile content"],
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log.error({ error }, "Failed to activate reviewed international Directory-only receipts");
+    return void res.status(500).json({ error: "Failed to apply international Directory-only receipts." });
+  } finally {
+    client.release();
   }
 });
 
