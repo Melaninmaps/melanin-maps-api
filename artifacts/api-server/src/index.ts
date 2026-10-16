@@ -11,6 +11,7 @@ import {
   ensureBusinessWebsiteCleanupAuditSchema,
   ensureDirectoryReconciliationLedgerSchema,
   ensureFounderMapRestorationSchema,
+  ensureInternationalDirectoryOnlyVisibilitySchema,
   ensureLegacyMapLocationAttestationSchema,
   ensureCommunityFeedReadSchema,
   ensureKinfolkQuestionImageSchemaOnly,
@@ -175,7 +176,12 @@ try {
   await ensureFounderMapRestorationSchema(logger);
   logger.info("Founder map restoration outcome schema ready before traffic acceptance");
   await ensureLegacyMapLocationAttestationSchema(logger);
+  await ensureInternationalDirectoryOnlyVisibilitySchema(
+    (message) => logger.info(message),
+    (message) => logger.warn(message),
+  );
   logger.info("Legacy map location attestation schema ready before traffic acceptance");
+  logger.info("International Directory-only visibility receipt schema ready before traffic acceptance");
   // Website cleanup is likewise a schema-only safety control. It is required
   // for an evidence-bound removal of a bad public URL, and it never changes a
   // business row by itself.

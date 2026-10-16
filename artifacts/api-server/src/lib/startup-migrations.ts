@@ -19006,7 +19006,7 @@ async function ensureCompletedCohortDirectoryDiscoverySchema(
 // updates business fields nor seeds any record. A receipt can be revoked or
 // allowed to expire, and the member-facing effect is limited to ordinary
 // directory browse by the policy predicate.
-async function ensureInternationalDirectoryOnlyVisibilitySchema(
+export async function ensureInternationalDirectoryOnlyVisibilitySchema(
   log: (msg: string) => void,
   warn: (msg: string) => void,
 ): Promise<void> {
