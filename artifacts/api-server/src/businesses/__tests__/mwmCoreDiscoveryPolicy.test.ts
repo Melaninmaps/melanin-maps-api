@@ -5,6 +5,7 @@ import {
   isMwmCoreDiscoveryEligible,
   isMwmDiasporaPromotionEnabled,
   isMwmDiasporaPromotionEligible,
+  internationalDirectoryOnlySqlPredicate,
   mwmCoreDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
   mwmPublicDirectorySqlPredicate,
@@ -65,6 +66,17 @@ describe("MWM Core discovery policy compatibility", () => {
     expect(sourceReceipt).not.toContain("ownership_designations");
     expect(generalDirectory).toContain("business_discovery_eligibility");
     expect(generalDirectory).toContain("business_source_directory_receipts");
+  });
+
+  it("keeps the reviewed international audit directory-only", () => {
+    const directoryOnly = internationalDirectoryOnlySqlPredicate("b.id");
+    const generalDirectory = mwmPublicDirectorySqlPredicate("b.id");
+    const kinfolk = mwmDiasporaPromotionSqlPredicate("b.id");
+    expect(directoryOnly).toContain("international_directory_only_visibility_receipts");
+    expect(directoryOnly).toContain("valid_until > CURRENT_TIMESTAMP");
+    expect(directoryOnly).toContain("revoked_at IS NULL");
+    expect(generalDirectory).toContain("international_directory_only_visibility_receipts");
+    expect(kinfolk).not.toContain("international_directory_only_visibility_receipts");
   });
 
   it("retains completed-cohort provenance for review but not as member eligibility", () => {
