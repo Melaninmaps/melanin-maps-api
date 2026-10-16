@@ -108,6 +108,25 @@ describe("named Kinfolk business resolution", () => {
     });
   });
 
+  it("resolves an explicit exact-name lookup without broadening to category discovery", async () => {
+    const repo = exactAminaRepository();
+    const result = await resolveNamedBusinessTurn({
+      message: "Find the restaurant called AMINA in Philadelphia",
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      scopeIsCurrentTurn: true,
+      existingMessages: [],
+      repository: repo,
+    });
+
+    expect(result).toEqual({ state: "resolved", business: AMINA, source: "explicit" });
+    expect(repo.findExactByNormalizedName).toHaveBeenCalledTimes(1);
+    expect(repo.findExactByNormalizedName).toHaveBeenCalledWith({
+      name: "AMINA",
+      city: "Philadelphia",
+      stateCode: "PA",
+    });
+  });
+
   it("keeps a contextless proper name in general knowledge when no business cue or location exists", async () => {
     const repo = repository(AMINA);
     const result = await resolveNamedBusinessTurn({

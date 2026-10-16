@@ -12,6 +12,7 @@ export type NamedBusinessResolution =
   | { state: "resolved"; business: GovernedKinfolkBusiness; source: "explicit" | "immediate_reference" };
 
 const EXPLICIT_BUSINESS_GRAMMAR = /^\s*(?:tell me about|what (?:can you tell me|do you know) about)\s+(.+?)\s*[?.!]*\s*$/i;
+const EXPLICIT_NAME_SEARCH_GRAMMAR = /^\s*(?:find|look up|search for)\s+(?:the\s+)?(?:exact\s+)?(?:business|restaurant|place|spot|venue|shop|store|cafe|bar|salon|barbershop)?\s*(?:named|called)\s+(.+?)\s*[?.!]*\s*$/i;
 const IMMEDIATE_REFERENCE_GRAMMAR = /^\s*the\s+(?:restaurant|business|place|spot|venue|shop|store|cafe|bar|salon|barbershop)\s+(?:in|at)\s+(.+?)\s*[?.!]*\s*$/i;
 const GENERIC_REFERENTS = /^(?:it|that|this|the (?:restaurant|business|place|spot|venue|shop|store|cafe|bar|salon|barbershop))$/i;
 const GENERIC_DISCOVERY_SUBJECT = /^(?:book[ -]?stores?|bookshops?|books|restaurants?|caf[eé]s?|coffee shops?|barbers?|barber[ -]?shops?|salons?|grocer(?:y|ies)|grocery stores?|laundromats?|laundr(?:y|ies)|hotels?|night[ -]?life|bars?|clubs?|lounges?)(?:\s+(?:in|near|around|at)\b|$)/i;
@@ -19,7 +20,10 @@ const GENERAL_KNOWLEDGE_SUBJECT = /^(?:HBCUs?|historically black colleges?(?: an
 const EXPLICIT_BUSINESS_CUE = /\b(?:business|restaurant|place|spot|venue|shop|store|caf[eé]|bar|salon|barbershop)\b/i;
 
 function explicitBusinessName(message: string): string | null {
-  const candidate = message.match(EXPLICIT_BUSINESS_GRAMMAR)?.[1]?.trim() ?? null;
+  const candidate = (
+    message.match(EXPLICIT_BUSINESS_GRAMMAR)?.[1] ??
+    message.match(EXPLICIT_NAME_SEARCH_GRAMMAR)?.[1]
+  )?.trim() ?? null;
   if (
     !candidate
     || candidate.length > 120

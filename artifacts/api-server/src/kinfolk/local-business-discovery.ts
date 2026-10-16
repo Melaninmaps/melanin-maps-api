@@ -260,8 +260,13 @@ export function eligibleForImmediateDining(
     ...(business.specialties ?? []),
   ].join(" ").toLowerCase();
   const cateringOnly = /\b(?:caterer|catering|private chef)\b/.test(text)
-    && !/\b(?:restaurant|dine[ -]?in|counter service|take[ -]?out|food truck|cafe|coffee shop)\b/.test(text);
-  return !cateringOnly;
+    && !/\b(?:restaurants?|dine[ -]?in|counter service|take[ -]?out|food truck|cafes?|coffee shop)\b/.test(text);
+  const diningService = /\b(?:restaurants?|dine[ -]?in|counter service|take[ -]?out|food truck|cafes?|coffee shop)\b/.test(text);
+  // A broad `Food` category is not, by itself, evidence that a bakery,
+  // caterer, packaged-goods shop, or unrelated listing can serve dinner now.
+  // This asks only whether the published record represents an actionable dining
+  // service—not whether it is currently open.
+  return !cateringOnly && diningService;
 }
 
 function webQueries(
@@ -652,8 +657,11 @@ export async function discoverLocalBusinesses(input: {
       address: null,
       phone: null,
       website: place.websiteUrl,
-    }, input.subject),
+      }, input.subject),
   );
+  // A Friday-night dinner needs an actionable business, not a historical map
+  // record whose dining hours and service availability are unknowable.
+  if (input.subject.foodIntent === "dining_now") mapRows = [];
 
   // A strict Support Lens and the default Diaspora Promotion Catalog are
   // documentary-only. Kinfolk may answer general factual questions with

@@ -166,6 +166,65 @@ describe("Kinfolk business personalization", () => {
     expect(ranked[0]?.matchReasons).toContain("Community feedback: Portions With Love");
   });
 
+  it("prioritizes documented Friday-evening alternatives over a possible wait tradeoff without claiming live wait information", () => {
+    const quickDinner = {
+      ...business("quick", "Cedar Supper", "Food & Drink", "Restaurants", ["dinner", "romantic"]),
+      hours: "Fri 5:00 PM - 11:00 PM",
+      communitySignals: {
+        quickReviews: [{ key: "great-service", label: "Great Service", count: 4 }],
+        communityVibes: [],
+        theReal: [],
+      },
+    };
+    const waitTradeoff = {
+      ...business("wait", "Juniper Table", "Food & Drink", "Restaurants", ["dinner", "romantic"]),
+      weeklySchedule: { fri: { open: "5:00 PM", close: "11:00 PM" } },
+      showAvailability: true,
+      communitySignals: {
+        quickReviews: [{ key: "worth-the-wait", label: "Worth the Wait", count: 12 }],
+        communityVibes: [],
+        theReal: [],
+      },
+    };
+    const earlyClosing = {
+      ...business("early", "Early Plate", "Food & Drink", "Restaurants", ["dinner"]),
+      weeklySchedule: { fri: { open: "11:00 AM", close: "6:00 PM" } },
+      showAvailability: true,
+    };
+
+    const ranked = rankGovernedBusinessesForMember(
+      [waitTradeoff, earlyClosing, quickDinner],
+      {
+        ageBand: "18_plus",
+        currentRequest: "It's Friday night. I want dinner, but I don't want to wait.",
+      },
+    );
+
+    expect(ranked.map((entry) => entry.id)).toEqual(["quick", "wait"]);
+    expect(ranked[0]?.matchReasons).toContain(
+      "Published Friday hours list evening service; confirm current availability",
+    );
+    expect(ranked[1]?.matchReasons).toContain(
+      "Community feedback notes a possible wait-time tradeoff",
+    );
+    expect(ranked.flatMap((entry) => entry.matchReasons).join(" ")).not.toMatch(/open now|long line|live wait/i);
+  });
+
+  it("hard-excludes a documented loud setting when the member asks for romantic but not loud", () => {
+    const quiet = business("quiet", "Candlelight Dining", "Food & Drink", "Restaurants", ["romantic", "quiet"]);
+    const loud = {
+      ...business("loud", "Late Room", "Food & Drink", "Restaurants", ["romantic", "live music"]),
+      environmentTags: ["high energy"],
+    };
+
+    const ranked = rankGovernedBusinessesForMember([loud, quiet], {
+      ageBand: "18_plus",
+      currentRequest: "Find a restaurant that is romantic but not loud",
+    });
+
+    expect(ranked.map((entry) => entry.id)).toEqual(["quiet"]);
+  });
+
   it("blocks adult-only nightlife for a real persisted 13_15 member but retains a venue with published teen evidence", () => {
     const ranked = rankGovernedBusinessesForMember(PHILADELPHIA_ACTIVITIES, {
       ageBand: "13_15",

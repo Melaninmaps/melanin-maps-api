@@ -61,6 +61,8 @@ export type DietaryRequirement = Readonly<{
 export type DocumentedServiceRequirement = Readonly<{
   label: string;
   searchTerms: readonly string[];
+  /** Additional individual terms that must all appear in published service evidence. */
+  allOfSearchTerms?: readonly string[];
 }>;
 
 type SubjectDefinition = NormalizedBusinessSubject &
@@ -158,13 +160,16 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     key: "salon",
     label: "salons",
     match:
-      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style)\b/i,
+      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style|wigs?(?:\s+(?:install(?:ation)?|unit))?)\b/i,
     searchTerms: [
       "salon",
       "hair salon",
       "hair stylist",
       "hair color",
       "wash and style",
+      "wig installation",
+      "wig install",
+      "wig unit",
     ],
   },
   {
@@ -396,6 +401,15 @@ const WASHING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   ],
 };
 
+const WIG_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "wig installation with shampoo and detangling included",
+  // The primary phrase narrows the database query to a wig service. The two
+  // additional terms are enforced on every emitted record below, so a general
+  // salon or a wig-install-only listing can never satisfy this all-of request.
+  searchTerms: ["wig installation", "wig install", "wig unit"],
+  allOfSearchTerms: ["shampoo", "detangling"],
+};
+
 /**
  * A cuisine is a current-turn capability, not a generic restaurant category.
  * “Ethiopian food” must therefore match documented published business data;
@@ -487,6 +501,13 @@ export function deriveDocumentedServiceRequirement(
   const quoted = quotedServiceRequirement(message);
   if (quoted) return quoted;
   if (/\bethiopian\b/i.test(message)) return ETHIOPIAN_CUISINE_REQUIREMENT;
+  if (
+    /\bwigs?\s+(?:install(?:ation)?|unit)\b/i.test(message) &&
+    /\bshampoo(?:ing)?\b/i.test(message) &&
+    /\bdetangl(?:e|ing)\b/i.test(message)
+  ) {
+    return WIG_INSTALLATION_SERVICE_REQUIREMENT;
+  }
   return /\b(?:full\s+wash\s+and\s+detangle|wash\s+and\s+detangle|washing\s+and\s+detangling|wash\s+and\s+braid(?:ing)?|wash\s+and\s+style)\b/i.test(
     message,
   )
@@ -498,7 +519,7 @@ export function deriveFoodIntent(message: string): FoodIntent | undefined {
   if (/\b(?:cater(?:er|ing)?|feeding\s+\d+|event|wedding|reception|corporate\s+lunch)\b/i.test(message)) return "event_catering";
   if (/\bprivate\s+chef\b/i.test(message)) return "private_chef";
   if (/\b(?:delivery|deliver|take[ -]?out|pick[ -]?up)\b/i.test(message)) return "takeout_or_delivery";
-  if (/\b(?:dinner|lunch|breakfast|brunch)\s+(?:tonight|now)\b|\b(?:where|what).{0,32}\b(?:eat|dine)\s+now\b/i.test(message)) return "dining_now";
+  if (/\b(?:dinner|lunch|breakfast|brunch)\s+(?:tonight|now)\b|\b(?:where|what).{0,32}\b(?:eat|dine)\s+now\b|\bfriday\s+night\b/i.test(message)) return "dining_now";
   if (/\b(?:dinner|lunch|breakfast|brunch)\b/i.test(message)) return "dining_later";
   return undefined;
 }
@@ -689,10 +710,14 @@ export function matchesDocumentedServiceRequirement(
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
   if (!evidence) return false;
-  return requirement.searchTerms.some((term) => {
+  const includesTerm = (term: string) => {
     const phrase = term.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
-  });
+  };
+  return (
+    requirement.searchTerms.some(includesTerm) &&
+    (requirement.allOfSearchTerms ?? []).every(includesTerm)
+  );
 }
 
 /**

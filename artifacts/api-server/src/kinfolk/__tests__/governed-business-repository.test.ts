@@ -140,6 +140,32 @@ describe("governed Kinfolk business repository", () => {
     expect(results).toEqual([]);
   });
 
+  it("maps owner-published Friday schedules as static evidence without creating live availability", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [{
+      ...AMINA_ROW,
+      hours: "Fri 5:00 PM - 11:00 PM",
+      weekly_schedule: { fri: { open: "5:00 PM", close: "11:00 PM" } },
+      show_availability: true,
+    }] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    const result = await repository.findExactByNormalizedName({
+      name: "AMINA",
+      city: "Philadelphia",
+      stateCode: "PA",
+    });
+
+    expect(result).toMatchObject({
+      hours: "Fri 5:00 PM - 11:00 PM",
+      weeklySchedule: { fri: { open: "5:00 PM", close: "11:00 PM" } },
+      showAvailability: true,
+    });
+    const [sql] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("b.hours");
+    expect(sql).toContain("b.weekly_schedule");
+    expect(sql).toContain("COALESCE(b.show_availability, false) AS show_availability");
+  });
+
   it.each([
     [
       "destination",
@@ -529,7 +555,7 @@ describe("governed Kinfolk business repository", () => {
     expect(params).toEqual([
       "Philadelphia",
       "PA",
-      ["\\msalon\\M", "\\mhair[[:space:]-]+salon\\M", "\\mhair[[:space:]-]+stylist\\M", "\\mhair[[:space:]-]+color\\M", "\\mwash[[:space:]-]+and[[:space:]-]+style\\M"],
+      ["\\msalon\\M", "\\mhair[[:space:]-]+salon\\M", "\\mhair[[:space:]-]+stylist\\M", "\\mhair[[:space:]-]+color\\M", "\\mwash[[:space:]-]+and[[:space:]-]+style\\M", "\\mwig[[:space:]-]+installation\\M", "\\mwig[[:space:]-]+install\\M", "\\mwig[[:space:]-]+unit\\M"],
       12,
       "salon",
       subject.vibeKeys ?? [],

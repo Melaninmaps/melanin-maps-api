@@ -150,6 +150,64 @@ function containsWholeTerm(text: string, term: string): boolean {
   return new RegExp(`(?:^|[^a-z0-9])${pattern}(?=$|[^a-z0-9])`, "i").test(text);
 }
 
+type FridayEveningAvailability = "available" | "unavailable" | "unknown";
+
+function clockMinutes(value: string): number | null {
+  const match = value.match(/\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(a\.?m\.?|p\.?m\.?)\b/i);
+  if (!match) return null;
+  const hour = Number(match[1]) % 12 + (/^p/i.test(match[3]) ? 12 : 0);
+  return hour * 60 + Number(match[2] ?? "0");
+}
+
+/**
+ * Reads only owner-published schedule data to distinguish an explicitly
+ * incompatible Friday-evening listing from a possible match. This never
+ * asserts live open status; ambiguous schedule data stays unknown.
+ */
+function publishedFridayEveningAvailability(
+  business: GovernedKinfolkBusiness,
+): FridayEveningAvailability {
+  const friday = business.weeklySchedule?.fri ?? business.weeklySchedule?.friday;
+  if (friday === null) return "unavailable";
+  if (friday) {
+    const close = clockMinutes(friday.close);
+    if (close === null) return "unknown";
+    const open = clockMinutes(friday.open);
+    return close >= 20 * 60 || (open !== null && close < open)
+      ? "available"
+      : "unavailable";
+  }
+  const hours = business.hours?.trim();
+  if (!hours) return "unknown";
+  const fridaySegment = hours.match(/\b(?:fri(?:day)?)(?:[^;|]*)/i)?.[0];
+  if (!fridaySegment) return "unknown";
+  if (/\bclosed\b/i.test(fridaySegment)) return "unavailable";
+  if (/\b24\s*hours?\b/i.test(fridaySegment)) return "available";
+  const times = [...fridaySegment.matchAll(/\b(?:1[0-2]|0?[1-9])(?::[0-5]\d)?\s*(?:a\.?m\.?|p\.?m\.?)\b/gi)];
+  const closing = times.length ? clockMinutes(times.at(-1)?.[0] ?? "") : null;
+  return closing === null ? "unknown" : closing >= 20 * 60 ? "available" : "unavailable";
+}
+
+function currentRequestConstraints(value: string): {
+  avoidsWait: boolean;
+  avoidsLoudSetting: boolean;
+  fridayEvening: boolean;
+  excludedDirectTerms: Set<string>;
+} {
+  const request = value.toLowerCase();
+  const avoidsWait = /\b(?:do\s+not|don(?:['’ ]?)t|not|avoid|without)\b[^.!?]{0,28}\bwait(?:ing)?\b/.test(request);
+  const avoidsLoudSetting = /\b(?:do\s+not|don(?:['’ ]?)t|not|avoid|without)\b[^.!?]{0,20}\b(?:loud|noisy|high[ -]?energy)\b/.test(request);
+  return {
+    avoidsWait,
+    avoidsLoudSetting,
+    fridayEvening: /\bfriday\s+(?:night|evening)\b/.test(request),
+    excludedDirectTerms: new Set([
+      ...(avoidsWait ? ["wait", "waiting"] : []),
+      ...(avoidsLoudSetting ? ["loud", "noisy", "high energy"] : []),
+    ]),
+  };
+}
+
 function scoredBusiness(
   business: GovernedKinfolkBusiness,
   index: number,
@@ -194,10 +252,19 @@ function scoredBusiness(
   );
   const request = cleanTerm(personalization.currentRequest);
   if (request) {
+    const constraints = currentRequestConstraints(request);
+    if (constraints.fridayEvening) {
+      const availability = publishedFridayEveningAvailability(business);
+      if (availability === "unavailable") return null;
+      if (availability === "available") {
+        score += 18;
+        reasons.push("Published Friday hours list evening service; confirm current availability");
+      }
+    }
     // The current turn is the member's direct instruction. Saved preferences may
     // refine a tied result but cannot win against a clear, current request.
-    const directRequestTerms = requestTerms(request).filter((term) =>
-      containsWholeTerm(text, term),
+    const directRequestTerms = requestTerms(request).filter(
+      (term) => !constraints.excludedDirectTerms.has(term) && containsWholeTerm(text, term),
     );
     if (directRequestTerms.length > 0) {
       score += Math.min(64, 40 + directRequestTerms.length * 8);
@@ -209,13 +276,34 @@ function scoredBusiness(
       ...(business.communitySignals?.theReal ?? []),
     ];
     const matchingCommunitySignal = communityLabels.find((signal) =>
-      requestTerms(request).some((term) => containsWholeTerm(signal.label.toLowerCase(), term)),
+      requestTerms(request)
+        .filter((term) => !constraints.excludedDirectTerms.has(term))
+        .some((term) => containsWholeTerm(signal.label.toLowerCase(), term)),
     );
     if (matchingCommunitySignal) {
       // Counts are supporting evidence, never a popularity contest: a signal
       // helps only when its actual label relates to the current request.
       score += Math.min(12, 4 + matchingCommunitySignal.count);
       reasons.push(`Community feedback: ${matchingCommunitySignal.label}`);
+    }
+    if (
+      constraints.avoidsWait &&
+      communityLabels.some((signal) => /\bworth\s+the\s+wait\b/i.test(signal.label))
+    ) {
+      // This is a member-experience tradeoff, not a real-time wait estimate.
+      score -= 36;
+      reasons.push("Community feedback notes a possible wait-time tradeoff");
+    }
+    if (
+      constraints.avoidsLoudSetting &&
+      ["loud", "noisy", "high energy", "nightlife", "live music"].some(
+        (term) => containsWholeTerm(text, term),
+      )
+    ) {
+      // A direct “not loud” request is a current-turn exclusion, not merely a
+      // soft saved preference. This preserves room for an explicit override in
+      // a later turn while keeping the present recommendation trustworthy.
+      return null;
     }
   }
 

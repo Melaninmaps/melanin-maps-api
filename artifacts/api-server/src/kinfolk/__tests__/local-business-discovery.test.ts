@@ -66,6 +66,17 @@ describe("immediate dining intent", () => {
       phone: null,
       website: "https://dinner.example.com",
     }, subject)).toBe(true);
+    expect(eligibleForImmediateDining({
+      name: "Morning Bakes",
+      category: "Food & Drink",
+      subcategory: "Bakery",
+      description: "Pastries and packaged treats.",
+      tags: ["bakery"],
+      specialties: [],
+      address: "789 Market St",
+      phone: null,
+      website: "https://bakery.example.com",
+    }, subject)).toBe(false);
   });
 });
 
@@ -366,6 +377,107 @@ describe("deterministic local business discovery", () => {
       expect.objectContaining({ title: "Ethiopian restaurant guide" }),
     ]);
     expect(result.recommendations?.summary).toContain("Ethiopian restaurants");
+  });
+
+  it("requires every requested wig-installation service detail from the published record", async () => {
+    const subject = deriveBusinessSubject(
+      "Find a wig installation in Philadelphia that includes shampoo and detangling",
+    )!;
+    expect(subject).toMatchObject({
+      key: "salon",
+      documentedServiceRequirement: {
+        label: "wig installation with shampoo and detangling included",
+        allOfSearchTerms: ["shampoo", "detangling"],
+      },
+    });
+    const included = {
+      ...governedBusiness,
+      id: "complete-wig-service",
+      name: "Complete Wig Studio",
+      city: "Philadelphia",
+      stateCode: "PA",
+      category: "Beauty & Wellness",
+      subcategory: "Salon",
+      description: "Wig installation includes shampoo and detangling before fitting.",
+      tags: ["wig installation", "shampoo", "detangling"],
+      matchReasons: ["category", "documented service"],
+    };
+    const incomplete = {
+      ...included,
+      id: "partial-wig-service",
+      name: "Install Only Studio",
+      description: "Wig installation with shampoo before fitting.",
+      tags: ["wig installation", "shampoo"],
+    };
+
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      subject,
+      repository: repository({ businesses: [incomplete, included] }),
+      webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({ id: "complete-wig-service" }),
+    ]);
+    expect(result.discovery.platformBusinesses).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "partial-wig-service" })]),
+    );
+  });
+
+  it("ranks Friday-night dinner alternatives from published hours and governed community evidence without inventing live wait status", async () => {
+    const subject = deriveBusinessSubject(
+      "It's Friday night. I want dinner, but I don't want to wait in Philadelphia PA.",
+    )!;
+    expect(subject).toMatchObject({ key: "restaurant", foodIntent: "dining_now" });
+    const quick = {
+      ...governedBusiness,
+      id: "quick-dinner",
+      name: "Cedar Supper",
+      city: "Philadelphia",
+      stateCode: "PA",
+      category: "Food & Drink",
+      subcategory: "Restaurants",
+      description: "Romantic dinner service.",
+      hours: "Fri 5:00 PM - 11:00 PM",
+      communitySignals: { quickReviews: [{ key: "service", label: "Great Service", count: 5 }], communityVibes: [], theReal: [] },
+    };
+    const waitTradeoff = {
+      ...quick,
+      id: "wait-tradeoff",
+      name: "Juniper Table",
+      weeklySchedule: { fri: { open: "5:00 PM", close: "11:00 PM" } },
+      showAvailability: true,
+      communitySignals: { quickReviews: [{ key: "worth-the-wait", label: "Worth the Wait", count: 12 }], communityVibes: [], theReal: [] },
+    };
+    const earlyClosing = {
+      ...quick,
+      id: "early-closing",
+      name: "Early Plate",
+      weeklySchedule: { fri: { open: "11:00 AM", close: "6:00 PM" } },
+      showAvailability: true,
+    };
+
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      subject,
+      repository: repository({ businesses: [waitTradeoff, earlyClosing, quick], places: [forKeepsPlace] }),
+      webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+      personalization: { ageBand: "18_plus", currentRequest: "It's Friday night. I want dinner, but I don't want to wait." },
+    });
+
+    expect(result.discovery.platformBusinesses.map((business) => business.id)).toEqual([
+      "quick-dinner",
+      "wait-tradeoff",
+    ]);
+    expect(result.discovery.mapPlaces).toEqual([]);
+    expect(result.discovery.platformBusinesses[0]?.matchReasons).toContain(
+      "Published Friday hours list evening service; confirm current availability",
+    );
+    expect(result.discovery.platformBusinesses[1]?.matchReasons).toContain(
+      "Community feedback notes a possible wait-time tradeoff",
+    );
+    expect(JSON.stringify(result)).not.toMatch(/open now|live wait|long line/i);
   });
 
   it("uses one generic Philadelphia activity request to produce four distinct profile-backed cards", async () => {

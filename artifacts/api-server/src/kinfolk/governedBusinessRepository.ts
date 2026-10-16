@@ -68,6 +68,11 @@ export type GovernedKinfolkBusiness = Readonly<{
   distanceMiles: number | null;
   phone: string | null;
   website: string | null;
+  /** Published free-form hours; informative, never a live-availability claim. */
+  hours?: string | null;
+  /** Owner-published weekly availability, used only when the owner exposes it. */
+  weeklySchedule?: Record<string, { open: string; close: string } | null> | null;
+  showAvailability?: boolean;
   verified: boolean;
   /** True only when the published listing status says it has been claimed. */
   claimed: boolean;
@@ -136,6 +141,9 @@ type BusinessRow = {
   distance_miles?: unknown;
   phone: unknown;
   website: unknown;
+  hours: unknown;
+  weekly_schedule: unknown;
+  show_availability: unknown;
   verified: unknown;
   claimed: unknown;
   black_owned: unknown;
@@ -241,6 +249,9 @@ const CANONICAL_SELECT = `
   b.longitude,
   b.phone,
   b.website,
+  b.hours,
+  b.weekly_schedule,
+  COALESCE(b.show_availability, false) AS show_availability,
   COALESCE(b.verified, false) AS verified,
   (COALESCE(b.listing_status, '') = 'live_claimed') AS claimed,
   COALESCE(b.black_owned, false) AS black_owned,
@@ -369,6 +380,29 @@ function objectArray(value: unknown): Record<string, unknown>[] {
   }
 }
 
+function publishedWeeklySchedule(
+  value: unknown,
+): Record<string, { open: string; close: string } | null> | null {
+  const candidate = typeof value === "string"
+    ? (() => {
+        try { return JSON.parse(value) as unknown; } catch { return null; }
+      })()
+    : value;
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
+  const schedule: Record<string, { open: string; close: string } | null> = {};
+  for (const [day, hours] of Object.entries(candidate as Record<string, unknown>)) {
+    if (hours === null) {
+      schedule[day] = null;
+      continue;
+    }
+    if (!hours || typeof hours !== "object" || Array.isArray(hours)) continue;
+    const open = nullableText((hours as Record<string, unknown>).open);
+    const close = nullableText((hours as Record<string, unknown>).close);
+    if (open && close) schedule[day] = { open, close };
+  }
+  return Object.keys(schedule).length ? schedule : null;
+}
+
 /**
  * Stored profile values remain untouched, but Kinfolk may surface only VIBES
  * that the current founder taxonomy permits for the business category.
@@ -446,6 +480,11 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     // canonical navigable URL; this is never synthesized from free text.
     website:
       nullableText(row.website) && canonicalizeContextualUrl(text(row.website)),
+    hours: nullableText(row.hours),
+    weeklySchedule: row.show_availability === true
+      ? publishedWeeklySchedule(row.weekly_schedule)
+      : null,
+    showAvailability: row.show_availability === true,
     verified: row.verified === true,
     claimed: row.claimed === true,
     blackOwned: row.black_owned === true,
