@@ -3,6 +3,7 @@ import {
   KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_VERSION,
   kinfolkCurrentOnlinePresenceManifestFingerprint,
   parseKinfolkCurrentOnlinePresenceManifest,
+  ensureKinfolkCurrentDeleteReviewTransferSchema,
 } from "../kinfolkCurrentOnlinePresenceReview";
 
 const inactiveWebsite = {
@@ -125,5 +126,20 @@ describe("Kinfolk Current online-presence manifest", () => {
     expect(() => parseKinfolkCurrentOnlinePresenceManifest(manifest)).toThrow(
       "integrity fingerprint",
     );
+  });
+});
+
+describe("Kinfolk Current Delete Review explicit transfer schema", () => {
+  it("adds a distinct transferred state, never rewrites original evidence or disables guards", async () => {
+    const statements: string[] = [];
+    await ensureKinfolkCurrentDeleteReviewTransferSchema({ query: async (sql) => { statements.push(sql); } });
+    const sql = statements.join("\n");
+    expect(sql).toContain("'queued', 'restored', 'transferred_to_delete_queue'");
+    expect(sql).not.toContain("UPDATE businesses");
+    expect(sql).not.toContain("UPDATE kinfolk_current_online_presence_reviews");
+    expect(sql).not.toContain("DELETE FROM");
+    expect(sql).not.toContain("DROP TRIGGER");
+    expect(sql).not.toContain("original_listing_state =");
+    expect(sql).not.toContain("verification_evidence =");
   });
 });

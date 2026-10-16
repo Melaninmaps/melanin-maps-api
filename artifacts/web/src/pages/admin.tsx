@@ -342,6 +342,11 @@ type AdminBusiness = {
   isDuplicate: boolean;
   deletionHoldState: "pending" | "blocked" | null;
   deletionHoldDeleteAfter: string | null;
+  deleteQueueEntryId: string | null;
+  deleteQueueQueuedAt: string | null;
+  deleteQueueEligibleAt: string | null;
+  deleteQueueEligible: boolean;
+  deleteQueueSourceVault: "archive" | "duplicates" | "permanently_closed" | null;
   kinfolkCurrentDeleteReview: boolean;
   kinfolkCurrentDeleteReviewQueuedAt: string | null;
   needsVerification: boolean;
@@ -1031,7 +1036,7 @@ export default function Admin() {
   const [bizSearch, setBizSearch] = useState("");
   const [bizSearchInput, setBizSearchInput] = useState("");
   const [bizStatusFilter, setBizStatusFilter] = useState<
-    "all" | "active" | "permanently_closed" | "needs_review" | "kinfolk_current_delete_review" | "archived" | "duplicates"
+    "all" | "active" | "permanently_closed" | "needs_review" | "kinfolk_current_delete_review" | "delete_queue" | "archived" | "duplicates"
   >("all");
   const [bizCityFilters, setBizCityFilters] = useState<string[]>([]);
   const [bizCityFilterSearch, setBizCityFilterSearch] = useState("");
@@ -1072,6 +1077,7 @@ export default function Admin() {
     useState(0);
   const [businessNeedsReviewTotal, setBusinessNeedsReviewTotal] = useState(0);
   const [businessKinfolkCurrentDeleteReviewTotal, setBusinessKinfolkCurrentDeleteReviewTotal] = useState(0);
+  const [businessDeleteQueueTotal, setBusinessDeleteQueueTotal] = useState(0);
   const [onlinePresenceManifest, setOnlinePresenceManifest] = useState<OnlinePresenceManifestPreview | null>(null);
   const [onlinePresenceApplying, setOnlinePresenceApplying] = useState(false);
   const [onlinePresenceResult, setOnlinePresenceResult] = useState<string | null>(null);
@@ -1528,6 +1534,9 @@ export default function Admin() {
           typeof data.kinfolkCurrentDeleteReviewTotal === "number"
             ? data.kinfolkCurrentDeleteReviewTotal
             : 0,
+        );
+        setBusinessDeleteQueueTotal(
+          typeof data.deleteQueueTotal === "number" ? data.deleteQueueTotal : 0,
         );
         setBusinessReconciliationLedgerAvailable(data.reconciliationLedgerAvailable === true);
         setBusinessReconciliationAccountedTotal(
@@ -2883,6 +2892,7 @@ export default function Admin() {
   const permanentlyClosedCount = businessPermanentlyClosedTotal;
   const needsReviewCount = businessNeedsReviewTotal;
   const kinfolkCurrentDeleteReviewCount = businessKinfolkCurrentDeleteReviewTotal;
+  const deleteQueueCount = businessDeleteQueueTotal;
   const archivedCount = businessArchivedInventoryTotal;
   const duplicateCount = businessDuplicateInventoryTotal;
   const inventoryCities = businessCityOptions;
@@ -3213,62 +3223,90 @@ export default function Admin() {
   };
 
 
-  const scheduleBusinessesForDeletion = async (
-    ids: string[],
-    names: string[],
+  const moveBusinessesToDeleteQueue = async (
+    ids: string[], names: string[], fromDeleteReview = false,
   ) => {
-    if (ids.length === 0 || ids.length > 500) return;
-    const summary =
-      names.slice(0, 3).join(", ") +
-      (names.length > 3 ? ` and ${names.length - 3} more` : "");
+    if (ids.length === 0 || ids.length > 500 || bulkBusinessUpdating) return;
+    if (!window.confirm(
+      `Move ${ids.length} selected business record${ids.length === 1 ? "" : "s"} to Delete Queue? They leave public discovery now and remain intact for at least 7 days. Nothing auto-deletes. Removing the hold returns them only to a non-public vault, not discovery.\n\n${names.slice(0, 3).join(", ")}`,
+    )) return;
     setBulkBusinessUpdating(true);
     try {
-      const response = await fetch(`${BASE}api/admin/businesses/permanent`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
+      const response = await authenticatedAdminFetch(`${BASE}api/admin/businesses/delete-queue`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids, source: fromDeleteReview ? "kinfolk_current_delete_review" : undefined,
+          reason: "Administrator moved selected records to the reversible Delete Queue",
+          confirmation: `MOVE ${ids.length} ${ids.length === 1 ? "BUSINESS" : "BUSINESSES"} TO DELETE QUEUE`,
+        }),
       });
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        scheduledCount?: number;
-        alreadyScheduledCount?: number;
-        deleteAfter?: string;
-      };
-      if (!response.ok) {
-        window.alert(
-          body.error ?? "No selected business was scheduled for deletion.",
-        );
-        return;
-      }
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Nothing was moved to Delete Queue.");
       setSelectedBusinessIds(new Set());
-      await loadBusinesses();
-      const deleteAfter = body.deleteAfter
-        ? new Date(body.deleteAfter).toLocaleString()
-        : "seven days from now";
-      window.alert(
-        `${body.scheduledCount ?? 0} business record${body.scheduledCount === 1 ? "" : "s"} scheduled for permanent deletion on ${deleteAfter}. ` +
-          `${body.alreadyScheduledCount ?? 0} already had an active deletion hold. Restore a listing from Archive vault before that date to cancel its hold.
-
-Selected: ${summary}`,
-      );
-    } catch {
-      window.alert(
-        "No selected business was scheduled for deletion. Please try again.",
-      );
+      applyBusinessInventoryFilters({ status: "delete_queue", intakeCohort: "all", link: "all", sourceBatch: "" });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Nothing was moved to Delete Queue.");
     } finally {
       setBulkBusinessUpdating(false);
     }
   };
 
-  const scheduleSelectedBusinessesForDeletion = () => {
-    const selectedRows = filteredBiz.filter((business) =>
-      selectedBusinessIds.has(business.id),
+  const moveSelectedBusinessesToDeleteQueue = () => {
+    const selectedRows = filteredBiz.filter((business) => selectedBusinessIds.has(business.id));
+    void moveBusinessesToDeleteQueue(
+      [...selectedBusinessIds], selectedRows.map((business) => business.name),
+      bizStatusFilter === "kinfolk_current_delete_review",
     );
-    void scheduleBusinessesForDeletion(
-      selectedRows.map((business) => business.id),
-      selectedRows.map((business) => business.name),
-    );
+  };
+
+  const removeBusinessesFromDeleteQueue = async (ids: string[]) => {
+    if (ids.length === 0 || bulkBusinessUpdating) return;
+    if (!window.confirm(`Remove ${ids.length} Delete Queue hold${ids.length === 1 ? "" : "s"}? Records remain non-public in Archive, Duplicate, or Permanently Closed vault. This does NOT restore public discovery.`)) return;
+    setBulkBusinessUpdating(true);
+    try {
+      const response = await authenticatedAdminFetch(`${BASE}api/admin/businesses/delete-queue/remove`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids, reason: "Administrator removed queue hold while retaining the nonpublic vault record",
+          confirmation: `REMOVE ${ids.length} ${ids.length === 1 ? "BUSINESS" : "BUSINESSES"} FROM DELETE QUEUE`,
+        }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "The records remain in Delete Queue.");
+      setSelectedBusinessIds(new Set());
+      await loadBusinesses();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The records remain in Delete Queue.");
+    } finally {
+      setBulkBusinessUpdating(false);
+    }
+  };
+
+  const permanentlyDeleteQueuedBusinesses = async (rows: AdminBusiness[]) => {
+    if (rows.length === 0 || bulkBusinessUpdating) return;
+    if (rows.some((business) => !business.deleteQueueEntryId || !business.deleteQueueEligible)) {
+      window.alert("Every selected record must complete its 7-day Delete Queue hold. Nothing was deleted.");
+      return;
+    }
+    const ids = rows.map((business) => business.id);
+    const requiredConfirmation = `DELETE ${ids.length} ${ids.length === 1 ? "BUSINESS" : "BUSINESSES"}`;
+    const confirmation = window.prompt(`This permanently deletes eligible records and cannot be undone. Type ${requiredConfirmation} to confirm. Linked protected records block deletion.`);
+    if (confirmation !== requiredConfirmation) return;
+    setBulkBusinessUpdating(true);
+    try {
+      const response = await authenticatedAdminFetch(`${BASE}api/admin/businesses/permanent`, {
+        method: "DELETE", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, confirmation, reason: "Administrator separately confirmed eligible Delete Queue permanent deletion" }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Nothing was permanently deleted.");
+      setSelectedBusinessIds(new Set());
+      await loadBusinesses();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Nothing was permanently deleted.");
+    } finally {
+      setBulkBusinessUpdating(false);
+    }
   };
 
   const updateSingleBusinessListingStatus = async (
@@ -5376,6 +5414,8 @@ Selected: ${summary}`,
                         ? "Archive vault"
                         : bizStatusFilter === "kinfolk_current_delete_review"
                           ? "Kinfolk Current Delete Review"
+                        : bizStatusFilter === "delete_queue"
+                          ? "Delete Queue"
                         : kinfolkCurrentCohortSelected
                           ? "Kinfolk Current"
                           : bizStatusFilter === "all"
@@ -5391,6 +5431,8 @@ Selected: ${summary}`,
                         ? `Archived business records (${businessArchivedInventoryTotal.toLocaleString()})`
                         : bizStatusFilter === "kinfolk_current_delete_review"
                           ? `Kinfolk Current Delete Review (${kinfolkCurrentDeleteReviewCount.toLocaleString()})`
+                        : bizStatusFilter === "delete_queue"
+                          ? `Delete Queue (${deleteQueueCount.toLocaleString()})`
                         : kinfolkCurrentCohortSelected
                           ? `Kinfolk Current (${businessInventoryFilteredTotal.toLocaleString()})`
                           : bizStatusFilter === "all"
@@ -5406,10 +5448,12 @@ Selected: ${summary}`,
                         ? "This separate vault retains archived profiles, research, source links, and audit history. Restore only a record you have re-confirmed."
                         : bizStatusFilter === "kinfolk_current_delete_review"
                           ? "These retained profiles lost public discovery only because the verified website and all direct official social links were unavailable. Restore returns each selected record to its exact pre-review discovery state; it never deletes a business."
+                        : bizStatusFilter === "delete_queue"
+                          ? "A dedicated reversible, non-public retention folder. Records stay intact for at least 7 days; nothing auto-deletes. Permanent deletion requires a separate typed confirmation after eligibility."
                         : kinfolkCurrentCohortSelected
                           ? "The current public catalog available to Kinfolk. Use the same filters, checkboxes, full editor, and reversible archive action; this cohort does not publish, change source receipts, or alter ownership."
                           : bizStatusFilter === "all"
-                            ? "Every retained business record is together here. The row status tells you whether it is live, archived, or a confirmed duplicate; those statuses still protect the actions available for that row."
+                            ? "Retained business records are together here; Delete Queue, Kinfolk Current Delete Review, and Permanently Closed have separate folders. The row status tells you whether it is live, archived, or a confirmed duplicate; those statuses still protect the actions available for that row."
                             : bizIntakeCohortFilter === "manus_created"
                               ? "Direct Manus research/import records only. Anything you already archived, hid, or retained as a duplicate is excluded here so you do not review it twice."
                               : "Filter live inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context."}
@@ -5610,6 +5654,11 @@ Selected: ${summary}`,
                     warn: kinfolkCurrentDeleteReviewCount > 0,
                   },
                   {
+                    key: "delete_queue",
+                    label: `Delete Queue (${deleteQueueCount.toLocaleString()})`,
+                    warn: deleteQueueCount > 0,
+                  },
+                  {
                     key: "archived",
                     label: `📦 Archive vault (${archivedCount.toLocaleString()})`,
                     warn: false,
@@ -5625,7 +5674,9 @@ Selected: ${summary}`,
                   key={key}
                   onClick={() => applyBusinessInventoryFilters({
                     status: key,
-                    intakeCohort: key === "kinfolk_current_delete_review" ? "all" : undefined,
+                    intakeCohort: key === "kinfolk_current_delete_review" || key === "delete_queue" ? "all" : undefined,
+                    link: key === "delete_queue" ? "all" : undefined,
+                    sourceBatch: key === "delete_queue" ? "" : undefined,
                   })}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                     bizStatusFilter === key
@@ -5893,7 +5944,7 @@ Selected: ${summary}`,
                 : "Reconciliation ledger migration is pending. Existing inventory remains visible, but reconciliation filters intentionally return no records until the ledger is available."}
             </p>
 
-            {profileEnrichmentScope && bizStatusFilter !== "kinfolk_current_delete_review" && (
+            {profileEnrichmentScope && bizStatusFilter !== "kinfolk_current_delete_review" && bizStatusFilter !== "delete_queue" && (
               <div id="profile-enrichment" className="mb-4">
                 <KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope} />
               </div>
@@ -5919,7 +5970,7 @@ Selected: ${summary}`,
               <section className="mb-4 rounded-xl border border-[#7A2637]/25 bg-[#FFF7F8] px-4 py-4 text-sm text-[#3A1F0E]" aria-label="Kinfolk Current online-presence operations">
                 <h3 className="font-serif text-base font-bold text-[#5F1E2D]">Verified online-presence plan</h3>
                 <p className="mt-1 max-w-4xl text-xs leading-5 text-[#3A1F0E]/70">
-                  Load only the manifest generated from the completed Kinfolk Current verifier. The server re-reads and locks each record before changing it: changed links, active social profiles, records no longer in Kinfolk Current, and previously handled records are skipped without changes. This queue never permanently deletes a business.
+                  Load only the manifest generated from the completed Kinfolk Current verifier. The server re-reads and locks each record before changing it: changed links, active social profiles, records no longer in Kinfolk Current, and previously handled records are skipped without changes. This queue never permanently deletes a business. Use Move selected to Delete Queue for a separate, manual-only 7-day hold; Restore exact prior state remains available until transfer.
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <input
@@ -5930,6 +5981,10 @@ Selected: ${summary}`,
                     className="max-w-sm text-xs text-[#3A1F0E]/70 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-[#3A1F0E] file:shadow-sm hover:file:bg-[#FFF9EF]"
                     aria-label="Load verified Kinfolk Current online-presence manifest"
                   />
+                  <button type="button"
+                    onClick={() => applyBusinessInventoryFilters({ status: "delete_queue", intakeCohort: "all", link: "all", sourceBatch: "" })}
+                    className="rounded-lg border border-[#7A2637]/25 bg-white px-3 py-1.5 text-xs font-bold text-[#7A2637]"
+                  >Open Delete Queue</button>
                   {onlinePresenceManifest && (
                     <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/75">
                       {onlinePresenceManifest.websiteRemovals} social-preserving website removal{onlinePresenceManifest.websiteRemovals === 1 ? "" : "s"} · {onlinePresenceManifest.deleteReviews} Delete Review record{onlinePresenceManifest.deleteReviews === 1 ? "" : "s"}
@@ -5956,12 +6011,14 @@ Selected: ${summary}`,
               <div>
                 <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
                 {bizStatusFilter === "duplicates"
-                  ? "These are duplicate records retained from all historical states. Delete schedules a seven-day recovery hold; Restore cancels it."
+                  ? "These are retained duplicate records. Move to Delete Queue starts a reversible, manual-only seven-day hold."
                   : bizStatusFilter === "archived"
-                  ? "These are separated from routine city and business-name review. Restore to discovery, or schedule deletion with a seven-day recovery hold."
+                  ? "These records are retained non-public. Restore deliberately to discovery, or move to Delete Queue; nothing auto-deletes."
                   : bizStatusFilter === "kinfolk_current_delete_review"
-                  ? "These records are isolated from public discovery through the online-presence review queue. Restore returns only the exact prior listing state; permanent deletion is unavailable here."
-                  : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration. Delete starts a seven-day recovery hold."}
+                  ? "These records are isolated from public discovery. Restore returns the exact prior listing state, or Move selected to Delete Queue starts a separate manual-only 7-day hold; permanent deletion is unavailable here."
+                  : bizStatusFilter === "delete_queue"
+                  ? "Records remain intact and non-public for at least 7 days. Nothing auto-deletes. Remove hold returns only to a non-public vault; eligible permanent deletion needs a separate typed confirmation."
+                  : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration. Move to Delete Queue starts a manual-only seven-day retention hold."}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 <label className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A1F0E]/15 bg-white px-2.5 py-1 text-xs font-bold text-[#3A1F0E]/70">
@@ -5994,7 +6051,18 @@ Selected: ${summary}`,
                 >
                   Clear selection ({selectedVisibleBusinessCount})
                 </button>
-                {bizStatusFilter === "duplicates" ? (
+                {bizStatusFilter === "delete_queue" ? (
+                  <>
+                    <button type="button" onClick={selectAllVisibleBusinessListings} disabled={filteredBiz.length === 0}
+                      className="rounded-lg border bg-white px-3 py-1.5 text-xs font-bold">Select this page</button>
+                    <button type="button" onClick={() => void removeBusinessesFromDeleteQueue([...selectedBusinessIds])}
+                      disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                      className="rounded-lg border bg-white px-3 py-1.5 text-xs font-bold">Remove selected hold — keep non-public</button>
+                    <button type="button" onClick={() => void permanentlyDeleteQueuedBusinesses(filteredBiz.filter((business) => selectedBusinessIds.has(business.id)))}
+                      disabled={bulkBusinessUpdating || !filteredBiz.some((business) => selectedBusinessIds.has(business.id)) || filteredBiz.some((business) => selectedBusinessIds.has(business.id) && !business.deleteQueueEligible)}
+                      className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50">Permanently delete eligible selected — typed confirmation</button>
+                  </>
+                ) : bizStatusFilter === "duplicates" ? (
                   <>
                     <button
                       type="button"
@@ -6006,12 +6074,12 @@ Selected: ${summary}`,
                     </button>
                     <button
                       type="button"
-                      onClick={scheduleSelectedBusinessesForDeletion}
+                      onClick={moveSelectedBusinessesToDeleteQueue}
                       disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {bulkBusinessUpdating ? "Scheduling hold…" : `Delete selected — 7-day hold (${selectedVisibleBusinessCount})`}
+                      {bulkBusinessUpdating ? "Moving to queue…" : `Move selected to Delete Queue — 7-day hold (${selectedVisibleBusinessCount})`}
                     </button>
                     <button
                       type="button"
@@ -6030,6 +6098,11 @@ Selected: ${summary}`,
                       className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Select this page ({filteredBiz.length.toLocaleString()})
+                    </button>
+                    <button type="button" onClick={moveSelectedBusinessesToDeleteQueue}
+                      disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50">
+                      <Trash2 className="h-3.5 w-3.5" /> Move selected to Delete Queue ({selectedVisibleBusinessCount})
                     </button>
                     <button
                       type="button"
@@ -6066,12 +6139,12 @@ Selected: ${summary}`,
                     </button>
                     <button
                       type="button"
-                      onClick={scheduleSelectedBusinessesForDeletion}
+                      onClick={moveSelectedBusinessesToDeleteQueue}
                       disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {bulkBusinessUpdating ? "Scheduling hold…" : `Delete selected — 7-day hold (${selectedVisibleBusinessCount})`}
+                      {bulkBusinessUpdating ? "Moving to queue…" : `Move selected to Delete Queue — 7-day hold (${selectedVisibleBusinessCount})`}
                     </button>
                   </>
                 ) : (
@@ -6097,12 +6170,12 @@ Selected: ${summary}`,
                     </button>
                     <button
                       type="button"
-                      onClick={scheduleSelectedBusinessesForDeletion}
+                      onClick={moveSelectedBusinessesToDeleteQueue}
                       disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {bulkBusinessUpdating ? "Scheduling hold…" : `Delete selected — 7-day hold (${selectedVisibleBusinessCount})`}
+                      {bulkBusinessUpdating ? "Moving to queue…" : `Move selected to Delete Queue — 7-day hold (${selectedVisibleBusinessCount})`}
                     </button>
                   </>
                 )}
@@ -6237,7 +6310,7 @@ Selected: ${summary}`,
                             )}
                             {biz.deletionHoldState === "pending" && biz.deletionHoldDeleteAfter && (
                               <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
-                                Deletion hold until {new Date(biz.deletionHoldDeleteAfter).toLocaleDateString()}
+                                Legacy hold (automatic deletion disabled): {new Date(biz.deletionHoldDeleteAfter).toLocaleDateString()}
                               </span>
                             )}
                             {biz.deletionHoldState === "blocked" && (
@@ -6299,6 +6372,9 @@ Selected: ${summary}`,
                               <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold">
                                 Archived
                               </span>
+                            )}
+                            {biz.deleteQueueEntryId && (
+                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">Delete Queue — manual-only hold</span>
                             )}
                             {biz.kinfolkCurrentDeleteReview && (
                               <span className="px-2 py-0.5 rounded-full bg-[#FDECEF] text-[#7A2637] text-xs font-bold">
@@ -6388,15 +6464,25 @@ Selected: ${summary}`,
                                 >
                                   Edit profile
                                 </button>
-                                {!biz.kinfolkCurrentDeleteReview && <button
+                                {!biz.deleteQueueEntryId && <button
                                   type="button"
-                                  onClick={() => void scheduleBusinessesForDeletion([biz.id], [biz.name])}
+                                  onClick={() => void moveBusinessesToDeleteQueue([biz.id], [biz.name], biz.kinfolkCurrentDeleteReview)}
                                   className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                                  title="Archive this listing and schedule permanent deletion after a seven-day recovery hold"
+                                  disabled={bulkBusinessUpdating}
+                                  title="Move intact record to a reversible manual-only Delete Queue; never delete automatically"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" /> Delete — 7-day hold
+                                  <Trash2 className="h-3.5 w-3.5" /> Move to Delete Queue — 7-day hold
                                 </button>}
-                                {biz.isDuplicate ? (
+                                {biz.deleteQueueEntryId ? (
+                                  <>
+                                    <span className="text-xs text-[#7A2637]">{biz.deleteQueueEligible ? "Eligible for separately confirmed deletion" : `Held until ${biz.deleteQueueEligibleAt ? new Date(biz.deleteQueueEligibleAt).toLocaleString() : "eligibility is confirmed"}`}</span>
+                                    <button type="button" onClick={() => void removeBusinessesFromDeleteQueue([biz.id])}
+                                      disabled={bulkBusinessUpdating} className="rounded-lg border px-3 py-1.5 text-xs font-bold">Remove hold — keep non-public</button>
+                                    <button type="button" onClick={() => void permanentlyDeleteQueuedBusinesses([biz])}
+                                      disabled={bulkBusinessUpdating || !biz.deleteQueueEligible}
+                                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700 disabled:opacity-50">Permanently delete — typed confirmation</button>
+                                  </>
+                                ) : biz.isDuplicate ? (
                               bizStatusFilter === "duplicates" ? (
                                 <span className="max-w-48 text-xs leading-5 text-[#3A1F0E]/55">
                                   Use Duplicates &amp; review for a retained-duplicate review action.

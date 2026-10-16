@@ -174,7 +174,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("const liveInventoryWhere");
     expect(adminRoute).toContain("const archivedInventoryWhere");
     expect(adminRoute).toContain('status === "all"');
-    expect(adminRoute).toContain('? "TRUE"');
+    expect(adminRoute).toContain('? ordinaryInventoryWhere');
     expect(adminRoute).toContain("listing_status, is_duplicate, deletion_hold.state AS deletion_hold_state");
     expect(adminRoute).toContain("isDuplicate: b.is_duplicate");
     expect(adminRoute).toContain("liveInventoryTotal");
@@ -203,18 +203,18 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
 
   it("keeps confirmed duplicates in their own all-status vault while retaining direct controls", () => {
     expect(adminRoute).toContain('status === "duplicates"');
-    expect(adminRoute).toContain('const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true"');
+    expect(adminRoute).toContain('const duplicateInventoryWhere = `${ordinaryInventoryWhere} AND COALESCE(is_duplicate, false) = true`');
     expect(adminRoute).toContain("duplicateInventoryTotal");
     expect(adminRoute).toContain("COALESCE(is_duplicate, false) = false");
     expect(adminScreen).toContain("Duplicate vault");
     expect(adminScreen).toContain("Duplicates &amp; review");
-    expect(adminScreen).toContain("Delete selected — 7-day hold");
+    expect(adminScreen).toContain("Move selected to Delete Queue — 7-day hold");
     expect(adminScreen).toContain("Outreach unavailable for retained duplicates");
     expect(adminScreen).toContain('tab === "businesses" || tab === "kinfolk-catalog"');
     expect(adminScreen).toContain('tab === "reports"');
     expect(adminScreen).toContain("<AdminBusinessReview embedded />");
     expect(adminRoute).toContain('"/admin/businesses/permanent"');
-    expect(adminRoute).toContain("seven-day reversible hold");
+    expect(adminRoute).toContain("seven-day hold never auto-deletes");
     expect(adminRoute).not.toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
     expect(businessRoutes).not.toContain("Confirmed duplicate records are read-only");
   });
@@ -300,7 +300,9 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   });
 
   it("keeps the public directory ownership choices exact and in its API requests", () => {
-    expect(publicDirectory).toContain("Black / African American-Owned");
+    // The deployed member-facing label is Black-owned; documentary storage
+    // labels remain unchanged. Do not rewrite public copy to satisfy a stale test.
+    expect(publicDirectory).toContain('{ id: "black-african-american", label: "Black-owned" }');
     expect(publicDirectory).toContain("Latino / Hispanic-Owned");
     expect(publicDirectory).toContain("No ownership tag");
     expect(publicDirectory).toContain('params.set("designations", activeOwnership)');
@@ -354,28 +356,31 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("business_listing_status_audit_events");
     expect(adminRoute).toContain("remove_public_discovery");
     expect(adminScreen).toContain("research, source, or Kinfolk context");
-    expect(adminRoute).toContain("Admin scheduled businesses for seven-day permanent-deletion hold");
+    expect(adminRoute).toContain("Admin moved businesses into the reversible seven-day Delete Queue");
     expect(adminRoute).toContain("cancelBusinessDeletionHold");
-    expect(adminScreen).toContain("Delete selected — 7-day hold");
-    expect(adminScreen).toContain("Delete — 7-day hold");
+    expect(adminScreen).toContain("Move selected to Delete Queue — 7-day hold");
+    expect(adminScreen).toContain("Move to Delete Queue — 7-day hold");
     expect(adminScreen).not.toContain("This permanently deletes ${ids.length} selected business record");
     expect(adminScreen).not.toContain("Permanently delete this business after typed confirmation");
     expect(serverStartup).toContain("ensureBusinessDeletionHoldSchema(pool)");
     expect(serverStartup).toContain("startBusinessDeletionHoldWorker(pool, logger)");
     expect(businessDeletionHold).toContain("BUSINESS_DELETION_HOLD_DAYS = 7");
-    expect(businessDeletionHold).toContain("Seven-day administrative deletion hold elapsed");
-    expect(businessDeletionHold).toContain("state = 'blocked'");
-    expect(businessDeletionHold).toContain("DELETE FROM businesses WHERE id = $1");
+    expect(businessDeletionHold).toContain("Automatic business deletion disabled");
+    expect(businessDeletionHold).not.toContain("DELETE FROM businesses");
+    expect(adminRoute).toContain("permanentDeletionConfirmation(ids.length)");
+    expect(adminRoute).toContain("eligible_at <= NOW() AND queued_at + INTERVAL '168 hours' <= NOW() AS eligible");
     expect(businessDeletionHold).not.toContain("DELETE FROM businesses CASCADE");
   });
 
   it("retains full hold and deletion snapshots before final deletion", () => {
     expect(adminRoute).toContain("to_jsonb(businesses) AS snapshot");
     expect(adminRoute).toContain("business_deletion_holds");
-    expect(businessDeletionHold).toContain("deletionHoldSnapshot: hold.snapshot");
-    expect(businessDeletionHold).toContain("business_permanent_deletion_audit_events");
-    expect(businessDeletionHold).toContain("DELETE FROM business_inventory_cohort_receipts WHERE business_id = $1");
-    expect(businessDeletionHold).toContain("DELETE FROM businesses WHERE id = $1");
+    expect(adminRoute).toContain("deleteQueueEntry: heldById.get(row.id)");
+    expect(adminRoute).toContain("kinfolkCurrentOnlinePresenceReview: reviewSnapshot");
+    expect(adminRoute).toContain("business_permanent_deletion_audit_events");
+    expect(adminRoute).toContain("DELETE FROM business_inventory_cohort_receipts WHERE business_id = ANY($1::text[])");
+    expect(adminRoute).toContain("DELETE FROM businesses WHERE id = $1");
+    expect(businessDeletionHold).not.toContain("DELETE FROM businesses");
   });
 
   it("shows all stored ownership designations without inferring or rewriting source identity", () => {

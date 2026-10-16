@@ -68,17 +68,14 @@ import {
   publicDiscoveryRemovalStateForReason,
 } from "../businesses/directoryReconciliationPolicy";
 import {
-  BUSINESS_DELETION_HOLD_REASON,
   cancelBusinessDeletionHold,
   ensureBusinessDeletionHoldSchema,
-  recordBusinessDeletionHoldEvent,
-  sevenDaysFrom,
 } from "../businesses/businessDeletionHold";
 import {
-  KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON,
   KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS,
   KINFOLK_CURRENT_DELETE_REVIEW_REASON,
   ensureKinfolkCurrentOnlinePresenceReviewSchema,
+  ensureKinfolkCurrentDeleteReviewTransferSchema,
   parseKinfolkCurrentOnlinePresenceManifest,
   recordKinfolkCurrentOnlinePresenceReviewEvent,
   type ActiveOfficialSocial,
@@ -92,6 +89,14 @@ import {
   matchesInternationalDirectoryOnlyManifest,
   parseInternationalDirectoryOnlyManifest,
 } from "../businesses/internationalDirectoryOnlyVisibility";
+
+import {
+  deleteQueueConfirmation,
+  removeFromDeleteQueueConfirmation,
+  getDeleteQueueEligibleAt,
+  isDeleteQueueEligible,
+  ensureBusinessDeleteQueueSchema,
+} from "../businesses/deleteQueue";
 
 const router: IRouter = Router();
 
@@ -1132,6 +1137,8 @@ type AdminBusinessInventoryFilters = Readonly<{
   reconciliation: string;
   reconciliationLedgerAvailable: boolean;
   onlinePresenceReviewTableAvailable: boolean;
+  deleteQueueTableAvailable: boolean;
+  activeDeleteQueuePredicate: string;
   sort: "added_desc" | "name_asc";
   orderBy: string;
   where: string;
@@ -1256,6 +1263,19 @@ async function compileAdminBusinessInventoryFilters(
   const onlinePresenceReviewTableAvailable = Boolean(
     onlinePresenceReviewProbe.rows[0]?.table_name,
   );
+  const deleteQueueProbe = await pool.query<{ table_name: string | null }>(
+    "SELECT to_regclass('public.business_delete_queue_entries') AS table_name",
+  );
+  const deleteQueueTableAvailable = Boolean(deleteQueueProbe.rows[0]?.table_name);
+  const activeDeleteQueuePredicate = deleteQueueTableAvailable
+    ? `EXISTS (SELECT 1 FROM business_delete_queue_entries delete_queue
+         WHERE delete_queue.business_id::text = businesses.id::text
+           AND delete_queue.removed_at IS NULL AND delete_queue.permanent_deleted_at IS NULL)`
+    : "FALSE";
+  const queuedOnlinePresenceReviewPredicate = onlinePresenceReviewTableAvailable
+    ? `EXISTS (SELECT 1 FROM kinfolk_current_online_presence_reviews presence_review
+         WHERE presence_review.business_id::text = businesses.id::text AND presence_review.state = 'queued')`
+    : "FALSE";
   const filters: string[] = [];
   const filterParams: unknown[] = [];
   const addFilter = (clause: string, value: string) => {
@@ -1298,38 +1318,29 @@ async function compileAdminBusinessInventoryFilters(
   if (sourceBatch) {
     addFilter("COALESCE(intake_batch_reference, '') = ?", sourceBatch);
   }
-  if (status === "duplicates") {
-    // Confirmed duplicate records are retained for evidence and reversible
-    // merge restoration, but review them in their own all-status vault rather
-    // than mixing them into ordinary or Archive-vault inventory.
-    filters.push("COALESCE(is_duplicate, false) = true");
-  } else if (status === "archived") {
-    filters.push("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
-  } else if (status === "kinfolk_current_delete_review") {
-    // The queue is deliberately distinct from Archive and Needs Review. It
-    // retains the original record and evidence while keeping only this bounded
-    // online-presence outcome out of public discovery.
-    filters.push(
-      onlinePresenceReviewTableAvailable
-        ? `listing_status = '${KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS}'
-           AND EXISTS (
-             SELECT 1 FROM kinfolk_current_online_presence_reviews presence_review
-              WHERE presence_review.business_id::text = businesses.id::text
-                AND presence_review.state = 'queued'
-           )`
-        : "FALSE",
-    );
-  } else if (status !== "all") {
-    // All ordinary review modes exclude the reversible archive. `all` is used
-    // only by the explicit Admin CSV inventory download. Confirmed duplicates
-    // are intentionally reviewed only in the dedicated Duplicate vault.
-    filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false");
+  if (status === "delete_queue") {
+    filters.push(activeDeleteQueuePredicate);
+  } else {
+    filters.push(`NOT (${activeDeleteQueuePredicate})`);
+    if (status === "kinfolk_current_delete_review") {
+      filters.push(queuedOnlinePresenceReviewPredicate);
+    } else {
+      filters.push(`NOT (${queuedOnlinePresenceReviewPredicate})`);
+      if (status === "permanently_closed") {
+        filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
+      } else {
+        filters.push("NOT (COALESCE(enrichment_note, '') ILIKE '%permanently closed%')");
+        if (status === "duplicates") {
+          filters.push("COALESCE(is_duplicate, false) = true");
+        } else if (status === "archived") {
+          filters.push("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
+        } else if (status !== "all") {
+          filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false");
+        }
+      }
+    }
   }
-  if (status === "permanently_closed") {
-    filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
-  } else if (status === "needs_review") {
-    filters.push("needs_verification = true");
-  }
+  if (status === "needs_review") filters.push("needs_verification = true");
   // This is an exact, documentary review filter. It does not infer ownership
   // from a business name, category, neighborhood, image, or city. `no_tag`
   // means the record carries no ownership designation and is not a legacy
@@ -1423,6 +1434,8 @@ async function compileAdminBusinessInventoryFilters(
     reconciliation,
     reconciliationLedgerAvailable,
     onlinePresenceReviewTableAvailable,
+    deleteQueueTableAvailable,
+    activeDeleteQueuePredicate,
     sort,
     orderBy,
     where: filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "",
@@ -1979,35 +1992,37 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       nationalMasterPredicate,
       manusCreatedPredicate,
       onlinePresenceReviewTableAvailable,
+      deleteQueueTableAvailable,
+      activeDeleteQueuePredicate,
     } = await compileAdminBusinessInventoryFilters(req.query);
     const pageParams = [...filterParams, String(pageSize), String((page - 1) * pageSize)];
 
     // Use to_jsonb for the optional, additive intake fields. The older records
     // predate those fields, and an incomplete startup-migration retry must not
     // make the entire administrator inventory unavailable.
-    const liveInventoryWhere = "COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false";
-    const archivedInventoryWhere = "listing_status = 'archived' AND COALESCE(is_duplicate, false) = false";
-    const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true";
     const kinfolkCurrentDeleteReviewInventoryWhere = onlinePresenceReviewTableAvailable
-      ? `listing_status = '${KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS}'
-         AND EXISTS (
-           SELECT 1 FROM kinfolk_current_online_presence_reviews presence_review
-            WHERE presence_review.business_id::text = businesses.id::text
-              AND presence_review.state = 'queued'
-         )`
+      ? `EXISTS (SELECT 1 FROM kinfolk_current_online_presence_reviews presence_review
+           WHERE presence_review.business_id::text = businesses.id::text AND presence_review.state = 'queued')`
       : "FALSE";
-    // The master owner inventory deliberately includes every retained row.
-    // Its controls remain status-aware; this only removes the view-level wall
-    // between live, archived, and duplicate records.
-    const inventoryScopeWhere = status === "duplicates"
-      ? duplicateInventoryWhere
+    const reviewableInventoryWhere = `NOT (${activeDeleteQueuePredicate}) AND NOT (${kinfolkCurrentDeleteReviewInventoryWhere})`;
+    const permanentlyClosedInventoryWhere = `${reviewableInventoryWhere} AND COALESCE(enrichment_note, '') ILIKE '%permanently closed%'`;
+    const ordinaryInventoryWhere = `${reviewableInventoryWhere} AND NOT (COALESCE(enrichment_note, '') ILIKE '%permanently closed%')`;
+    const liveInventoryWhere = `${ordinaryInventoryWhere} AND COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false`;
+    const archivedInventoryWhere = `${ordinaryInventoryWhere} AND listing_status = 'archived' AND COALESCE(is_duplicate, false) = false`;
+    const duplicateInventoryWhere = `${ordinaryInventoryWhere} AND COALESCE(is_duplicate, false) = true`;
+    const inventoryScopeWhere = status === "delete_queue"
+      ? activeDeleteQueuePredicate
+      : status === "duplicates"
+        ? duplicateInventoryWhere
       : status === "archived"
         ? archivedInventoryWhere
-        : status === "kinfolk_current_delete_review"
-          ? kinfolkCurrentDeleteReviewInventoryWhere
-        : status === "all"
-          ? "TRUE"
-          : liveInventoryWhere;
+      : status === "kinfolk_current_delete_review"
+        ? kinfolkCurrentDeleteReviewInventoryWhere
+      : status === "permanently_closed"
+        ? permanentlyClosedInventoryWhere
+      : status === "all"
+        ? ordinaryInventoryWhere
+        : liveInventoryWhere;
     // Project only the reconciliation fields used by this listing query. The
     // ledger has its own created_at/updated_at columns, so joining the full
     // table would make the established Admin date filter and sort ambiguous.
@@ -2041,6 +2056,19 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               presence_review.queued_at AS kinfolk_current_delete_review_queued_at,`
       : `false AS kinfolk_current_delete_review,
               NULL::timestamptz AS kinfolk_current_delete_review_queued_at,`;
+    const deleteQueueJoin = deleteQueueTableAvailable
+      ? `LEFT JOIN (
+           SELECT business_id, id AS delete_queue_entry_id, queued_at AS delete_queue_queued_at,
+                  eligible_at AS delete_queue_eligible_at, source_vault AS delete_queue_source_vault
+             FROM business_delete_queue_entries
+            WHERE removed_at IS NULL AND permanent_deleted_at IS NULL
+         ) queue_entry ON queue_entry.business_id::text = businesses.id::text`
+      : "";
+    const deleteQueueColumns = deleteQueueTableAvailable
+      ? `queue_entry.delete_queue_entry_id, queue_entry.delete_queue_queued_at,
+         queue_entry.delete_queue_eligible_at, queue_entry.delete_queue_source_vault,`
+      : `NULL::uuid AS delete_queue_entry_id, NULL::timestamptz AS delete_queue_queued_at,
+         NULL::timestamptz AS delete_queue_eligible_at, NULL::text AS delete_queue_source_vault,`;
     const [
       businesses,
       inventoryCount,
@@ -2052,6 +2080,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       permanentlyClosedCount,
       needsReviewCount,
       kinfolkCurrentDeleteReviewCount,
+      deleteQueueCount,
       filteredCount,
       cities,
       services,
@@ -2074,6 +2103,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       is_duplicate: boolean;
       deletion_hold_state: "pending" | "blocked" | null;
       deletion_hold_delete_after: string | null;
+      delete_queue_entry_id: string | null;
+      delete_queue_queued_at: string | null;
+      delete_queue_eligible_at: string | null;
+      delete_queue_source_vault: "archive" | "duplicates" | "permanently_closed" | null;
       description: string | null;
       hours: string | null;
       tags: string[] | null;
@@ -2129,6 +2162,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               ) THEN false ELSE true END AS official_presence_unresolved,
               ${reconciliationColumns}
               ${onlinePresenceReviewColumns}
+              ${deleteQueueColumns}
               created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
@@ -2145,6 +2179,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
        FROM businesses
        ${reconciliationJoin}
        ${onlinePresenceReviewJoin}
+       ${deleteQueueJoin}
        LEFT JOIN business_deletion_holds deletion_hold
          ON deletion_hold.business_id::text = businesses.id::text
        ${where}
@@ -2179,8 +2214,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total
            FROM businesses
-          WHERE ${liveInventoryWhere}
-            AND COALESCE(enrichment_note, '') ILIKE '%permanently closed%'`,
+          WHERE ${permanentlyClosedInventoryWhere}`,
       ),
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total
@@ -2195,6 +2229,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               WHERE state = 'queued'`,
           )
         : Promise.resolve({ rows: [{ total: "0" }] }),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM businesses WHERE ${activeDeleteQueuePredicate}`,
+      ),
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total FROM businesses ${where}`,
         filterParams,
@@ -2254,6 +2291,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const kinfolkCurrentDeleteReviewTotal = Number(
       kinfolkCurrentDeleteReviewCount.rows[0]?.total ?? 0,
     );
+    const deleteQueueTotal = Number(deleteQueueCount.rows[0]?.total ?? 0);
     const filteredTotal = Number(filteredCount.rows[0]?.total ?? 0);
     const reconciliationAccountedTotal = Number(reconciliationAccountedCount.rows[0]?.total ?? 0);
     const intakeCohortCounts = cohortCounts.rows[0] ?? {
@@ -2276,6 +2314,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       isDuplicate: b.is_duplicate,
       deletionHoldState: b.deletion_hold_state,
       deletionHoldDeleteAfter: b.deletion_hold_delete_after,
+      deleteQueueEntryId: b.delete_queue_entry_id,
+      deleteQueueQueuedAt: b.delete_queue_queued_at,
+      deleteQueueEligibleAt: b.delete_queue_eligible_at,
+      deleteQueueSourceVault: b.delete_queue_source_vault,
+      deleteQueueEligible: Boolean(b.delete_queue_eligible_at && isDeleteQueueEligible(b.delete_queue_eligible_at)),
       kinfolkCurrentDeleteReview: b.kinfolk_current_delete_review,
       kinfolkCurrentDeleteReviewQueuedAt: b.kinfolk_current_delete_review_queued_at,
       description: b.description,
@@ -2356,6 +2399,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       permanentlyClosedTotal,
       needsReviewTotal,
       kinfolkCurrentDeleteReviewTotal,
+      deleteQueueTotal,
       reconciliationLedgerAvailable,
       reconciliationAccountedTotal,
       filteredTotal,
@@ -2895,40 +2939,8 @@ router.post("/admin/businesses/kinfolk-current/online-presence-apply", async (re
         skipped.push({ businessId: item.businessId, lane: "delete_review", reason: "A retained review history already exists for this business." });
         continue;
       }
-      const deleteAfter = sevenDaysFrom(new Date());
-      await client.query(
-        `INSERT INTO business_deletion_holds
-           (business_id, requested_by, delete_after, reason, snapshot)
-         VALUES ($1, $2, $3, $4, $5::jsonb)
-         ON CONFLICT (business_id) DO NOTHING`,
-        [
-          business.id,
-          req.user?.id ?? null,
-          deleteAfter,
-          KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON,
-          JSON.stringify({
-            originalBusinessSnapshot: business.snapshot,
-            originalListingState: beforeState,
-            verificationEvidence: {
-              websiteVerification: item.websiteVerification,
-              socialVerification: item.socialVerification,
-              currentSnapshotHash: item.currentSnapshotHash,
-            },
-            manifestFingerprint: manifest.manifestFingerprint,
-          }),
-        ],
-      );
-      await recordBusinessDeletionHoldEvent(client, {
-        businessId: business.id,
-        action: "scheduled",
-        actorUserId: req.user?.id ?? null,
-        reason: KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON,
-        deleteAfter,
-        snapshot: {
-          manifestFingerprint: manifest.manifestFingerprint,
-          originalBusinessSnapshot: business.snapshot,
-        },
-      });
+      // Review is reversible and evidence-bound, not an automatic deletion hold.
+      // A founder may explicitly transfer it to Delete Queue in a separate action.
       const nextState: ListingAuditState = {
         listingStatus: KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS,
         status: "suspended",
@@ -3104,111 +3116,131 @@ router.patch("/admin/businesses/kinfolk-current/delete-review/restore", async (r
   }
 });
 
-// DELETE /admin/businesses/permanent — schedule a permanent deletion after a
-// seven-day reversible hold. The route name is retained for existing dashboard
-// clients, but it can no longer remove a business in the request that starts it.
-router.delete(
-  "/admin/businesses/permanent",
-  async (req: Request, res: Response) => {
-    if (!isAdmin(req)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
+// POST /admin/businesses/delete-queue — move an explicit selection into its own
+// reversible seven-day retention vault. A current listing is archived as part of
+// the same transaction so it immediately leaves public discovery and every
+// routine Admin view; Archive is never a prerequisite for Delete Queue.
+router.post("/admin/businesses/delete-queue", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set<string>((req.body.ids as unknown[]).filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  if (ids.length === 0 || ids.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 business records." });
+    return;
+  }
+  if (reason.length < 3 || reason.length > 1_000) {
+    res.status(400).json({ error: "A 3–1,000 character Delete Queue reason is required." });
+    return;
+  }
+  if (req.body?.confirmation !== deleteQueueConfirmation(ids.length)) {
+    res.status(400).json({ error: `Type ${deleteQueueConfirmation(ids.length)} to start the seven-day hold.` });
+    return;
+  }
 
-    const ids = Array.isArray(req.body?.ids)
-      ? [
-          ...new Set(
-            req.body.ids.filter(
-              (id: unknown): id is string =>
-                typeof id === "string" && id.trim().length > 0,
-            ),
-          ),
-        ]
-      : [];
-    if (ids.length === 0 || ids.length > 500) {
-      res.status(400).json({ error: "Select between 1 and 500 businesses." });
-      return;
-    }
-
-    const client = await pool.connect();
-    try {
-      await ensureBusinessDeletionHoldSchema(client);
-      await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
-      await client.query("BEGIN");
-      const current = await client.query<{
-        id: string;
-        name: string;
-        listing_status: string | null;
-        status: string;
-        promotion_eligible: boolean;
-        featured: boolean;
-        promoted_until: string | null;
-        is_duplicate: boolean;
-        snapshot: Record<string, unknown>;
-      }>(
-        `SELECT id, name, listing_status, status, promotion_eligible, featured, promoted_until,
-              COALESCE(is_duplicate, false) AS is_duplicate,
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await ensureBusinessDeleteQueueSchema(client);
+    await ensureListingStatusAuditSchema(client);
+    await ensureBusinessDeletionHoldSchema(client);
+    await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
+    await ensureKinfolkCurrentDeleteReviewTransferSchema(client);
+    const current = await client.query<{
+      id: string;
+      name: string;
+      listing_status: string | null;
+      status: string;
+      promotion_eligible: boolean;
+      featured: boolean;
+      promoted_until: string | null;
+      is_duplicate: boolean;
+      permanently_closed: boolean;
+      snapshot: Record<string, unknown>;
+    }>(
+      `SELECT id, name, listing_status, status, promotion_eligible, featured,
+              promoted_until, COALESCE(is_duplicate, false) AS is_duplicate,
+              COALESCE(enrichment_note, '') ILIKE '%permanently closed%' AS permanently_closed,
               to_jsonb(businesses) AS snapshot
          FROM businesses
         WHERE id = ANY($1::text[])
+        ORDER BY id FOR UPDATE`,
+      [ids],
+    );
+    if (current.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected businesses were not found." });
+      return;
+    }
+    const alreadyQueued = await client.query<{ business_id: string }>(
+      `SELECT business_id
+         FROM business_delete_queue_entries
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL
         FOR UPDATE`,
-        [ids],
-      );
-      if (current.rows.length !== ids.length) {
-        await client.query("ROLLBACK");
-        res
-          .status(404)
-          .json({ error: "One or more selected businesses were not found." });
-        return;
-      }
-      const queuedReviews = await client.query<{ business_id: string }>(
-        `SELECT business_id
-           FROM kinfolk_current_online_presence_reviews
-          WHERE business_id = ANY($1::text[])
-            AND state = 'queued'
-          FOR UPDATE`,
-        [ids],
-      );
-      if (queuedReviews.rows.length > 0) {
-        await client.query("ROLLBACK");
-        res.status(409).json({
-          error: "A Kinfolk Current Delete Review record must be restored or specifically resolved through review before permanent deletion can be scheduled.",
-          blockedIds: queuedReviews.rows.map((row) => row.business_id),
-        });
-        return;
-      }
+      [ids],
+    );
+    if (alreadyQueued.rows.length > 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "One or more selected businesses are already in the Delete Queue." });
+      return;
+    }
 
-      const deleteAfter = sevenDaysFrom(new Date());
-      let scheduledCount = 0;
-      let alreadyScheduledCount = 0;
-      for (const row of current.rows) {
-        const scheduled = await client.query<{ business_id: string }>(
-          `INSERT INTO business_deletion_holds
-           (business_id, requested_by, delete_after, reason, snapshot)
-         VALUES ($1, $2, $3, $4, $5::jsonb)
-         ON CONFLICT (business_id) DO NOTHING
-         RETURNING business_id`,
-          [
-            row.id,
-            req.user?.id ?? null,
-            deleteAfter,
-            BUSINESS_DELETION_HOLD_REASON,
-            JSON.stringify(row.snapshot),
-          ],
+    const reviews = await client.query<{ business_id: string; snapshot: Record<string, unknown> }>(
+      `SELECT business_id, to_jsonb(kinfolk_current_online_presence_reviews) AS snapshot
+         FROM kinfolk_current_online_presence_reviews
+        WHERE business_id = ANY($1::text[]) AND state = 'queued'
+        ORDER BY business_id FOR UPDATE`,
+      [ids],
+    );
+    if (req.body?.source === "kinfolk_current_delete_review" && reviews.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "The selection changed; only records still in Kinfolk Current Delete Review may be transferred from that screen." });
+      return;
+    }
+    const reviewsById = new Map(reviews.rows.map((review) => [review.business_id, review.snapshot]));
+    const queuedAt = new Date();
+    const eligibleAt = getDeleteQueueEligibleAt(queuedAt);
+    for (const row of current.rows) {
+      const reviewSnapshot = reviewsById.get(row.id) ?? null;
+      // Cancel the legacy automatic hold with its immutable snapshot receipt.
+      await cancelBusinessDeletionHold(client, {
+        businessId: row.id, actorUserId: req.user?.id ?? null,
+        reason: "Administrator transferred the record to the manual-only Delete Queue",
+      });
+      if (reviewSnapshot) {
+        await recordKinfolkCurrentOnlinePresenceReviewEvent(client, {
+          businessId: row.id, action: "transferred_to_delete_queue",
+          actorUserId: req.user?.id ?? null,
+          details: { reviewSnapshot, reason, eligibleAt: eligibleAt.toISOString() },
+        });
+        // Resolve the locked review before changing lifecycle. Do not bypass or
+        // weaken either queued-review trigger, or pretend this was a restoration.
+        await client.query(
+          `UPDATE kinfolk_current_online_presence_reviews
+              SET state = 'transferred_to_delete_queue'
+            WHERE business_id = $1 AND state = 'queued'`,
+          [row.id],
         );
-        if (scheduled.rows.length === 0) {
-          alreadyScheduledCount += 1;
-          continue;
-        }
-        scheduledCount += 1;
-        const beforeState: ListingAuditState = {
+      }
+      // A Delete Queue entry has its own Admin folder. For a current listing,
+      // preserve all information while making it non-public in this same
+      // transaction; if the hold is removed it remains safely in Archive for
+      // a deliberate later restore. Duplicates already have their own vault.
+      {
+        const beforeState = {
           listingStatus: row.listing_status,
           status: row.status,
           promotionEligible: row.promotion_eligible,
           featured: row.featured,
           promotedUntil: row.promoted_until,
         };
-        const heldState: ListingAuditState = {
+        const afterState = {
           listingStatus: "archived",
           status: "suspended",
           promotionEligible: false,
@@ -3217,19 +3249,19 @@ router.delete(
         };
         await client.query(
           `UPDATE businesses
-            SET listing_status = $1,
-                status = $2,
-                promotion_eligible = $3,
-                featured = $4,
-                promoted_until = $5,
-                updated_at = NOW()
-          WHERE id = $6`,
+              SET listing_status = $1,
+                  status = $2,
+                  promotion_eligible = $3,
+                  featured = $4,
+                  promoted_until = $5,
+                  updated_at = NOW()
+            WHERE id = $6`,
           [
-            heldState.listingStatus,
-            heldState.status,
-            heldState.promotionEligible,
-            heldState.featured,
-            heldState.promotedUntil,
+            afterState.listingStatus,
+            afterState.status,
+            afterState.promotionEligible,
+            afterState.featured,
+            afterState.promotedUntil,
             row.id,
           ],
         );
@@ -3237,53 +3269,334 @@ router.delete(
           businessId: row.id,
           action: "remove_public_discovery",
           actorUserId: req.user?.id ?? null,
-          reason: BUSINESS_DELETION_HOLD_REASON,
+          reason,
           beforeState,
-          afterState: heldState,
-        });
-        await recordBusinessDeletionHoldEvent(client, {
-          businessId: row.id,
-          action: "scheduled",
-          actorUserId: req.user?.id ?? null,
-          reason: BUSINESS_DELETION_HOLD_REASON,
-          deleteAfter,
-          snapshot: row.snapshot,
+          afterState,
         });
       }
-      await client.query("COMMIT");
-      req.log?.info(
-        {
-          selectedCount: ids.length,
-          scheduledCount,
-          alreadyScheduledCount,
-          deleteAfter,
-          by: req.user?.id,
-        },
-        "Admin scheduled businesses for seven-day permanent-deletion hold",
+      await client.query(
+        `INSERT INTO business_delete_queue_entries
+           (id, business_id, source_vault, queued_by_user_id, reason, queued_at, eligible_at, snapshot)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
+        [
+          randomUUID(),
+          row.id,
+          row.permanently_closed ? "permanently_closed" : row.is_duplicate ? "duplicates" : "archive",
+          req.user?.id ?? null,
+          reason,
+          queuedAt.toISOString(),
+          eligibleAt.toISOString(),
+          JSON.stringify({ business: row.snapshot, kinfolkCurrentOnlinePresenceReview: reviewSnapshot }),
+        ],
       );
-      res.json({
-        ok: true,
-        scheduledCount,
-        alreadyScheduledCount,
-        deleteAfter,
-      });
-    } catch (err: unknown) {
-      await client.query("ROLLBACK").catch(() => undefined);
-      req.log?.error(
-        { err },
-        "Failed to schedule selected businesses for deletion hold",
+      await client.query(
+        `INSERT INTO business_delete_queue_events (id, business_id, action, actor_user_id, details)
+         VALUES ($1, $2, 'queued', $3, $4::jsonb)`,
+        [randomUUID(), row.id, req.user?.id ?? null, JSON.stringify({
+          reason, eligibleAt: eligibleAt.toISOString(), business: row.snapshot,
+          kinfolkCurrentOnlinePresenceReview: reviewSnapshot,
+        })],
       );
-      res
-        .status(500)
-        .json({
-          error:
-            "No selected business was changed; deletion holds could not be scheduled.",
-        });
-    } finally {
-      client.release();
     }
-  },
-);
+    await client.query("COMMIT");
+    req.log?.info(
+      { selectedCount: ids.length, eligibleAt: eligibleAt.toISOString(), by: req.user?.id },
+      "Admin moved businesses into the reversible seven-day Delete Queue",
+    );
+    res.json({
+      ok: true,
+      queuedCount: ids.length,
+      eligibleAt: eligibleAt.toISOString(),
+      guarantee: "No business was deleted. Selected current listings left public discovery and now appear only in the Delete Queue. Nothing is deleted automatically after the hold.",
+    });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log?.error({ err }, "Failed to queue selected businesses for delayed deletion");
+    res.status(500).json({ error: "The selected businesses were not moved to the Delete Queue." });
+  } finally {
+    client.release();
+  }
+});
+
+// POST /admin/businesses/delete-queue/remove — leave the Delete Queue and
+// return the record to a nonpublic Archive/Duplicate/Permanently Closed vault.
+router.post("/admin/businesses/delete-queue/remove", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set<string>((req.body.ids as unknown[]).filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  if (ids.length === 0 || ids.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 Delete Queue businesses." });
+    return;
+  }
+  if (reason.length < 3 || reason.length > 1_000) {
+    res.status(400).json({ error: "A 3–1,000 character removal reason is required." });
+    return;
+  }
+  if (req.body?.confirmation !== removeFromDeleteQueueConfirmation(ids.length)) {
+    res.status(400).json({ error: `Type ${removeFromDeleteQueueConfirmation(ids.length)} to remove the hold.` });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await ensureBusinessDeleteQueueSchema(client);
+    await ensureListingStatusAuditSchema(client);
+    await ensureBusinessDeletionHoldSchema(client);
+    await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
+    const retained = await client.query<{ id: string }>(
+      "SELECT id FROM businesses WHERE id = ANY($1::text[]) ORDER BY id FOR UPDATE", [ids],
+    );
+    if (retained.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected businesses are no longer retained." });
+      return;
+    }
+    const held = await client.query<{ business_id: string }>(
+      `SELECT business_id
+         FROM business_delete_queue_entries
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL
+        FOR UPDATE`,
+      [ids],
+    );
+    if (held.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Each selected record must still be in the active Delete Queue." });
+      return;
+    }
+    await client.query(
+      `UPDATE businesses SET listing_status = 'archived', status = 'suspended',
+              promotion_eligible = false, featured = false, promoted_until = NULL, updated_at = NOW()
+        WHERE id = ANY($1::text[])`, [ids],
+    );
+    for (const businessId of ids) {
+      await cancelBusinessDeletionHold(client, {
+        businessId, actorUserId: req.user?.id ?? null,
+        reason: "Administrator removed Delete Queue hold; record remains in a nonpublic vault",
+      });
+      await client.query(
+        `INSERT INTO business_delete_queue_events (id, business_id, action, actor_user_id, details)
+         SELECT $1, business_id, 'removed', $2,
+                jsonb_build_object('reason', $3::text, 'queueEntry', to_jsonb(business_delete_queue_entries))
+           FROM business_delete_queue_entries
+          WHERE business_id = $4 AND removed_at IS NULL AND permanent_deleted_at IS NULL`,
+        [randomUUID(), req.user?.id ?? null, reason, businessId],
+      );
+    }
+    await client.query(
+      `UPDATE business_delete_queue_entries
+          SET removed_at = NOW(),
+              removed_by_user_id = $2,
+              removal_reason = $3
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL`,
+      [ids, req.user?.id ?? null, reason],
+    );
+    await client.query("COMMIT");
+    res.json({
+      ok: true,
+      removedCount: ids.length,
+      guarantee: "No public listing was restored. Records remain archived/nonpublic in Archive, Duplicate, or Permanently Closed vault.",
+    });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log?.error({ err }, "Failed to remove selected businesses from the Delete Queue");
+    res.status(500).json({ error: "The selected businesses remain in the Delete Queue." });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE /admin/businesses/permanent — audited, non-cascading deletion from an
+// eligible Delete Queue entry only. The seven-day hold never auto-deletes.
+router.delete("/admin/businesses/permanent", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set<string>((req.body.ids as unknown[]).filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  if (ids.length === 0 || ids.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 eligible Delete Queue businesses." });
+    return;
+  }
+  if (reason.length < 3 || reason.length > 1_000) {
+    res.status(400).json({ error: "A 3–1,000 character administrator deletion reason is required." });
+    return;
+  }
+  if (req.body?.confirmation !== permanentDeletionConfirmation(ids.length)) {
+    res.status(400).json({ error: `Type ${permanentDeletionConfirmation(ids.length)} to confirm permanent deletion.` });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await ensureBusinessDeleteQueueSchema(client);
+    await ensureListingStatusAuditSchema(client);
+    await ensureBusinessDeletionHoldSchema(client);
+    await ensureKinfolkCurrentOnlinePresenceReviewSchema(client);
+    await ensureBusinessPermanentDeletionAuditSchema(client);
+    const current = await client.query<{
+      id: string;
+      name: string;
+      listing_status: string | null;
+      is_duplicate: boolean;
+      status: string;
+      promotion_eligible: boolean;
+      featured: boolean;
+      promoted_until: string | null;
+      snapshot: Record<string, unknown>;
+    }>(
+      `SELECT id, name, listing_status, status, promotion_eligible, featured, promoted_until, COALESCE(is_duplicate, false) AS is_duplicate,
+              to_jsonb(businesses) AS snapshot
+         FROM businesses
+        WHERE id = ANY($1::text[])
+        ORDER BY id FOR UPDATE`,
+      [ids],
+    );
+    if (current.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected businesses were not found." });
+      return;
+    }
+    const held = await client.query<{
+      business_id: string;
+      eligible_at: string;
+      snapshot: Record<string, unknown>;
+      eligible: boolean;
+    }>(
+      `SELECT business_id, eligible_at, to_jsonb(business_delete_queue_entries) AS snapshot,
+              eligible_at <= NOW() AND queued_at + INTERVAL '168 hours' <= NOW() AS eligible
+         FROM business_delete_queue_entries
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL
+        FOR UPDATE`,
+      [ids],
+    );
+    if (held.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "Permanent deletion is allowed only from the active Delete Queue after the seven-day hold. Move an Archive or Duplicate vault record into the Delete Queue first.",
+      });
+      return;
+    }
+    const stillHeld = held.rows.filter((row) => !row.eligible || !isDeleteQueueEligible(row.eligible_at));
+    if (stillHeld.length > 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "One or more selected records are still within the required seven-day Delete Queue hold. Nothing was deleted.",
+      });
+      return;
+    }
+
+    const queuedReviews = await client.query<{ business_id: string }>(
+      `SELECT business_id FROM kinfolk_current_online_presence_reviews
+        WHERE business_id = ANY($1::text[]) AND state = 'queued' FOR UPDATE`, [ids],
+    );
+    if (queuedReviews.rows.length > 0 || current.rows.some((row) =>
+      row.listing_status !== "archived" || row.status !== "suspended" ||
+      row.promotion_eligible !== false || row.featured !== false || row.promoted_until !== null
+    )) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Only nonpublic, resolved, eligible Delete Queue records may be permanently deleted." });
+      return;
+    }
+    const heldById = new Map(held.rows.map((entry) => [entry.business_id, entry.snapshot]));
+    // Source-cohort receipts are factual reconciliation evidence rather than
+    // community or owner content. Their restrictive FK correctly prevents an
+    // accidental delete, but an administrator's explicitly confirmed permanent
+    // deletion must be able to move that evidence into the private deletion
+    // receipt first. No other relationship is removed or cascaded.
+    const cohortReceipts = await client.query<{
+      business_id: string;
+      snapshot: Record<string, unknown>;
+    }>(
+      `SELECT business_id, to_jsonb(business_inventory_cohort_receipts) AS snapshot
+         FROM business_inventory_cohort_receipts
+        WHERE business_id = ANY($1::text[])
+        FOR UPDATE`,
+      [ids],
+    );
+    const cohortReceiptsByBusinessId = new Map<string, Record<string, unknown>>();
+    for (const receipt of cohortReceipts.rows) {
+      cohortReceiptsByBusinessId.set(receipt.business_id, receipt.snapshot);
+    }
+
+    for (const row of current.rows) {
+      await client.query(
+        `INSERT INTO business_permanent_deletion_audit_events
+           (id, business_id, actor_user_id, reason, snapshot)
+         VALUES ($1, $2, $3, $4, $5::jsonb)`,
+        [
+          randomUUID(),
+          row.id,
+          req.user?.id ?? null,
+          reason,
+          JSON.stringify({
+            business: row.snapshot,
+            inventoryCohortReceipt: cohortReceiptsByBusinessId.get(row.id) ?? null,
+            deleteQueueEntry: heldById.get(row.id),
+          }),
+        ],
+      );
+    }
+    // Deliberately explicit rather than cascading. The source receipt is now
+    // retained in the audit event above; every other dependent record remains
+    // protected by its own restrictive foreign key.
+    await client.query(
+      "DELETE FROM business_inventory_cohort_receipts WHERE business_id = ANY($1::text[])",
+      [ids],
+    );
+    // Retain the hold receipt even after the business row is gone. This update
+    // occurs in the same transaction as the guarded deletion, so a foreign-key
+    // failure leaves both the business and its hold untouched.
+    await client.query(
+      `UPDATE business_delete_queue_entries
+          SET permanent_deleted_at = NOW()
+        WHERE business_id = ANY($1::text[])
+          AND removed_at IS NULL
+          AND permanent_deleted_at IS NULL`,
+      [ids],
+    );
+    for (const row of current.rows) {
+      await client.query(
+        `INSERT INTO business_delete_queue_events (id, business_id, action, actor_user_id, details)
+         VALUES ($1, $2, 'permanently_deleted', $3, $4::jsonb)`,
+        [randomUUID(), row.id, req.user?.id ?? null, JSON.stringify({ reason, business: row.snapshot, deleteQueueEntry: heldById.get(row.id) })],
+      );
+    }
+    // Deliberately no CASCADE. If this record has linked data protected by a
+    // foreign key, PostgreSQL rejects the transaction and preserves everything.
+    for (const id of ids) await client.query("DELETE FROM businesses WHERE id = $1", [id]);
+    await client.query("COMMIT");
+    req.log?.info({ selectedCount: ids.length, by: req.user?.id }, "Admin permanently deleted eligible Delete Queue businesses with audit snapshots");
+    res.json({ ok: true, deletedCount: ids.length });
+  } catch (err: unknown) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code?: unknown }).code) : "";
+    if (code === "23503") {
+      res.status(409).json({ error: "This business has linked records and cannot be permanently deleted. It remains safely in its vault; archive or retain it instead." });
+      return;
+    }
+    req.log?.error({ err }, "Failed to permanently delete selected businesses");
+    res.status(500).json({ error: "Permanent deletion failed; no selected business was deleted." });
+  } finally {
+    client.release();
+  }
+});
 
 // PATCH /admin/businesses/:id/listing-status — remove or restore a public business listing.
 // This is intentionally a reversible governance control, never a destructive

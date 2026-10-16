@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 import type { Pool } from "pg";
-import { KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON } from "./kinfolkCurrentOnlinePresenceReview";
 
 export const BUSINESS_DELETION_HOLD_DAYS = 7;
 export const BUSINESS_DELETION_HOLD_REASON =
@@ -160,232 +159,24 @@ export async function cancelBusinessDeletionHold(
   return true;
 }
 
-async function finalizeOneDueHold(
-  pool: Pool,
-  logger: BusinessDeletionHoldWorkerLogger,
-  businessId: string,
-): Promise<"deleted" | "missing" | "blocked" | "skipped"> {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const holdResult = await client.query<{
-      business_id: string;
-      requested_by: string | null;
-      delete_after: string;
-      reason: string;
-      snapshot: Record<string, unknown>;
-    }>(
-      `SELECT business_id, requested_by, delete_after, reason, snapshot
-         FROM business_deletion_holds
-        WHERE business_id = $1
-          AND state = 'pending'
-          AND delete_after <= NOW()
-        FOR UPDATE`,
-      [businessId],
-    );
-    const hold = holdResult.rows[0];
-    if (!hold) {
-      await client.query("ROLLBACK");
-      return "skipped";
-    }
-
-    const currentResult = await client.query<{
-      snapshot: Record<string, unknown>;
-    }>(
-      `SELECT to_jsonb(businesses) AS snapshot
-         FROM businesses
-        WHERE id = $1
-        FOR UPDATE`,
-      [businessId],
-    );
-    const current = currentResult.rows[0];
-    if (!current) {
-      await recordBusinessDeletionHoldEvent(client, {
-        businessId,
-        action: "missing",
-        actorUserId: hold.requested_by,
-        reason:
-          "Seven-day deletion hold expired after the business was already absent",
-        deleteAfter: hold.delete_after,
-        snapshot: hold.snapshot,
-      });
-      await client.query(
-        "DELETE FROM business_deletion_holds WHERE business_id = $1",
-        [businessId],
-      );
-      await client.query("COMMIT");
-      return "missing";
-    }
-
-    const queuedReview = await client.query<{
-      business_id: string;
-      snapshot: Record<string, unknown>;
-    }>(
-      `SELECT business_id, to_jsonb(kinfolk_current_online_presence_reviews) AS snapshot
-         FROM kinfolk_current_online_presence_reviews
-        WHERE business_id = $1
-          AND state = 'queued'
-        FOR UPDATE`,
-      [businessId],
-    );
-    let onlinePresenceReviewSnapshot: Record<string, unknown> | null = null;
-    if (queuedReview.rows[0]) {
-      if (hold.reason !== KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON) {
-        throw new Error(
-          "Business is in Kinfolk Current Delete Review and cannot be permanently deleted until specifically resolved through review",
-        );
-      }
-      onlinePresenceReviewSnapshot = queuedReview.rows[0].snapshot;
-      await client.query(
-        `DELETE FROM kinfolk_current_online_presence_reviews
-          WHERE business_id = $1 AND state = 'queued'`,
-        [businessId],
-      );
-    }
-
-    const cohortReceipts = await client.query<{
-      snapshot: Record<string, unknown>;
-    }>(
-      `SELECT to_jsonb(business_inventory_cohort_receipts) AS snapshot
-         FROM business_inventory_cohort_receipts
-        WHERE business_id = $1
-        FOR UPDATE`,
-      [businessId],
-    );
-    const deletionSnapshot = {
-      business: current.snapshot,
-      inventoryCohortReceipt: cohortReceipts.rows[0]?.snapshot ?? null,
-      kinfolkCurrentOnlinePresenceReview: onlinePresenceReviewSnapshot,
-      deletionHoldSnapshot: hold.snapshot,
-    };
-
-    await client.query(
-      `INSERT INTO business_permanent_deletion_audit_events
-         (id, business_id, actor_user_id, reason, snapshot)
-       VALUES ($1, $2, $3, $4, $5::jsonb)`,
-      [
-        randomUUID(),
-        businessId,
-        hold.requested_by,
-        "Seven-day administrative deletion hold elapsed",
-        JSON.stringify(deletionSnapshot),
-      ],
-    );
-    await recordBusinessDeletionHoldEvent(client, {
-      businessId,
-      action: "permanently_deleted",
-      actorUserId: hold.requested_by,
-      reason: "Seven-day administrative deletion hold elapsed",
-      deleteAfter: hold.delete_after,
-      snapshot: deletionSnapshot,
-    });
-    await client.query(
-      "DELETE FROM business_inventory_cohort_receipts WHERE business_id = $1",
-      [businessId],
-    );
-    // Deliberately no CASCADE: linked community, owner, review, or media data
-    // blocks the final deletion and leaves the held listing recoverable.
-    await client.query("DELETE FROM businesses WHERE id = $1", [businessId]);
-    await client.query("COMMIT");
-    return "deleted";
-  } catch (error: unknown) {
-    await client.query("ROLLBACK").catch(() => undefined);
-    const detail =
-      error instanceof Error
-        ? error.message.slice(0, 900)
-        : "Unknown final-deletion error";
-    try {
-      await client.query("BEGIN");
-      const held = await client.query<{
-        delete_after: string;
-        snapshot: Record<string, unknown>;
-      }>(
-        `UPDATE business_deletion_holds
-            SET state = 'blocked',
-                last_error = $2,
-                blocked_at = NOW(),
-                updated_at = NOW()
-          WHERE business_id = $1
-            AND state = 'pending'
-          RETURNING delete_after, snapshot`,
-        [businessId, detail],
-      );
-      const hold = held.rows[0];
-      if (hold) {
-        await recordBusinessDeletionHoldEvent(client, {
-          businessId,
-          action: "blocked",
-          actorUserId: null,
-          reason:
-            "Seven-day deletion hold ended but protected linked records blocked removal",
-          deleteAfter: hold.delete_after,
-          snapshot: hold.snapshot,
-        });
-      }
-      await client.query("COMMIT");
-    } catch (recordError) {
-      await client.query("ROLLBACK").catch(() => undefined);
-      logger.error(
-        { businessId, error: recordError },
-        "Could not record blocked business deletion hold",
-      );
-    }
-    logger.error(
-      { businessId, error },
-      "Business deletion hold finalization failed; listing remains archived and recoverable",
-    );
-    return "blocked";
-  } finally {
-    client.release();
-  }
-}
-
+/** Legacy entry point retained for callers, but expiration is never deletion.
+ * Existing pending Kinfolk Current Delete Review holds are safe without a DB
+ * migration: neither this entry point nor startup performs a query or deletion.
+ * Administrators must explicitly move records into Delete Queue and separately
+ * confirm permanent deletion after its new seven-day eligibility period.
+ */
 export async function processDueBusinessDeletionHolds(
-  pool: Pool,
-  logger: BusinessDeletionHoldWorkerLogger,
-  limit = 100,
+  _pool: Pool,
+  _logger: BusinessDeletionHoldWorkerLogger,
+  _limit = 100,
 ): Promise<{ deleted: number; missing: number; blocked: number }> {
-  const batchSize = Math.max(1, Math.min(limit, 500));
-  const due = await pool.query<{ business_id: string }>(
-    `SELECT business_id
-       FROM business_deletion_holds
-      WHERE state = 'pending'
-        AND delete_after <= NOW()
-      ORDER BY delete_after ASC, business_id ASC
-      LIMIT $1`,
-    [batchSize],
-  );
-  const results = { deleted: 0, missing: 0, blocked: 0 };
-  for (const row of due.rows) {
-    const outcome = await finalizeOneDueHold(pool, logger, row.business_id);
-    if (outcome === "deleted") results.deleted += 1;
-    else if (outcome === "missing") results.missing += 1;
-    else if (outcome === "blocked") results.blocked += 1;
-  }
-  return results;
+  return { deleted: 0, missing: 0, blocked: 0 };
 }
 
 export function startBusinessDeletionHoldWorker(
-  pool: Pool,
+  _pool: Pool,
   logger: BusinessDeletionHoldWorkerLogger,
 ): () => void {
-  let running = false;
-  const run = async () => {
-    if (running) return;
-    running = true;
-    try {
-      const result = await processDueBusinessDeletionHolds(pool, logger);
-      if (result.deleted || result.missing || result.blocked) {
-        logger.info(result, "Processed due seven-day business deletion holds");
-      }
-    } catch (error) {
-      logger.error({ error }, "Business deletion hold worker pass failed");
-    } finally {
-      running = false;
-    }
-  };
-  void run();
-  const interval = setInterval(() => void run(), 5 * 60 * 1000);
-  interval.unref();
-  return () => clearInterval(interval);
+  logger.info({}, "Automatic business deletion disabled; Delete Queue requires separate confirmation");
+  return () => undefined;
 }

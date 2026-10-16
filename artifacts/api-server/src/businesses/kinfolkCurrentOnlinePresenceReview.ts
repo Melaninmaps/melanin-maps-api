@@ -5,6 +5,7 @@ export const KINFOLK_CURRENT_ONLINE_PRESENCE_MANIFEST_VERSION =
 export const KINFOLK_CURRENT_DELETE_REVIEW_LISTING_STATUS = "staged";
 export const KINFOLK_CURRENT_DELETE_REVIEW_REASON =
   "Kinfolk Current online-presence verification found no active official website or social profile";
+// Historical audit label only; no new review uses an automatic deletion hold.
 export const KINFOLK_CURRENT_DELETE_REVIEW_DELETION_HOLD_REASON =
   "Kinfolk Current Delete Review automatic permanent deletion held for seven days";
 
@@ -386,11 +387,30 @@ export async function ensureKinfolkCurrentOnlinePresenceReviewSchema(
   `);
 }
 
+/** Only the explicit Delete Queue flow installs this additive state. Original
+ * review snapshots/evidence and immutable events remain retained in place.
+ * The queued-review lifecycle/deletion triggers are deliberately unchanged.
+ */
+export async function ensureKinfolkCurrentDeleteReviewTransferSchema(client: SqlClient): Promise<void> {
+  await client.query(`
+    ALTER TABLE kinfolk_current_online_presence_reviews
+      DROP CONSTRAINT IF EXISTS kinfolk_current_online_presence_reviews_state_check;
+    ALTER TABLE kinfolk_current_online_presence_reviews
+      ADD CONSTRAINT kinfolk_current_online_presence_reviews_state_check
+      CHECK (state IN ('queued', 'restored', 'transferred_to_delete_queue'));
+    ALTER TABLE kinfolk_current_online_presence_review_events
+      DROP CONSTRAINT IF EXISTS kinfolk_current_online_presence_review_events_action_check;
+    ALTER TABLE kinfolk_current_online_presence_review_events
+      ADD CONSTRAINT kinfolk_current_online_presence_review_events_action_check
+      CHECK (action IN ('queued', 'restored', 'transferred_to_delete_queue'));
+  `);
+}
+
 export async function recordKinfolkCurrentOnlinePresenceReviewEvent(
   client: SqlClient,
   input: Readonly<{
     businessId: string;
-    action: "queued" | "restored";
+    action: "queued" | "restored" | "transferred_to_delete_queue";
     actorUserId: string | null;
     details: Record<string, unknown>;
   }>,

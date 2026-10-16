@@ -12,6 +12,9 @@ describe("Admin Kinfolk Current online-presence controls", () => {
     expect(adminScreen).toContain("Kinfolk Current Delete Review");
     expect(adminScreen).toContain('key: "kinfolk_current_delete_review"');
     expect(adminScreen).toContain("Restore exact prior state");
+    expect(adminScreen).toContain("Move selected to Delete Queue ({selectedVisibleBusinessCount})");
+    expect(adminScreen).toContain("moveBusinessesToDeleteQueue([biz.id], [biz.name], biz.kinfolkCurrentDeleteReview)");
+    expect(adminScreen).toContain("Open Delete Queue");
     expect(adminScreen).toContain("This queue never permanently deletes a business.");
   });
 
@@ -23,7 +26,7 @@ describe("Admin Kinfolk Current online-presence controls", () => {
   });
 
   it("does not offer generic permanent deletion for a queued Delete Review record", () => {
-    expect(adminScreen).toContain("!biz.kinfolkCurrentDeleteReview && <button");
+    expect(adminScreen).toContain("!biz.deleteQueueEntryId && <button");
     expect(adminScreen).toContain("api/admin/businesses/kinfolk-current/delete-review/restore");
   });
 });
