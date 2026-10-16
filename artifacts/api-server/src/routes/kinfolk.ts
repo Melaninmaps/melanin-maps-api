@@ -401,6 +401,7 @@ import {
   normalizeKinfolkFormalDocumentReply,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
+import { buildKinfolkGeneratedContentContract } from "../kinfolk/generated-content-style";
 import {
   isKinfolkRaisePreparationRequest,
   renderKinfolkRaisePreparation,
@@ -10802,7 +10803,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : "") +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
-    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}`;
+    const generatedContentContract = buildKinfolkGeneratedContentContract(message);
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}${generatedContentContract ? `\n\n${generatedContentContract}` : ""}`;
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`

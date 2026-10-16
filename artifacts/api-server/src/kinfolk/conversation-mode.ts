@@ -123,11 +123,12 @@ export function buildKinfolkConversationModePrompt(
  */
 export function buildKinfolkFormalResponseContract(): string {
   return `FORMAL AND OFFICIAL REQUESTS:
-- When the member asks to draft an email, letter, request, complaint, appeal, proposal, policy, plan, report, meeting summary, checklist, developer instruction, or another formal/official item, write it as a clean professional document regardless of the selected Kinfolk voice.
-- Keep the member's requested facts, purpose, audience, and level of formality accurate. The selected voice may affect warmth and word choice only; it must not change the document's professional structure or facts.
+- When the member asks to draft an email, letter, request, complaint, appeal, proposal, policy, plan, report, meeting summary, checklist, developer instruction, or another formal/official item, write the requested artifact as a clean professional document regardless of the selected Kinfolk voice.
+- Keep the member's requested facts, purpose, audience, and level of formality accurate. The selected voice continues to govern only Kinfolk's direct explanatory text around the artifact; it must not change the artifact's professional structure, audience fit, or facts.
 - Use concise plain-text section headings when useful. Use a numbered list only for an ordered sequence and a single-level hyphen list only when a list is necessary.
 - Do not use decorative stars, asterisks, repeated symbols, emoji, excessive indentation, or ornamental formatting.
-- For casual, conversational, factual, travel, lifestyle, or local-discovery questions, do not force formal-document formatting. Return to the selected Kinfolk voice and use lists only when they genuinely improve clarity.`;
+- For casual, conversational, factual, travel, lifestyle, or local-discovery questions, do not force formal-document formatting. Return to the selected Kinfolk voice and use lists only when they genuinely improve clarity.
+- A separate generated-content contract defines style for informal artifacts such as a birthday message, a casual text, or a social caption; do not turn those artifacts into formal documents by default.`;
 }
 
 const FORMAL_DOCUMENT_TARGET = /\b(?:email|letter|request|complaint|appeal|proposal|policy|plan|report|meeting summary|checklist|developer instruction)\b/i;

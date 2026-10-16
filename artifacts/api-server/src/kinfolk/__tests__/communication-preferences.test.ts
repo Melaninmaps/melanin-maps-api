@@ -152,6 +152,25 @@ describe("Kinfolk communication preference precedence", () => {
     ).toContain("COMMUNICATION DELIVERY — MEMBER SELECTED");
   });
 
+  it("keeps consented communication preferences isolated to the supplied member memory set", () => {
+    const memberA = resolve({
+      message: "Who was Nat Turner?",
+      memories: [
+        {
+          content:
+            "Kinfolk communication preference: use a natural AAVE register; apply this to history explanations.",
+        },
+      ],
+    });
+    const memberB = resolve({
+      message: "Who was Nat Turner?",
+      memories: [],
+    });
+
+    expect(memberA).toMatchObject({ source: "saved_memory", aaveLevel: 2 });
+    expect(memberB).toMatchObject({ source: "settings", aaveLevel: 0, regionalFlavor: "off" });
+  });
+
   it("preserves the same communication preference when the member switches personas", () => {
     const saved = buildConsentedCommunicationPreferenceMemory(
       "Remember that I prefer history explained in AAVE.",
