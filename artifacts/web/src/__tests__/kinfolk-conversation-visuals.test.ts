@@ -12,6 +12,7 @@ describe("web Kinfolk conversation-first visuals", () => {
     expect(travelPageSource).toContain('data-testid="kinfolk-conversation-welcome"');
     expect(travelPageSource).toContain("Kinfolk here — let's map it out.");
     expect(travelPageSource).not.toContain("Welcome back,");
+    expect(travelPageSource).not.toContain("Last time we talked about");
     expect(travelPageSource).not.toContain("Start a conversation");
     expect(travelPageSource).not.toContain("Start here");
     expect(travelPageSource).not.toContain("More ways Kinfolk can help");
@@ -22,6 +23,7 @@ describe("web Kinfolk conversation-first visuals", () => {
     expect(travelPageSource).toContain('isEmpty ? "flex-none overflow-visible" : "flex-1 overflow-y-auto"');
     expect(travelPageSource).toContain('aria-label="Kinfolk greeting"');
     expect(travelPageSource).not.toContain("rounded-3xl border border-[#3A1F0E]/8 bg-white p-4 shadow");
+    expect(travelPageSource).not.toContain("Your taste profile is active for recommendations");
   });
 
   it("keeps history and explicit privacy controls available without an inline voice picker", () => {

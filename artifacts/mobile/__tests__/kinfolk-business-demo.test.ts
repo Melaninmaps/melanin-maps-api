@@ -18,12 +18,15 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(hookSource).toContain("website?: string | null");
     expect(hookSource).toContain("claimed?: boolean");
     expect(hookSource).toContain("matchReasons?: string[]");
+    expect(hookSource).toContain("communitySignals?:");
     expect(travelSource).toContain('pathname: "/business/[id]"');
     expect(travelSource).toContain("openExternalUrl(biz.website!)");
     expect(travelSource).toContain("Claimed · Not MWM verified");
     expect(travelSource).toContain("Unclaimed · Not MWM verified");
     expect(travelSource).toContain("MWM verified");
     expect(travelSource).toContain("Why it surfaced:");
+    expect(travelSource).toContain("What the community says");
+    expect(travelSource).toContain("biz.communitySignals?.quickReviews");
     expect(travelSource).toContain("Know before you go:");
     expect(travelSource).toContain("Confirm current hours, services, and availability");
     expect(hookSource).toContain("resultView?: ConversationalBusinessResultView | null");

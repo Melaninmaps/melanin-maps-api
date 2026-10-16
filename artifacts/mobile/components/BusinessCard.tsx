@@ -63,6 +63,26 @@ function getExperienceLabel(
   return null;
 }
 
+function CommunitySignalChips({ business }: { business: Business }) {
+  const signals = [
+    ...(business.communitySignals?.quickReviews ?? []),
+    ...(business.communitySignals?.theReal ?? []),
+  ].slice(0, 2);
+  if (signals.length === 0) return null;
+  return (
+    <View accessibilityLabel={`What the community says about ${business.name}`} style={{ marginTop: 5, gap: 3 }}>
+      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: "#9A6B1C", textTransform: "uppercase", letterSpacing: 0.6 }}>What the community says</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+        {signals.map((signal) => (
+          <View key={signal.key} style={{ backgroundColor: "#CA922B12", borderColor: "#CA922B35", borderWidth: 1, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3 }}>
+            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 9, color: "#6B4313" }}>{signal.label} · {signal.count}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 interface Props {
   business: Business;
   onPress: () => void;
@@ -197,6 +217,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
                 </View>
               );
             })()}
+            <CommunitySignalChips business={business} />
             {business.hiddenGemLabel ? (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
                 <Feather name="star" size={10} color="#CA922B" />
@@ -352,6 +373,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
               </View>
             );
           })()}
+          <CommunitySignalChips business={business} />
           {business.hiddenGemLabel ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
               <Feather name="star" size={10} color="#CA922B" />

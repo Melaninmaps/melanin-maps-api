@@ -75,6 +75,10 @@ import {
   isCanonicalSubcategoryForCategory,
 } from "@workspace/constants";
 import { buildDesignationPredicateSql, legacyDesignationColumn, resolveDesignationScope } from "../kinfolk/designation-predicate-policy";
+import {
+  emptyCommunitySignalSummary,
+  loadCommunitySignalSummaries,
+} from "../businesses/community-signal-summary";
 
 const communitySubmissionRepository = new SubmissionRepository();
 const CANONICAL_VIBE_KEYS = new Set(
@@ -1278,8 +1282,22 @@ router.get("/businesses", async (req: Request, res: Response) => {
               ),
             })
           : null;
+        // Community signals are aggregate, member-backed context. Their
+        // absence or a temporary aggregation failure never changes which
+        // listings match a directory, Map, or ownership-filter request.
+        const communitySignals = await loadCommunitySignalSummaries(
+          pool,
+          withDistance.map((business) => ({
+            id: String(business.id),
+            category: typeof business.category === "string" ? business.category : null,
+            subcategory: typeof business.subcategory === "string" ? business.subcategory : null,
+          })),
+        ).catch(() => new Map());
         const publicResults = await attachDocumentedOwnership(
-          withDistance.map((business) => toPublicBusinessRecord(business)),
+          withDistance.map((business) => ({
+            ...toPublicBusinessRecord(business),
+            communitySignals: communitySignals.get(String(business.id)) ?? emptyCommunitySignalSummary(),
+          })),
         );
         sendDynamicJson(res, {
           businesses: publicResults,
@@ -2507,7 +2525,15 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
         .catch(() => {});
     })();
 
-    const [publicBusiness] = await attachDocumentedOwnership([toPublicBusinessRecord(business)]);
+    const communitySignals = await loadCommunitySignalSummaries(pool, [{
+      id: String(business.id),
+      category: typeof business.category === "string" ? business.category : null,
+      subcategory: typeof business.subcategory === "string" ? business.subcategory : null,
+    }]).catch(() => new Map());
+    const [publicBusiness] = await attachDocumentedOwnership([{
+      ...toPublicBusinessRecord(business),
+      communitySignals: communitySignals.get(String(business.id)) ?? emptyCommunitySignalSummary(),
+    }]);
     sendDynamicJson(res, {
       business: {
         ...publicBusiness,

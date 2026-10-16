@@ -146,6 +146,26 @@ describe("Kinfolk business personalization", () => {
     expect(ranked[1]?.matchReasons).not.toContain("Matches your saved preference: luxury");
   });
 
+  it("uses a relevant governed community signal as supporting evidence without treating the count as a rating", () => {
+    const communityRecommended = {
+      ...business("community", "Neighborhood Supper Club", "Food & Drink", "Restaurants", []),
+      communitySignals: {
+        quickReviews: [{ key: "official_food_drink_portions_with_love", label: "Portions With Love", count: 8 }],
+        communityVibes: [],
+        theReal: [],
+      },
+    };
+    const unreviewed = business("unreviewed", "Neighborhood Table", "Food & Drink", "Restaurants", []);
+
+    const ranked = rankGovernedBusinessesForMember([unreviewed, communityRecommended], {
+      ageBand: "18_plus",
+      currentRequest: "Find a restaurant with portions with love",
+    });
+
+    expect(ranked[0]?.name).toBe("Neighborhood Supper Club");
+    expect(ranked[0]?.matchReasons).toContain("Community feedback: Portions With Love");
+  });
+
   it("blocks adult-only nightlife for a real persisted 13_15 member but retains a venue with published teen evidence", () => {
     const ranked = rankGovernedBusinessesForMember(PHILADELPHIA_ACTIVITIES, {
       ageBand: "13_15",

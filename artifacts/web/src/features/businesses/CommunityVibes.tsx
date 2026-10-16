@@ -166,6 +166,11 @@ export function CommunityVibes({
   const ownerVibes = new Set(data.ownerChoices.vibes);
   const ownerPrice = data.policy.priceChoices.find((choice) => choice.key === data.ownerChoices.price) ?? null;
   const selectedPrice = data.viewerSelections.find((item) => item.kind === "price")?.key;
+  const communitySummary = data.policy.reactionChoices
+    .map((choice) => ({ choice, count: aggregates.reactionCounts[choice.key] ?? 0 }))
+    .filter((item) => item.count > 0)
+    .sort((left, right) => right.count - left.count || left.choice.label.localeCompare(right.choice.label))
+    .slice(0, 3);
 
   function group(
     kind: BusinessExperienceKind,
@@ -243,6 +248,21 @@ export function CommunityVibes({
           </select>
         </label>
       </div>
+
+      <section aria-label="What the community says" className="rounded-xl border border-[#CA922B]/25 bg-[#241810] px-4 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F0C76D]">What the community says</p>
+        {communitySummary.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {communitySummary.map(({ choice, count }) => (
+              <span key={choice.key} className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-semibold text-white">
+                {resolveExperienceChoiceLabel(choice, communityCode)} <span className="text-white/55">· {count}</span>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-1 text-xs leading-5 text-white/55">No community quick reviews yet. Be the first member to share a quick experience below.</p>
+        )}
+      </section>
 
       {group("vibe", data.policy.atmosphereLabel, "Atmosphere, occasion, and energy — only shown when it fits this business type.", data.policy.vibeChoices, <Sparkles className="h-4 w-4" />)}
       {group(

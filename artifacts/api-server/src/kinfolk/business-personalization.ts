@@ -82,6 +82,9 @@ function searchableText(business: GovernedKinfolkBusiness): string {
     ...business.communityValues,
     ...business.audiencesServed,
     ...business.vibes,
+    ...(business.communitySignals?.quickReviews.map((signal) => signal.label) ?? []),
+    ...(business.communitySignals?.communityVibes.map((signal) => signal.label) ?? []),
+    ...(business.communitySignals?.theReal.map((signal) => signal.label) ?? []),
     ...business.accessibilityFeatures,
     ...business.environmentTags,
     ...business.amenityTags,
@@ -199,6 +202,20 @@ function scoredBusiness(
     if (directRequestTerms.length > 0) {
       score += Math.min(64, 40 + directRequestTerms.length * 8);
       reasons.push("Matches what you asked for right now");
+    }
+    const communityLabels = [
+      ...(business.communitySignals?.quickReviews ?? []),
+      ...(business.communitySignals?.communityVibes ?? []),
+      ...(business.communitySignals?.theReal ?? []),
+    ];
+    const matchingCommunitySignal = communityLabels.find((signal) =>
+      requestTerms(request).some((term) => containsWholeTerm(signal.label.toLowerCase(), term)),
+    );
+    if (matchingCommunitySignal) {
+      // Counts are supporting evidence, never a popularity contest: a signal
+      // helps only when its actual label relates to the current request.
+      score += Math.min(12, 4 + matchingCommunitySignal.count);
+      reasons.push(`Community feedback: ${matchingCommunitySignal.label}`);
     }
   }
 

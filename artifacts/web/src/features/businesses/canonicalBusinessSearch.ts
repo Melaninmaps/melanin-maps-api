@@ -85,6 +85,11 @@ export interface CanonicalBusinessSearchRecord {
   verified?: boolean | null;
   priceRange?: string | null;
   tags?: unknown;
+  communitySignals?: {
+    quickReviews?: Array<{ key: string; label: string; count: number }>;
+    communityVibes?: Array<{ key: string; label: string; count: number }>;
+    theReal?: Array<{ key: string; label: string; count: number }>;
+  };
 }
 
 function isCanonicalBusinessSearchRecord(

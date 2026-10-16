@@ -28,6 +28,12 @@ export interface Business {
   tags: string[];
   /** Founder-approved owner VIBE keys returned by the canonical directory. */
   vibes?: string[];
+  /** Aggregate member feedback, distinct from owner-provided profile VIBES. */
+  communitySignals?: {
+    quickReviews?: Array<{ key: string; label: string; count: number }>;
+    communityVibes?: Array<{ key: string; label: string; count: number }>;
+    theReal?: Array<{ key: string; label: string; count: number }>;
+  };
   phone?: string;
   website?: string;
   sourceUrl?: string;

@@ -25,7 +25,12 @@ import {
   normalizeOwnerExperienceKey,
   normalizeOwnershipDesignationFilterIds,
   ownershipDesignationStorageValues,
+  THE_REAL_DISPLAY_THRESHOLD,
 } from "@workspace/constants";
+import {
+  summarizeCommunitySignals,
+  type PublicCommunitySignalSummary,
+} from "../businesses/community-signal-summary";
 
 export type QueryPool = {
   query<T = Record<string, unknown>>(
@@ -86,6 +91,8 @@ export type GovernedKinfolkBusiness = Readonly<{
   audienceType: string | null;
   environmentTags: string[];
   amenityTags: string[];
+  /** Governed aggregate member signals, never an owner claim or rating. */
+  communitySignals?: PublicCommunitySignalSummary;
   /** Server-derived evidence for why this record matched the requested service. */
   matchReasons: string[];
   /** Administrator-supplied, source-backed context for a future recommendation. */
@@ -151,6 +158,8 @@ type BusinessRow = {
   audience_type: unknown;
   environment_tags: unknown;
   amenity_tags: unknown;
+  community_feedback_signals: unknown;
+  the_real_signals: unknown;
   kinfolk_recommendation_reason: unknown;
   research_source_url: unknown;
   research_source_label: unknown;
@@ -258,6 +267,29 @@ const CANONICAL_SELECT = `
   bi.audience_type,
   COALESCE(bi.environment_tags, '[]'::jsonb) AS environment_tags,
   COALESCE(bi.amenity_tags, '[]'::jsonb) AS amenity_tags,
+  COALESCE((
+    SELECT jsonb_agg(jsonb_build_object('kind', feedback.kind, 'key', feedback.key, 'count', feedback.count)
+      ORDER BY feedback.count DESC, feedback.key ASC)
+    FROM (
+      SELECT member_feedback.kind, member_feedback.key, COUNT(*)::int AS count
+      FROM public.business_member_feedback AS member_feedback
+      WHERE member_feedback.business_id::text = b.id::text
+        AND member_feedback.status = 'active'
+        AND member_feedback.is_load_test = FALSE
+      GROUP BY member_feedback.kind, member_feedback.key
+    ) AS feedback
+  ), '[]'::jsonb) AS community_feedback_signals,
+  COALESCE((
+    SELECT jsonb_agg(jsonb_build_object('tag_key', endorsement.tag_key, 'count', endorsement.count)
+      ORDER BY endorsement.count DESC, endorsement.tag_key ASC)
+    FROM (
+      SELECT tap.tag_key, COUNT(*)::int AS count
+      FROM public.business_endorsement_taps AS tap
+      WHERE tap.business_id::text = b.id::text
+      GROUP BY tap.tag_key
+      HAVING COUNT(*) >= ${THE_REAL_DISPLAY_THRESHOLD}
+    ) AS endorsement
+  ), '[]'::jsonb) AS the_real_signals,
   b.kinfolk_recommendation_reason,
   COALESCE((
     SELECT ownership_receipt.source_url
@@ -323,6 +355,20 @@ function stringArray(value: unknown): string[] {
   }
 }
 
+function objectArray(value: unknown): Record<string, unknown>[] {
+  if (Array.isArray(value))
+    return value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object");
+  if (typeof value !== "string") return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Stored profile values remain untouched, but Kinfolk may surface only VIBES
  * that the current founder taxonomy permits for the business category.
@@ -350,6 +396,29 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
   const longitude = numberOrNull(row.longitude);
   const category = text(row.category);
   const subcategory = nullableText(row.subcategory);
+  const id = text(row.id);
+  const communitySignals = summarizeCommunitySignals({
+    business: { id, category, subcategory },
+    feedback: objectArray(row.community_feedback_signals).flatMap((value) => (
+      value.kind === "vibe" || value.kind === "caption"
+        ? [{
+          business_id: id,
+          kind: value.kind,
+          key: typeof value.key === "string" ? value.key : "",
+          count: typeof value.count === "string" || typeof value.count === "number" ? value.count : 0,
+        }]
+        : []
+    )),
+    theReal: objectArray(row.the_real_signals).flatMap((value) => (
+      typeof value.tag_key === "string"
+        ? [{
+          business_id: id,
+          tag_key: value.tag_key,
+          count: typeof value.count === "string" || typeof value.count === "number" ? value.count : 0,
+        }]
+        : []
+    )),
+  });
   const hasMapCoordinate = hasTrustworthyMapCoordinate({
     city: row.city,
     stateCode: row.state_code,
@@ -357,7 +426,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     longitude,
   });
   return {
-    id: text(row.id),
+    id,
     name: text(row.name),
     category,
     subcategory,
@@ -399,6 +468,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     audienceType: nullableText(row.audience_type),
     environmentTags: stringArray(row.environment_tags),
     amenityTags: stringArray(row.amenity_tags),
+    communitySignals,
     matchReasons: [],
     recommendationContext: sanitizePublicListingCopyOrNull(
       row.kinfolk_recommendation_reason,

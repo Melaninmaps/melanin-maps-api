@@ -96,6 +96,11 @@ interface Business {
   verified?: boolean;
   claimed?: boolean;
   matchReasons?: string[];
+  communitySignals?: {
+    quickReviews?: Array<{ key: string; label: string; count: number }>;
+    communityVibes?: Array<{ key: string; label: string; count: number }>;
+    theReal?: Array<{ key: string; label: string; count: number }>;
+  };
 }
 interface ConversationalBusinessResultView {
   cards: Array<{
@@ -842,6 +847,10 @@ function ConversationalBusinessCards({ view }: { view: ConversationalBusinessRes
 
 function BusinessCard({ biz, onFeedback, feedback }: { biz: Business; onFeedback: (n: string, c: string, r: "like" | "dislike") => void; feedback: Record<string, "like" | "dislike"> }) {
   const reaction = feedback[biz.name];
+  const communitySignals = [
+    ...(biz.communitySignals?.quickReviews ?? []),
+    ...(biz.communitySignals?.theReal ?? []),
+  ].slice(0, 3);
   return (
     <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden shadow-sm">
       <div className="flex items-start gap-3 p-4">
@@ -860,6 +869,14 @@ function BusinessCard({ biz, onFeedback, feedback }: { biz: Business; onFeedback
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#7A4B16]">{businessTrustLabel(biz)}</p>
           {biz.matchReasons && biz.matchReasons.length > 0 && (
             <p className="mb-3 text-[11px] leading-relaxed text-[#3A1F0E]/65"><strong>Why it surfaced:</strong> {biz.matchReasons.join(" · ")}</p>
+          )}
+          {communitySignals.length > 0 && (
+            <section className="mb-3 border-l-2 border-[#CA922B]/45 pl-2.5" aria-label={`What the community says about ${biz.name}`}>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[#7A4B16]">What the community says</p>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {communitySignals.map((signal) => <span key={signal.key} className="rounded-full bg-[#FFF8EC] px-2 py-1 text-[10px] font-semibold text-[#5D3A12]">{signal.label} · {signal.count}</span>)}
+              </div>
+            </section>
           )}
           <div className="bg-[#FAF6EF] rounded-xl p-2.5 text-xs text-[#3A1F0E]/80 flex items-start gap-1.5 mb-3">
             <Info size={12} className="text-[#CA922B] shrink-0 mt-0.5" />

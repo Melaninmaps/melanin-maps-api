@@ -1981,3 +1981,64 @@ No merge, deploy, staging invocation, migration, production-data operation, or m
 | Web/iOS/Android member experience | **Not accepted.** No browser/device acceptance test, mobile build, staging run, or release was performed. |
 
 No additional Kinfolk development is opened by this disposition. Preserve the implementation, commits, tests, and evidence; return to the next already-authorized cumulative Mapping with Melanin/Kinfolk priority. No merge, integration, staging, deployment, migration, production-data change, mobile build, or new paid provider is authorized by this source-level acceptance.
+
+## Follow-up — polished Kinfolk entry and community-intelligent recommendations
+
+**Status: SOURCE REVIEW.** This focused source update responds to the requested polished answer format, minimal Kinfolk arrival, and governed business recommendation signals. It does not deploy, invoke staging, alter production data, run a migration, or create a mobile build.
+
+### Member-facing response presentation
+
+- **Web arrival:** the initial and returning arrival surface is now only **“Kinfolk here. Let’s map it out…”**. The decorative/boxed welcome content and capability prompt were removed from the chat entry surface. Existing conversation continuity remains available through the established conversation controls rather than competing with the greeting.
+- **Answer production:** Kinfolk preserves meaningful Markdown headings, paragraphs, ordered and nested bullets, bold emphasis, safe external hyperlinks, and copy-ready plaintext. Responses can therefore be clear in-app and practical to copy into an email, note, message, or another conversation.
+- **Formatting principle:** no rigid checklist format is imposed. Kinfolk uses headings, bullets, indentation, numbering, or paragraphs when the question warrants them; simple answers remain direct. This preserves the accepted response-depth and persona work rather than reopening it.
+- **Images and sources:** existing structured response cards, verified media links, and safe source links remain available only where the underlying response provides supported data. No decorative or invented image was added to a member answer.
+
+### Governed community recommendation signals
+
+Kinfolk now uses the existing signals without creating a replacement rating or tagging system:
+
+1. **Business profile data** remains the source for business name, category, subcategory, description, specialties, owner VIBES, ownership verification, and other owner-supplied facts.
+2. **Member community signals** are loaded as a distinct, governed summary:
+   - category-permitted community Quick Reviews;
+   - member-applied atmosphere VIBES, kept separate from owner VIBES; and
+   - threshold-qualified **The Real** signals, kept separate from both.
+3. Only active, non-load-test feedback is aggregated. Unknown, out-of-policy, price, and unqualified signals are not publicized as community claims.
+4. Directory, public business-profile, native business-card, and Kinfolk recommendation payloads receive the same governed summary. Web and native cards show a restrained **“What the community says”** section before a member opens a listing.
+5. Kinfolk ranking may use a matching governed signal as **supporting evidence** (for example, “Community feedback: Portions With Love”), while preserving the member’s current request, safety rules, ownership/verification rules, and documented business details as the governing constraints. Counts are not converted into star ratings or assumed wait times, service guarantees, or popularity claims.
+
+### Focused validation
+
+```bash
+# API
+cd artifacts/api-server
+pnpm exec vitest run \
+  src/businesses/__tests__/community-signal-summary.test.ts \
+  src/kinfolk/__tests__/business-result-view.test.ts
+pnpm exec vitest run \
+  src/kinfolk/__tests__/business-personalization.test.ts \
+  --testNamePattern='community signal|current request|saved preference|different explainable top result'
+pnpm typecheck
+
+# Web
+cd ../web
+pnpm exec vitest run \
+  src/__tests__/kinfolk-conversation-visuals.test.ts \
+  src/__tests__/canonical-business-search-ui.test.ts \
+  src/__tests__/kinfolk-chat-presentation.test.ts
+pnpm typecheck
+
+# Native
+cd ../mobile
+pnpm exec vitest run \
+  __tests__/business-discovery-contract.test.ts \
+  __tests__/kinfolk-business-demo.test.ts
+pnpm typecheck
+```
+
+**Result:** API focused community, result-view, and relevant personalization tests passed (**11 executed**); Web presentation and directory tests passed (**23**); native directory and Kinfolk-card tests passed (**24**); API, Web, and native TypeScript typechecks passed; `git diff --check` passed.
+
+### Release boundary
+
+- This is **source review only**.
+- No merge, deployment, staging invocation, migration, production-data modification, image-generation call, or mobile build was performed.
+- The live Mapping with Melanin website continues to show its currently deployed experience until this source work is included in a separately authorized release.

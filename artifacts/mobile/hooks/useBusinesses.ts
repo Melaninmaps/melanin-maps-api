@@ -46,6 +46,27 @@ interface UseBusinessByIdResult {
   error: string | null;
 }
 
+function mapCommunitySignals(value: unknown): Business["communitySignals"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const source = value as Record<string, unknown>;
+  const mapSignals = (raw: unknown) =>
+    Array.isArray(raw)
+      ? raw.flatMap((signal) => {
+          if (!signal || typeof signal !== "object" || Array.isArray(signal)) return [];
+          const record = signal as Record<string, unknown>;
+          const count = Number(record.count);
+          return typeof record.key === "string" && typeof record.label === "string" && Number.isFinite(count) && count > 0
+            ? [{ key: record.key, label: record.label, count }]
+            : [];
+        })
+      : [];
+  return {
+    quickReviews: mapSignals(source.quickReviews),
+    communityVibes: mapSignals(source.communityVibes),
+    theReal: mapSignals(source.theReal),
+  };
+}
+
 function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
   const socialProfiles =
     b.socialProfiles &&
@@ -102,6 +123,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
         : (b.longitude as number),
     tags: (b.tags as string[]) ?? [],
     vibes: Array.isArray(b.vibes) ? b.vibes.filter((value): value is string => typeof value === "string") : [],
+    communitySignals: mapCommunitySignals(b.communitySignals),
     reviews: (b.reviews as Business["reviews"]) ?? [],
     phone: b.phone as string | undefined,
     website: b.website as string | undefined,

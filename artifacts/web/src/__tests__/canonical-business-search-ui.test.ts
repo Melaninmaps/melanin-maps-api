@@ -69,6 +69,9 @@ describe("routed canonical business directory", () => {
     expect(directory).toContain("Search businesses by mood or occasion");
     expect(directory).toContain("Load more (");
     expect(directory).toContain("Unclaimed · Not verified");
+    expect(directory).toContain("What the community says");
+    expect(directory).toContain("record.communitySignals?.quickReviews");
+    expect(directory).toContain("record.communitySignals?.theReal");
     expect(directory).toContain(
       "Community-reported minority-owned · Not verified",
     );
@@ -83,6 +86,7 @@ describe("routed canonical business directory", () => {
     expect(api).toContain(
       "NOT (latitude::numeric = 0 AND longitude::numeric = 0)",
     );
+    expect(api).toContain("loadCommunitySignalSummaries");
   });
 
   it("maps owner claim status so community listings can be labeled unclaimed", () => {

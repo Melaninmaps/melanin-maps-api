@@ -211,6 +211,25 @@ function BusinessCard({
       {biz.matchReasons && biz.matchReasons.length > 0 && (
         <Text style={[bizStyles.matchReason, { color: colors.mutedForeground }]}>Why it surfaced: {biz.matchReasons.join(" · ")}</Text>
       )}
+      {(() => {
+        const communitySignals = [
+          ...(biz.communitySignals?.quickReviews ?? []),
+          ...(biz.communitySignals?.theReal ?? []),
+        ].slice(0, 3);
+        if (communitySignals.length === 0) return null;
+        return (
+          <View accessibilityLabel={`What the community says about ${biz.name}`} style={{ marginBottom: 10, borderLeftWidth: 2, borderLeftColor: GOLD + "99", paddingLeft: 9 }}>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: 0.55 }}>What the community says</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 5 }}>
+              {communitySignals.map((signal) => (
+                <View key={signal.key} style={{ backgroundColor: GOLD + "14", borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 }}>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: colors.text }}>{signal.label} · {signal.count}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        );
+      })()}
       <View style={[bizStyles.mustTry, { backgroundColor: GOLD + "14", borderColor: GOLD + "33" }]}>
         <Ionicons name="information-circle-outline" size={13} color={GOLD} />
         <Text style={[bizStyles.mustTryText, { color: colors.text }]}>

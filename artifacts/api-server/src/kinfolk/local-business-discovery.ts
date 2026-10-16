@@ -33,6 +33,7 @@ import {
 import { logRadiusDiscoveryTrace } from "./radius-discovery-trace";
 import { isMwmDiasporaPromotionEnabled } from "../businesses/mwmCoreDiscoveryPolicy";
 import { mayUseSourceBackedTagEvidence } from "./directory-taxonomy-v2";
+import type { PublicCommunitySignalSummary } from "../businesses/community-signal-summary";
 
 export type BusinessDiscoverySignalRepository = Readonly<{
   recordCoverageGap(input: {
@@ -71,6 +72,8 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
   isOnlineOnly?: boolean;
   /** Present only when the member supplied a verified public starting point. */
   distanceMiles?: number | null;
+  /** Aggregate community feedback, kept separate from owner-provided profile data. */
+  communitySignals?: PublicCommunitySignalSummary;
   matchReasons: string[];
   ownershipEvidence?: {
     sourceUrl: string;
@@ -123,6 +126,7 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
       isOnlineOnly: boolean;
       matchReasons: string[];
       ownershipEvidence: BusinessDiscoveryPlatformBusiness["ownershipEvidence"];
+      communitySignals?: PublicCommunitySignalSummary;
     }>;
     neighborhoods: [];
     events: [];
@@ -301,6 +305,7 @@ function platformBusiness(
     claimed: business.claimed,
     isOnlineOnly: business.isOnlineOnly === true,
     distanceMiles: business.distanceMiles,
+    communitySignals: business.communitySignals,
     matchReasons:
       "matchReasons" in business && Array.isArray(business.matchReasons)
         ? business.matchReasons.filter(
@@ -848,10 +853,11 @@ export async function discoverLocalBusinesses(input: {
               detailUrl: business.detailUrl,
               verified: business.verified,
     claimed: business.claimed,
-    isOnlineOnly: business.isOnlineOnly === true,
-    distanceMiles: business.distanceMiles,
-    matchReasons: business.matchReasons,
+              isOnlineOnly: business.isOnlineOnly === true,
+              distanceMiles: business.distanceMiles,
+              matchReasons: business.matchReasons,
               ownershipEvidence: business.ownershipEvidence,
+              communitySignals: business.communitySignals,
             })),
             neighborhoods: [],
             events: [],

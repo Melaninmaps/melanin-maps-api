@@ -21,6 +21,10 @@ const mapSource = readFileSync(
   decodeURIComponent(new URL("../components/FullMapView.tsx", import.meta.url).pathname),
   "utf8",
 );
+const businessCardSource = readFileSync(
+  decodeURIComponent(new URL("../components/BusinessCard.tsx", import.meta.url).pathname),
+  "utf8",
+);
 const locationShareSource = readFileSync(
   decodeURIComponent(new URL("../app/location-share.tsx", import.meta.url).pathname),
   "utf8",
@@ -96,5 +100,14 @@ describe("business discovery data contract", () => {
     expect(mapSource).toContain("View Business");
     expect(mapSource).toContain("openMapDirections(");
     expect(mapSource).toContain("Directions");
+  });
+
+  it("shows governed community signals on native business cards without treating them as ratings or owner claims", () => {
+    expect(hookSource).toContain("function mapCommunitySignals");
+    expect(hookSource).toContain("communitySignals: mapCommunitySignals(b.communitySignals)");
+    expect(businessCardSource).toContain("What the community says");
+    expect(businessCardSource).toContain("business.communitySignals?.quickReviews");
+    expect(businessCardSource).toContain("business.communitySignals?.theReal");
+    expect(businessCardSource).not.toContain("VIBE labels inferred from category");
   });
 });

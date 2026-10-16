@@ -34,6 +34,11 @@ export type TravelBusiness = {
   verified?: boolean;
   claimed?: boolean;
   matchReasons?: string[];
+  communitySignals?: {
+    quickReviews?: Array<{ key: string; label: string; count: number }>;
+    communityVibes?: Array<{ key: string; label: string; count: number }>;
+    theReal?: Array<{ key: string; label: string; count: number }>;
+  };
 };
 
 export type ConversationalBusinessResultView = {
