@@ -6,10 +6,7 @@ import {
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight, Volume2,
   Mic, MicOff, Square, ImagePlus, Archive, Pin, RotateCcw, Info,
 } from "lucide-react";
-import {
-  MwmHome, MwmPlane, MwmBriefcase, MwmStore,
-  MwmCommunity, MwmShield, MwmHeart, MwmGraduationCap,
-} from "@/components/icons/mwm-icons";
+import { MwmCommunity } from "@/components/icons/mwm-icons";
 import { Link } from "wouter";
 import { GoldFeatherMark } from "@/components/brand/GoldFeatherMark";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
@@ -29,6 +26,7 @@ import {
   hasItineraryDays,
   isSerializedItineraryContent,
   KinfolkAssistantText,
+  kinfolkCopyableText,
   KinfolkContextualContent,
   KinfolkItinerary as KinfolkItineraryRenderer,
   KinfolkSourceLinks,
@@ -333,61 +331,16 @@ const HUMOR_LEVELS = [{ id: "none", label: "Straightforward" }, { id: "light", l
 // PERMANENT — Do not remove or edit without explicit founder authorization.
 // These are stored here so they are never lost between sessions or deploys.
 
-/** The standard Kinfolk greeting for a first-time or new-session user. */
-export const KINFOLK_DEFAULT_GREETING =
-  "Hey! I'm Kinfolk — your community companion. I can help you find trusted businesses, " +
-  "keep you safe in unfamiliar places, connect you with your community, or just talk. " +
-  "What's on your mind?";
+/** The stable, uncluttered Kinfolk greeting for every new or returning session. */
+export const KINFOLK_DEFAULT_GREETING = "Kinfolk here — let's map it out.";
 
-/** Body-only version (heading "Hey! I'm Kinfolk." is shown separately). */
-const KINFOLK_DEFAULT_GREETING_BODY =
-  "I can help you find trusted businesses, keep you safe in unfamiliar places, " +
-  "connect you with your community, or just talk. What's on your mind?";
+/** Returning conversations remain in History; the entry greeting does not expose prior topics. */
+export const kinfolkReturningGreeting = (_firstName: string | null | undefined) => KINFOLK_DEFAULT_GREETING;
 
-/** Greeting for a returning user with no specific context. */
-export const kinfolkReturningGreeting = (firstName: string | null | undefined) =>
-  firstName ? `Welcome back, ${firstName}! What can I help with today?` : "Welcome back! What can I help with today?";
+/** The entry greeting remains stable even when a member has prior conversation history. */
+export const kinfolkReturningWithContext = (_firstName: string | null | undefined, _topic: string) => KINFOLK_DEFAULT_GREETING;
 
-/** Greeting for a returning user whose last session topic is known. */
-export const kinfolkReturningWithContext = (firstName: string | null | undefined, topic: string) =>
-  firstName
-    ? `Hey ${firstName}! Last time we talked about "${topic}." Want to pick up where we left off, or is there something new on your mind?`
-    : `Hey! Last time we talked about "${topic}." Want to pick up where we left off, or something new?`;
-
-/**
- * Primary life-category chips — MWM gold icon + label + tap-to-send prompt.
- * Mirrors the mobile LIFE_CHIPS. Not travel-only.
- * PERMANENT — do not remove without founder authorization.
- * Icons use the approved MWM visual language (stroke #CA922B, fill none, rounded).
- */
-const KINFOLK_LIFE_CHIPS: { Icon: React.ComponentType<{ size?: number; color?: string }>; label: string; prompt: string }[] = [
-  { Icon: MwmHome,          label: "I'm Moving",       prompt: "I'm thinking about relocating" },
-  { Icon: MwmPlane,         label: "I'm Traveling",    prompt: "I'm planning a trip" },
-  { Icon: MwmBriefcase,     label: "My Career",        prompt: "I need help with my career" },
-  { Icon: MwmStore,         label: "Find Businesses",  prompt: "Help me find minority-owned businesses near me" },
-  { Icon: MwmCommunity,     label: "Community",        prompt: "I want to connect with my community" },
-  { Icon: MwmShield,        label: "Stay Safe",        prompt: "I want to check safety info for my area" },
-  { Icon: MwmHeart,         label: "Healthcare",       prompt: "I need healthcare recommendations" },
-  { Icon: MwmGraduationCap, label: "Schools",          prompt: "I need help finding good schools" },
-];
-
-/**
- * Secondary example-prompt chips shown under "Or try asking:".
- * Mirrors the mobile WELCOME_CHIPS. PERMANENT.
- */
-const KINFOLK_EXAMPLE_CHIPS = [
-  "Where's good to eat in Atlanta?",
-  "Best minority-owned hotels in Houston",
-  "What's the vibe in New Orleans?",
-  "What should I know about Minneapolis?",
-  "Hidden gems in DC",
-  "Family spots in Chicago",
-  "Would my community like this city?",
-];
-
-// The opening line is deliberately stable. A member's chosen delivery mode and
-// first name may personalize a returning greeting, but random slogans should
-// not make Kinfolk feel like a different assistant on each visit.
+/** The opening line is deliberately stable and free of personalized history. */
 const KINFOLK_WELCOME_HEADLINE = "Kinfolk here — let's map it out.";
 
 // ─── Chip toggle helper ───────────────────────────────────────────────────────
@@ -2183,12 +2136,12 @@ function TravelPage() {
     navigator.clipboard.writeText(lines).then(() => { setCopyToast("Copied to clipboard!"); setTimeout(() => setCopyToast(null), 2500); });
   };
 
-  // Every Kinfolk answer is explicitly copyable. The control copies only the
-  // rendered answer — never session metadata, private-memory context, or a
-  // member's location input.
+  // Every Kinfolk answer is explicitly copyable. The control copies a clean
+  // text equivalent of the rendered answer — never session metadata,
+  // private-memory context, or a member's location input.
   const copyAnswer = (content: string) => {
     if (!content.trim()) return;
-    navigator.clipboard.writeText(content).then(
+    navigator.clipboard.writeText(kinfolkCopyableText(content)).then(
       () => { setCopyToast("Answer copied to clipboard"); setTimeout(() => setCopyToast(null), 2500); },
       () => { setCopyToast("Copy was unavailable — select the answer text instead."); setTimeout(() => setCopyToast(null), 3500); },
     );
@@ -2297,10 +2250,7 @@ function TravelPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#CA922B]/15 ring-1 ring-[#CA922B]/20">
             <Sparkles className="w-4 h-4 text-[#CA922B]" />
           </div>
-          <div>
-            <div className="font-serif text-base font-bold leading-tight text-white">KinfolkAI™</div>
-            <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-[#F5EBD8]/45">Conversation companion</div>
-          </div>
+          <div className="font-serif text-base font-bold leading-tight text-white">KinfolkAI™</div>
         </div>
         {isLoggedIn && (
           <div className="flex items-center gap-1.5">
@@ -2431,85 +2381,8 @@ function TravelPage() {
             <>
               <div ref={msgContainerRef} onScroll={handleConversationScroll} data-testid="kinfolk-conversation-scroll-region" className={`min-h-0 px-4 py-5 space-y-4 ${isEmpty ? "flex-none overflow-visible" : "flex-1 overflow-y-auto"}`}>
                 {isEmpty && (
-                  <section data-testid="kinfolk-conversation-welcome" aria-label="Start a Kinfolk conversation" className="mx-auto w-full max-w-3xl py-1 sm:py-3">
-                    <div className="rounded-3xl border border-[#3A1F0E]/8 bg-white p-4 shadow-[0_12px_36px_rgba(58,31,14,0.05)] sm:p-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#CA922B]/10 ring-1 ring-[#CA922B]/15">
-                          <Sparkles className="h-[18px] w-[18px] text-[#CA922B]" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8D5C17]">Start a conversation</p>
-                          <h2 className="mt-0.5 font-serif text-xl font-bold tracking-[-0.02em] text-[#2B1507] sm:text-2xl">
-                            {sessions.length > 0 && (authData?.user as { firstName?: string })?.firstName
-                              ? `Welcome back, ${(authData.user as { firstName?: string }).firstName}.`
-                              : sessions.length > 0
-                              ? "Welcome back."
-                              : KINFOLK_WELCOME_HEADLINE}
-                          </h2>
-                        </div>
-                      </div>
-                      <p className="mt-3 max-w-2xl text-sm leading-6 text-[#3A1F0E]/60">
-                        {sessions.length > 0 && sessions[0]?.title
-                          ? `Last time we talked about “${sessions[0].title}.” Pick up where you left off, or bring something new.`
-                          : sessions.length > 0
-                          ? "Bring a question, a decision, or a place you want to understand better."
-                          : KINFOLK_DEFAULT_GREETING_BODY}
-                      </p>
-                      {prefsLoaded && !hasPrefs && (
-                        <button onClick={() => setShowPrefs(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-1.5 text-xs font-semibold text-[#8D5C17] transition-colors hover:bg-[#CA922B]/10">
-                          <Settings size={12} /> Set a taste profile for personalized picks
-                        </button>
-                      )}
-                      {prefsLoaded && hasPrefs && (
-                        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-1.5 text-xs font-semibold text-[#8D5C17]">
-                          <Check size={12} /> Your taste profile is active for recommendations
-                        </p>
-                      )}
-
-                      <div className="mt-4 border-t border-[#3A1F0E]/8 pt-4">
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <p className="text-xs font-bold text-[#2B1507]">Start here</p>
-                          <span className="text-[11px] text-[#3A1F0E]/45">Or type anything below.</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {KINFOLK_LIFE_CHIPS.slice(0, 4).map(chip => (
-                            <button key={chip.label} onClick={() => send(chip.prompt)}
-                              className="group inline-flex items-center gap-2 rounded-xl border border-[#3A1F0E]/8 bg-[#FAF6EF] px-3 py-2 text-left text-xs font-semibold text-[#3A1F0E]/72 transition-colors hover:border-[#CA922B]/35 hover:bg-[#FFF8EC] hover:text-[#8D5C17]">
-                              <chip.Icon size={15} color="#CA922B" aria-hidden />
-                              <span>{chip.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                        <details className="group mt-3">
-                          <summary className="cursor-pointer list-none text-xs font-semibold text-[#8D5C17] marker:hidden">
-                            <span className="inline-flex items-center gap-1.5">More ways Kinfolk can help <ChevronRight size={12} className="transition-transform group-open:rotate-90" /></span>
-                          </summary>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {KINFOLK_LIFE_CHIPS.slice(4).map(chip => (
-                              <button key={chip.label} onClick={() => send(chip.prompt)}
-                                className="group inline-flex items-center gap-2 rounded-xl border border-[#3A1F0E]/8 bg-white px-3 py-2 text-left text-xs font-semibold text-[#3A1F0E]/72 transition-colors hover:border-[#CA922B]/35 hover:bg-[#FFF8EC] hover:text-[#8D5C17]">
-                                <chip.Icon size={15} color="#CA922B" aria-hidden />
-                                <span>{chip.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </details>
-                      </div>
-
-                      <details className="group mt-3">
-                        <summary className="cursor-pointer list-none text-xs font-semibold text-[#8D5C17] marker:hidden">
-                          <span className="inline-flex items-center gap-1.5">See example questions <ChevronRight size={12} className="transition-transform group-open:rotate-90" /></span>
-                        </summary>
-                        <div className="flex flex-wrap gap-2">
-                          {KINFOLK_EXAMPLE_CHIPS.map(chip => (
-                            <button key={chip} onClick={() => send(chip)}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#3A1F0E]/10 bg-white px-3 py-2 text-xs text-[#3A1F0E]/62 transition-colors hover:border-[#CA922B]/40 hover:text-[#8D5C17]">
-                              <ChevronRight size={10} className="shrink-0 text-[#CA922B]" />{chip}
-                            </button>
-                          ))}
-                        </div>
-                      </details>
-                    </div>
+                  <section data-testid="kinfolk-conversation-welcome" aria-label="Kinfolk greeting" className="mx-auto w-full max-w-3xl py-2 sm:py-4">
+                    <h1 className="font-serif text-xl font-bold tracking-[-0.02em] text-[#2B1507] sm:text-2xl">{KINFOLK_WELCOME_HEADLINE}</h1>
                   </section>
                 )}
 

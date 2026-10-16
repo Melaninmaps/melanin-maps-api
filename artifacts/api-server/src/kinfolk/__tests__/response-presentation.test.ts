@@ -69,6 +69,19 @@ describe("Kinfolk response presentation preferences", () => {
     })).toEqual({ responseLength: "adaptive", responseFormat: "adaptive", source: "default" });
   });
 
+  it("gives structured answers a safe, readable Markdown contract", () => {
+    const structured = buildKinfolkResponsePresentationPrompt({
+      responseLength: "balanced",
+      responseFormat: "structured",
+      source: "saved",
+    });
+
+    expect(structured).toContain("Use a number only for an actual order or sequence");
+    expect(structured).toContain("safe plain-text Markdown");
+    expect(structured).toContain("[descriptive link text](https://...)");
+    expect(structured).toContain("Never emit HTML");
+  });
+
   it("treats response length as a composition preference instead of a text cutoff", () => {
     const brief = buildKinfolkResponsePresentationPrompt({
       responseLength: "brief",

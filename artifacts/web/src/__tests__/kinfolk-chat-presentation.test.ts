@@ -11,6 +11,7 @@ import {
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
   KINFOLK_RESPONSE_STATUS_STAGES,
+  kinfolkCopyableText,
   responseStatusForElapsedTime,
   safeExternalSourceHref,
   safeLibraryHref,
@@ -42,14 +43,23 @@ describe("Kinfolk chat presentation", () => {
     );
   });
 
-  it("preserves assistant paragraph and list line breaks as safe plain text", () => {
-    const content = "A first paragraph.\n\n- First detail\n- Second detail";
+  it("renders headings, bold labels, lists, indentation, and sourced links without HTML", () => {
+    const content = "## A clear answer\n\nA first **important** paragraph with a [trusted source](https://example.org/source).\n\n- First detail\n  - Related detail\n1. First step\n2. Second step";
     const markup = renderToStaticMarkup(React.createElement(KinfolkAssistantText, { content }));
 
-    expect(markup).toContain("whitespace-pre-wrap");
-    expect(markup).toContain("break-words");
-    expect(markup).toContain(content);
+    expect(markup).toContain("A clear answer");
+    expect(markup).toContain("font-serif");
+    expect(markup).toContain("important");
+    expect(markup).toContain("<ul");
+    expect(markup).toContain("<ol");
+    expect(markup).toContain('href="https://example.org/source"');
+    expect(markup).toContain('target="_blank"');
     expect(markup).not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("copies structured answers as clear text with source URLs intact", () => {
+    expect(kinfolkCopyableText("## Plan\n\n**First:** Begin here\n- Check [the source](https://example.org/a)\n2) Confirm"))
+      .toBe("Plan\n\nFirst: Begin here\n• Check the source (https://example.org/a)\n2. Confirm");
   });
 
   it("uses only truthful elapsed-time status copy and never claims a search", () => {

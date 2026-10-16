@@ -120,14 +120,15 @@ export function buildKinfolkResponsePresentationPrompt(
   };
   const formatGuidance: Record<KinfolkResponseFormat, string> = {
     natural: "Use flowing natural conversational paragraphs as the primary shape. Preserve readable paragraph breaks and explain related decision factors in prose, not as a multi-section checklist. A single small descriptive heading, compact list, or short copyable script is appropriate only when the member explicitly asks for steps or an inherently sequential task would otherwise become unclear. Do not make an ordinary conversation primarily a roadmap, matrix, checklist, or repeated headings.",
-    structured: "Use descriptive headings, comparisons, or lists where they materially improve scanning; do not impose a business, academic, or checklist template on an unrelated question.",
-    adaptive: "Choose natural paragraphs or structure based on what makes this exact answer easiest to understand; do not add formatting as decoration.",
+    structured: "Use descriptive headings, comparisons, bullets, or numbered steps where they materially improve scanning. Use a number only for an actual order or sequence, and indent a related sub-point only when it clarifies the relationship. Do not impose a business, academic, or checklist template on an unrelated question.",
+    adaptive: "Choose natural paragraphs or structure based on what makes this exact answer easiest to understand. When structure helps, use a clear descriptive heading, bullet, or numbered sequence—not formatting as decoration.",
   };
   return `MEMBER RESPONSE PRESENTATION — ${presentation.source === "current_message" ? "CURRENT-TURN OVERRIDE" : presentation.source === "saved" ? "SAVED PREFERENCE" : "DEFAULT"}:
 - Response length: ${presentation.responseLength}. ${lengthGuidance[presentation.responseLength]}
 - Response format: ${presentation.responseFormat}. ${formatGuidance[presentation.responseFormat]}
 - This is not a rigid word, paragraph, section, or bullet limit. Simple questions stay direct even when Detailed is selected; complex, technical, educational, or safety-sensitive questions retain enough explanation even when Brief is selected.
 - The selected Kinfolk persona changes conversational tone, cadence, warmth, and framing—not capability, factual standards, research quality, or available response formats.
+- For a member-visible structured answer, use only safe plain-text Markdown: short # headings, **bold** labels, -, and 1. for real sequences. Use [descriptive link text](https://...) only for an exact, sourced public HTTPS link. Never emit HTML, raw URLs without useful link text, or invented sources.
 - A current instruction such as “keep it short,” “summarize that,” “give me the long version,” or “use headings” applies only to this reply and overrides the saved presentation preference.
 - This governs Kinfolk's direct commentary only. A standalone email, letter, resume, developer instruction, proposal, or other artifact follows its own audience, purpose, requested length, and format contract.`;
 }

@@ -8,23 +8,20 @@ const travelPageSource = readFileSync(
 );
 
 describe("web Kinfolk conversation-first visuals", () => {
-  it("keeps the first screen focused on a conversation without removing starting paths", () => {
+  it("keeps the first screen limited to the founder-approved Kinfolk greeting", () => {
     expect(travelPageSource).toContain('data-testid="kinfolk-conversation-welcome"');
-    expect(travelPageSource).toContain("Start a conversation");
     expect(travelPageSource).toContain("Kinfolk here — let's map it out.");
-    expect(travelPageSource).not.toContain("KINFOLK_WELCOME_HEADLINES");
-    expect(travelPageSource).toContain("Start here");
-    expect(travelPageSource).toContain("More ways Kinfolk can help");
-    expect(travelPageSource).toContain("See example questions");
-    expect(travelPageSource).toContain("KINFOLK_LIFE_CHIPS.slice(0, 4)");
-    expect(travelPageSource).toContain("KINFOLK_LIFE_CHIPS.slice(4)");
-    expect(travelPageSource).toContain("KINFOLK_EXAMPLE_CHIPS.map");
+    expect(travelPageSource).not.toContain("Welcome back,");
+    expect(travelPageSource).not.toContain("Start a conversation");
+    expect(travelPageSource).not.toContain("Start here");
+    expect(travelPageSource).not.toContain("More ways Kinfolk can help");
+    expect(travelPageSource).not.toContain("See example questions");
+    expect(travelPageSource).not.toContain("KINFOLK_LIFE_CHIPS");
+    expect(travelPageSource).not.toContain("KINFOLK_EXAMPLE_CHIPS");
+    expect(travelPageSource).not.toContain("Conversation companion");
     expect(travelPageSource).toContain('isEmpty ? "flex-none overflow-visible" : "flex-1 overflow-y-auto"');
-    expect(travelPageSource).toContain("inline-flex items-center gap-2 rounded-xl");
-    expect(travelPageSource).not.toContain("min-h-[50vh]");
-    expect(travelPageSource).not.toContain("min-h-20 flex-col");
-    expect(travelPageSource).not.toContain("grid grid-cols-4 gap-2 max-w-lg mb-5 w-full");
-    expect(travelPageSource).not.toContain('>Or try asking:</div>');
+    expect(travelPageSource).toContain('aria-label="Kinfolk greeting"');
+    expect(travelPageSource).not.toContain("rounded-3xl border border-[#3A1F0E]/8 bg-white p-4 shadow");
   });
 
   it("keeps history and explicit privacy controls available without an inline voice picker", () => {

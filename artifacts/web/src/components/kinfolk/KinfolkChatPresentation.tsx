@@ -86,14 +86,133 @@ export function safeLibraryHref(url: string): string | null {
   return /^\/library\/topics\/[A-Za-z0-9._~%-]+(?:#[A-Za-z0-9._~%-]+)?$/.test(url) ? url : null;
 }
 
+type KinfolkMessageBlock =
+  | { kind: "heading"; level: number; content: string }
+  | { kind: "paragraph"; content: string }
+  | { kind: "unordered"; items: Array<{ content: string; indent: number }> }
+  | { kind: "ordered"; items: Array<{ content: string; indent: number; ordinal: number }> };
+
+function renderKinfolkInline(content: string, keyPrefix: string): React.ReactNode[] {
+  const tokenPattern = /(\[[^\]\n]+\]\(https?:\/\/[^\s)]+\)|\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`)/g;
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  let index = 0;
+
+  for (const match of content.matchAll(tokenPattern)) {
+    const start = match.index ?? 0;
+    if (start > cursor) nodes.push(content.slice(cursor, start));
+    const token = match[0];
+    const link = token.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+    const bold = token.match(/^(?:\*\*|__)([^*_\n]+)(?:\*\*|__)$/);
+    const code = token.match(/^`([^`\n]+)`$/);
+    const key = `${keyPrefix}-${index++}`;
+    if (link) {
+      const href = safeExternalSourceHref(link[2]);
+      nodes.push(href ? <a key={key} href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#8D5C17] underline decoration-[#CA922B]/50 underline-offset-2 hover:text-[#CA922B]">{link[1]}</a> : link[1]);
+    } else if (bold) {
+      nodes.push(<strong key={key} className="font-bold text-[#2B1507]">{bold[1]}</strong>);
+    } else if (code) {
+      nodes.push(<code key={key} className="rounded bg-[#FAF6EF] px-1 py-0.5 font-mono text-[0.9em] text-[#3A1F0E]">{code[1]}</code>);
+    } else {
+      nodes.push(token);
+    }
+    cursor = start + token.length;
+  }
+  if (cursor < content.length) nodes.push(content.slice(cursor));
+  return nodes;
+}
+
+function indentation(value: string): number {
+  return Math.min(3, Math.floor(value.replace(/\t/g, "  ").length / 2));
+}
+
+function parseKinfolkMessageBlocks(content: string): KinfolkMessageBlock[] {
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const blocks: KinfolkMessageBlock[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line.trim()) { index += 1; continue; }
+
+    const heading = line.match(/^\s*(#{1,3})\s+(.+?)\s*#*\s*$/);
+    if (heading) {
+      blocks.push({ kind: "heading", level: heading[1].length, content: heading[2] });
+      index += 1;
+      continue;
+    }
+
+    const unordered = line.match(/^(\s*)[-*+•]\s+(.+)$/);
+    if (unordered) {
+      const items: Array<{ content: string; indent: number }> = [];
+      while (index < lines.length) {
+        const item = lines[index].match(/^(\s*)[-*+•]\s+(.+)$/);
+        if (!item) break;
+        items.push({ content: item[2], indent: indentation(item[1]) });
+        index += 1;
+      }
+      blocks.push({ kind: "unordered", items });
+      continue;
+    }
+
+    const ordered = line.match(/^(\s*)(\d+)[.)]\s+(.+)$/);
+    if (ordered) {
+      const items: Array<{ content: string; indent: number; ordinal: number }> = [];
+      while (index < lines.length) {
+        const item = lines[index].match(/^(\s*)(\d+)[.)]\s+(.+)$/);
+        if (!item) break;
+        items.push({ content: item[3], indent: indentation(item[1]), ordinal: Number(item[2]) });
+        index += 1;
+      }
+      blocks.push({ kind: "ordered", items });
+      continue;
+    }
+
+    const paragraph: string[] = [];
+    while (index < lines.length && lines[index].trim()) {
+      if (paragraph.length > 0 && /^(\s*#{1,3}\s+|\s*[-*+•]\s+|\s*\d+[.)]\s+)/.test(lines[index])) break;
+      paragraph.push(lines[index]);
+      index += 1;
+    }
+    blocks.push({ kind: "paragraph", content: paragraph.join("\n") });
+  }
+  return blocks;
+}
+
+/** Clean, link-preserving text for sharing a Kinfolk answer outside the app. */
+export function kinfolkCopyableText(content: string): string {
+  return content
+    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, "$1 ($2)")
+    .replace(/^([ \t]*)#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/gm, "$2")
+    .replace(/^(\s*)[-*+•]\s+(.+)$/gm, "$1• $2")
+    .replace(/^(\s*)(\d+)[)]\s+(.+)$/gm, "$1$2. $3")
+    .replace(/(?:\*\*|__)([^*_\n]+)(?:\*\*|__)/g, "$1")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .trim();
+}
+
 export function KinfolkAssistantText({ content }: { content: string }) {
+  const blocks = parseKinfolkMessageBlocks(content);
   return (
-    <p
+    <div
       data-testid="kinfolk-assistant-text"
-      className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-7"
+      className="break-words text-[15px] leading-7 [overflow-wrap:anywhere]"
     >
-      {content}
-    </p>
+      {blocks.map((block, blockIndex) => {
+        const key = `${block.kind}-${blockIndex}`;
+        if (block.kind === "heading") {
+          const Heading = block.level === 1 ? "h2" : block.level === 2 ? "h3" : "h4";
+          return <Heading key={key} className="mt-4 first:mt-0 font-serif text-base font-bold leading-6 text-[#2B1507]">{renderKinfolkInline(block.content, key)}</Heading>;
+        }
+        if (block.kind === "unordered") {
+          return <ul key={key} className="my-2 space-y-1.5 pl-5 marker:text-[#CA922B]">{block.items.map((item, itemIndex) => <li key={`${key}-${itemIndex}`} style={{ marginLeft: `${item.indent * 1.25}rem` }}>{renderKinfolkInline(item.content, `${key}-${itemIndex}`)}</li>)}</ul>;
+        }
+        if (block.kind === "ordered") {
+          return <ol key={key} className="my-2 space-y-1.5 pl-6 marker:font-semibold marker:text-[#8D5C17]">{block.items.map((item, itemIndex) => <li key={`${key}-${itemIndex}`} value={item.ordinal} style={{ marginLeft: `${item.indent * 1.25}rem` }}>{renderKinfolkInline(item.content, `${key}-${itemIndex}`)}</li>)}</ol>;
+        }
+        return <p key={key} className="mt-3 first:mt-0 whitespace-pre-wrap">{renderKinfolkInline(block.content, key)}</p>;
+      })}
+    </div>
   );
 }
 

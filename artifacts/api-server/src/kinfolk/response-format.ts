@@ -1,29 +1,18 @@
 /**
- * Kinfolk responses are rendered as plain text across web and mobile. This
- * converts accidental Markdown into the product's quiet bullet language
- * without interpreting untrusted text as HTML.
+ * Kinfolk replies travel as safe Markdown-like plain text. The web client
+ * renders a limited, trusted subset without ever interpreting HTML, while
+ * native and copied replies retain their clear text structure.
  */
 export function normalizeKinfolkMemberReply(value: string): string {
-  const bulletHeading = (label: string, trailing = "") => {
-    const cleanLabel = label.trim().replace(/:\s*$/, "");
-    const cleanTrailing = trailing.trim();
-    return `• ${cleanLabel}${cleanTrailing ? `: ${cleanTrailing}` : ""}`;
-  };
-
   return value
-    .replace(/^[ \t]*(?:\*\*|__)([^*_\n]+?)(?:\*\*|__):?[ \t]+(.+)$/gm, (_match, label: string, trailing: string) => bulletHeading(label, trailing))
-    .replace(/^[ \t]*(?:\*\*|__)([^*_\n]+?)(?:\*\*|__):?[ \t]*$/gm, (_match, label: string) => bulletHeading(label))
-    .replace(/^[ \t]{0,3}#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/gm, (_match, label: string) => bulletHeading(label))
-    // Conversational Kinfolk responses use one quiet, scan-friendly list style.
-    // Numbered sequences are reserved for an explicitly formal document, which
-    // follows its own formatter after this normalizer.
-    .replace(/^[ \t]*(?:•[ \t]*)?\d+[.)][ \t]+(.+)$/gm, "• $1")
-    .replace(/^[ \t]*[-*+][ \t]+(.+)$/gm, "• $1")
-    .replace(/\*\*([^*\n]+)\*\*/g, "$1")
-    .replace(/__([^_\n]+)__/g, "$1")
-    // A model can occasionally start emphasis without closing it. The markers
-    // are decorative in this interface, so omit the remaining literal tokens.
-    .replace(/\*\*|__/g, "")
+    // One bullet marker and one ordered-list separator prevent mixed model
+    // syntax without turning an intentional sequence into a generic bullet.
+    .replace(/^[ \t]*\*[ \t]+(.+)$/gm, "- $1")
+    .replace(/^[ \t]*(\d+)[)][ \t]+(.+)$/gm, "$1. $2")
+    .replace(/^[ \t]*•[ \t]*(\d+)[.)][ \t]+(.+)$/gm, "$1. $2")
+    // A model can occasionally start emphasis without closing it. Remove only
+    // the unpaired marker; paired emphasis stays available to the renderer.
+    .replace(/^(?:\*\*|__)([^*_\n]*)$/gm, "$1")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

@@ -8,9 +8,10 @@ const source = readFileSync(`${root}/artifacts/web/src/pages/travel.tsx`, "utf8"
 describe("Kinfolk web answer copy contract", () => {
   it("offers a copy action for every rendered assistant answer without copying private metadata", () => {
     expect(source).toContain("const copyAnswer = (content: string)");
-    expect(source).toContain("navigator.clipboard.writeText(content)");
+    expect(source).toContain("navigator.clipboard.writeText(kinfolkCopyableText(content))");
     expect(source).toContain('aria-label="Copy this Kinfolk answer"');
-    expect(source).toContain("never session metadata, private-memory context");
+    expect(source).toContain("never session metadata");
+    expect(source).toContain("private-memory context");
   });
 
   it("retains and confirms server-proposed Kinfolk reminders", () => {
