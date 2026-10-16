@@ -19,6 +19,12 @@ export const meetupVerificationsTable = pgTable("meetup_verifications", {
   rescheduleRequestedAt: timestamp("reschedule_requested_at"),
   rescheduleNote: varchar("reschedule_note", { length: 300 }),
   consentAcknowledgedAt: timestamp("consent_acknowledged_at"),
+  // Each participant explicitly acknowledges the other participant's current
+  // identity-status signal. These are not verification results or safety scores.
+  initiatorIdentityAcknowledgedAt: timestamp("initiator_identity_acknowledged_at"),
+  initiatorIdentityStatusAcknowledged: varchar("initiator_identity_status_acknowledged", { length: 32 }),
+  partnerIdentityAcknowledgedAt: timestamp("partner_identity_acknowledged_at"),
+  partnerIdentityStatusAcknowledged: varchar("partner_identity_status_acknowledged", { length: 32 }),
   policyVersion: varchar("policy_version", { length: 64 }),
   expiresAt: timestamp("expires_at").notNull(),
   retentionDeleteAt: timestamp("retention_delete_at"),

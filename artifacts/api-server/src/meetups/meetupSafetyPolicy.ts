@@ -1,13 +1,11 @@
-export const MEETUP_SAFETY_POLICY_VERSION = "consent_first_meetups_v1";
+export const MEETUP_SAFETY_POLICY_VERSION = "consent_first_adult_identity_transparency_v2";
 export const MEETUP_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 
 export type MeetupAgeBand = "unknown" | "13_15" | "16_17" | "18_plus";
 export type MeetupEligibilityCode =
   | "eligible_adult"
-  | "eligible_guardian_approved"
   | "age_assurance_required"
-  | "under_16_not_available"
-  | "guardian_approval_required";
+  | "minor_not_available";
 
 export type MeetupEligibility = {
   allowed: boolean;
@@ -17,7 +15,6 @@ export type MeetupEligibility = {
 
 export function resolveMeetupEligibility(
   ageBand: MeetupAgeBand,
-  hasGuardianApproval: boolean,
 ): MeetupEligibility {
   if (ageBand === "18_plus") {
     return {
@@ -27,27 +24,11 @@ export function resolveMeetupEligibility(
     };
   }
 
-  if (ageBand === "16_17" && hasGuardianApproval) {
-    return {
-      allowed: true,
-      code: "eligible_guardian_approved",
-      message: "Meetup Verification is available with recorded guardian approval.",
-    };
-  }
-
-  if (ageBand === "16_17") {
+  if (ageBand === "16_17" || ageBand === "13_15") {
     return {
       allowed: false,
-      code: "guardian_approval_required",
-      message: "Meetup Verification requires recorded guardian approval for members ages 16–17.",
-    };
-  }
-
-  if (ageBand === "13_15") {
-    return {
-      allowed: false,
-      code: "under_16_not_available",
-      message: "Meetup Verification is not available to members under 16.",
+      code: "minor_not_available",
+      message: "Meetup Verification is currently available only to members confirmed as 18+. A minor-specific safety design has not been approved.",
     };
   }
 

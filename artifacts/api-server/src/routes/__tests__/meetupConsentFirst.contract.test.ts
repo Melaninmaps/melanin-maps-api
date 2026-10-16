@@ -6,11 +6,12 @@ const routeSource = readFileSync(resolve(process.cwd(), "src/routes/meetup-verif
 const cronSource = readFileSync(resolve(process.cwd(), "src/routes/cron.ts"), "utf8");
 
 describe("consent-first meetup route contract", () => {
-  it("requires adult/guardian eligibility, an accepted connection, consent, and safety restrictions", () => {
+  it("requires adult eligibility, an accepted connection, consent, and safety restrictions", () => {
     expect(routeSource).toContain("getMeetupEligibility(userId)");
     expect(routeSource).toContain("requireAcceptedConnection(userId, normalizedPartnerId, connectionId)");
     expect(routeSource).toContain("meetupRestrictedBetween(userId, normalizedPartnerId)");
     expect(routeSource).toContain("acknowledgedSafetyNotice !== true");
+    expect(routeSource).not.toContain("minor_meetup_guardian_approvals");
   });
 
   it("accepts only existing accepted Safety Hub contacts and retires ad-hoc sharing", () => {
@@ -58,5 +59,12 @@ describe("consent-first meetup route contract", () => {
     expect(routeSource).toContain('router.patch("/admin/meetups/safety-reports"');
     expect(routeSource).toContain("requireAdmin(req, res)");
     expect(routeSource).toContain("action !== \"restrict\" && action !== \"dismiss\"");
+  });
+
+  it("uses the existing identity verification signal and requires a fresh status acknowledgment", () => {
+    expect(routeSource).toContain("buildMeetupIdentityTransparency");
+    expect(routeSource).toContain("acknowledgedPartnerIdentityStatus");
+    expect(routeSource).toContain("identityAcknowledgmentMatches");
+    expect(routeSource).toContain("partnerIdentityAcknowledgedAt");
   });
 });

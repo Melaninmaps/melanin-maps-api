@@ -71,6 +71,15 @@ type MeetupVerification = {
   homeCheckAt: string | null;
   homeCheckedAt: string | null;
   homeCheckStatus: string | null;
+  initiatorIdentity: MeetupIdentityTransparency;
+  partnerIdentity: MeetupIdentityTransparency;
+};
+
+type MeetupIdentityTransparency = {
+  status: "verified" | "not_verified" | "unavailable";
+  memberSince: string | null;
+  verifiedAt: string | null;
+  message: string;
 };
 
 type TrustedSafetyContact = {
@@ -127,6 +136,9 @@ export default function MemberConnectionsScreen() {
   const [trustedContacts, setTrustedContacts] = useState<TrustedSafetyContact[]>([]);
   const [selectedTrustedContactId, setSelectedTrustedContactId] = useState<string | null>(null);
   const [safetyAcknowledged, setSafetyAcknowledged] = useState(false);
+  const [partnerIdentity, setPartnerIdentity] = useState<MeetupIdentityTransparency | null>(null);
+  const [identityAcknowledged, setIdentityAcknowledged] = useState(false);
+  const [confirmedIdentityAcknowledgments, setConfirmedIdentityAcknowledgments] = useState<Set<number>>(new Set());
   const [meetupEligibility, setMeetupEligibility] = useState<MeetupEligibility | null>(null);
   const [sending, setSending] = useState(false);
 
@@ -177,6 +189,32 @@ export default function MemberConnectionsScreen() {
 
   useEffect(() => { queueMicrotask(() => { void fetchData(); }); }, [fetchData]);
 
+  const openMeetupPlanner = async (connection: Connection) => {
+    setSelectedConn(connection);
+    setPartnerIdentity(null);
+    setIdentityAcknowledged(false);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(
+        `${getApiBase()}/api/meetups/partner-check?partnerId=${encodeURIComponent(connection.otherId)}&connectionId=${encodeURIComponent(String(connection.id))}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+      );
+      if (response.ok) {
+        const data = await response.json() as { identity?: MeetupIdentityTransparency };
+        setPartnerIdentity(data.identity ?? null);
+      }
+    } catch {
+      // The server requires a current status at submission; show unavailable
+      // locally rather than inferring identity details from another field.
+      setPartnerIdentity({
+        status: "unavailable",
+        memberSince: null,
+        verifiedAt: null,
+        message: "Identity verification status is currently unavailable to confirm. This is not a safety judgment.",
+      });
+    }
+  };
+
   const sendMeetupRequest = async () => {
     if (!selectedConn) return;
 
@@ -188,21 +226,10 @@ export default function MemberConnectionsScreen() {
       Alert.alert("Review required", "Acknowledge the safety notice before sending a meetup request.");
       return;
     }
-
-    // An optional identity signal is informational only. It never decides who
-    // may use the feature, and the server remains the source of truth.
-    try {
-      const preToken = await SecureStore.getItemAsync("auth_session_token");
-      const checkRes = await fetch(`${getApiBase()}/api/meetups/partner-check?partnerId=${encodeURIComponent(selectedConn.otherId)}&connectionId=${encodeURIComponent(String(selectedConn.id))}`, {
-        headers: preToken ? { Authorization: `Bearer ${preToken}` } : {},
-      });
-      if (checkRes.ok) {
-        const checkData = await checkRes.json() as { identitySignal?: string; message?: string };
-        if (checkData.identitySignal === "community_verified") {
-          Alert.alert("Community Verified", checkData.message ?? "This is an informational identity signal, not a safety guarantee.");
-        }
-      }
-    } catch { /* Server-side checks remain mandatory on request submission. */ }
+    if (!partnerIdentity || !identityAcknowledged) {
+      Alert.alert("Review required", "Review and acknowledge the connection's current identity-verification status before sending a meetup request.");
+      return;
+    }
 
     setSending(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -220,6 +247,7 @@ export default function MemberConnectionsScreen() {
         arrivalCheckAt: arrivalMinutes != null ? new Date(Date.now() + arrivalMinutes * 60000).toISOString() : undefined,
         homeCheckAt: homeMinutes != null ? new Date(Date.now() + homeMinutes * 60000).toISOString() : undefined,
         acknowledgedSafetyNotice: true,
+        acknowledgedPartnerIdentityStatus: partnerIdentity.status,
       };
       const res = await fetch(`${getApiBase()}/api/meetups`, {
         method: "POST",
@@ -245,18 +273,27 @@ export default function MemberConnectionsScreen() {
     } finally { setSending(false); }
   };
 
-  const confirmMeetup = async (id: number) => {
+  const confirmMeetup = async (meetup: MeetupVerification) => {
+    if (!confirmedIdentityAcknowledgments.has(meetup.id)) {
+      Alert.alert("Review required", "Review and acknowledge the requester's current identity-verification status before confirming.");
+      return;
+    }
     if (confirmingId !== null) return;
-    setConfirmingId(id);
+    setConfirmingId(meetup.id);
     try {
       if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${getApiBase()}/api/meetups/${id}/confirm`, {
-        method: "PATCH", headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`${getApiBase()}/api/meetups/${meetup.id}/respond`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "confirm",
+          acknowledgedPartnerIdentityStatus: meetup.initiatorIdentity.status,
+        }),
       });
       const d = await res.json() as { verification?: MeetupVerification; error?: string };
       if (res.ok && d.verification) {
-        setMeetups((prev) => prev.map((m) => m.id === id ? d.verification! : m));
+        setMeetups((prev) => prev.map((m) => m.id === meetup.id ? { ...m, ...d.verification! } : m));
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
         Alert.alert("Error", d.error ?? "Failed to confirm meetup.");
@@ -280,7 +317,7 @@ export default function MemberConnectionsScreen() {
       });
       const d = await res.json() as { verification?: MeetupVerification; error?: string };
       if (res.ok && d.verification) {
-        setMeetups((prev) => prev.map((m) => m.id === id ? d.verification! : m));
+        setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, ...d.verification! } : m));
         Alert.alert(
           action === "decline" ? "Meetup Declined" : "Reschedule Requested",
           action === "decline" ? "The request has been declined." : "The other member can now share new optional public-meeting details.",
@@ -310,7 +347,7 @@ export default function MemberConnectionsScreen() {
               });
               const data = await res.json() as { verification?: MeetupVerification; error?: string };
               if (!res.ok || !data.verification) throw new Error(data.error ?? "Could not cancel meetup request.");
-              setMeetups((prev) => prev.map((meetup) => meetup.id === id ? data.verification! : meetup));
+              setMeetups((prev) => prev.map((meetup) => meetup.id === id ? { ...meetup, ...data.verification! } : meetup));
               if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch (error) {
               Alert.alert("Could not cancel", error instanceof Error ? error.message : "Please try again.");
@@ -354,7 +391,7 @@ export default function MemberConnectionsScreen() {
       });
       const d = await res.json() as { verification?: MeetupVerification; error?: string };
       if (res.ok && d.verification) {
-        setMeetups((prev) => prev.map((m) => m.id === id ? d.verification! : m));
+        setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, ...d.verification! } : m));
         Alert.alert("Arrival Confirmed", "Your arrival check-in is confirmed. Your selected trusted contact will not be alerted.");
       } else {
         Alert.alert("Error", d.error ?? "Failed to confirm arrival.");
@@ -374,7 +411,7 @@ export default function MemberConnectionsScreen() {
       });
       const d = await res.json() as { verification?: MeetupVerification; error?: string };
       if (res.ok && d.verification) {
-        setMeetups((prev) => prev.map((m) => m.id === id ? d.verification! : m));
+        setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, ...d.verification! } : m));
         Alert.alert("Home Safe ✓", "Your home check-in is confirmed. Stay safe out there!");
       } else {
         Alert.alert("Error", d.error ?? "Failed to confirm home check-in.");
@@ -385,6 +422,8 @@ export default function MemberConnectionsScreen() {
 
   const resetModal = () => {
     setSelectedConn(null);
+    setPartnerIdentity(null);
+    setIdentityAcknowledged(false);
     setMeetupCity("");
     setMeetupLocation("");
     setScheduledAt("");
@@ -419,6 +458,12 @@ export default function MemberConnectionsScreen() {
 
   const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  const identityStatusLabel = (identity: MeetupIdentityTransparency) => {
+    if (identity.status === "verified") return "Identity Verified";
+    if (identity.status === "not_verified") return "Identity verification not complete";
+    return "Identity verification currently unavailable";
+  };
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -461,13 +506,34 @@ export default function MemberConnectionsScreen() {
                       <Text style={[styles.requestMeta, { color: "#6B7280" }]}>
                         Sent {formatDateTime(m.initiatedAt)}
                       </Text>
+                      <View style={[styles.privacyNote, { marginTop: 8, backgroundColor: "#FFFFFF", borderColor: "#BFDBFE" }]}>
+                        <Feather name={m.initiatorIdentity.status === "verified" ? "check-circle" : "info"} size={14} color="#1D4ED8" />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.privacyNoteText, { color: "#1E3A8A" }]}>{identityStatusLabel(m.initiatorIdentity)}</Text>
+                          {m.initiatorIdentity.memberSince && <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>Member since {formatDate(m.initiatorIdentity.memberSince)}</Text>}
+                          {m.initiatorIdentity.verifiedAt && <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>Verified {formatDate(m.initiatorIdentity.verifiedAt)}</Text>}
+                          <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>{m.initiatorIdentity.message}</Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
+                  <TouchableOpacity
+                    onPress={() => setConfirmedIdentityAcknowledgments((current) => {
+                      const next = new Set(current);
+                      if (next.has(m.id)) next.delete(m.id); else next.add(m.id);
+                      return next;
+                    })}
+                    style={[styles.privacyNote, { marginTop: 10, backgroundColor: confirmedIdentityAcknowledgments.has(m.id) ? "#16A34A10" : "#FFF7ED", borderColor: confirmedIdentityAcknowledgments.has(m.id) ? "#16A34A40" : "#FB923C50" }]}
+                    activeOpacity={0.75}
+                  >
+                    <Feather name={confirmedIdentityAcknowledgments.has(m.id) ? "check-square" : "square"} size={16} color={confirmedIdentityAcknowledgments.has(m.id) ? "#16A34A" : "#C2410C"} />
+                    <Text style={[styles.privacyNoteText, { color: colors.foreground, flex: 1 }]}>I reviewed this member's current identity-verification status. It is informational and not a safety guarantee.</Text>
+                  </TouchableOpacity>
                   <View style={{ flexDirection: "row", gap: 8 }}>
                     <TouchableOpacity
                       style={[styles.confirmBtn, { flex: 1, opacity: confirmingId === m.id ? 0.6 : 1 }]}
-                      onPress={() => void confirmMeetup(m.id)}
-                      disabled={confirmingId !== null}
+                      onPress={() => void confirmMeetup(m)}
+                      disabled={confirmingId !== null || !confirmedIdentityAcknowledgments.has(m.id)}
                       activeOpacity={0.85}
                     >
                       {confirmingId === m.id ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="check" size={14} color="#fff" />}
@@ -712,7 +778,7 @@ export default function MemberConnectionsScreen() {
                       <TouchableOpacity
                         style={styles.verifyBtn}
                         onPress={() => {
-                          setSelectedConn(c);
+                          void openMeetupPlanner(c);
                           setMeetupCity("");
                           setMeetupLocation("");
                           setScheduledAt("");
@@ -758,9 +824,25 @@ export default function MemberConnectionsScreen() {
                     <Text style={[styles.modalInfoText, { color: colors.foreground }]}>
                       Sending a verification request to{" "}
                       <Text style={{ fontFamily: "Inter_700Bold" }}>{connName(selectedConn)}</Text>.
-                      Once they confirm, you&apos;re both marked as verified.
+                      Either member can decline or cancel at any time. Meetup Verification is not a safety guarantee.
                     </Text>
                   </View>
+
+                  {partnerIdentity ? (
+                    <View style={[styles.watcherSection, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
+                      <View style={styles.watcherSectionHeader}>
+                        <Feather name={partnerIdentity.status === "verified" ? "check-circle" : "info"} size={14} color="#1D4ED8" />
+                        <Text style={[styles.watcherSectionTitle, { color: "#1D4ED8" }]}>{identityStatusLabel(partnerIdentity)}</Text>
+                      </View>
+                      {partnerIdentity.memberSince && <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>Member since {formatDate(partnerIdentity.memberSince)}</Text>}
+                      {partnerIdentity.verifiedAt && <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>Identity verified {formatDate(partnerIdentity.verifiedAt)}</Text>}
+                      <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>{partnerIdentity.message}</Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.watcherSection, { backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }]}>
+                      <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>Loading the connection&apos;s current identity-verification status…</Text>
+                    </View>
+                  )}
 
                   <Text style={[styles.modalLabel, { color: colors.foreground }]}>City or area (optional)</Text>
                   <TextInput
@@ -907,9 +989,19 @@ export default function MemberConnectionsScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.sendBtn, { opacity: (sending || !safetyAcknowledged || !meetupEligibility?.allowed) ? 0.6 : 1 }]}
+                    onPress={() => setIdentityAcknowledged((value) => !value)}
+                    disabled={!partnerIdentity}
+                    style={[styles.privacyNote, { backgroundColor: identityAcknowledged ? "#16A34A10" : "#EFF6FF", borderColor: identityAcknowledged ? "#16A34A40" : "#BFDBFE", opacity: partnerIdentity ? 1 : 0.55 }]}
+                    activeOpacity={0.75}
+                  >
+                    <Feather name={identityAcknowledged ? "check-square" : "square"} size={16} color={identityAcknowledged ? "#16A34A" : "#1D4ED8"} />
+                    <Text style={[styles.privacyNoteText, { color: colors.foreground, flex: 1 }]}>I reviewed this member&apos;s current identity-verification status. It is informational and not a safety guarantee.</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.sendBtn, { opacity: (sending || !safetyAcknowledged || !identityAcknowledged || !partnerIdentity || !meetupEligibility?.allowed) ? 0.6 : 1 }]}
                     onPress={() => void sendMeetupRequest()}
-                    disabled={sending || !safetyAcknowledged || !meetupEligibility?.allowed}
+                    disabled={sending || !safetyAcknowledged || !identityAcknowledged || !partnerIdentity || !meetupEligibility?.allowed}
                     activeOpacity={0.85}
                   >
                     {sending ? (

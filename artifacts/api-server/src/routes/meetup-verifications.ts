@@ -20,6 +20,11 @@ import {
   validateMeetingPlace,
   type MeetupAgeBand,
 } from "../meetups/meetupSafetyPolicy";
+import {
+  buildMeetupIdentityTransparency,
+  identityAcknowledgmentMatches,
+  type MeetupIdentityStatus,
+} from "../meetups/meetupIdentityTransparency";
 
 const router: IRouter = Router();
 const MAX_MEETUP_NOTE_LENGTH = 500;
@@ -51,6 +56,35 @@ function numericId(value: unknown): number | null {
 
 function serializedVerification<T extends { clearCode?: string | null }>(verification: T) {
   return { ...verification, hasClearCode: Boolean(verification.clearCode), clearCode: undefined };
+}
+
+function serializedMeetupWithIdentity(
+  verification: Record<string, unknown> & { clearCode?: string | null },
+) {
+  const initiatorIdentity = buildMeetupIdentityTransparency({
+    identityVerified: verification.initiatorIdentityVerified as boolean | null | undefined,
+    identityVerifiedAt: verification.initiatorIdentityVerifiedAt as Date | string | null | undefined,
+    memberSince: verification.initiatorMemberSince as Date | string | null | undefined,
+  });
+  const partnerIdentity = buildMeetupIdentityTransparency({
+    identityVerified: verification.partnerIdentityVerified as boolean | null | undefined,
+    identityVerifiedAt: verification.partnerIdentityVerifiedAt as Date | string | null | undefined,
+    memberSince: verification.partnerMemberSince as Date | string | null | undefined,
+  });
+  const {
+    initiatorIdentityVerified: _initiatorIdentityVerified,
+    initiatorIdentityVerifiedAt: _initiatorIdentityVerifiedAt,
+    initiatorMemberSince: _initiatorMemberSince,
+    partnerIdentityVerified: _partnerIdentityVerified,
+    partnerIdentityVerifiedAt: _partnerIdentityVerifiedAt,
+    partnerMemberSince: _partnerMemberSince,
+    ...publicVerification
+  } = verification;
+  return {
+    ...serializedVerification(publicVerification),
+    initiatorIdentity,
+    partnerIdentity,
+  };
 }
 
 function invalidRequest(res: Response, error: unknown): void {
@@ -87,22 +121,32 @@ type TrustedSafetyContact = {
 async function getMeetupEligibility(userId: string) {
   const result = await pool.query<{
     age_band: MeetupAgeBand | null;
-    guardian_approved: boolean;
   }>(
-    `SELECT COALESCE(uaa.age_band, 'unknown') AS age_band,
-            EXISTS(
-              SELECT 1
-              FROM minor_meetup_guardian_approvals mga
-              WHERE mga.user_id = $1
-                AND mga.revoked_at IS NULL
-            ) AS guardian_approved
+    `SELECT COALESCE(uaa.age_band, 'unknown') AS age_band
        FROM users u
        LEFT JOIN user_age_assurance uaa ON uaa.user_id = u.id
       WHERE u.id = $1`,
     [userId],
   );
-  const row = result.rows[0] ?? { age_band: "unknown" as const, guardian_approved: false };
-  return resolveMeetupEligibility(row.age_band ?? "unknown", row.guardian_approved);
+  const row = result.rows[0] ?? { age_band: "unknown" as const };
+  return resolveMeetupEligibility(row.age_band ?? "unknown");
+}
+
+async function getMeetupIdentityTransparency(userId: string) {
+  const [user] = await db
+    .select({
+      identityVerified: usersTable.identityVerified,
+      identityVerifiedAt: usersTable.identityVerifiedAt,
+      memberSince: usersTable.createdAt,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+  return buildMeetupIdentityTransparency({
+    identityVerified: user?.identityVerified,
+    identityVerifiedAt: user?.identityVerifiedAt,
+    memberSince: user?.memberSince,
+  });
 }
 
 async function getTrustedSafetyContacts(ownerId: string): Promise<TrustedSafetyContact[]> {
@@ -265,10 +309,14 @@ router.get("/meetups", async (req: Request, res: Response) => {
         initiatorLastName: initiatorUser.lastName,
         initiatorUsername: initiatorUser.username,
         initiatorIdentityVerified: initiatorUser.identityVerified,
+        initiatorIdentityVerifiedAt: initiatorUser.identityVerifiedAt,
+        initiatorMemberSince: initiatorUser.createdAt,
         partnerFirstName: partnerUser.firstName,
         partnerLastName: partnerUser.lastName,
         partnerUsername: partnerUser.username,
         partnerIdentityVerified: partnerUser.identityVerified,
+        partnerIdentityVerifiedAt: partnerUser.identityVerifiedAt,
+        partnerMemberSince: partnerUser.createdAt,
         watcherFirstName: watcherUser.firstName,
         watcherLastName: watcherUser.lastName,
         watcherUsername: watcherUser.username,
@@ -285,7 +333,7 @@ router.get("/meetups", async (req: Request, res: Response) => {
       .orderBy(desc(meetupVerificationsTable.initiatedAt))
       .limit(50);
 
-    res.json({ verifications: verifications.map(serializedVerification) });
+    res.json({ verifications: verifications.map(serializedMeetupWithIdentity) });
   } catch (err) {
     req.log.error({ err }, "GET /meetups error");
     res.status(500).json({ error: "Failed to load meetups" });
@@ -316,17 +364,18 @@ router.get("/meetups/partner-check", async (req: Request, res: Response) => {
         lastName: usersTable.lastName,
         username: usersTable.username,
         identityVerified: usersTable.identityVerified,
+        identityVerifiedAt: usersTable.identityVerifiedAt,
+        memberSince: usersTable.createdAt,
       })
       .from(usersTable)
       .where(eq(usersTable.id, partnerId))
       .limit(1);
     if (!user) { res.status(404).json({ error: "Connection is unavailable" }); return; }
+    const identity = buildMeetupIdentityTransparency(user);
     res.json({
       displayName: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Community Member",
-      identitySignal: user.identityVerified ? "community_verified" : "not_shown",
-      message: user.identityVerified
-        ? "This member has a Community Verified identity signal. It is informational, not a safety guarantee."
-        : "Identity signals are optional and are not used to decide who can request a meetup.",
+      identity,
+      message: identity.message,
     });
   } catch (err) {
     req.log.error({ err }, "GET /meetups/partner-check error");
@@ -352,6 +401,7 @@ router.post("/meetups", async (req: Request, res: Response) => {
       arrivalCheckAt: rawArrivalCheckAt,
       homeCheckAt: rawHomeCheckAt,
       acknowledgedSafetyNotice,
+      acknowledgedPartnerIdentityStatus,
     } = req.body as Record<string, unknown>;
 
     if (typeof partnerId !== "string" || !partnerId.trim()) {
@@ -374,6 +424,14 @@ router.post("/meetups", async (req: Request, res: Response) => {
     }
     if (await meetupRestrictedBetween(userId, normalizedPartnerId)) {
       res.status(403).json({ error: "Meetup Verification is unavailable for this connection." }); return;
+    }
+    const partnerIdentity = await getMeetupIdentityTransparency(normalizedPartnerId);
+    if (!identityAcknowledgmentMatches(acknowledgedPartnerIdentityStatus, partnerIdentity.status)) {
+      res.status(409).json({
+        error: "Review and acknowledge the connection's current identity-verification status before sending a meetup request.",
+        identity: partnerIdentity,
+      });
+      return;
     }
 
     const city = optionalSafeText(rawCity, "City", 120);
@@ -423,8 +481,13 @@ router.post("/meetups", async (req: Request, res: Response) => {
       homeCheckAt,
       homeCheckStatus: homeCheckAt ? "pending" : null,
       consentAcknowledgedAt: now,
+      initiatorIdentityAcknowledgedAt: now,
+      initiatorIdentityStatusAcknowledged: partnerIdentity.status,
       policyVersion: MEETUP_SAFETY_POLICY_VERSION,
     }).returning();
+    if (!verification) {
+      throw new Error("Meetup request could not be created.");
+    }
 
     const initiatorName = await displayName(userId);
     void sendPushToUser(normalizedPartnerId, {
@@ -440,7 +503,16 @@ router.post("/meetups", async (req: Request, res: Response) => {
       });
     }
 
-    res.status(201).json({ verification: serializedVerification(verification) });
+    const initiatorIdentity = await getMeetupIdentityTransparency(userId);
+    res.status(201).json({
+      verification: Object.assign(
+        serializedVerification(verification as { clearCode?: string | null }),
+        {
+        initiatorIdentity,
+        partnerIdentity,
+        },
+      ),
+    });
   } catch (err) {
     if (err instanceof Error && /must be|street address|future|valid date-time/.test(err.message)) {
       invalidRequest(res, err); return;
@@ -482,7 +554,20 @@ router.patch("/meetups/:id/respond", async (req: Request, res: Response) => {
     let update: Partial<typeof meetupVerificationsTable.$inferInsert>;
     let notificationBody: string;
     if (action === "confirm") {
-      update = { status: "confirmed", confirmedAt: now };
+      const initiatorIdentity = await getMeetupIdentityTransparency(verification.initiatorId);
+      if (!identityAcknowledgmentMatches(req.body?.acknowledgedPartnerIdentityStatus, initiatorIdentity.status)) {
+        res.status(409).json({
+          error: "Review and acknowledge the requester's current identity-verification status before confirming.",
+          identity: initiatorIdentity,
+        });
+        return;
+      }
+      update = {
+        status: "confirmed",
+        confirmedAt: now,
+        partnerIdentityAcknowledgedAt: now,
+        partnerIdentityStatusAcknowledged: initiatorIdentity.status,
+      };
       notificationBody = "confirmed your meetup request.";
     } else if (action === "decline") {
       update = { status: "declined", declinedAt: now };
@@ -520,8 +605,21 @@ router.patch("/meetups/:id/confirm", async (req: Request, res: Response) => {
     if (!["pending", "reschedule_requested"].includes(verification.status)) {
       res.status(409).json({ error: "This meetup request can no longer be confirmed." }); return;
     }
+    const initiatorIdentity = await getMeetupIdentityTransparency(verification.initiatorId);
+    if (!identityAcknowledgmentMatches(req.body?.acknowledgedPartnerIdentityStatus, initiatorIdentity.status)) {
+      res.status(409).json({
+        error: "Review and acknowledge the requester's current identity-verification status before confirming.",
+        identity: initiatorIdentity,
+      });
+      return;
+    }
     const [updated] = await db.update(meetupVerificationsTable)
-      .set({ status: "confirmed", confirmedAt: new Date() })
+      .set({
+        status: "confirmed",
+        confirmedAt: new Date(),
+        partnerIdentityAcknowledgedAt: new Date(),
+        partnerIdentityStatusAcknowledged: initiatorIdentity.status,
+      })
       .where(eq(meetupVerificationsTable.id, id))
       .returning();
     const partnerName = await displayName(userId);
@@ -699,37 +797,6 @@ router.patch("/admin/meetups/safety-reports", async (req: Request, res: Response
   } catch (err) {
     req.log.error({ err }, "PATCH admin meetup safety report error");
     res.status(500).json({ error: "Failed to update meetup safety restriction" });
-  }
-});
-
-// Administrators record a guardian approval only after the guardian-consent
-// process outside this endpoint is complete. No guardian date of birth, address,
-// phone number, or email is stored here.
-router.patch("/admin/meetups/:userId/guardian-approval", async (req: Request, res: Response) => {
-  const adminUserId = requireAuth(req, res); if (!adminUserId || !requireAdmin(req, res)) return;
-  const targetUserId = req.params["userId"];
-  if (!targetUserId) { res.status(400).json({ error: "Member ID is required" }); return; }
-  const action = req.body?.action;
-  if (action !== "approve" && action !== "revoke") { res.status(400).json({ error: "Choose approve or revoke." }); return; }
-  try {
-    if (action === "approve") {
-      await pool.query(
-        `INSERT INTO minor_meetup_guardian_approvals (user_id, approved_by, approved_at, revoked_at)
-         VALUES ($1, $2, now(), NULL)
-         ON CONFLICT (user_id) DO UPDATE
-           SET approved_by = EXCLUDED.approved_by, approved_at = EXCLUDED.approved_at, revoked_at = NULL`,
-        [targetUserId, adminUserId],
-      );
-    } else {
-      await pool.query(
-        `UPDATE minor_meetup_guardian_approvals SET revoked_at = now(), approved_by = $2 WHERE user_id = $1`,
-        [targetUserId, adminUserId],
-      );
-    }
-    res.json({ success: true, action });
-  } catch (err) {
-    req.log.error({ err }, "PATCH guardian meetup approval error");
-    res.status(500).json({ error: "Failed to record guardian approval" });
   }
 });
 

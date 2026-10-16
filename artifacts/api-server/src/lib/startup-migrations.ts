@@ -19025,6 +19025,7 @@ async function ensureSaborWebsiteCorrection(
 // ── Consent-first Meetup Verification ───────────────────────────────────────
 // This adds only the constrained meeting-planning fields. Records never contain
 // exact addresses, device location, date of birth, or guardian contact details.
+// The MVP is restricted to adults and has no minor/guardian workflow.
 async function ensureConsentFirstMeetupSafetySchema(
   log: (msg: string) => void,
   warn: (msg: string) => void,
@@ -19038,15 +19039,12 @@ async function ensureConsentFirstMeetupSafetySchema(
         ADD COLUMN IF NOT EXISTS reschedule_requested_at TIMESTAMPTZ,
         ADD COLUMN IF NOT EXISTS reschedule_note VARCHAR(300),
         ADD COLUMN IF NOT EXISTS consent_acknowledged_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS initiator_identity_acknowledged_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS initiator_identity_status_acknowledged VARCHAR(32),
+        ADD COLUMN IF NOT EXISTS partner_identity_acknowledged_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS partner_identity_status_acknowledged VARCHAR(32),
         ADD COLUMN IF NOT EXISTS policy_version VARCHAR(64),
         ADD COLUMN IF NOT EXISTS retention_delete_at TIMESTAMPTZ;
-
-      CREATE TABLE IF NOT EXISTS minor_meetup_guardian_approvals (
-        user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        approved_by VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-        approved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        revoked_at TIMESTAMPTZ
-      );
 
       -- Pairwise safety restrictions are deliberately minimal. An authorized
       -- moderator records them only after manual review; this table exposes
@@ -19073,21 +19071,11 @@ async function ensureConsentFirstMeetupSafetySchema(
         ON meetup_verifications (initiator_id, partner_id, expires_at DESC)
         WHERE cleared_at IS NULL;
 
-      -- Existing records are never expanded or enriched here. Their visible
-      -- lifetime is only tightened to the fixed 90-day retention period.
-      UPDATE meetup_verifications
-         SET retention_delete_at = COALESCE(
-               retention_delete_at,
-               initiated_at + INTERVAL '90 days'
-             ),
-             expires_at = LEAST(
-               expires_at,
-               COALESCE(retention_delete_at, initiated_at + INTERVAL '90 days')
-             )
-       WHERE retention_delete_at IS NULL
-          OR expires_at > COALESCE(retention_delete_at, initiated_at + INTERVAL '90 days');
+      -- No existing meetup row is backfilled, rewritten, or deleted at startup.
+      -- Older application binaries ignore these nullable columns, so a rollback
+      -- preserves existing records and behavior while the new binary is absent.
     `);
-    log("ensureConsentFirstMeetupSafetySchema: consent, guardian gate, and fixed retention ready");
+    log("ensureConsentFirstMeetupSafetySchema: adult-only consent, identity acknowledgments, and fixed retention ready");
   } catch (err: unknown) {
     warn(`ensureConsentFirstMeetupSafetySchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }

@@ -9,24 +9,20 @@ import {
 } from "../meetupSafetyPolicy";
 
 describe("consent-first Meetup Verification policy", () => {
-  it("allows adults and guardian-approved 16–17 year olds only", () => {
-    expect(resolveMeetupEligibility("18_plus", false)).toMatchObject({
+  it("allows confirmed adults only and fails closed for all minor bands", () => {
+    expect(resolveMeetupEligibility("18_plus")).toMatchObject({
       allowed: true,
       code: "eligible_adult",
     });
-    expect(resolveMeetupEligibility("16_17", true)).toMatchObject({
-      allowed: true,
-      code: "eligible_guardian_approved",
-    });
-    expect(resolveMeetupEligibility("16_17", false)).toMatchObject({
+    expect(resolveMeetupEligibility("16_17")).toMatchObject({
       allowed: false,
-      code: "guardian_approval_required",
+      code: "minor_not_available",
     });
-    expect(resolveMeetupEligibility("13_15", true)).toMatchObject({
+    expect(resolveMeetupEligibility("13_15")).toMatchObject({
       allowed: false,
-      code: "under_16_not_available",
+      code: "minor_not_available",
     });
-    expect(resolveMeetupEligibility("unknown", false)).toMatchObject({
+    expect(resolveMeetupEligibility("unknown")).toMatchObject({
       allowed: false,
       code: "age_assurance_required",
     });
