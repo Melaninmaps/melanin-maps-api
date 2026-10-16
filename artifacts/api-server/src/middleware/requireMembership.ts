@@ -27,6 +27,9 @@ export const TIER_RANK: Record<MembershipTier, number> = {
   legacy_member: 4,
 };
 
+/** True when the server is running in testing mode (all users get Trailblazer). */
+export const TESTING_MODE = process.env.TESTING_MODE === "true";
+
 type ApprovedBusinessMembership = {
   business_status: string | null;
   founding_business: boolean | null;
@@ -86,13 +89,27 @@ async function getApprovedBusinessMembershipTier(userId: string): Promise<Member
   }
 }
 
-function getPersonalTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipTier {
+export type PersonalMembershipRecord = {
+  memberType?: string | null;
+  stripeSubscriptionId?: string | null;
+  trialEndsAt?: Date | null;
+};
+
+/**
+ * Resolves the personal entitlement before approved business benefits are
+ * considered. It is intentionally pure so paid, trial, founder, and tester
+ * behavior remains regression-testable without database state.
+ */
+export function getPersonalMembershipTier(
+  user: PersonalMembershipRecord | null | undefined,
+  testingMode = TESTING_MODE,
+): MembershipTier {
   if (!user) return "free";
 
   // ── TESTING_MODE: all authenticated users get Trailblazer during test phases ──
   // Set TESTING_MODE=true in Railway environment variables to enable.
   // Remove or set to "false" before production launch.
-  if (process.env.TESTING_MODE === "true") return "trailblazer";
+  if (testingMode) return "trailblazer";
 
   // Founding members and beta testers get top-tier access
   if (user.memberType === "founding" || user.memberType === "beta") return "legacy_member";
@@ -107,15 +124,12 @@ function getPersonalTier(user: Awaited<ReturnType<typeof storage.getUser>>): Mem
 }
 
 async function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): Promise<MembershipTier> {
-  const personalTier = getPersonalTier(user);
+  const personalTier = getPersonalMembershipTier(user);
   if (!user || TESTING_MODE || personalTier === "legacy_member") return personalTier;
 
   const businessTier = await getApprovedBusinessMembershipTier(user.id);
   return higherMembershipTier(personalTier, businessTier);
 }
-
-/** True when the server is running in testing mode (all users get Trailblazer). */
-export const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 /** Resolves the membership tier for any user ID. Use in route handlers for soft limit checks. */
 export async function getUserTier(userId: string): Promise<MembershipTier> {

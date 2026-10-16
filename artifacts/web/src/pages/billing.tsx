@@ -29,6 +29,11 @@ type BillingStatus = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
+  free: "Explorer",
+  navigator: "Navigator",
+  trailblazer: "Trailblazer",
+  community_builder: "Community Builder",
+  legacy_member: "Legacy Member",
   individual: "Explorer",
   business: "Business Starter",
   founding: "Founding Member",
@@ -91,7 +96,7 @@ export default function Billing() {
               {billing?.trialEndsAt && !billing.trialActive && !billing.hasSubscription && (
                 <p className="text-[#F5EBD8]/60 text-sm">Trial ended — free Community access only</p>
               )}
-              {billing?.hasSubscription && (
+              {billing?.hasSubscription && !billing?.trialActive && (
                 <div className="flex items-center gap-2 text-green-400 text-sm">
                   <CheckCircle className="w-4 h-4" />
                   <span>Active paid membership</span>

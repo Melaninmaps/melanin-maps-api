@@ -3,6 +3,8 @@ import { getUncachableStripeClient } from "../stripeClient";
 import { storage } from "../storage";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { hasActivePaidMembershipTrial } from "../constants/membershipTiers";
+import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
@@ -65,14 +67,17 @@ router.get("/billing/subscription", async (req: any, res): Promise<void> => {
     const user = await storage.getUser(req.user.id);
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
+    // The display reads the same effective entitlement used by protected APIs;
+    // a historical memberType cannot outlive a cancelled provider subscription.
+    const membershipTier = await getUserTier(req.user.id);
     const now = new Date();
-    const trialActive = user.trialEndsAt ? user.trialEndsAt > now : false;
+    const trialActive = hasActivePaidMembershipTrial(user, now);
     const trialDaysLeft = trialActive && user.trialEndsAt
       ? Math.ceil((user.trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       : 0;
 
     res.json({
-      memberType: user.memberType ?? "individual",
+      memberType: membershipTier,
       trialEndsAt: user.trialEndsAt ?? null,
       trialActive,
       trialDaysLeft,

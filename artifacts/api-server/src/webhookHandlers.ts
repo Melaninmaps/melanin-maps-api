@@ -5,7 +5,10 @@ import { and, eq } from "drizzle-orm";
 import { sendTrialEndingSoon, sendTrialExpired, sendMembershipCancelled } from "./lib/email";
 import { logger } from "./lib/logger";
 import { hasActivePaidMembershipTrial } from "./constants/membershipTiers";
-import { decideMembershipSubscriptionEntitlement } from "./lib/stripeMembershipEntitlement";
+import {
+  decideMembershipSubscriptionEntitlement,
+  providerTrialEndsAt,
+} from "./lib/stripeMembershipEntitlement";
 
 async function getUserByCustomerId(customerId: string) {
   const [user] = await db
@@ -41,8 +44,9 @@ async function reconcileMembershipSubscription(
   const subscriptionId = String(subscription.id);
 
   if (decision.action === "grant") {
+    const trialEndsAt = providerTrialEndsAt(subscription);
     await db.update(usersTable)
-      .set({ stripeSubscriptionId: subscriptionId, memberType: decision.plan })
+      .set({ stripeSubscriptionId: subscriptionId, memberType: decision.plan, trialEndsAt })
       .where(eq(usersTable.id, user.id));
     logger.info(
       { userId: user.id, subscriptionId, plan: decision.plan, status: subscription.status },

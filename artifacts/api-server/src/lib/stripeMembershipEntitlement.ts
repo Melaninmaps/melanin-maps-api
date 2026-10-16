@@ -13,6 +13,7 @@ export type MembershipSubscriptionDecision =
 type SubscriptionLike = {
   status?: unknown;
   metadata?: unknown;
+  trial_end?: unknown;
 };
 
 export function isStripeMembershipPlan(value: unknown): value is StripeMembershipPlan {
@@ -42,4 +43,14 @@ export function decideMembershipSubscriptionEntitlement(
     return { action: "grant", plan };
   }
   return { action: "revoke" };
+}
+
+/**
+ * Trial display dates are accepted only from a Stripe `trialing` subscription.
+ * Checkout requests and client-provided dates can never populate this value.
+ */
+export function providerTrialEndsAt(subscription: SubscriptionLike): Date | null {
+  if (subscription.status !== "trialing" || typeof subscription.trial_end !== "number") return null;
+  const date = new Date(subscription.trial_end * 1000);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
