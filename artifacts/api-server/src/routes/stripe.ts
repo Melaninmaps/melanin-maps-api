@@ -19,64 +19,15 @@ router.get("/stripe/subscription", async (req: any, res): Promise<void> => {
   }
 });
 
-const TRIAL_DAYS: Record<string, number> = {
-  individual: 90,
-  navigator: 90,
-  trailblazer: 90,
-  business: 30,
-  founding: 90,
-  beta: 365,
-  business_referral: 365,
-};
-
 router.post("/stripe/checkout", async (req: any, res): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-
-    const { priceId, planType = "individual" } = req.body as { priceId: string; planType?: string };
-    if (!priceId) {
-      res.status(400).json({ error: "priceId is required" });
-      return;
-    }
-
-    const user = await storage.getUser(req.user.id);
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
-
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripeService.createCustomer(user.email ?? "", user.id);
-      await storage.updateUserStripeInfo(user.id, { stripeCustomerId: customer.id });
-      customerId = customer.id;
-    }
-
-    const trialDays = TRIAL_DAYS[planType] ?? 14;
-    const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
-    const memberType = planType as "individual" | "navigator" | "trailblazer" | "business" | "founding" | "beta" | "business_referral";
-
-    await storage.updateUserStripeInfo(user.id, { memberType, trialEndsAt });
-
-    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "localhost";
-    const baseUrl = `https://${domain}`;
-
-    const session = await stripeService.createCheckoutSession(
-      customerId,
-      priceId,
-      `${baseUrl}/api/stripe/checkout/success`,
-      `${baseUrl}/api/stripe/checkout/cancel`,
-      trialDays,
-    );
-
-    res.json({ url: session.url });
-  } catch (err: any) {
-    req.log.error({ err }, "Checkout session creation failed");
-    res.status(500).json({ error: "Failed to create checkout session" });
-  }
+  // The supported member-payment path is /billing/checkout. This historical
+  // endpoint accepted a caller-provided price and wrote paid access before
+  // Stripe completed Checkout, so it is intentionally retired rather than
+  // maintained as a second checkout system.
+  res.status(410).json({
+    error: "This checkout path is retired. Use /billing/checkout.",
+    code: "LEGACY_CHECKOUT_RETIRED",
+  });
 });
 
 router.get("/membership/stats", async (_req, res) => {

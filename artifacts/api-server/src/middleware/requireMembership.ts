@@ -1,11 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { pool } from "@workspace/db";
 import { storage } from "../storage";
+import { getTierFromMemberType, hasActivePaidMembershipTrial } from "../constants/membershipTiers";
 
 // Internal tier identifiers — map to display names:
 //   "free"              → Explorer (Free)
 //   "navigator"         → Navigator ($7.99/mo)
-//   "trailblazer"       → Trailblazer ($19.99/mo)
+//   "trailblazer"       → Trailblazer ($14.99/mo)
 //   "community_builder" → Community Builder ($29.99/mo)
 //   "legacy_member"     → Legacy Member ($79.99/mo)
 export type MembershipTier = "free" | "navigator" | "trailblazer" | "community_builder" | "legacy_member";
@@ -26,17 +27,10 @@ export const TIER_RANK: Record<MembershipTier, number> = {
   legacy_member: 4,
 };
 
-const PAID_TIERS: readonly string[] = ["navigator", "trailblazer", "community_builder", "legacy_member"];
-
 type ApprovedBusinessMembership = {
   business_status: string | null;
   founding_business: boolean | null;
 };
-
-function resolveFromMemberType(memberType: string | null | undefined): MembershipTier {
-  if (memberType && PAID_TIERS.includes(memberType)) return memberType as MembershipTier;
-  return "navigator"; // default for any active paid subscription
-}
 
 /**
  * Maps only an already-approved owner's existing business tier to its included
@@ -100,17 +94,14 @@ function getPersonalTier(user: Awaited<ReturnType<typeof storage.getUser>>): Mem
   // Remove or set to "false" before production launch.
   if (process.env.TESTING_MODE === "true") return "trailblazer";
 
-  const now = new Date();
-  const trialActive = user.trialEndsAt && user.trialEndsAt > now;
-
   // Founding members and beta testers get top-tier access
   if (user.memberType === "founding" || user.memberType === "beta") return "legacy_member";
 
   // Active Stripe subscription OR RevenueCat subscription (stored as "rc_<productId>" in stripeSubscriptionId)
-  if (user.stripeSubscriptionId) return resolveFromMemberType(user.memberType);
+  if (user.stripeSubscriptionId) return getTierFromMemberType(user.memberType);
 
-  // Active trial
-  if (trialActive) return resolveFromMemberType(user.memberType);
+  // A dated trial is valid only when it is tied to a recognized paid plan.
+  if (hasActivePaidMembershipTrial(user)) return getTierFromMemberType(user.memberType);
 
   return "free";
 }

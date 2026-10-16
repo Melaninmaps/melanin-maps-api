@@ -9190,17 +9190,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // the demo model also permits the controlled demo call. Standard users keep
       // their existing free and paid quota behavior unchanged.
       if (modelPolicy.mode !== "staff_demo" && !staffAuditPolicy) {
-        const resolvedTier = getTierFromMemberType(user?.memberType);
-
-        // A paid subscription or active trial with an unset/unknown memberType is
-        // a data gap — treat as legacy_member (unlimited) so we never show "pool of 0".
-        const hasPaidAccount =
-          !!user?.stripeSubscriptionId ||
-          !!(user?.trialEndsAt && user.trialEndsAt > new Date());
-        const effectiveTier: ReturnType<typeof getTierFromMemberType> =
-          hasPaidAccount && resolvedTier === "free"
-            ? "legacy_member"
-            : resolvedTier;
+        // Use the same entitlement resolver as every membership-gated API.
+        // Unknown or stale Stripe references fail closed instead of unlocking
+        // unlimited Kinfolk access.
+        const effectiveTier = await getUserTier(req.user.id);
 
         const isFree = effectiveTier === "free";
 

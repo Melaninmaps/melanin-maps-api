@@ -133,6 +133,22 @@ export function getTierFromMemberType(memberType: string | null | undefined): Me
   return map[memberType ?? ""] ?? "free";
 }
 
+/**
+ * A trial must name a paid membership tier. A bare date is not enough: older
+ * profile reads could write a date for Explorer accounts, which must never
+ * unlock paid features.
+ */
+export function hasActivePaidMembershipTrial(
+  user: {
+    memberType?: string | null;
+    trialEndsAt?: Date | null;
+  } | null | undefined,
+  now = new Date(),
+): boolean {
+  if (!user?.trialEndsAt || user.trialEndsAt <= now) return false;
+  return getTierFromMemberType(user.memberType) !== "free";
+}
+
 function getCurrentYearMonth(): string {
   return new Date().toISOString().slice(0, 7);
 }

@@ -138,13 +138,6 @@ router.get("/users/me", async (req: Request, res: Response) => {
       return;
     }
 
-    // Auto-start 90-day community premium trial if not yet set
-    if (!user.trialEndsAt) {
-      const trialEndsAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
-      await db.update(usersTable).set({ trialEndsAt }).where(eq(usersTable.id, req.user.id));
-      user = { ...user, trialEndsAt };
-    }
-
     // Return the user object directly (not wrapped) so the web profile page
     // can read fields like bio/username/jobTitle as profile.bio, not profile.user.bio.
     const { stripeCustomerId, stripeSubscriptionId, pushToken, ...safeUser } = user;
