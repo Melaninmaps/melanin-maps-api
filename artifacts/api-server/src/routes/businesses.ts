@@ -50,6 +50,7 @@ import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
 import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
 import { sanitizePublicListingCopy } from "../businesses/publicListingCopy";
+import { shouldRecordBusinessProfileView } from "../businesses/profile-view-policy";
 import {
   hasTrustworthyMapCoordinate,
   MAP_LOCATION_HOLD_REASON,
@@ -2698,24 +2699,26 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
 
     const userId = (req as any).user?.id as string | undefined;
     // Fire-and-forget: skip tracking if user has opted out
-    void (async () => {
-      if (userId) {
-        const [settings] = await db
-          .select({
-            profileViewTrackingEnabled:
-              userSettingsTable.profileViewTrackingEnabled,
-          })
-          .from(userSettingsTable)
-          .where(eq(userSettingsTable.userId, userId))
-          .limit(1)
-          .catch(() => []);
-        if (settings?.profileViewTrackingEnabled === false) return;
-      }
-      db.insert(businessProfileViewsTable)
-        .values({ businessId: id, userId: userId ?? null })
-        .execute()
-        .catch(() => {});
-    })();
+    if (shouldRecordBusinessProfileView(req.user)) {
+      void (async () => {
+        if (userId) {
+          const [settings] = await db
+            .select({
+              profileViewTrackingEnabled:
+                userSettingsTable.profileViewTrackingEnabled,
+            })
+            .from(userSettingsTable)
+            .where(eq(userSettingsTable.userId, userId))
+            .limit(1)
+            .catch(() => []);
+          if (settings?.profileViewTrackingEnabled === false) return;
+        }
+        db.insert(businessProfileViewsTable)
+          .values({ businessId: id, userId: userId ?? null })
+          .execute()
+          .catch(() => {});
+      })();
+    }
 
     const [publicBusiness] = await attachPublicBusinessPresentation([toPublicBusinessRecord(business)]);
     sendDynamicJson(res, {
@@ -3257,6 +3260,10 @@ router.post("/businesses/:id/view", async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const userId = req.user?.id ?? null;
+    if (!shouldRecordBusinessProfileView(req.user)) {
+      res.json({ ok: true, recorded: false });
+      return;
+    }
     await db
       .insert(businessProfileViewsTable)
       .values({ businessId: id, userId });
