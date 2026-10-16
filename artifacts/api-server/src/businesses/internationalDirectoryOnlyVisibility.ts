@@ -104,6 +104,22 @@ function nullableFiniteCoordinate(value: unknown): number | null | undefined {
   return undefined;
 }
 
+/**
+ * PostgreSQL's numeric decoder can supply a coordinate as a decimal string,
+ * while the signed audit artifact is parsed as a JavaScript number. Normalize
+ * only that transport representation before the bounded equality check; this
+ * does not alter the immutable evidence or accept non-finite values.
+ */
+export function matchesInternationalDirectoryOnlyAuditedCoordinate(
+  current: unknown,
+  expected: number | null,
+): boolean {
+  const normalizedCurrent = nullableFiniteCoordinate(current);
+  return typeof normalizedCurrent === "number"
+    && typeof expected === "number"
+    && Math.abs(normalizedCurrent - expected) < 0.000_001;
+}
+
 function parseItem(value: unknown): InternationalDirectoryOnlyManifestItem | null {
   const candidate = record(value);
   if (!candidate) return null;
