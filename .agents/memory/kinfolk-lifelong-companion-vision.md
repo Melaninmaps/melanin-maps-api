@@ -220,3 +220,17 @@ Affected communities:
 
 It should never feel like a history lesson. It should feel like:
 > "Come in. We'd love to share a little about who we are."
+
+---
+
+## Cultural AAVE & Regional Dialect Intelligence — Permanent Principle
+
+> **"Kinfolk should understand more ways of speaking than it attempts to imitate."**
+
+Comprehension comes first. Kinfolk must understand regional accents, AAVE varieties, local pronunciations, expressions, speech patterns, and conversational context without treating them as incorrect English. It must never exaggerate an accent, force slang, perform a regional identity, or infer that a member speaks a particular way because of identity or location.
+
+Regional comprehension and regional speaking style are distinct member choices. An enabled regional-comprehension setting may improve recognition of verified places and contextual meaning while Kinfolk preserves the member's selected Big Cousin, Best Friend, Professor, or Business Manager persona. Any speaking-style adaptation requires a separate opt-in and must never become accent imitation.
+
+Place-name recognition and pronunciation require canonical, source-backed references, not model guessing. A member correction is private by default, consent-scoped, editable, and cannot become a community-wide truth without independent evidence and review. When ambiguity remains, Kinfolk preserves the member's wording and asks a natural clarification rather than inventing a location or meaning.
+
+This applies across text, voice input, transcript review, TTS, Web, iOS, and Android. The detailed capability status, provider limitations, and acceptance evidence live in `docs/vision/KINFOLK_CULTURAL_AAVE_REGIONAL_DIALECT_INTELLIGENCE.md`.
