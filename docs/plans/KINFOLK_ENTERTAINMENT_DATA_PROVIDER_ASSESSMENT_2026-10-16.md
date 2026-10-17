@@ -1,6 +1,6 @@
 # Kinfolk Entertainment Discovery — Data Provider Assessment
 
-**Assessment date:** 2026-10-16  
+**Assessment date:** 2026-10-16
 **Scope:** source-only selection and integration boundary. No provider account, key, contract, paid API, scrape, live request, deployment, or migration was activated.
 
 ## Decision summary

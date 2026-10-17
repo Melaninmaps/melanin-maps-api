@@ -1,8 +1,10 @@
 # Kinfolk Entertainment Personalization & Provider Readiness — Source Handoff
 
-**Status:** **SOURCE COMPLETE / AWAITING PROVIDER APPROVAL AND STAGING ACCEPTANCE**  
-**Branch:** `feature/kinfolk-regional-dialect-multilingual-foundation-20261016`  
-**Continuation source commit:** `77beb13794a1d77f14f5d0ae122f1d82fbee3236`  
+> **Superseded for continuation purposes:** The current factual status and no-additional-subscription decision are in the [verified cited-availability handoff](KINFOLK_ENTERTAINMENT_VERIFIED_CITED_AVAILABILITY_HANDOFF_2026-10-16.md).
+
+**Historical status:** **SOURCE COMPLETE / AWAITING STAGING ACCEPTANCE**
+**Preserved feature branch:** `feature/kinfolk-entertainment-web-search-first-20261016`
+**Continuation source commit:** `77beb13794a1d77f14f5d0ae122f1d82fbee3236`
 **Earlier availability foundation:** `1f00d195cb12ded23a0ccded6fbb80bbc7e52ec4`
 
 ## Delivered continuation
