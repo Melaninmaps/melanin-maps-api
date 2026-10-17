@@ -860,6 +860,14 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           });
           return;
         }
+        if (stagingAdminBootstrap.status === "already_claimed") {
+          res.status(409).json({
+            error:
+              "The isolated-staging administrator bootstrap has already been claimed. Use the established staging administrator account.",
+            code: "STAGING_ADMIN_BOOTSTRAP_ALREADY_CLAIMED",
+          });
+          return;
+        }
         if (
           stagingAdminBootstrap.status === "not_requested" &&
           process.env.RAILWAY_ENVIRONMENT_NAME === "staging"

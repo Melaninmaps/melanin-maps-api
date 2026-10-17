@@ -18,6 +18,8 @@ describe("approved-member registration contract", () => {
     expect(authSource).toContain('from "../auth/isolatedStagingAdminBootstrap.js"');
     expect(authSource).toContain("const stagingAdminBootstrap = await acquireIsolatedStagingAdminBootstrap(");
     expect(authSource).toContain('if (stagingAdminBootstrap.status === "tester_conflict")');
+    expect(authSource).toContain('if (stagingAdminBootstrap.status === "already_claimed")');
+    expect(authSource).toContain('code: "STAGING_ADMIN_BOOTSTRAP_ALREADY_CLAIMED"');
     expect(authSource).toContain("const authorizedStagingAdminBootstrap =");
     expect(authSource).toContain("if (!authorizedStagingAdminBootstrap && !waitlistEntry && !approvedAsTester)");
     expect(authSource).toContain("const bootstrapResult = await db.transaction(async (tx) => {");
