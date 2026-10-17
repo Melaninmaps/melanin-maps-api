@@ -45,7 +45,7 @@ The existing matrix owns **KIN-ENT-01 through KIN-ENT-08**. In one authenticated
 
 These scenarios require actual returned citations and application behavior. Injected fixtures and offline unit tests do not establish current availability.
 
-**KIN-13** is the separate continuity acceptance boundary: an undecided legacy account must receive the disclosure across Web, iOS, and Android; accept and decline must persist and read back without changing safety settings. A fresh-account production acceptance remains pending and is not authorized or claimed here.
+**KIN-13** is the separate continuity acceptance boundary: test a new account and an undecided legacy account; accepted and declined accounts after relaunch; and a choice made on Web read back on iOS/Android and vice versa. Each undecided account must receive the disclosure, accepted continuity remains enabled, declined continuity remains off, and neither choice may change unrelated safety settings. A fresh-account production acceptance remains pending and is not authorized or claimed here.
 
 ## Precise approvals needed
 
