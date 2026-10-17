@@ -168,6 +168,7 @@ export default function KinfolkSettingsControlCenter() {
   const [preferredName, setPreferredName] = useState<PreferredName>({ name: null, state: "not_saved" });
   const [disclosureRequired, setDisclosureRequired] = useState(false);
   const [disclosureOpen, setDisclosureOpen] = useState(false);
+  const [persistedContinuityDecision, setPersistedContinuityDecision] = useState<"accepted" | "declined" | null>(null);
   const [continuityDecision, setContinuityDecision] = useState<"accepted" | "declined" | undefined>();
   const [profileOpen, setProfileOpen] = useState(false);
   const mounted = useRef(false);
@@ -201,11 +202,15 @@ export default function KinfolkSettingsControlCenter() {
       if (!mounted.current || request !== loadId.current) return;
       const settings = settingsRes.ok ? await settingsRes.json() : {};
       const prefPayload = prefsRes.ok ? await prefsRes.json() as { preferences?: unknown } : {};
-      const continuity = continuityRes.ok ? await continuityRes.json() as { disclosureRequired?: boolean } : {};
+      const continuity = continuityRes.ok ? await continuityRes.json() as {
+        disclosureRequired?: boolean;
+        decision?: "accepted" | "declined" | null;
+      } : {};
       const next = normalizeDraft(settings, prefPayload.preferences, continuity);
       if (!dirtyRef.current) {
         setPersisted(copyDraft(next));
         setDraft(copyDraft(next));
+        setPersistedContinuityDecision(continuity.decision ?? null);
         setContinuityDecision(undefined);
       }
       setDisclosureRequired(continuity.disclosureRequired === true);
@@ -245,7 +250,8 @@ export default function KinfolkSettingsControlCenter() {
   }, [persisted]);
 
   const save = useCallback(async (): Promise<boolean> => {
-    if (identical(persisted, draft)) return true;
+    const decisionChanged = continuityDecision !== undefined;
+    if (identical(persisted, draft) && !decisionChanged) return true;
     if (savingPromise.current) return savingPromise.current;
     const snapshot = copyDraft(draft);
     const behaviorChanged = persisted.personalizedSuggestions !== snapshot.personalizedSuggestions;
@@ -287,7 +293,7 @@ export default function KinfolkSettingsControlCenter() {
             culturalInterests: snapshot.profile.culturalInterests,
           }),
         }));
-        if (continuityChanged) requests.push(fetch(`${base}/api/kinfolk/continuity`, {
+        if (continuityChanged || decisionChanged) requests.push(fetch(`${base}/api/kinfolk/continuity`, {
           method: "PUT", headers,
           body: JSON.stringify({ enabled: snapshot.continuityEnabled, ...(continuityDecision ? { decision: continuityDecision } : {}) }),
         }));
@@ -300,6 +306,10 @@ export default function KinfolkSettingsControlCenter() {
         if (mounted.current) {
           setPersisted(copyDraft(snapshot));
           setDraft(copyDraft(snapshot));
+          if (continuityDecision) {
+            setPersistedContinuityDecision(continuityDecision);
+            setDisclosureRequired(false);
+          }
           setContinuityDecision(undefined);
           setProfileOpen(false);
           if (Platform.OS !== "web") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -337,7 +347,7 @@ export default function KinfolkSettingsControlCenter() {
   }, [draft.profile]);
 
   const requestContinuity = (next: boolean) => {
-    if (next && disclosureRequired) { setDisclosureOpen(true); return; }
+    if (next && (disclosureRequired || persistedContinuityDecision !== "accepted")) { setDisclosureOpen(true); return; }
     replaceDraft({ ...draft, continuityEnabled: next });
   };
 

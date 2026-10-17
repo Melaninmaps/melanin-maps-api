@@ -30,6 +30,11 @@ import {
 } from "../constants/membershipTiers";
 import { getCachedPrefs, invalidatePrefsCache } from "../kinfolk/preference-cache";
 import { persistKinfolkContinuitySettings } from "../kinfolk/continuity-settings-persistence";
+import {
+  kinfolkContinuityStatus,
+  normalizeKinfolkContinuityDecision,
+  resolveKinfolkContinuityUpdate,
+} from "../kinfolk/continuity-consent-policy";
 import crypto from "crypto";
 import {
   db,
@@ -5564,12 +5569,31 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
           },
         });
       const resetAt = new Date();
+      const [currentContinuity] = await tx
+        .select({
+          decision: userSettingsTable.kinfolkContinuityDisclosureDecision,
+          disclosureVersion: userSettingsTable.kinfolkContinuityDisclosureVersion,
+          disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt,
+        })
+        .from(userSettingsTable)
+        .where(eq(userSettingsTable.userId, userId))
+        .limit(1);
+      const preservedDecision = normalizeKinfolkContinuityDecision(currentContinuity?.decision);
+      const continuity = kinfolkContinuityStatus({
+        enabled: false,
+        decision: preservedDecision,
+        disclosureVersion: currentContinuity?.disclosureVersion ?? null,
+        disclosedAt: currentContinuity?.disclosedAt ?? null,
+        updatedAt: resetAt,
+      });
       await persistKinfolkContinuitySettings(tx, {
         userId,
         enabled: false,
-        decision: null,
-        disclosureVersion: null,
-        disclosedAt: null,
+        // A reset clears Kinfolk content but must not erase a member's prior
+        // explicit continuity choice or turn a recorded choice into undecided.
+        decision: preservedDecision,
+        disclosureVersion: currentContinuity?.disclosureVersion ?? null,
+        disclosedAt: currentContinuity?.disclosedAt ?? null,
         updatedAt: resetAt,
       });
       await tx
@@ -5582,6 +5606,7 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
         deletedBusinessFeedback: deletedBusinessFeedback.length,
         deletedResponseFeedback: deletedResponseFeedback.length,
         revokedMemories: revokedMemories.length,
+        continuity,
       };
     });
 
@@ -5590,8 +5615,9 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
     res.json({
       ok: true,
       receipt,
-      message:
-        "Kinfolk has started fresh. Chat memory and personalised suggestions are off. If you use Kinfolk again, you can choose whether it remembers ordinary continuity.",
+      message: receipt.continuity.disclosureRequired
+        ? "Kinfolk has started fresh. Chat memory and personalised suggestions are off. When you use Kinfolk again, you can choose whether it remembers ordinary continuity."
+        : "Kinfolk has started fresh. Chat memory and personalised suggestions are off, and your recorded continuity choice is retained.",
     });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to reset Kinfolk");
@@ -5604,29 +5630,6 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
 // decision keeps legacy member settings pending rather than treating a previous
 // value as consent. Settings can subsequently turn continuity off or back on.
 const KINFOLK_CONTINUITY_DISCLOSURE_VERSION = "v2";
-type KinfolkContinuityDecision = "accepted" | "declined";
-
-function normalizeKinfolkContinuityDecision(value: unknown): KinfolkContinuityDecision | null {
-  return value === "accepted" || value === "declined" ? value : null;
-}
-
-function kinfolkContinuityStatus(settings?: {
-  enabled?: boolean | null;
-  decision?: string | null;
-  updatedAt?: Date | null;
-  disclosedAt?: Date | null;
-  disclosureVersion?: string | null;
-}) {
-  const decision = normalizeKinfolkContinuityDecision(settings?.decision);
-  return {
-    enabled: decision === "accepted" && settings?.enabled === true,
-    disclosureRequired: decision === null,
-    decision,
-    updatedAt: settings?.updatedAt ?? null,
-    disclosedAt: settings?.disclosedAt ?? null,
-    disclosureVersion: settings?.disclosureVersion ?? null,
-  };
-}
 
 router.get("/kinfolk/continuity", async (req: Request, res: Response) => {
   if (!req.user?.id)
@@ -5685,7 +5688,18 @@ router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
       .where(eq(userSettingsTable.userId, req.user.id))
       .limit(1);
     const currentDecision = normalizeKinfolkContinuityDecision(current?.decision);
-    const decision = requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined");
+    const updateResolution = resolveKinfolkContinuityUpdate({
+      currentDecision,
+      requestedDecision,
+      enabled,
+    });
+    if (!updateResolution.ok) {
+      return void res.status(409).json({
+        error: updateResolution.error,
+        code: updateResolution.code,
+      });
+    }
+    const decision = updateResolution.decision;
     const disclosedAt = current?.disclosedAt ?? updatedAt;
     const continuityUpdate = {
       // Keep the existing legacy memory flag aligned with the explicit modern
@@ -6541,6 +6555,13 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
   }
 
   try {
+    const continuityEnabled = await resolveOwnerExplicitMemberMemoryAccess(req.user.id);
+    if (!continuityEnabled) {
+      return void res.status(403).json({
+        error: "Choose ‘Let Kinfolk remember’ before saving a private Kinfolk memory.",
+        code: "KINFOLK_CONTINUITY_CONSENT_REQUIRED",
+      });
+    }
     const result = await withSerializedPrivateMemoryWrite({
       userId: req.user.id,
       write: async ({ activeCount, tx }) => {
@@ -6578,35 +6599,6 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
           requestedCount: itemsToSave.length,
         });
         const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
-        const [current] = await tx
-          .select({ disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt })
-          .from(userSettingsTable)
-          .where(eq(userSettingsTable.userId, req.user!.id))
-          .limit(1);
-        const continuityUpdate = {
-          kinfolkMemoryEnabled: true,
-          kinfolkContinuityEnabled: true,
-          kinfolkContinuityUpdatedAt: now,
-          kinfolkContinuityDisclosureDecision: "accepted" as const,
-          kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-          kinfolkContinuityDisclosedAt: current?.disclosedAt ?? now,
-          updatedAt: now,
-        };
-        const updated = await tx
-          .update(userSettingsTable)
-          .set(continuityUpdate)
-          .where(eq(userSettingsTable.userId, req.user!.id))
-          .returning({ userId: userSettingsTable.userId });
-        if (updated.length === 0) {
-          await persistKinfolkContinuitySettings(tx, {
-            userId: req.user!.id,
-            enabled: true,
-            decision: "accepted",
-            disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-            disclosedAt: current?.disclosedAt ?? now,
-            updatedAt: now,
-          });
-        }
         for (const item of itemsToSave) {
           await tx.insert(kinfolkPrivateMemoriesTable).values({
             userId: req.user!.id,

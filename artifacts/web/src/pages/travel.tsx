@@ -1015,6 +1015,7 @@ class KinfolkErrorBoundary extends Component<{ children: ReactNode }, { error: E
 // ─── Main page ────────────────────────────────────────────────────────────────
 function TravelPage() {
   const { data: authData, isLoading: authLoading } = useGetCurrentAuthUser();
+  const authenticatedUserId = (authData?.user as { id?: string } | undefined)?.id ?? null;
   const isLoggedIn = !authLoading && !!authData?.user;
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1052,6 +1053,10 @@ function TravelPage() {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
   const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
+  const [kinfolkContinuityDecision, setKinfolkContinuityDecision] = useState<"accepted" | "declined" | null>(null);
+  const [showContinuityReconsent, setShowContinuityReconsent] = useState(false);
+  const continuityLoadRevision = useRef(0);
+  const sessionLoadRevision = useRef(0);
   const [pendingSensitiveMemory, setPendingSensitiveMemory] = useState<{
     content: string;
     purpose: string;
@@ -1791,26 +1796,39 @@ function TravelPage() {
   // Load session list
   const loadSessions = useCallback(async () => {
     if (!isLoggedIn) return;
+    const requestRevision = ++sessionLoadRevision.current;
     setSessionsLoading(true);
     try {
       const r = await fetch(`${BASE}api/kinfolk/sessions?view=${historyView}`, { credentials: "include", headers: kinfolkAuthHeaders() });
-      if (r.ok) { const d = await r.json() as { sessions: Session[] }; setSessions(d.sessions); }
+      if (r.ok) {
+        const d = await r.json() as { sessions: Session[] };
+        if (requestRevision !== sessionLoadRevision.current) return;
+        setSessions(d.sessions);
+      }
     } finally { setSessionsLoading(false); }
-  }, [isLoggedIn, historyView]);
+  }, [isLoggedIn, historyView, authenticatedUserId]);
 
   const loadKinfolkContinuity = useCallback(async () => {
     if (!isLoggedIn) return;
+    const requestRevision = ++continuityLoadRevision.current;
     const response = await fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include", headers: kinfolkAuthHeaders() });
     if (!response.ok) return;
-    const body = await response.json() as { enabled?: boolean; disclosureRequired?: boolean };
+    const body = await response.json() as {
+      enabled?: boolean;
+      disclosureRequired?: boolean;
+      decision?: "accepted" | "declined" | null;
+    };
+    if (requestRevision !== continuityLoadRevision.current) return;
     setKinfolkContinuityEnabled(body.enabled === true);
     setKinfolkContinuityDisclosureRequired(body.disclosureRequired === true);
-  }, [isLoggedIn]);
+    setKinfolkContinuityDecision(body.decision ?? null);
+  }, [isLoggedIn, authenticatedUserId]);
 
   const setKinfolkContinuity = useCallback(async (
     enabled: boolean,
     decision?: "accepted" | "declined",
   ): Promise<boolean> => {
+    const requestRevision = ++continuityLoadRevision.current;
     const response = await fetch(`${BASE}api/kinfolk/continuity`, {
       method: "PUT",
       credentials: "include",
@@ -1818,13 +1836,27 @@ function TravelPage() {
       body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) }),
     });
     if (!response.ok) return false;
-    const body = await response.json() as { enabled?: boolean; disclosureRequired?: boolean };
+    const body = await response.json() as {
+      enabled?: boolean;
+      disclosureRequired?: boolean;
+      decision?: "accepted" | "declined" | null;
+    };
+    if (requestRevision !== continuityLoadRevision.current) return false;
     setKinfolkContinuityEnabled(body.enabled === true);
     setKinfolkContinuityDisclosureRequired(body.disclosureRequired === true);
+    setKinfolkContinuityDecision(body.decision ?? null);
     setSessions([]);
     if (body.enabled === true) void loadSessions();
     return true;
   }, [loadSessions]);
+
+  const requestKinfolkContinuity = useCallback(async (enabled: boolean): Promise<boolean> => {
+    if (enabled && kinfolkContinuityDecision !== "accepted") {
+      setShowContinuityReconsent(true);
+      return false;
+    }
+    return setKinfolkContinuity(enabled);
+  }, [kinfolkContinuityDecision, setKinfolkContinuity]);
 
   const organizeSession = useCallback(async (id: string, action: "archive" | "restore" | "pin" | "unpin") => {
     const response = await fetch(`${BASE}api/kinfolk/sessions/${encodeURIComponent(id)}/organization`, {
@@ -1835,6 +1867,16 @@ function TravelPage() {
     });
     if (response.ok) void loadSessions();
   }, [loadSessions]);
+
+  useEffect(() => {
+    continuityLoadRevision.current += 1;
+    sessionLoadRevision.current += 1;
+    setKinfolkContinuityEnabled(false);
+    setKinfolkContinuityDisclosureRequired(false);
+    setKinfolkContinuityDecision(null);
+    setShowContinuityReconsent(false);
+    setSessions([]);
+  }, [authenticatedUserId]);
 
   useEffect(() => { loadSessions(); loadPrefs(); loadKinfolkContinuity(); }, [loadSessions, loadPrefs, loadKinfolkContinuity]);
 
@@ -2506,8 +2548,12 @@ function TravelPage() {
       {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={closePreferences} prefs={prefs} onSave={savePrefs}
         hydrated={preferencesHydrated} />}
       <KinfolkContinuityDisclosure
-        visible={isLoggedIn && kinfolkContinuityDisclosureRequired}
-        onChoose={(decision) => setKinfolkContinuity(decision === "accepted", decision)}
+        visible={isLoggedIn && (kinfolkContinuityDisclosureRequired || showContinuityReconsent)}
+        onChoose={async (decision) => {
+          const saved = await setKinfolkContinuity(decision === "accepted", decision);
+          if (saved) setShowContinuityReconsent(false);
+          return saved;
+        }}
       />
 
       {/* Header */}
@@ -2572,7 +2618,7 @@ function TravelPage() {
           <div className="min-w-[17rem] border-b border-[#3A1F0E]/8 px-3 py-3">
             <button
               type="button"
-              onClick={() => void setKinfolkContinuity(!kinfolkContinuityEnabled)}
+              onClick={() => void requestKinfolkContinuity(!kinfolkContinuityEnabled)}
               className={`w-full rounded-lg px-3 py-2 text-left text-[11px] font-semibold transition-colors ${kinfolkContinuityEnabled ? "bg-[#CA922B]/10 text-[#8D5C17] hover:bg-[#CA922B]/15" : "bg-[#3A1F0E]/6 text-[#3A1F0E]/70 hover:bg-[#3A1F0E]/10"}`}
             >
               {kinfolkContinuityEnabled ? "Pause Kinfolk continuity" : "Turn on Kinfolk continuity"}
