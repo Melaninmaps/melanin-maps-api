@@ -54,6 +54,10 @@ import {
   FOUNDER_OWNER_ADMIN_EMAILS,
   PROTECTED_ADMIN_EMAILS,
 } from "./protectedAdminAccess";
+import {
+  ensureIsolatedStagingAdminBootstrapGuard,
+  isIsolatedStagingAdminBootstrapEnabled,
+} from "../auth/isolatedStagingAdminBootstrap.js";
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
@@ -8248,6 +8252,23 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   // capability, geocodes an address, or creates a member record at startup.
   await ensureKinfolkPrivatePlacesSchema(log, warn);
   await ensureKinfolkTemporaryStaysSchema(log, warn);
+
+  // The guard is a no-op outside explicitly isolated staging. Install it before
+  // any existing tester recovery writer can run so an administrator bootstrap
+  // can never race an entitlement grant.
+  try {
+    await ensureIsolatedStagingAdminBootstrapGuard(pool);
+  } catch (error) {
+    warn(
+      `Isolated staging administrator bootstrap guard unavailable: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    if (isIsolatedStagingAdminBootstrapEnabled()) {
+      warn(
+        "Isolated staging bootstrap is fail-closed; tester recovery and seed guards are disabled until its database boundary is available.",
+      );
+      return;
+    }
+  }
 
   // This narrowly scoped, founder-authorized recovery runs outside the generic
   // seed guard. It is required to repair the fixed tester roster when a

@@ -68,9 +68,14 @@ export async function getOidcConfig(): Promise<client.Configuration> {
   return oidcConfig;
 }
 
-export async function createSession(data: SessionData): Promise<string> {
+type SessionInsertExecutor = Pick<typeof db, "insert">;
+
+export async function createSession(
+  data: SessionData,
+  sessionDb: SessionInsertExecutor = db,
+): Promise<string> {
   const sid = crypto.randomBytes(32).toString("hex");
-  await db.insert(sessionsTable).values({
+  await sessionDb.insert(sessionsTable).values({
     sid,
     sess: data as unknown as Record<string, unknown>,
     expire: new Date(Date.now() + SESSION_TTL),

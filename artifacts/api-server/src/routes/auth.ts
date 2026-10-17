@@ -21,6 +21,7 @@ import { withDbRetry } from "../lib/db-retry";
 import { normalizeHomeState } from "../lib/happening-personalization";
 import { normalizeOwnershipDesignationFilterIds } from "@workspace/constants";
 import { invalidatePrefsCache } from "../kinfolk/preference-cache";
+import { acquireIsolatedStagingAdminBootstrap } from "../auth/isolatedStagingAdminBootstrap.js";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -844,6 +845,25 @@ router.post("/auth/register", async (req: Request, res: Response) => {
         // After account creation, the existing applyPendingTesterEntitlement() logic
         // auto-attaches the tester role — this gate only controls ENTRY, not entitlement.
 
+        // A staging operator cannot approve the first ordinary member without an
+        // authenticated reviewer. The one-time, allowlisted bootstrap is serialized
+        // by a PostgreSQL advisory lock and leaves a durable staging admin marker.
+        const stagingAdminBootstrap = await acquireIsolatedStagingAdminBootstrap(
+          cleanEmail,
+          pool,
+        );
+        if (stagingAdminBootstrap.status === "tester_conflict") {
+          res.status(403).json({
+            error:
+              "This isolated-staging administrator identity has a pending tester entitlement and cannot be used for administrator bootstrap.",
+            code: "STAGING_ADMIN_BOOTSTRAP_TESTER_CONFLICT",
+          });
+          return;
+        }
+        const authorizedStagingAdminBootstrap =
+          stagingAdminBootstrap.status === "granted";
+
+        try {
         const [waitlistEntry] = await db
           .select({ approvedAt: waitlistTable.approvedAt })
           .from(waitlistTable)
@@ -860,7 +880,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           if (testerCheck.rows.length > 0) approvedAsTester = true;
         }
 
-        if (!waitlistEntry && !approvedAsTester) {
+        if (!authorizedStagingAdminBootstrap && !waitlistEntry && !approvedAsTester) {
           req.log.info(
             {
               ...diagBase,
@@ -878,7 +898,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           });
           return;
         }
-        if (waitlistEntry && !waitlistEntry.approvedAt) {
+        if (!authorizedStagingAdminBootstrap && waitlistEntry && !waitlistEntry.approvedAt) {
           // On waitlist but pending admin approval — pre-approved testers (approvedAsTester=true) skip this
           req.log.info(
             {
@@ -900,7 +920,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
         const activationToken = typeof rawActivationToken === "string"
           ? rawActivationToken.trim()
           : "";
-        if (waitlistEntry?.approvedAt) {
+        if (!authorizedStagingAdminBootstrap && waitlistEntry?.approvedAt) {
           // Preserve pre-invitation legacy approvals, but never let an expired,
           // revoked, or failed-delivery activation capability fall back to an
           // unprotected approved-waitlist registration path.
@@ -932,23 +952,63 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           .toString("hex")
           .toUpperCase();
 
-        const [user] = await db
-          .insert(usersTable)
-          .values({
-            email: cleanEmail,
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            username: cleanUsername,
-            passwordHash,
-            emailVerified: false,
-            approved: true,
-            agreeToTerms: true,
-            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-            referralCode,
-          })
-          .returning();
+        const userInsertValues = {
+          email: cleanEmail,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          username: cleanUsername,
+          passwordHash,
+          emailVerified: false,
+          approved: true,
+          agreeToTerms: true,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+          referralCode,
+          role: authorizedStagingAdminBootstrap ? ("admin" as const) : ("user" as const),
+        };
+        let user: typeof usersTable.$inferSelect;
+        let bootstrapSessionId: string | undefined;
 
-        if (activationToken) {
+        if (authorizedStagingAdminBootstrap) {
+          // The bootstrap identity and its usable session must either both
+          // commit or both roll back. This branch is unreachable outside the
+          // explicit isolated-staging bootstrap claim.
+          const bootstrapResult = await db.transaction(async (tx) => {
+            const [transactionalUser] = await tx
+              .insert(usersTable)
+              .values(userInsertValues)
+              .returning();
+            if (!transactionalUser) {
+              throw new Error("Isolated staging administrator bootstrap user was not created");
+            }
+            const transactionalSessionData: SessionData = {
+              user: {
+                id: transactionalUser.id,
+                email: transactionalUser.email,
+                firstName: transactionalUser.firstName,
+                lastName: transactionalUser.lastName,
+                profileImageUrl: transactionalUser.profileImageUrl,
+                approved: transactionalUser.approved,
+                role: transactionalUser.role as "user" | "tester" | "admin",
+              },
+              access_token: "",
+            };
+            const sid = await createSession(transactionalSessionData, tx);
+            return { user: transactionalUser, sid };
+          });
+          user = bootstrapResult.user;
+          bootstrapSessionId = bootstrapResult.sid;
+        } else {
+          const [createdUser] = await db
+            .insert(usersTable)
+            .values(userInsertValues)
+            .returning();
+          if (!createdUser) {
+            throw new Error("Registration user was not created");
+          }
+          user = createdUser;
+        }
+
+        if (!authorizedStagingAdminBootstrap && activationToken) {
           // A concurrent admin revocation can happen after validation. Do not
           // issue a usable account if the final single-use consumption loses
           // that race; no agreement, email, entitlement, or session exists yet.
@@ -988,7 +1048,9 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
         sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
         // Auto-attach any pre-approved tester entitlement for this email
-        await applyPendingTesterEntitlement(user.id, user.email!);
+        if (!authorizedStagingAdminBootstrap) {
+          await applyPendingTesterEntitlement(user.id, user.email!);
+        }
 
         const sessionData: SessionData = {
           user: {
@@ -1002,7 +1064,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           },
           access_token: "",
         };
-        const sid = await createSession(sessionData);
+        const sid = bootstrapSessionId ?? (await createSession(sessionData));
 
         // Track whether the HTTP response actually reaches the client
         let responseFinished = false;
@@ -1041,6 +1103,11 @@ router.post("/auth/register", async (req: Request, res: Response) => {
             username: user.username,
           },
         });
+        } finally {
+          if (stagingAdminBootstrap.status === "granted") {
+            await stagingAdminBootstrap.release();
+          }
+        }
       },
       req.log,
       "POST /auth/register",

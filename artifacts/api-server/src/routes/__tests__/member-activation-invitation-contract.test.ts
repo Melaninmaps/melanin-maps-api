@@ -57,7 +57,7 @@ describe("member activation invitation contract", () => {
     expect(auth).toContain("const consumed = await consumeMemberActivationInvitation(cleanEmail, activationToken)");
     expect(auth).toContain("await db.delete(usersTable).where(eq(usersTable.id, user.id))");
     expect(auth.indexOf("const consumed = await consumeMemberActivationInvitation(cleanEmail, activationToken)")).toBeGreaterThan(
-      auth.indexOf("const [user] = await db"),
+      auth.indexOf("const userInsertValues = {"),
     );
   });
 

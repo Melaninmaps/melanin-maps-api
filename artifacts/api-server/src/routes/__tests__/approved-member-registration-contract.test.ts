@@ -13,15 +13,23 @@ describe("approved-member registration contract", () => {
     expect(authSource).toContain("You must be at least 13 years old to use this platform.");
   });
 
-  it("keeps registration invite-only while preserving the independent tester path", () => {
+  it("keeps registration invite-only except for a one-time isolated staging administrator bootstrap", () => {
     expect(authSource).toContain("pending_tester_emails");
-    expect(authSource).toContain("if (!waitlistEntry && !approvedAsTester)");
+    expect(authSource).toContain('from "../auth/isolatedStagingAdminBootstrap.js"');
+    expect(authSource).toContain("const stagingAdminBootstrap = await acquireIsolatedStagingAdminBootstrap(");
+    expect(authSource).toContain('if (stagingAdminBootstrap.status === "tester_conflict")');
+    expect(authSource).toContain("const authorizedStagingAdminBootstrap =");
+    expect(authSource).toContain("if (!authorizedStagingAdminBootstrap && !waitlistEntry && !approvedAsTester)");
+    expect(authSource).toContain("const bootstrapResult = await db.transaction(async (tx) => {");
+    expect(authSource).toContain("await createSession(transactionalSessionData, tx)");
+    expect(authSource).toContain("const sid = bootstrapSessionId ?? (await createSession(sessionData))");
+    expect(authSource).toContain("if (!authorizedStagingAdminBootstrap) {");
     expect(authSource).toContain('code: "WAITLIST_REQUIRED"');
     expect(authSource).toContain('code: "WAITLIST_PENDING"');
   });
 
-  it("continues to attach a pending tester entitlement after authorized registration", () => {
+  it("continues to attach a pending tester entitlement and session after ordinary authorized registration", () => {
     expect(authSource).toContain("await applyPendingTesterEntitlement(user.id, user.email!)");
-    expect(authSource).toContain("const sid = await createSession(sessionData)");
+    expect(authSource).toContain("await createSession(sessionData)");
   });
 });
