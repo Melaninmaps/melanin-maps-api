@@ -24,7 +24,7 @@
 
 - [ ] Contract, configure, or call JustWatch, International Showtimes, Watchmode, MovieGlu, TMDB, or any provider.
 - [ ] Run a database migration, deploy, create a mobile build, start AWS Device Farm, activate paid services, or make a production write.
-- [ ] Claim live streaming availability, rental/purchase options, showtimes, pricing, geographic coverage, theater listings, ticketing, or device acceptance.
+- [ ] Claim structured provider availability, entitlement, price, ticketing, geographic coverage, freshness SLA, or device acceptance without a separately approved and licensed provider.
 
 ## Post-source provider research
 
@@ -37,5 +37,9 @@
 
 - [x] Reuse the configured Kinfolk cited-web search adapter for one exact, explicitly requested current entertainment lookup; do not activate a new provider or make development-time live requests.
 - [x] Require title/country and require city for showtimes before a source query; use short-lived non-member-specific caching, safe HTTPS citations, a single low-budget query, and a truthful unavailable state.
-- [x] Return source links only. Do not parse or claim a streaming offer, subscription entitlement, rental/purchase price, theater, showtime, ticket link, provider coverage, or purchase flow from web-search results.
-- [x] Continue to reserve structured availability, offers, prices, theaters, showtimes, ticket links, and provider attribution for separately authorized provider integration.
+- [x] Retain the cited response sentence associated with each safe URL citation, then require an official first-party streaming/cinema source, exact title, exact requested region, explicit current fact, and freshness check before a natural-language availability statement.
+- [x] Resolve “it” only from one unambiguous title in the current private session; persist the bounded availability answer and source metadata through the existing session path so the next explicit follow-up can resolve safely.
+- [x] Permit a streaming statement only when the cited official page supports it; distinguish included-with-subscription, rental, purchase, and unpriced availability only when the cited text explicitly establishes that detail. Apply `included_only` before responding.
+- [x] Permit a theater statement only for a cited allow-listed official cinema page that supports the exact title, member-provided city/country, ISO date, and local start time. Do not construct ticket links.
+- [x] Reject stale, ambiguous, generic, geographic-mismatch, uncited, non-official, and same-provider-conflicting claims; provide legitimate source links or a truthful limitation instead.
+- [x] Continue to reserve structured provider availability, offers, price/entitlement truth, broad cinema coverage, ticket links, attribution SLA, and provider guarantees for separately authorized provider integration.

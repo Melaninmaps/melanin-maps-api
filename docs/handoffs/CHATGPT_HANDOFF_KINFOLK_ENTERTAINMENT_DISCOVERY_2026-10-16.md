@@ -9,33 +9,34 @@ This is the authoritative handoff for the **Kinfolk Entertainment Discovery, sub
 | Item | Value |
 |---|---|
 | Repository | `Melaninmaps/melanin-maps-api` |
-| Branch | `feature/kinfolk-regional-dialect-multilingual-foundation-20261016` |
+| Branch | `feature/kinfolk-entertainment-web-search-first-20261016` |
 | Original availability foundation | `1f00d195cb12ded23a0ccded6fbb80bbc7e52ec4` |
 | Personalization continuation | `77beb13794a1d77f14f5d0ae122f1d82fbee3236` |
 | Cited web-search extension | `7c4dacf7196b5a4998740cccdad9915738b2f645` |
-| Status | **SOURCE COMPLETE / AWAITING PROVIDER APPROVAL AND STAGING ACCEPTANCE** |
+| Verified cited-availability extension | `57f8da7093dd4ee347f897b5c2688f7b9368dfff` |
+| Status | **SOURCE COMPLETE / AWAITING CONTROLLED INTEGRATION AND STAGING ACCEPTANCE** |
 
 ## What is source complete
 
 1. **Normal Kinfolk entertainment conversation is preserved.** Movies, television, actors, music, books, entertainment history, and cultural conversation remain on the existing Kinfolk route, persona, research, and citation behavior. They never require a streaming or showtime provider.
-2. **Current availability is safely gated.** Only explicit current availability, showtime, or named-event requests enter the bounded availability path. Title and country are required; city is also required for showtimes/events. A generic reference such as “this movie” stays in the title-required state. With the existing configured cited-web adapter, Kinfolk can return one short-lived list of title-matched source links; without it, it returns a truthful unavailable result. In neither case does it invent or claim a service, offer, entitlement, rental, purchase, price, theater, showtime, ticket link, geographic coverage, or provider result.
+2. **Current availability is safely evidence-gated.** Only explicit current availability, showtime, or named-event requests enter the bounded path. Title and country are required; city is also required for showtimes/events. A generic reference stays title-required unless exactly one title is unambiguous in the current private session. The configured cited-web adapter performs one short-lived source lookup. Kinfolk may state an availability fact only where cited text from an official streaming/cinema source proves the exact title, requested geography, and current fact; otherwise it returns source links or a truthful limitation.
 3. **Subscription changes are consent-first.** “I have Netflix,” “I switched from Hulu to Max,” “I cancelled Peacock,” and an explicit no-extra-cost request produce a specific confirm/dismiss card. Chat text alone does not write a preference.
 4. **No duplicate memory store was created.** Confirmed choices use the existing `user_preferences` record. Settings and chat both support review/edit/clear behavior. The preferences are private and do not change membership pricing, billing, or subscription entitlements.
-5. **No-extra-cost behavior exists in source.** The `included_only` preference filters provider-shaped fixture data to subscription-included, free, or ad-supported options from saved services; rental/purchase options are excluded. The cited-web query can be shaped by saved services but never treats them as an entitlement or claims a real included offer.
-6. **Showtime questions are bounded.** Title-less prompts such as “What Black movies are playing near me?” are recognized. Kinfolk requests a country/city/title as required, does not infer “my mom’s house,” and does not retain raw device coordinates.
+5. **No-extra-cost behavior exists in source.** The `included_only` preference filters provider-shaped fixture data to subscription-included, free, or ad-supported options from saved services; rental/purchase options are excluded. Cited-web evidence must explicitly say an option is included before it can appear under this preference. A saved service is never treated as an entitlement.
+6. **Showtime questions are bounded.** Title-less prompts such as “What Black movies are playing near me?” are recognized. Kinfolk requests a country/city/title as required, does not infer “my mom’s house,” and does not retain raw device coordinates. It may state a showtime only from an cited allow-listed official cinema source that names the title, city, country, ISO date, and local start time; it never constructs a ticket link.
 7. **Offline provider fixtures exist only for tests.** Typed fixture data includes offers, showtimes, attribution, freshness, formats, destination validation, and provider failure. There is no runtime fixture switch and no outbound provider call.
 8. **Web and native source paths exist.** Web and native settings include service/country/no-extra-cost controls and disclose the cited-web boundary. Existing Web/native source-link components render returned citations; chat still renders a confirmation card before persisting a natural-language subscription change.
 
-## Validation at source commit `77beb13794a1d77f14f5d0ae122f1d82fbee3236`
+## Validation at source commit `57f8da7093dd4ee347f897b5c2688f7b9368dfff`
 
 | Validation | Result |
 |---|---|
 | Database, API, Web TypeScript | Passed |
 | Native TypeScript | Passed with existing `--ignoreDeprecations 6.0` compatibility override |
-| API focused tests | **17/17 passed** across 4 files |
-| Web focused tests | **4/4 passed** across 2 files |
-| Native focused tests | **4/4 passed** across 2 files |
-| Web production build | Passed; existing source-map and bundle-size warnings only |
+| API focused tests | **21/21 passed** across 5 files; includes verified official source, country mismatch, stale/ambiguous result, conflicting source, exact cinema showtime, citation-context, and follow-up resolution coverage |
+| Web focused tests | **2/2 passed** |
+| Native focused tests | **2/2 passed** |
+| Web production build | Not run in this extension; this source change did not initiate a release build |
 
 ## Provider decision — public-term research completed
 
@@ -53,18 +54,19 @@ Read the [provider decision packet](../plans/KINFOLK_ENTERTAINMENT_PROVIDER_DECI
 
 ## Must not be claimed
 
-Do **not** say that Kinfolk currently has structured live streaming availability, rentals/purchases, prices, showtimes, theaters, ticket links, coverage, a configured entertainment provider, device acceptance, or member acceptance. It does not. Cited web links are only source links for the member to review, not availability proof.
+Do **not** say that Kinfolk has structured live streaming offers, subscription entitlements, prices, broad showtime/theater coverage, ticket links, a freshness SLA, a configured entertainment provider, device acceptance, or member acceptance. It does not. The narrow cited-web path may make a natural-language current availability or exact showtime statement only after its deterministic official-source evidence guard succeeds; a citation must remain visible and clickable.
 
 Do **not** say a plain entertainment statement is saved. It is saved only after the member confirms a dedicated consent card or explicitly changes Settings.
 
 ## Next authorized action
 
-The workstream is source complete and awaits **controlled integration**, then **founder provider approval** and a **bounded non-production staging authorization**. The smallest approval should name one provider, one country, one U.S. city confirmed by that provider, six test titles, and a non-production credential. Only then: run the additive migration on an approved test database, inspect redacted provider requests/responses for title/country/city/attribution/freshness/link safety, and execute `ENT-01`–`ENT-08`. No ticket checkout.
+The workstream is source complete and awaits **controlled integration**, then a bounded staging acceptance of the cited-web evidence guard. A separately approved provider still requires a written provider decision, named country/city, non-production credential, source-attribution review, and provider-output inspection. No ticket checkout.
 
 ## Related documents
 
 - [Continuation source handoff](KINFOLK_ENTERTAINMENT_PERSONALIZATION_CONTINUATION_HANDOFF_2026-10-16.md)
 - [Cited web-search source handoff](KINFOLK_ENTERTAINMENT_CITED_WEB_SEARCH_HANDOFF_2026-10-16.md)
+- [Verified cited-availability handoff](KINFOLK_ENTERTAINMENT_VERIFIED_CITED_AVAILABILITY_HANDOFF_2026-10-16.md)
 - [Provider decision packet](../plans/KINFOLK_ENTERTAINMENT_PROVIDER_DECISION_PACKET_2026-10-16.md)
 - [Continuation implementation plan](../plans/KINFOLK_ENTERTAINMENT_PERSONALIZATION_CONTINUATION_PLAN.md)
 - [Completion checklist](../plans/KINFOLK_ENTERTAINMENT_DISCOVERY_TODO.md)
