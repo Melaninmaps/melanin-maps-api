@@ -26,7 +26,8 @@ describe("Kinfolk entertainment settings", () => {
     expect(settings).toContain("kinfolk-entertainment-settings");
     expect(settings).toContain("Ordinary chat never");
     expect(settings).toContain("Clear saved services");
-    expect(settings).toContain("api/kinfolk/preferences");
+    expect(settings).toContain("api/kinfolk/entertainment/preferences");
+    expect(settings).toContain("entertainmentCostPolicy");
   });
   it("renders the entertainment controls in the Kinfolk settings home", () => {
     expect(host).toContain("KinfolkEntertainmentSettings");

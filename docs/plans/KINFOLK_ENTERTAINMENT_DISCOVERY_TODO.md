@@ -1,27 +1,27 @@
 # Kinfolk Entertainment Discovery & Availability — TODO
 
-## Completed source foundation
+## Completed foundation
 
-- [x] Review the current Kinfolk candidate, conversation route, memory consent, preferences, existing contextual research, and Web/native chat surfaces.
-- [x] Record provider alternatives, licensing/coverage constraints, attribution requirements, and the no-activation decision.
-- [x] Add a provider-gated, disabled-by-default availability interface, authenticated readiness route, and no-network default result.
-- [x] Add deterministic current-availability/showtime detection for explicit title questions. General entertainment/culture conversation remains on its existing route.
-- [x] Add a deterministic consent prompt for a member’s ordinary streaming-subscription/favorite statement. Nothing is written from that message; the member may explicitly save a service in Settings or use the existing `Remember that…` flow.
-- [x] Extend existing Kinfolk preferences with explicit, clearable saved streaming services and an availability country. A member’s saved country/services are read privately by the availability endpoint, but never treated as live provider evidence.
-- [x] Add Web and native settings controls and native navigation. They clearly label live availability/showtimes as unavailable until an approved provider is connected.
-- [x] Preserve existing culture conversation, citations, private-memory safeguards, and no-background-location behavior.
+- [x] Preserve the existing provider-gated Entertainment Discovery source and do not duplicate its preference or availability architecture.
+- [x] Keep general movie, television, actor, music, book, entertainment-history, and cultural conversations on the existing Kinfolk route; a provider is never required for an ordinary answer.
+- [x] Keep current availability and showtime facts provider-gated, deterministic, attributed, and fail-closed.
+- [x] Keep member-selected streaming services and country private, editable, and removable in existing Kinfolk preferences on Web and native.
+- [x] Record provider alternatives, commercial/attribution constraints, and the no-activation decision.
 
-## Completed quality work
+## Authorized continuation — source work
 
-- [x] Add API service/route tests for explicit detection, consent prompting, provider-disabled, title, country, and showtime-location boundaries.
-- [x] Add Web and native preference/navigation contract tests.
-- [x] Run database/API/Web/native TypeScript checks; focused API/Web/native tests; and Web production build.
-- [x] Update the cumulative release matrix and final source handoff with exact commits and validation results.
+- [x] Recognize natural subscription additions, changes, and cancellations, including phrases such as “I have Netflix,” “I switched from Hulu to Max,” and “I cancelled Peacock.”
+- [x] Return a clear consent plan from natural subscription/favorite statements; never write from ordinary chat. Apply only a member-confirmed add/remove/replace/cost-policy operation to the existing preferences record.
+- [x] Persist and clear a member’s explicit `included_only` / no-extra-cost preference without changing membership pricing, subscription entitlements, or Stripe billing.
+- [x] Apply saved services and the no-extra-cost rule only to provider-shaped fixture data; exclude rental/purchase options from `included_only` results and never claim a real offer without a provider.
+- [x] Extend explicit availability/showtime detection to title-less theater discovery requests, including city/country/title clarification. Do not infer “my mom’s house,” collect background location, or invent theaters/showtimes.
+- [x] Add typed offline streaming/showtime fixtures with attribution, freshness, formats, destination validation, and controlled provider failure states. Fixtures are source-test-only.
+- [x] Add Web and native review/edit/delete controls for services and no-extra-cost policy; preserve the selected Kinfolk persona and existing settings layout.
+- [x] Add focused tests for intent, consent, subscriptions, cancellations, included-only filtering, provider failure, country/city/title gating, link safety, ordinary entertainment conversation, and Web/native source behavior.
+- [x] Update the provider decision packet, cumulative completion matrix, existing ChatGPT handoff, and Device Farm-ready acceptance cases.
 
 ## Explicitly deferred and inactive
 
-- [ ] Contract, configure, or call JustWatch, International Showtimes, Watchmode, MovieGlu, TMDB, or any other provider.
-- [ ] Render real streaming offers/showtime cards. Those cards require a provider response with contractual attribution and freshness evidence; the source candidate returns a truthful unavailable state instead.
-- [ ] Run a database migration or deploy.
-- [ ] Create a mobile build, AWS/device session, provider-output/audio acceptance, local-speaker validation, or member acceptance.
-- [ ] Claim working live availability, rental/purchase options, showtimes, pricing, geographic coverage, or ticketing.
+- [ ] Contract, configure, or call JustWatch, International Showtimes, Watchmode, MovieGlu, TMDB, or any provider.
+- [ ] Run a database migration, deploy, create a mobile build, start AWS Device Farm, activate paid services, or make a production write.
+- [ ] Claim live streaming availability, rental/purchase options, showtimes, pricing, geographic coverage, theater listings, ticketing, or device acceptance.

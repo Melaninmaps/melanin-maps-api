@@ -84,6 +84,16 @@ import {
 } from "../kinfolk/community-need-feedback";
 import { ensureKinfolkFeedbackFlywheelSchema } from "../lib/startup-migrations";
 import {
+  isEntertainmentPreferenceStatement,
+  parseEntertainmentAvailabilityRequest,
+  resolveEntertainmentAvailability,
+} from "../kinfolk/entertainment-availability";
+import {
+  buildEntertainmentConsentPlan,
+  normalizeEntertainmentCostPolicy,
+  normalizeStreamingService,
+} from "../kinfolk/entertainment-personalization";
+import {
   classifyKinfolkRequest,
   buildDiscoveryInstruction,
 } from "../kinfolk/request-classifier";
@@ -8683,6 +8693,106 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           fallbackUsed: false,
           partial: false,
         },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  if (isEntertainmentPreferenceStatement(message)) {
+    return void res.json({
+      sessionId,
+      reply:
+        "I will not save entertainment preferences from ordinary chat. If you want Kinfolk to remember a streaming service, choose it in Kinfolk Settings or say “Remember that I subscribe to [service].” You can change or clear it any time.",
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: ["Open Kinfolk Settings", "Keep this conversation private"],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "personalization",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "entertainment_preference_consent",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: { attempted: false, state: "not_needed", provider: null, fallbackUsed: false, partial: false },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  // Current watch/showtime questions have a different truth boundary from an
+  // ordinary culture conversation. Model memory must never fabricate a service,
+  // rental, price, cinema, or showtime while no approved provider is configured.
+  const entertainmentAvailabilityRequest = parseEntertainmentAvailabilityRequest({
+    message,
+    city: typeof cityHint === "string" ? cityHint : undefined,
+  });
+  if (entertainmentAvailabilityRequest) {
+    const entertainmentPreferenceRow = await pool.query<{
+      streaming_services: unknown;
+      entertainment_country: string | null;
+      entertainment_cost_policy: unknown;
+    }>(
+      `SELECT streaming_services, entertainment_country, entertainment_cost_policy
+         FROM user_preferences WHERE user_id = $1`,
+      [req.user.id],
+    );
+    const savedEntertainmentPreferences = entertainmentPreferenceRow.rows[0];
+    const savedStreamingServices = Array.isArray(savedEntertainmentPreferences?.streaming_services)
+      ? savedEntertainmentPreferences.streaming_services
+          .map(normalizeStreamingService)
+          .filter((service): service is string => Boolean(service))
+      : [];
+    const entertainmentAvailability = await resolveEntertainmentAvailability(
+      {
+        ...entertainmentAvailabilityRequest,
+        countryCode:
+          typeof savedEntertainmentPreferences?.entertainment_country === "string"
+            ? savedEntertainmentPreferences.entertainment_country.toUpperCase()
+            : null,
+      },
+      {
+        streamingServices: [...new Set(savedStreamingServices)],
+        entertainmentCostPolicy: normalizeEntertainmentCostPolicy(
+          savedEntertainmentPreferences?.entertainment_cost_policy,
+        ),
+      },
+    );
+    return void res.json({
+      sessionId,
+      reply: entertainmentAvailability.message,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [
+        "Discuss the title or artist",
+        "Open Kinfolk Settings to choose entertainment preferences",
+      ],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "culture_entertainment",
+      sources: [],
+      needsClarification:
+        entertainmentAvailability.status === "location_required" ||
+        entertainmentAvailability.status === "title_required",
+      originalQuery: message,
+      answerMode: "entertainment_availability_unavailable",
+      entertainmentAvailability,
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: true,
+        web: { attempted: false, state: "not_needed", provider: null, fallbackUsed: false, partial: false },
         asOf: new Date().toISOString(),
       },
     });

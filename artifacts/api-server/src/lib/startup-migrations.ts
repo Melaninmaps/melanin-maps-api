@@ -258,7 +258,8 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     name: "kinfolk_entertainment_preferences_v1",
     sql: `ALTER TABLE user_preferences
       ADD COLUMN IF NOT EXISTS streaming_services JSONB NOT NULL DEFAULT '[]'::jsonb,
-      ADD COLUMN IF NOT EXISTS entertainment_country VARCHAR(2);
+      ADD COLUMN IF NOT EXISTS entertainment_country VARCHAR(2),
+      ADD COLUMN IF NOT EXISTS entertainment_cost_policy VARCHAR(20) NOT NULL DEFAULT 'any';
     DO $$ BEGIN
       IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
@@ -270,9 +271,21 @@ const MIGRATIONS: { name: string; sql: string }[] = [
           CHECK (entertainment_country IS NULL OR entertainment_country ~ '^[A-Z]{2}$')
           NOT VALID;
       END IF;
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+         WHERE conname = 'user_preferences_entertainment_cost_policy_check'
+           AND conrelid = 'user_preferences'::regclass
+      ) THEN
+        ALTER TABLE user_preferences
+          ADD CONSTRAINT user_preferences_entertainment_cost_policy_check
+          CHECK (entertainment_cost_policy IN ('any', 'included_only'))
+          NOT VALID;
+      END IF;
     END $$;
     ALTER TABLE user_preferences
-      VALIDATE CONSTRAINT user_preferences_entertainment_country_check;`,
+      VALIDATE CONSTRAINT user_preferences_entertainment_country_check;
+    ALTER TABLE user_preferences
+      VALIDATE CONSTRAINT user_preferences_entertainment_cost_policy_check;`,
   },
   {
     name: "kinfolk_response_feedback_v1",
