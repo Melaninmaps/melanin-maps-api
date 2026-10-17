@@ -128,13 +128,24 @@ describe("validated presence batch routes", () => {
     expect(statements.some((statement: string) => statement.includes("DELETE FROM businesses"))).toBe(false);
   });
 
-  it("holds active Delete Queue records and rejects a generic Minority-Owned attempt", async () => {
+  it("holds active Delete Queue records and permits an approved Minority-Owned row with a public receipt", async () => {
     const { app } = appWith("admin", makeDatabase({ in_delete_queue: true }));
     const preview = await request(app).post("/admin/businesses/validated-presence-batch/preview").send({ rows: [inputRow] }).expect(200);
     expect(preview.body.candidates[0]).toMatchObject({ status: "skipped", reason: expect.stringContaining("Delete Queue") });
-    await request(app).post("/admin/businesses/validated-presence-batch/preview")
+    const approved = await request(appWith("admin").app).post("/admin/businesses/validated-presence-batch/preview")
       .send({ rows: [{ ...inputRow, authorizedOwnershipStatus: "Minority-Owned" }] })
-      .expect(400);
+      .expect(200);
+    expect(approved.body.candidates[0]).toMatchObject({ status: "ready", proposedFields: expect.arrayContaining(["ownership_designations"]) });
+  });
+
+  it("limits a local-source row to directly validated presence and leaves ownership unchanged", async () => {
+    const { app } = appWith("admin");
+    const preview = await request(app).post("/admin/businesses/validated-presence-batch/preview")
+      .send({ rows: [{ ...inputRow, sourceUrl: "CURRENT_LOCAL_SEARCH" }] })
+      .expect(200);
+    expect(preview.body.candidates[0]).toMatchObject({ status: "ready" });
+    expect(preview.body.candidates[0].proposedFields).toEqual(expect.arrayContaining(["website", "instagram"]));
+    expect(preview.body.candidates[0].proposedFields).not.toEqual(expect.arrayContaining(["phone", "ownership_designations"]));
   });
 
   it("holds a legacy terminal state even when its listing status is archived", async () => {

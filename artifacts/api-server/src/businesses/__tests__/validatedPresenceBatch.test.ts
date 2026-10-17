@@ -45,14 +45,27 @@ describe("validated presence batch policy", () => {
     expect(validatedPresenceOwnershipReceiptNote(parsed)).toContain("The source labels Community Books as Black-owned.");
   });
 
-  it("maps the only user-approved combined designation without inferring other ownership values", () => {
-    const [parsed] = parseValidatedPresenceBatchRows({ rows: [row({ authorizedOwnershipStatus: "Black / African American-Owned; Latino / Hispanic-Owned" })] });
-    expect(ownershipDesignationsForValidatedPresence(parsed.authorizedOwnershipStatus)).toEqual([
+  it("maps all founder-approved ownership designations without inferring other ownership values", () => {
+    const [combined] = parseValidatedPresenceBatchRows({ rows: [row({ authorizedOwnershipStatus: "Black / African American-Owned; Latino / Hispanic-Owned" })] });
+    expect(ownershipDesignationsForValidatedPresence(combined.authorizedOwnershipStatus)).toEqual([
       "Black / African American-Owned",
       "Latino / Hispanic-Owned",
     ]);
-    expect(() => parseValidatedPresenceBatchRows({ rows: [row({ authorizedOwnershipStatus: "Minority-Owned" })] }))
-      .toThrow("Only explicit Black / African American-Owned or Latino / Hispanic-Owned");
+    const [minority] = parseValidatedPresenceBatchRows({ rows: [row({ authorizedOwnershipStatus: "Minority-Owned" })] });
+    expect(ownershipDesignationsForValidatedPresence(minority.authorizedOwnershipStatus)).toEqual(["Minority-Owned"]);
+    expect(() => parseValidatedPresenceBatchRows({ rows: [row({ authorizedOwnershipStatus: "Women-Owned" })] }))
+      .toThrow("Only approved Black / African American-Owned, Latino / Hispanic-Owned, or Minority-Owned");
+  });
+
+  it("limits local-source references to website and social presence only", () => {
+    const [parsed] = parseValidatedPresenceBatchRows({ rows: [row({ sourceUrl: "CURRENT_LOCAL_SEARCH" })] });
+    expect(parsed.sourceUrl).toBeNull();
+    expect(presencePatchFromValidatedRow(parsed)).toEqual({
+      website: "https://communitybooks.example/",
+      instagram: "https://www.instagram.com/communitybooks/",
+    });
+    expect(() => parseValidatedPresenceBatchRows({ rows: [row({ sourceUrl: "file:///tmp/not-a-source" })] }))
+      .toThrow("sourceUrl must be a public http or https URL or an approved local-source reference");
   });
 
   it("rejects email fields, repeated identities, and batches larger than fifty", () => {

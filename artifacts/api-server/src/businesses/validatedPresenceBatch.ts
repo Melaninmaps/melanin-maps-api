@@ -8,13 +8,15 @@ export type ExplicitOwnershipStatus =
   | "Latino / Hispanic-Owned"
   | "Black / African American-Owned; Latino / Hispanic-Owned";
 
+export type AuthorizedOwnershipStatus = ExplicitOwnershipStatus | "Minority-Owned";
+
 export type ValidatedPresenceBatchRow = {
   originalRowNumber: number;
   businessName: string;
   city: string;
   state: string;
   phone: string | null;
-  authorizedOwnershipStatus: ExplicitOwnershipStatus;
+  authorizedOwnershipStatus: AuthorizedOwnershipStatus;
   authorizedOwnershipBasis: string;
   authorizedOwnershipSourceName: string;
   authorizedOwnershipSourceEvidence: string | null;
@@ -24,16 +26,27 @@ export type ValidatedPresenceBatchRow = {
   validationTier: string;
   businessNameEvidence: string;
   locationEvidence: string;
-  sourceUrl: string;
+  /** A public receipt for an ownership designation, or null for a local-source presence-only row. */
+  sourceUrl: string | null;
   auditCaveat: string;
 };
 
 export type PresencePatch = Partial<Record<"website" | "phone" | "instagram" | "tiktok" | "facebook" | "twitter" | "youtube" | "pinterest", string>>;
 
-const EXPLICIT_OWNERSHIP_STATUS = new Set<ExplicitOwnershipStatus>([
+const AUTHORIZED_OWNERSHIP_STATUS = new Set<AuthorizedOwnershipStatus>([
   "Black / African American-Owned",
   "Latino / Hispanic-Owned",
   "Black / African American-Owned; Latino / Hispanic-Owned",
+  "Minority-Owned",
+]);
+
+/** Known non-URL provenance markers from the founder-approved validation file. */
+const LOCAL_SOURCE_REFERENCES = new Set([
+  "CURRENT_LOCAL_SEARCH",
+  "LOCAL_BUSINESS_SEARCH",
+  "LOCAL_BUSINESS_SEARCH_2026",
+  "CURRENT LOCAL BUSINESS SEARCH_2026",
+  "CURRENT_LOCAL_BUSINESS_EVIDENCE_2026",
 ]);
 
 const SOCIAL_FIELD_BY_HOST_SUFFIX: Array<[string, Exclude<keyof PresencePatch, "website" | "phone">]> = [
@@ -88,6 +101,20 @@ function cleanPublicUrl(value: unknown, label: string): string {
   return url.toString();
 }
 
+/**
+ * Local-source markers are allowed only for presence-only updates. They never
+ * become an ownership receipt and cannot support a phone change.
+ */
+function cleanOwnershipSourceUrl(value: unknown): string | null {
+  const text = cleanText(value, "sourceUrl", 2048) as string;
+  try {
+    return cleanPublicUrl(text, "sourceUrl");
+  } catch {
+    if (LOCAL_SOURCE_REFERENCES.has(text.toUpperCase())) return null;
+    throw new Error("sourceUrl must be a public http or https URL or an approved local-source reference");
+  }
+}
+
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (isRecord(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
@@ -127,16 +154,18 @@ function qualifyingUrls(value: string): string[] {
   return normalized;
 }
 
-export function ownershipDesignationsForValidatedPresence(status: ExplicitOwnershipStatus): string[] {
+export function ownershipDesignationsForValidatedPresence(status: AuthorizedOwnershipStatus): string[] {
   if (status === "Black / African American-Owned") return [status];
   if (status === "Latino / Hispanic-Owned") return [status];
+  if (status === "Minority-Owned") return [status];
   return ["Black / African American-Owned", "Latino / Hispanic-Owned"];
 }
 
 /**
- * The browser sends only a selected slice of the uploaded CSV. This parser keeps
- * the API bound to 50 known rows, rejects generic Minority-Owned rows, and never
- * accepts an email payload from a presence-only upload.
+ * The browser sends only a selected slice of the founder-approved CSV. This
+ * parser remains bound to 50 known rows and never accepts an email payload.
+ * A local source marker permits directly validated website/social presence only;
+ * it cannot become an ownership receipt or authorize a phone change.
  */
 export function parseValidatedPresenceBatchRows(input: unknown): ValidatedPresenceBatchRow[] {
   if (!isRecord(input) || !Array.isArray(input.rows)) throw new Error("A validated presence batch with rows is required");
@@ -148,8 +177,8 @@ export function parseValidatedPresenceBatchRows(input: unknown): ValidatedPresen
     if (!isRecord(candidate)) throw new Error("Each validated presence row must be an object");
     if (Object.prototype.hasOwnProperty.call(candidate, "email")) throw new Error("Validated presence batches do not accept email fields");
     const ownership = cleanText(candidate.authorizedOwnershipStatus, "authorizedOwnershipStatus", 120) as string;
-    if (!EXPLICIT_OWNERSHIP_STATUS.has(ownership as ExplicitOwnershipStatus)) {
-      throw new Error("Only explicit Black / African American-Owned or Latino / Hispanic-Owned rows may be submitted in this batch");
+    if (!AUTHORIZED_OWNERSHIP_STATUS.has(ownership as AuthorizedOwnershipStatus)) {
+      throw new Error("Only approved Black / African American-Owned, Latino / Hispanic-Owned, or Minority-Owned rows may be submitted in this batch");
     }
     const row: ValidatedPresenceBatchRow = {
       originalRowNumber: cleanRowNumber(candidate.originalRowNumber),
@@ -157,7 +186,7 @@ export function parseValidatedPresenceBatchRows(input: unknown): ValidatedPresen
       city: cleanText(candidate.city, "city", 100) as string,
       state: (cleanText(candidate.state, "state", 50) as string).toUpperCase(),
       phone: cleanText(candidate.phone, "phone", 30, false),
-      authorizedOwnershipStatus: ownership as ExplicitOwnershipStatus,
+      authorizedOwnershipStatus: ownership as AuthorizedOwnershipStatus,
       authorizedOwnershipBasis: cleanText(candidate.authorizedOwnershipBasis, "authorizedOwnershipBasis", 1000) as string,
       authorizedOwnershipSourceName: cleanText(candidate.authorizedOwnershipSourceName, "authorizedOwnershipSourceName", 255) as string,
       authorizedOwnershipSourceEvidence: cleanText(candidate.authorizedOwnershipSourceEvidence, "authorizedOwnershipSourceEvidence", 1000, false),
@@ -167,7 +196,7 @@ export function parseValidatedPresenceBatchRows(input: unknown): ValidatedPresen
       validationTier: cleanText(candidate.validationTier, "validationTier", 1000) as string,
       businessNameEvidence: cleanText(candidate.businessNameEvidence, "businessNameEvidence", 1000) as string,
       locationEvidence: cleanText(candidate.locationEvidence, "locationEvidence", 1000) as string,
-      sourceUrl: cleanPublicUrl(candidate.sourceUrl, "sourceUrl"),
+      sourceUrl: cleanOwnershipSourceUrl(candidate.sourceUrl),
       auditCaveat: cleanText(candidate.auditCaveat, "auditCaveat", 1000) as string,
     };
     if (qualifyingUrls(row.qualifyingUrls).length === 0) throw new Error("Each validated presence row must contain at least one public qualifying URL");
@@ -183,7 +212,7 @@ export function parseValidatedPresenceBatchRows(input: unknown): ValidatedPresen
   return rows;
 }
 
-/** Returns only website/social/phone fields that are directly represented by the uploaded validation row. */
+/** Returns only website/social/phone fields directly represented by the validation row. */
 export function presencePatchFromValidatedRow(row: ValidatedPresenceBatchRow): PresencePatch {
   const patch: PresencePatch = {};
   const urls = qualifyingUrls(row.qualifyingUrls);
@@ -195,7 +224,8 @@ export function presencePatchFromValidatedRow(row: ValidatedPresenceBatchRow): P
     }
     if (/website/i.test(row.qualifyingPresenceType)) patch.website ??= url;
   }
-  if (row.phone) patch.phone = row.phone;
+  // A phone value needs the public source receipt that ties it to this business.
+  if (row.phone && row.sourceUrl) patch.phone = row.phone;
   return patch;
 }
 

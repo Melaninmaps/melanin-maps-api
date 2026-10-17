@@ -20,7 +20,7 @@ import {
 } from "./validatedPresenceBatch";
 
 const KINFOLK_CATALOG_COHORT_KEY = "kinfolk_catalog";
-const VALIDATED_PRESENCE_BATCH_VERSION = "validated-presence-batch-v1";
+const VALIDATED_PRESENCE_BATCH_VERSION = "validated-presence-batch-v2";
 
 type QueryResult<T = Record<string, unknown>> = { rows: T[]; rowCount?: number | null };
 type QueryClient = { query<T = Record<string, unknown>>(statement: string, values?: readonly unknown[]): Promise<QueryResult<T>> };
@@ -172,9 +172,11 @@ function sourceReceiptForPresence(field: keyof PresencePatch, value: string, row
     pinterest: "Pinterest profile",
   };
   const identitySignal = field === "website" ? "official_domain" : field === "phone" ? "full_phone" : "official_social_profile";
+  const sourceUrl = field === "phone" ? row.sourceUrl : value;
+  if (!sourceUrl) throw new Error("A phone update requires a public source receipt");
   return {
     field,
-    sourceUrl: field === "phone" ? row.sourceUrl : value,
+    sourceUrl,
     sourceLabel: field === "website" ? "Validated official website" : socialNames[field] ?? row.authorizedOwnershipSourceName,
     observedAt,
     confidence: "high" as const,
@@ -296,7 +298,9 @@ function prepareCandidate(
 
   const existingOwnership = textArray(business.ownership_designations);
   const canonicalExisting = new Set(existingOwnership.map((value) => value.trim().toLocaleLowerCase()));
-  const ownershipAdditions = ownershipDesignationsForValidatedPresence(input.authorizedOwnershipStatus)
+  // A local-source marker is accepted for its separately validated website/social
+  // evidence only. Ownership remains untouched without a public ownership receipt.
+  const ownershipAdditions = (input.sourceUrl ? ownershipDesignationsForValidatedPresence(input.authorizedOwnershipStatus) : [])
     .filter((designation) => !canonicalExisting.has(designation.toLocaleLowerCase()));
   if (ownershipAdditions.length > 0) profilePatch.ownershipDesignations = [...existingOwnership, ...ownershipAdditions];
 
@@ -308,14 +312,14 @@ function prepareCandidate(
     try {
       validatedPatch = validateAdminBusinessProfilePatch({
         ...profilePatch,
-        ownershipReceipt: ownershipAdditions.length > 0 ? {
+        ...(ownershipAdditions.length > 0 && input.sourceUrl ? { ownershipReceipt: {
           sourceUrl: input.sourceUrl,
           sourceLabel: input.authorizedOwnershipSourceName,
           observedAt,
           note: validatedPresenceOwnershipReceiptNote(input),
-        } : undefined,
+        } } : {}),
         sourceReceipts,
-        changeNote: `Validated presence batch row ${input.originalRowNumber}: exact identity match, explicit ownership source, and reviewed official presence.`,
+        changeNote: `Validated presence batch row ${input.originalRowNumber}: exact identity match, reviewed official presence${ownershipAdditions.length > 0 ? ", and a source-backed ownership designation" : "; ownership remains unchanged without a public source receipt"}.`,
       }, {
         name: business.name,
         description: business.description,
@@ -615,7 +619,9 @@ export function registerValidatedPresenceBatchRoutes(
           originalRowNumber: preview.input.originalRowNumber,
           businessId: business.id,
           status: "applied",
-          reason: "Validated presence, ownership receipt, public lifecycle, and Non-Kinfolk Current exclusion were saved with audit records.",
+          reason: locked.validatedPatch?.ownershipReceipt
+            ? "Validated presence, ownership receipt, public lifecycle, and Non-Kinfolk Current exclusion were saved with audit records."
+            : "Validated presence, public lifecycle, and Non-Kinfolk Current exclusion were saved with audit records; ownership was not changed without a public source receipt.",
           changedFields,
         });
       } catch (error) {

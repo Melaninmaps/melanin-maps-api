@@ -56,8 +56,8 @@ function candidateTone(status: PreviewCandidate["status"] | ApplyResult["status"
 
 /**
  * Browser-only CSV intake for the founder-approved 50-record operation. The
- * file remains in the browser; only the selected explicit-ownership slice goes
- * to the server for preview or separately confirmed apply.
+ * file remains in the browser; only a selected 50-record slice goes to the
+ * server for preview or separately confirmed apply.
  */
 export function ValidatedPresenceBatch({ onApplied }: { onApplied?: () => void }) {
   const [parsed, setParsed] = useState<ValidatedPresenceCsvParseResult | null>(null);
@@ -158,10 +158,10 @@ export function ValidatedPresenceBatch({ onApplied }: { onApplied?: () => void }
             <h3 id="validated-presence-batch-heading" className="font-serif text-lg font-semibold">Validated Presence Batch — 50 at a time</h3>
           </div>
           <p className="text-sm leading-6 text-emerald-900">
-            Select the founder-approved website/social CSV. It is read only in this browser. Each preview sends no more than 50 explicitly Black / African American-Owned or Latino / Hispanic-Owned records for an exact retained-record check. Minority-Owned rows stay held. Nothing is changed until you review the preview and type the confirmation shown below.
+            Select the founder-approved website/social CSV. It is read only in this browser. Each preview sends no more than 50 approved Black / African American-Owned, Latino / Hispanic-Owned, or Minority-Owned records for an exact retained-record check. Nothing is changed until you review the preview and type the confirmation shown below.
           </p>
           <p className="text-xs leading-5 text-emerald-800">
-            A safe apply fills only missing or identical official website/social/phone values, records source receipts, preserves any existing owner claim, restores an exact Archive match to public discovery when appropriate, and explicitly keeps it out of Kinfolk Current so it appears in Non-Kinfolk Current. It never creates a business, sends an email, overwrites a conflicting value, or touches Delete Queue / Kinfolk Current Delete Review records.
+            A safe apply fills only missing or identical official website/social values, records source receipts, preserves any existing owner claim, restores an exact Archive match to public discovery when appropriate, and explicitly keeps it out of Kinfolk Current so it appears in Non-Kinfolk Current. A local-source row cannot change ownership or phone without a public source receipt. It never creates a business, sends an email, overwrites a conflicting value, or touches Delete Queue / Kinfolk Current Delete Review records.
           </p>
         </div>
         <label className="flex min-w-64 flex-col gap-1 text-xs font-medium text-emerald-950">
@@ -182,9 +182,9 @@ export function ValidatedPresenceBatch({ onApplied }: { onApplied?: () => void }
         <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-4 text-sm text-emerald-950">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <strong>{parsed.rows.length.toLocaleString()} explicit-ownership records ready for review</strong>
+              <strong>{parsed.rows.length.toLocaleString()} approved records ready for review</strong>
               <span className="mx-2 text-emerald-300">•</span>
-              {parsed.heldMinorityOwnedCount.toLocaleString()} Minority-Owned record{parsed.heldMinorityOwnedCount === 1 ? "" : "s"} held
+              {parsed.includedMinorityOwnedCount.toLocaleString()} Minority-Owned record{parsed.includedMinorityOwnedCount === 1 ? "" : "s"} included
               {parsed.ignoredRowCount > 0 && <><span className="mx-2 text-emerald-300">•</span>{parsed.ignoredRowCount.toLocaleString()} non-approved row{parsed.ignoredRowCount === 1 ? "" : "s"} ignored</>}
             </div>
             <div className="flex flex-wrap items-center gap-2">

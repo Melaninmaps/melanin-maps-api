@@ -1,12 +1,18 @@
 export const VALIDATED_PRESENCE_BATCH_SIZE = 50;
 
+export type AuthorizedOwnershipStatus =
+  | "Black / African American-Owned"
+  | "Latino / Hispanic-Owned"
+  | "Black / African American-Owned; Latino / Hispanic-Owned"
+  | "Minority-Owned";
+
 export type ValidatedPresenceCsvRow = {
   originalRowNumber: number;
   businessName: string;
   city: string;
   state: string;
   phone: string | null;
-  authorizedOwnershipStatus: "Black / African American-Owned" | "Latino / Hispanic-Owned" | "Black / African American-Owned; Latino / Hispanic-Owned";
+  authorizedOwnershipStatus: AuthorizedOwnershipStatus;
   authorizedOwnershipBasis: string;
   authorizedOwnershipSourceName: string;
   authorizedOwnershipSourceEvidence: string | null;
@@ -22,14 +28,15 @@ export type ValidatedPresenceCsvRow = {
 
 export type ValidatedPresenceCsvParseResult = {
   rows: ValidatedPresenceCsvRow[];
-  heldMinorityOwnedCount: number;
+  includedMinorityOwnedCount: number;
   ignoredRowCount: number;
 };
 
-const EXPLICIT_OWNERSHIP = new Set<ValidatedPresenceCsvRow["authorizedOwnershipStatus"]>([
+const AUTHORIZED_OWNERSHIP = new Set<AuthorizedOwnershipStatus>([
   "Black / African American-Owned",
   "Latino / Hispanic-Owned",
   "Black / African American-Owned; Latino / Hispanic-Owned",
+  "Minority-Owned",
 ]);
 
 function canonicalHeader(value: string): string {
@@ -87,9 +94,10 @@ function readOptional(record: Record<string, string>, key: string): string | nul
 }
 
 /**
- * This parser runs only in the administrator's browser. It selects the three
- * user-approved explicit ownership labels, leaves Minority-Owned rows held, and
- * intentionally omits any unrequested CSV columns such as address or category.
+ * This parser runs only in the administrator's browser. It accepts all four
+ * founder-approved designations and intentionally omits unrelated CSV columns,
+ * such as address or category. The API independently limits local-source rows
+ * to a presence-only update when no public ownership receipt is available.
  */
 export function parseValidatedPresenceCsv(text: string): ValidatedPresenceCsvParseResult {
   const parsed = parseCsv(text);
@@ -105,19 +113,16 @@ export function parseValidatedPresenceCsv(text: string): ValidatedPresenceCsvPar
   if (missing.length > 0) throw new Error(`The selected CSV is missing required columns: ${missing.join(", ")}.`);
 
   const rows: ValidatedPresenceCsvRow[] = [];
-  let heldMinorityOwnedCount = 0;
+  let includedMinorityOwnedCount = 0;
   let ignoredRowCount = 0;
   for (const values of parsed.slice(1)) {
     const record = Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
     const ownership = readRequired(record, "authorized_ownership_status");
-    if (ownership === "Minority-Owned") {
-      heldMinorityOwnedCount += 1;
-      continue;
-    }
-    if (!EXPLICIT_OWNERSHIP.has(ownership as ValidatedPresenceCsvRow["authorizedOwnershipStatus"])) {
+    if (!AUTHORIZED_OWNERSHIP.has(ownership as AuthorizedOwnershipStatus)) {
       ignoredRowCount += 1;
       continue;
     }
+    if (ownership === "Minority-Owned") includedMinorityOwnedCount += 1;
     const originalRowNumber = Number.parseInt(readRequired(record, "original_row_number"), 10);
     if (!Number.isSafeInteger(originalRowNumber) || originalRowNumber < 1) throw new Error("Each selected record needs a valid original_row_number.");
     rows.push({
@@ -126,7 +131,7 @@ export function parseValidatedPresenceCsv(text: string): ValidatedPresenceCsvPar
       city: readRequired(record, "city"),
       state: readRequired(record, "state").toUpperCase(),
       phone: readOptional(record, "phone"),
-      authorizedOwnershipStatus: ownership as ValidatedPresenceCsvRow["authorizedOwnershipStatus"],
+      authorizedOwnershipStatus: ownership as AuthorizedOwnershipStatus,
       authorizedOwnershipBasis: readRequired(record, "authorized_ownership_basis"),
       authorizedOwnershipSourceName: readRequired(record, "authorized_ownership_source_name"),
       authorizedOwnershipSourceEvidence: readOptional(record, "authorized_ownership_source_evidence"),
@@ -140,6 +145,6 @@ export function parseValidatedPresenceCsv(text: string): ValidatedPresenceCsvPar
       auditCaveat: readRequired(record, "audit_caveat"),
     });
   }
-  if (rows.length === 0) throw new Error("No explicitly Black / African American-Owned or Latino / Hispanic-Owned rows were found in this CSV.");
-  return { rows, heldMinorityOwnedCount, ignoredRowCount };
+  if (rows.length === 0) throw new Error("No approved Black / African American-Owned, Latino / Hispanic-Owned, or Minority-Owned rows were found in this CSV.");
+  return { rows, includedMinorityOwnedCount, ignoredRowCount };
 }
