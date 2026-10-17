@@ -86,3 +86,27 @@ The evidence packet must include raw logs, migration result, API requests/respon
 | Streaming offers, rentals/purchases, and showtimes | Yes | No | No | No | No | No | Requires a separately authorized provider contract/key, attribution implementation, staging database migration, controlled provider-response inspection, location checks, and device acceptance. |
 
 > **Status boundary:** No provider account, trial, key, paid service, live request, scraping, migration, deployment, mobile build, Device Farm run, ticket checkout, or member acceptance occurred. Kinfolk does not currently claim live availability or showtimes.
+
+## Kinfolk Entertainment Personalization & Provider-Readiness — Continuation Status
+
+**Source continuation commit:** `77beb13794a1d77f14f5d0ae122f1d82fbee3236`
+
+| ID | Journey | Required result |
+|---|---|---|
+| ENT-01 | Ordinary entertainment conversation | Questions about movies, television, music, books, actors, entertainment history, and culture retain the selected Kinfolk persona and existing research/citation behavior; they do not require a provider or enter a live-availability flow. |
+| ENT-02 | Natural subscription change | “I have Netflix,” “I switched from Hulu to Max,” and “I cancelled Peacock” create a specific reviewable preference plan; nothing persists until the member confirms. Unrelated saved services remain unchanged. |
+| ENT-03 | No-extra-cost policy | The member can enable, disable, review, and clear an included-only policy. With provider-shaped fixture data, only subscription-included, free, or ad-supported options matching saved services remain; rental/purchase offers are excluded. |
+| ENT-04 | Streaming availability boundary | A current availability request requires an explicit title and country. If no approved provider is connected, Kinfolk returns a truthful unavailable state with no invented service, offer, price, purchase, rental, or link. |
+| ENT-05 | Theater/showtime boundary | “What Black movies are playing near me?” and “Find me a showing tonight” request an explicit city/country/title as needed; no background location, inferred home/family location, cinema, showtime, or ticket link is stored or invented. |
+| ENT-06 | Provider payload integrity | Approved provider results show only validated HTTPS destinations, explicit attribution, a freshness timestamp, and provider-provided offer/showtime fields. Provider failure remains a recoverable unavailable state. |
+| ENT-07 | Web and native consent parity | Web and installed iOS/Android builds display confirm/dismiss consent controls, settings edits/deletions, no-extra-cost controls, provider-unavailable copy, and do not write preferences on a plain chat message. |
+| ENT-08 | Provider approval and non-production validation | Before any provider is configured, written commercial/attribution approval, a non-production credential, a narrow test database, controlled title/city fixtures, provider-output review, and no-checkout verification are recorded. |
+
+| Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Subscription changes, consent, private retention, and no-extra-cost preference | Yes | Yes | Yes | No | No | No | Deterministic parser, member-confirmed endpoint, and Web/native consent/settings source tests are present. No preference was written in this workstream. |
+| Offline provider-shaped offers and showtimes | Yes | Yes | Yes | No | No | No | Test-only fixtures validate filtering, city/country/title gates, safe HTTPS links, attribution structure, and provider failure. No live data was requested. |
+| Provider decision packet | Yes | Yes | Yes | No | No | No | JustWatch + International Showtimes are recommended for later founder approval; contracts, credentials, terms confirmation, and non-production testing remain required. |
+| Web and native continuation controls | Yes | Yes | Yes | No | No | No | Source typechecks and focused tests pass; no mobile build, Device Farm session, or member test occurred. |
+
+> **Continuation status boundary:** This is **SOURCE COMPLETE / AWAITING PROVIDER APPROVAL AND STAGING ACCEPTANCE**. It does not authorize a provider trial, account, API key, payment, migration, deploy, mobile build, Device Farm run, live result, ticket link, or member acceptance.
