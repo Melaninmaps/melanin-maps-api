@@ -68,15 +68,25 @@ function standardPreflight(
     targetExists?: boolean;
     historicalAdminCount?: number;
     pendingTesterExists?: boolean;
+    failPreflight?: "target" | "historical_admins" | "pending_tester";
   } = {},
 ): unknown | undefined {
   if (query.includes("SELECT EXISTS(SELECT 1 FROM users")) {
+    if (overrides.failPreflight === "target") {
+      throw new Error("preflight query unavailable");
+    }
     return { rows: [{ exists: overrides.targetExists ?? false }] };
   }
   if (query.includes("SELECT COUNT(*)::int AS count")) {
+    if (overrides.failPreflight === "historical_admins") {
+      throw new Error("preflight query unavailable");
+    }
     return { rows: [{ count: overrides.historicalAdminCount ?? 1 }] };
   }
   if (query.includes("SELECT EXISTS(SELECT 1 FROM pending_tester_emails")) {
+    if (overrides.failPreflight === "pending_tester") {
+      throw new Error("preflight query unavailable");
+    }
     return { rows: [{ exists: overrides.pendingTesterExists ?? false }] };
   }
   return undefined;
@@ -139,6 +149,20 @@ describe("staging founder recovery issuance behavior", () => {
     const persistedTokenHash = insertCall?.[1]?.[1];
     expect(persistedTokenHash).toMatch(/^[a-f0-9]{64}$/);
     expect(persistedTokenHash).not.toBe(token);
+    const preflightQueries = original.query.mock.calls
+      .map(([query]) => String(query))
+      .filter(
+        (query) =>
+          query.includes("SELECT EXISTS(SELECT 1 FROM users") ||
+          query.includes("SELECT COUNT(*)::int AS count") ||
+          query.includes("SELECT EXISTS(SELECT 1 FROM pending_tester_emails"),
+      );
+    expect(preflightQueries).toHaveLength(3);
+    expect(preflightQueries[0]).toContain("SELECT EXISTS(SELECT 1 FROM users");
+    expect(preflightQueries[1]).toContain("SELECT COUNT(*)::int AS count");
+    expect(preflightQueries[2]).toContain(
+      "SELECT EXISTS(SELECT 1 FROM pending_tester_emails",
+    );
   });
 
   it("revokes the pending attempt when provider delivery fails and never reports issuance", async () => {
@@ -175,6 +199,47 @@ describe("staging founder recovery issuance behavior", () => {
       status: "blocked",
       reason: "target_account_exists",
     });
+    expect(state.sent).toHaveLength(0);
+  });
+
+  it("reports a non-single historical-admin baseline as a policy block without delivery", async () => {
+    state.clients = [issuanceClient([], { historicalAdminCount: 2 })];
+    state.sent = [];
+    state.sendFailure = false;
+
+    await expect(
+      issueStagingFounderAdminRecovery(environment),
+    ).resolves.toEqual({
+      status: "blocked",
+      reason: "historical_admin_count_not_one",
+    });
+    expect(state.sent).toHaveLength(0);
+  });
+
+  it("reports a pending-tester conflict as a policy block without delivery", async () => {
+    state.clients = [issuanceClient([], { pendingTesterExists: true })];
+    state.sent = [];
+    state.sendFailure = false;
+
+    await expect(
+      issueStagingFounderAdminRecovery(environment),
+    ).resolves.toEqual({
+      status: "blocked",
+      reason: "pending_tester_conflict",
+    });
+    expect(state.sent).toHaveLength(0);
+  });
+
+  it("propagates a preflight query failure instead of treating it as an eligibility block", async () => {
+    state.clients = [
+      issuanceClient([], { failPreflight: "historical_admins" }),
+    ];
+    state.sent = [];
+    state.sendFailure = false;
+
+    await expect(issueStagingFounderAdminRecovery(environment)).rejects.toThrow(
+      "preflight query unavailable",
+    );
     expect(state.sent).toHaveLength(0);
   });
 

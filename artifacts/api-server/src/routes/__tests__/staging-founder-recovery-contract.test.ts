@@ -48,6 +48,28 @@ describe("staging founder administrator recovery source contract", () => {
     expect(recovery).toContain("recoveryActivationUrl(token)");
   });
 
+  it("serializes completion invariants explicitly and keeps their client response generic", () => {
+    const completion = recovery.slice(
+      recovery.indexOf(
+        "export async function completeStagingFounderAdminRecovery",
+      ),
+      recovery.indexOf("const referralCode"),
+    );
+    expect(completion).not.toContain("Promise.all");
+    expect(completion.indexOf("const existingUser = await tx")).toBeGreaterThan(
+      -1,
+    );
+    expect(
+      completion.indexOf("const historicalAdminCount = await tx.execute"),
+    ).toBeGreaterThan(completion.indexOf("const existingUser = await tx"));
+    expect(
+      completion.indexOf("const pendingTester = await tx.execute"),
+    ).toBeGreaterThan(
+      completion.indexOf("const historicalAdminCount = await tx.execute"),
+    );
+    expect(completion).toContain('return { status: "not_completed" } as const');
+  });
+
   it("can supersede only a non-redeemable or expired recovery attempt under a second explicit flag", () => {
     expect(recovery).toContain(
       "KINFOLK_STAGING_FOUNDER_ADMIN_RECOVERY_REISSUE_ENABLED",

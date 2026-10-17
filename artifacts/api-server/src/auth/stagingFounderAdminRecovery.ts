@@ -618,25 +618,25 @@ export async function completeStagingFounderAdminRecovery(
       return { status: "not_completed" } as const;
     }
 
-    const [existingUser, historicalAdminCount, pendingTester] =
-      await Promise.all([
-        tx
-          .select({ id: usersTable.id })
-          .from(usersTable)
-          .where(eq(usersTable.email, cleanEmail))
-          .limit(1),
-        tx.execute<{ count: number }>(sql`
+    // Keep each recovery invariant visibly ordered on the transaction-bound
+    // client. This avoids relying on driver command queueing when an operator
+    // needs to distinguish database execution errors from policy failures.
+    const existingUser = await tx
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.email, cleanEmail))
+      .limit(1);
+    const historicalAdminCount = await tx.execute<{ count: number }>(sql`
         SELECT COUNT(*)::int AS count
           FROM users
          WHERE role = 'admin' AND LOWER(TRIM(email)) <> ${cleanEmail}
-      `),
-        tx.execute<{ exists: boolean }>(sql`
+      `);
+    const pendingTester = await tx.execute<{ exists: boolean }>(sql`
         SELECT EXISTS(
           SELECT 1 FROM pending_tester_emails
            WHERE LOWER(TRIM(email)) = ${cleanEmail}
         ) AS exists
-      `),
-      ]);
+      `);
     if (
       existingUser[0] ||
       historicalAdminCount.rows[0]?.count !== 1 ||
