@@ -292,9 +292,12 @@ function EmptyState({ query, onClear, onShowAll, savedDesignations, onRemoveDesi
       <div className="flex flex-wrap gap-3 justify-center">
         {!query && (
           <>
-            <Button className="rounded-full bg-[#2B1507] text-white px-6 h-10 text-sm" onClick={() => {}}>
-              Keep exact focus
-            </Button>
+            <p
+              data-testid="support-lens-exact-focus-status"
+              className="rounded-full bg-[#2B1507] text-white px-6 h-10 text-sm inline-flex items-center"
+            >
+              Keeping your exact focus
+            </p>
             {savedDesignations.length === 1 ? (
               <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-6 h-10 text-sm" onClick={() => onRemoveDesignation(savedDesignations[0])}>
                 Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === savedDesignations[0])?.label ?? "selection"}

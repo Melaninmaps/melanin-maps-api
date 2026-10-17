@@ -1,5 +1,21 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { buildReducedSupportLensUpdate, persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
+
+const directorySource = readFileSync(
+  new URL("../pages/businesses.tsx", import.meta.url),
+  "utf8",
+);
+const mapSource = readFileSync(new URL("../pages/map.tsx", import.meta.url), "utf8");
+
+function exactFocusStatusOpeningTag(source: string): string {
+  const marker = 'data-testid="support-lens-exact-focus-status"';
+  const markerIndex = source.indexOf(marker);
+  expect(markerIndex).toBeGreaterThan(-1);
+  const openingTagStart = source.lastIndexOf("<", markerIndex);
+  const openingTagEnd = source.indexOf(">", markerIndex);
+  return source.slice(openingTagStart, openingTagEnd + 1);
+}
 
 describe("web Support Lens removal actions", () => {
   it("removes one designation while preserving strict mode and canonical aliases", () => {
@@ -45,5 +61,23 @@ describe("web Support Lens removal actions", () => {
       preferredOwnershipTypes: ["black-african-american"],
       supportLensMode: "strict_documented_designations",
     });
+  });
+
+  it("shows strict focus as a status while retaining real alternative actions", () => {
+    for (const source of [directorySource, mapSource]) {
+      const statusTag = exactFocusStatusOpeningTag(source);
+
+      expect(source).toContain("Keeping your exact focus");
+      expect(source).not.toContain("Keep exact focus");
+      expect(source).not.toContain("onClick={() => {}}");
+      expect(statusTag).toMatch(/^<p(?:\s|>)/);
+      expect(statusTag).not.toMatch(/\b(?:onClick|onKeyDown|onKeyUp|tabIndex|href)\s*=/);
+      expect(statusTag).not.toMatch(/\brole\s*=\s*["']button["']/);
+    }
+
+    expect(directorySource).toContain("onClick={onShowAll}");
+    expect(directorySource).toContain("onClick={() => onRemoveDesignation(");
+    expect(mapSource).toContain('setMapDiscoveryFocus("all")');
+    expect(mapSource).toContain("void removeMapDesignation(");
   });
 });

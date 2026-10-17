@@ -2248,9 +2248,12 @@ export default function MapPage() {
                     )}
                     <div className="flex flex-wrap gap-2 justify-center mb-3">
                       {supportLensError && <p role="alert" className="w-full text-sm font-semibold text-red-700">{supportLensError}</p>}
-                      <button className="px-4 py-2 rounded-full bg-[#2B1507] text-white text-xs font-bold">
-                        Keep exact focus
-                      </button>
+                      <p
+                        data-testid="support-lens-exact-focus-status"
+                        className="px-4 py-2 rounded-full bg-[#2B1507] text-white text-xs font-bold"
+                      >
+                        Keeping your exact focus
+                      </p>
                       <button
                         onClick={() => { setSearch(""); setMapDiscoveryFocus("all"); setUniversalResults(null); }}
                         className="px-4 py-2 rounded-full border border-[#3A1F0E]/20 text-[#3A1F0E] text-xs font-bold"
