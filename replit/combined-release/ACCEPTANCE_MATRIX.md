@@ -75,7 +75,7 @@ The evidence packet must include raw logs, migration result, API requests/respon
 
 ## Kinfolk Entertainment Discovery & Availability — Completion Status
 
-**Source implementation commit:** pending final source commit
+**Source implementation commit:** `1f00d195cb12ded23a0ccded6fbb80bbc7e52ec4`
 
 | Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
 |---|---:|---:|---:|---:|---:|---:|---|
