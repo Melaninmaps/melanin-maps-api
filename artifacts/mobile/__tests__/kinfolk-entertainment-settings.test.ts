@@ -22,7 +22,8 @@ const home = readFileSync(
 describe("native Kinfolk entertainment settings", () => {
   it("uses authenticated saved preference controls without claiming live data", () => {
     expect(settings).toContain("auth_session_token");
-    expect(settings).toContain("api/kinfolk/preferences");
+    expect(settings).toContain("api/kinfolk/entertainment/preferences");
+    expect(settings).toContain("entertainmentCostPolicy");
     expect(settings).toContain(
       "Live availability and showtimes are not connected",
     );

@@ -54,6 +54,10 @@ import {
   shouldAutoSpeakNewReply,
 } from "@/lib/kinfolkVoicePreferences";
 import {
+  KinfolkEntertainmentConsent,
+  type KinfolkEntertainmentConsentPlan,
+} from "@/components/kinfolk/KinfolkEntertainmentConsent";
+import {
   canRecordBrowserPcm,
   startBrowserPcmVoiceRecorder,
   type BrowserPcmVoiceRecorder,
@@ -217,6 +221,7 @@ interface Message {
   /** Explicit private-memory offer for a named companion; never a profile mutation. */
   companionMemoryOffer?: CompanionMemoryOffer | null;
   inlineMemoryConsent?: { message: string; plan: KinfolkInlineMemoryConsentPlan; sessionId?: string | null } | null;
+  entertainmentConsent?: KinfolkEntertainmentConsentPlan | null;
   /** Server decision metadata; the client fails closed for unauthorized cards. */
   responseMeta?: KinfolkResponseMeta | null;
 }
@@ -2116,6 +2121,7 @@ function TravelPage() {
           purpose?: string;
         } | null;
         memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null;
+        entertainmentConsentPlan?: KinfolkEntertainmentConsentPlan | null;
       };
 
       // A structured itinerary may intentionally omit conversational copy. Legacy replies
@@ -2175,6 +2181,7 @@ function TravelPage() {
         privateFinancialGoalOffer: Boolean(data.reply?.trim()) && isExplicitSavingsGoalPrompt(trimmed),
         companionMemoryOffer: data.companionMemoryOffer ?? null,
         inlineMemoryConsent: data.memoryConsentPlan ? { message: trimmed, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
+        entertainmentConsent: data.entertainmentConsentPlan ?? null,
         responseMeta,
       }]);
       if (shouldAutoSpeakNewReply({
@@ -2958,6 +2965,13 @@ function TravelPage() {
                           sessionId={msg.inlineMemoryConsent.sessionId}
                           onSaved={() => { setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item)); void loadKinfolkContinuity(); }}
                           onDismiss={() => setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item))}
+                        />
+                      )}
+                      {msg.role === "assistant" && msg.entertainmentConsent && (
+                        <KinfolkEntertainmentConsent
+                          plan={msg.entertainmentConsent}
+                          onSaved={() => setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, entertainmentConsent: null } : item))}
+                          onDismiss={() => setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, entertainmentConsent: null } : item))}
                         />
                       )}
                       {msg.role === "assistant" && msg.companionMemoryOffer && (

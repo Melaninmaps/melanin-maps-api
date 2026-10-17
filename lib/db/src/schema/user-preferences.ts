@@ -39,6 +39,9 @@ export const userPreferencesTable = pgTable("user_preferences", {
   // do not prove current provider availability in any country.
   streamingServices: jsonb("streaming_services").$type<string[]>().default([]),
   entertainmentCountry: varchar("entertainment_country", { length: 2 }),
+  entertainmentCostPolicy: varchar("entertainment_cost_policy", { length: 20 })
+    .notNull()
+    .default("any"),
   kinfolkVoice: varchar("kinfolk_voice", { length: 20 })
     .notNull()
     .default("onyx"),
