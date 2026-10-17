@@ -13,7 +13,7 @@ This packet records the bounded approval decision. The controlling status record
 
 Entertainment preserves consent-controlled streaming preferences, selected country/service controls, the no-extra-cost rule, current-session-only unambiguous title follow-up, visible citations, and a provider abstraction. A direct streaming or cinema statement is permitted only when a cited supported official source verifies exact title, relevant country, current wording, and—only for exact showtimes—city, ISO date, and local time. Stale, generic, uncited, ambiguous, contradictory, non-official, or geography-mismatched evidence fails closed to a limitation and legitimate source links. No ticket link is created or inferred.
 
-The prepared branch now also contains `69980538cd49f8dfb44ec8e36516dab44ba7c4d7`, a narrow first-use continuity hardening. It rejects a decision-less continuity update for an undecided/legacy member and displays the required accept/decline disclosure in the standalone Web Memory Manager. Existing native chat, memory, and Settings routes already render the disclosure; the native Settings control now routes every undecided change through it. This preserves the earlier schema-lag persistence repair in `cc39bd4a` and does not alter unrelated safety preferences.
+The preparation history contains narrow interim hardening `69980538cd49f8dfb44ec8e36516dab44ba7c4d7`, but it is **not** the universal-consent source of record and must not be replayed as a competing unit. The exact broader repair is open PR [#313](https://github.com/Melaninmaps/melanin-maps-api/pull/313), `fix/kinfolk-universal-consent-p0` at `e17422471b4128067187ea98d441a6e5353dd811`, based on `cc39bd4a`. On the later stable-authority reconciliation, retain unrelated Entertainment behavior but resolve every consent hunk in favor of `e1742247`, including its policy module/tests, reset semantics, private-memory consent gate, Web/native re-consent flows, and account-switch request cancellation. Neither consent implementation is integrated into the moving owner candidate yet.
 
 ## Focused source evidence
 
@@ -27,6 +27,7 @@ All checks below ran on the prepared branch after the consent hardening:
 | API focused suite | 39 passed across 9 files; 5 database-backed persistence tests skipped because no authorized `KINFOLK_CONTINUITY_TEST_DATABASE_URL` was supplied |
 | Web focused suite | 26 passed across 4 files |
 | Native focused suite | 13 passed across 4 files |
+| Separate universal-consent source PR #313 | Its owner reports 13 scoped API tests and 21 scoped mobile tests passing, plus API build, Web TypeScript/build, native TypeScript with the established compatibility flag, and diff integrity. This evidence belongs to `e1742247`; it has not been rerun or merged into this preparation. |
 
 The skipped database-backed tests are not a failure. They also are not authenticated application proof: no database migration, staging database write, production write, deployment, mobile build, provider activation, or live Entertainment lookup occurred.
 
@@ -49,7 +50,7 @@ These scenarios require actual returned citations and application behavior. Inje
 
 ## Precise approvals needed
 
-1. **Source-only integration approval:** once the active owner reports a stable current authoritative SHA, authorize a controlled rebase/cherry-pick of this prepared branch onto that SHA, with conflict review and the same focused regressions. This is not a final release merge, deployment, migration, mobile build, or provider activation.
+1. **Source-only integration approval:** once the active owner reports a stable current authoritative SHA, authorize a controlled rebase/cherry-pick of the ten Entertainment commits and the exact PR #313 commit `e1742247` onto that SHA, with conflict review and the same focused regressions. Resolve consent overlaps in favor of `e1742247`; do not replay `69980538` as a separate unit. This is not a final release merge, deployment, migration, mobile build, or provider activation.
 2. **Controlled staging approval:** separately authorize the required non-production schema readiness/migration and authenticated real-world KIN-ENT-01–08 plus KIN-13 save/readback. Existing cited-web configuration may be used within its existing limits; no paid provider, trial, account, subscription, or charge is requested.
 3. **Fresh-account production acceptance approval:** separately authorize observation-only verification on the already available Web, iOS, and Android surfaces after staging passes. No production data modification or new mobile build is included.
 
