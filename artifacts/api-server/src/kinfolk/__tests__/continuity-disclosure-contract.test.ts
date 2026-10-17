@@ -7,6 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../../")
 const route = readFileSync(resolve(root, "artifacts/api-server/src/routes/kinfolk.ts"), "utf8");
 const schema = readFileSync(resolve(root, "lib/db/src/schema/user-settings.ts"), "utf8");
 const migration = readFileSync(resolve(root, "artifacts/api-server/src/lib/startup-migrations.ts"), "utf8");
+const persistence = readFileSync(resolve(root, "artifacts/api-server/src/kinfolk/continuity-settings-persistence.ts"), "utf8");
 const webDisclosure = readFileSync(resolve(root, "artifacts/web/src/components/kinfolk/KinfolkContinuityDisclosure.tsx"), "utf8");
 const mobileDisclosure = readFileSync(resolve(root, "artifacts/mobile/components/KinfolkContinuityDisclosure.tsx"), "utf8");
 
@@ -39,11 +40,16 @@ describe("Kinfolk first-use continuity disclosure", () => {
     }
   });
 
-  it("initializes all Kinfolk settings creation paths with opt-in Safety defaults", () => {
-    expect(route.match(/safetyAlertPolice: false/g)).toHaveLength(3);
-    expect(route.match(/safetyAlertIce: false/g)).toHaveLength(3);
-    expect(route).toContain("Continuity consent is independent from Safety alert consent.");
-    expect(route).toContain("Private-memory consent never creates a Safety alert subscription.");
+  it("writes only the stable consent columns when newer optional settings columns are absent", () => {
+    expect(route.match(/persistKinfolkContinuitySettings\(/g)).toHaveLength(3);
+    expect(persistence).toContain("INSERT INTO user_settings");
+    expect(persistence).toContain("safety_alert_police");
+    expect(persistence).toContain("safety_alert_ice");
+    expect(persistence).toContain("safety_alert_radius_miles");
+    expect(persistence).toContain("ON CONFLICT (user_id) DO UPDATE SET");
+    expect(persistence).not.toContain("safety_alert_police = EXCLUDED");
+    expect(persistence).not.toContain("safety_alert_ice = EXCLUDED");
+    expect(persistence).not.toContain("notif_reminders");
   });
 
   it("requires a distinct sensitive save confirmation and preserves owner-only edit checks", () => {
