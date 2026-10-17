@@ -8,6 +8,7 @@ const chatCreate = vi.hoisted(() => vi.fn());
 const createAudioUploadFile = vi.hoisted(() => vi.fn());
 const resolveOpenAIConfiguration = vi.hoisted(() => vi.fn());
 const resolveAudioOpenAIConfiguration = vi.hoisted(() => vi.fn());
+const textToSpeechWithStyle = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
   openai: {
     audio: { transcriptions: { create: transcribe } },
@@ -20,7 +21,7 @@ vi.mock("@workspace/integrations-openai-ai-server/audio", () => ({
   audioOpenai: { audio: { transcriptions: { create: transcribe } } },
   createAudioUploadFile,
   resolveAudioOpenAIConfiguration,
-  textToSpeechWithStyle: vi.fn(),
+  textToSpeechWithStyle,
 }));
 
 import router, { safeKinfolkErrorMetadata } from "../../routes/kinfolk";
@@ -129,6 +130,38 @@ describe("actual Kinfolk transcription handler", () => {
     const response = await request(app(false)).post("/api/kinfolk/transcribe");
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({ error: "AUTHENTICATION_REQUIRED", audioRetained: false });
+  });
+
+  it("returns a safe unavailable response when provider resolution throws", async () => {
+    resolveAudioOpenAIConfiguration.mockImplementation(() => {
+      throw new Error("missing provider configuration");
+    });
+
+    const response = await request(app()).post("/api/kinfolk/transcribe");
+
+    expect(response.status).toBe(503);
+    expect(response.body).toMatchObject({
+      error: "TRANSCRIPTION_UNAVAILABLE",
+      audioRetained: false,
+    });
+    expect(JSON.stringify(response.body)).not.toContain("missing provider configuration");
+    expect(transcribe).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["/api/kinfolk/speak", { text: "Please read this." }],
+    ["/api/kinfolk/voice-preview", {}],
+  ])("returns a safe TTS-unavailable response when provider resolution throws for %s", async (path, body) => {
+    resolveAudioOpenAIConfiguration.mockImplementation(() => {
+      throw new Error("missing provider configuration");
+    });
+
+    const response = await request(app()).post(path).send(body);
+
+    expect(response.status).toBe(503);
+    expect(response.body).toMatchObject({ error: "TTS_UNAVAILABLE" });
+    expect(JSON.stringify(response.body)).not.toContain("missing provider configuration");
+    expect(textToSpeechWithStyle).not.toHaveBeenCalled();
   });
 
   it("uses the provider-compatible server-owned model for voice input", async () => {

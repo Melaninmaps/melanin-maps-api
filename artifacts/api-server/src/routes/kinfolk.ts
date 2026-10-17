@@ -14788,6 +14788,16 @@ function runMulter(req: Request, res: Response): Promise<void> {
   });
 }
 
+function hasConfiguredKinfolkAudioProvider(): boolean {
+  try {
+    return Boolean(resolveAudioOpenAIConfiguration());
+  } catch {
+    // Provider configuration is intentionally opaque to members. A missing or
+    // invalid configuration must fail closed as an unavailable voice feature.
+    return false;
+  }
+}
+
 router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   // Authentication is checked before provider configuration so unauthenticated
   // requests never learn whether a backend credential is installed.
@@ -14798,7 +14808,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       audioRetained: false,
     });
   }
-  if (!resolveAudioOpenAIConfiguration()) {
+  if (!hasConfiguredKinfolkAudioProvider()) {
     return void res.status(503).json({
       error: "TRANSCRIPTION_UNAVAILABLE",
       message: "Transcription is temporarily unavailable.",
@@ -15093,7 +15103,7 @@ router.get(
 router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-  if (!resolveAudioOpenAIConfiguration()) {
+  if (!hasConfiguredKinfolkAudioProvider()) {
     return void res.status(503).json({
       error: "TTS_UNAVAILABLE",
       message: "Kinfolk audio is unavailable right now. You can still read the response.",
@@ -15213,7 +15223,7 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
 router.post("/kinfolk/voice-preview", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-  if (!resolveAudioOpenAIConfiguration()) {
+  if (!hasConfiguredKinfolkAudioProvider()) {
     return void res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk audio is unavailable right now." });
   }
   const speechConfig = resolveKinfolkSpeechConfiguration();
