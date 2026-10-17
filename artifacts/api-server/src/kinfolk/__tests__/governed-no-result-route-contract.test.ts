@@ -12,7 +12,10 @@ describe("governed no-result route contract", () => {
     expect(route).toContain("resolveGovernedNoResultFollowUp");
     expect(route).toContain("decodeGovernedNoResultAction");
     expect(route).toContain("offeredActions: priorAssistant?.followUpSuggestions");
-    expect(route).toContain("const discoveryMessage = noResultFollowUp?.priorQuestion ?? input.message");
+    expect(route).toContain("const discoveryMessage =");
+    expect(route).toContain("noResultFollowUp?.priorQuestion ??");
+    expect(route).toContain("locationClarificationFollowUp?.priorQuestion ??");
+    expect(route).toContain("const noResultAction = noResultFollowUp?.action ?? null");
     expect(route).toContain("readEphemeralKinfolkSession(input.req.user!.id, input.sessionId)");
   });
 
