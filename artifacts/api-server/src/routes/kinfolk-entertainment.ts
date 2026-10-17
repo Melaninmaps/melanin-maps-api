@@ -3,8 +3,8 @@ import { pool } from "@workspace/db";
 import {
   normalizeEntertainmentCountry,
   parseEntertainmentAvailabilityRequest,
-  resolveEntertainmentAvailability,
 } from "../kinfolk/entertainment-availability";
+import { resolveEntertainmentAvailabilityWithWebSources } from "../kinfolk/entertainment-web-research";
 import {
   applyEntertainmentConsentPlan,
   buildEntertainmentConsentPlan,
@@ -224,10 +224,10 @@ router.post("/kinfolk/entertainment/availability", async (req, res) => {
         "Provide an explicit current availability or showtime question. Kinfolk does not turn ordinary entertainment conversation into a live lookup.",
     });
   }
-  const availability = await resolveEntertainmentAvailability(
+  const availability = await resolveEntertainmentAvailabilityWithWebSources({
     request,
     preferences,
-  );
+  });
   res.json({ availability, preferences });
 });
 

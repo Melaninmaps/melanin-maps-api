@@ -32,3 +32,10 @@
 - [x] Record published costs, known attribution/licensing constraints, and the absence of a public city-level U.S. showtime coverage list in the provider decision packet.
 - [x] Preserve the source candidate in the cumulative integration inventory for later controlled authoritative-candidate assembly.
 - [ ] Obtain a founder-approved provider and a written provider confirmation for the named non-production market before any activation.
+
+## Authorized cited-web availability source
+
+- [x] Reuse the configured Kinfolk cited-web search adapter for one exact, explicitly requested current entertainment lookup; do not activate a new provider or make development-time live requests.
+- [x] Require title/country and require city for showtimes before a source query; use short-lived non-member-specific caching, safe HTTPS citations, a single low-budget query, and a truthful unavailable state.
+- [x] Return source links only. Do not parse or claim a streaming offer, subscription entitlement, rental/purchase price, theater, showtime, ticket link, provider coverage, or purchase flow from web-search results.
+- [x] Continue to reserve structured availability, offers, prices, theaters, showtimes, ticket links, and provider attribution for separately authorized provider integration.

@@ -147,8 +147,10 @@ export function KinfolkEntertainmentSettings() {
       </Text>
       <Text style={{ color: colors.mutedForeground, lineHeight: 18 }}>
         Choose only services you want Kinfolk to remember. Ordinary chat never
-        changes this list. Live availability and showtimes are not connected
-        yet, so Kinfolk will not guess.
+        changes this list. When you explicitly ask a current availability or
+        showtime question, Kinfolk may return cited web sources for the title
+        and selected location; it will not claim a service, price, theater, or
+        ticket result without an approved provider.
       </Text>
       {error ? (
         <Text accessibilityRole="alert" style={{ color: "#B42318" }}>

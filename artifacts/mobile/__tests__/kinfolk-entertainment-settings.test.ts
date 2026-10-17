@@ -25,7 +25,7 @@ describe("native Kinfolk entertainment settings", () => {
     expect(settings).toContain("api/kinfolk/entertainment/preferences");
     expect(settings).toContain("entertainmentCostPolicy");
     expect(settings).toContain(
-      "Live availability and showtimes are not connected",
+      "it will not claim a service, price, theater, or",
     );
   });
   it("exposes an accessible navigation route", () => {
