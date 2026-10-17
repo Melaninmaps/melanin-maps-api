@@ -36,18 +36,19 @@ This is the authoritative handoff for the **Kinfolk Entertainment Discovery, sub
 | Native focused tests | **4/4 passed** across 2 files |
 | Web production build | Passed; existing source-map and bundle-size warnings only |
 
-## Provider decision
+## Provider decision — public-term research completed
 
 No provider was enabled, configured, called, paid for, trialed, or contractually accepted.
 
 | Need | Recommendation | Why | Approval requirement |
 |---|---|---|---|
-| Streaming availability | **JustWatch Content Partner API** | Public documentation describes daily VOD updates, 500+ providers, 100+ countries, provider offers, and direct provider URLs. It requires a partner agreement/token and branded JustWatch link. Public price is not posted. | Written commercial/attribution approval, token, approved markets, non-production credential. |
-| Theater/showtimes | **International Showtimes** | Public page lists cinema metadata, published showtimes, formats, subtitles/languages, ticket links, 7-day trial, €149/month/market Basic and €299/month/market Business. | Written terms, coverage/freshness/ticket-link/caching verification, non-production credential. |
-| Streaming fallback | Watchmode | Listed commercial Startup: $349/month; free tier is non-commercial and restricted. | Commercial plan/key and terms approval. |
-| Do not select by default | TMDB | Its terms require commercial written approval for AI/chatbot use. | Separate legal/commercial decision. |
+| Streaming availability | **JustWatch Content Partner API** | Strongest documented coverage/freshness candidate, but its token is issued after a concluded partner contract. No public commercial evaluation, sandbox, or price was found. It requires a branded JustWatch link next to each where-to-watch integration. | Written quote, contract, permitted locales, cache/retention terms, attribution design, and test credential. |
+| Theater/showtimes | **International Showtimes** | Published 7-day free trial, Basic from €149/month/market, Business from €299/month/market. Business adds the cinema geo/website data, formats, and ticket links missing from Basic. Public pages do not prove city-level U.S. coverage. | Written city-coverage, staging-display, caching, attribution, ticket-link, and credential terms. |
+| Streaming fallback | Watchmode | Free Developer plan is explicitly non-commercial. Startup is $349/month for commercial use, 40,000 credits, 50+ countries, and native deep links. | Commercial plan/key, retention/rate estimate, and terms approval. |
+| Evaluation-only showtime fallback | MovieGlu | 75 selected-country evaluation requests and unlimited development sandbox are advertised, but the evaluation terms prohibit publishing provider data to members of the public. | Separate written commercial terms before any member-facing staging. |
+| Do not select by default | TMDB | Its terms require a separate written commercial agreement for AI/chatbot use. | Separate legal/commercial decision. |
 
-Read the [provider decision packet](../plans/KINFOLK_ENTERTAINMENT_PROVIDER_DECISION_PACKET_2026-10-16.md) before recommending a provider.
+Read the [provider decision packet](../plans/KINFOLK_ENTERTAINMENT_PROVIDER_DECISION_PACKET_2026-10-16.md) before recommending a provider. The current public-term comparison does **not** authorize a sales contact, account, trial, key, contract, or payment.
 
 ## Must not be claimed
 
@@ -57,7 +58,7 @@ Do **not** say a plain entertainment statement is saved. It is saved only after 
 
 ## Next authorized action
 
-The workstream is blocked only on **founder provider approval** and a **bounded non-production staging authorization**. When approved: configure only one non-production credential, run the additive migration on an approved test database, inspect redacted provider requests/responses for title/country/city/attribution/freshness/link safety, and execute `ENT-01`–`ENT-08` in the acceptance matrix across Web/iOS/Android. No ticket checkout.
+The workstream is source complete and awaits **controlled integration**, then **founder provider approval** and a **bounded non-production staging authorization**. The smallest approval should name one provider, one country, one U.S. city confirmed by that provider, six test titles, and a non-production credential. Only then: run the additive migration on an approved test database, inspect redacted provider requests/responses for title/country/city/attribution/freshness/link safety, and execute `ENT-01`–`ENT-08`. No ticket checkout.
 
 ## Related documents
 
@@ -66,3 +67,4 @@ The workstream is blocked only on **founder provider approval** and a **bounded 
 - [Continuation implementation plan](../plans/KINFOLK_ENTERTAINMENT_PERSONALIZATION_CONTINUATION_PLAN.md)
 - [Completion checklist](../plans/KINFOLK_ENTERTAINMENT_DISCOVERY_TODO.md)
 - [Release acceptance matrix](../../replit/combined-release/ACCEPTANCE_MATRIX.md)
+- [Cumulative integration inventory](../../replit/combined-release/KINFOLK_CUMULATIVE_INTEGRATION_INVENTORY_2026-10-16.md)

@@ -25,3 +25,10 @@
 - [ ] Contract, configure, or call JustWatch, International Showtimes, Watchmode, MovieGlu, TMDB, or any provider.
 - [ ] Run a database migration, deploy, create a mobile build, start AWS Device Farm, activate paid services, or make a production write.
 - [ ] Claim live streaming availability, rental/purchase options, showtimes, pricing, geographic coverage, theater listings, ticketing, or device acceptance.
+
+## Post-source provider research
+
+- [x] Compare official public JustWatch, International Showtimes, Watchmode, MovieGlu, and TMDB terms without opening an account, trial, provider request, or paid service.
+- [x] Record published costs, known attribution/licensing constraints, and the absence of a public city-level U.S. showtime coverage list in the provider decision packet.
+- [x] Preserve the source candidate in the cumulative integration inventory for later controlled authoritative-candidate assembly.
+- [ ] Obtain a founder-approved provider and a written provider confirmation for the named non-production market before any activation.
