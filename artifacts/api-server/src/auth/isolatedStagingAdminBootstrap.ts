@@ -7,8 +7,18 @@ export interface IsolatedStagingAdminBootstrapEnvironment {
   readonly RAILWAY_ENVIRONMENT_NAME?: string;
 }
 
+export type IsolatedStagingAdminBootstrapEligibilityFailure =
+  | "missing_email"
+  | "environment_not_staging"
+  | "staging_isolation_disabled"
+  | "bootstrap_disabled"
+  | "email_not_allowlisted";
+
 export type IsolatedStagingAdminBootstrapClaim =
-  | { readonly status: "not_requested" }
+  | {
+      readonly status: "not_requested";
+      readonly reason: IsolatedStagingAdminBootstrapEligibilityFailure;
+    }
   | { readonly status: "already_claimed" }
   | { readonly status: "tester_conflict" }
   | { readonly status: "granted"; readonly release: () => Promise<void> };
@@ -36,6 +46,32 @@ export function isIsolatedStagingAdminBootstrapEnabled(
 }
 
 /**
+ * Produces a non-secret, fail-closed reason suitable only for isolated-staging
+ * diagnostics. It reports no values, allowlist entries, or role state.
+ */
+export function isolatedStagingAdminBootstrapEligibility(
+  email: string | null | undefined,
+  environment: IsolatedStagingAdminBootstrapEnvironment = process.env,
+): "eligible" | IsolatedStagingAdminBootstrapEligibilityFailure {
+  const normalizedEmail =
+    typeof email === "string" ? email.trim().toLowerCase() : "";
+  if (!normalizedEmail) return "missing_email";
+  if (environment.RAILWAY_ENVIRONMENT_NAME !== "staging") {
+    return "environment_not_staging";
+  }
+  if (environment.KINFOLK_MEMORY_STAGING_ISOLATION !== "true") {
+    return "staging_isolation_disabled";
+  }
+  if (environment.KINFOLK_STAGING_ADMIN_BOOTSTRAP_ENABLED !== "true") {
+    return "bootstrap_disabled";
+  }
+  if (!normalizedAdminEmails(environment.ADMIN_EMAILS).has(normalizedEmail)) {
+    return "email_not_allowlisted";
+  }
+  return "eligible";
+}
+
+/**
  * Allows a bootstrap attempt only in explicitly isolated Railway staging and
  * only for an existing ADMIN_EMAILS allowlist entry. The durable, one-time
  * decision is made by acquireIsolatedStagingAdminBootstrap below.
@@ -44,13 +80,8 @@ export function mayBootstrapIsolatedStagingAdmin(
   email: string | null | undefined,
   environment: IsolatedStagingAdminBootstrapEnvironment = process.env,
 ): boolean {
-  const normalizedEmail =
-    typeof email === "string" ? email.trim().toLowerCase() : "";
-  if (!normalizedEmail) return false;
-
   return (
-    isIsolatedStagingAdminBootstrapEnabled(environment) &&
-    normalizedAdminEmails(environment.ADMIN_EMAILS).has(normalizedEmail)
+    isolatedStagingAdminBootstrapEligibility(email, environment) === "eligible"
   );
 }
 
@@ -217,8 +248,12 @@ export async function acquireIsolatedStagingAdminBootstrap(
   pool: Pick<Pool, "connect">,
   environment: IsolatedStagingAdminBootstrapEnvironment = process.env,
 ): Promise<IsolatedStagingAdminBootstrapClaim> {
-  if (!mayBootstrapIsolatedStagingAdmin(email, environment)) {
-    return { status: "not_requested" };
+  const eligibility = isolatedStagingAdminBootstrapEligibility(
+    email,
+    environment,
+  );
+  if (eligibility !== "eligible") {
+    return { status: "not_requested", reason: eligibility };
   }
 
   // Do not grant a bootstrap claim unless the database itself rejects any

@@ -4,6 +4,7 @@ import {
   acquireIsolatedStagingAdminBootstrap,
   ensureIsolatedStagingAdminBootstrapGuard,
   isIsolatedStagingAdminBootstrapEnabled,
+  isolatedStagingAdminBootstrapEligibility,
   mayBootstrapIsolatedStagingAdmin,
 } from "../isolatedStagingAdminBootstrap";
 
@@ -88,6 +89,36 @@ describe("isolated staging administrator bootstrap", () => {
     expect(
       mayBootstrapIsolatedStagingAdmin(undefined, enabledEnvironment),
     ).toBe(false);
+  });
+
+  it("reports only a non-secret reason when an exact bootstrap gate is not eligible", () => {
+    expect(
+      isolatedStagingAdminBootstrapEligibility(undefined, enabledEnvironment),
+    ).toBe("missing_email");
+    expect(
+      isolatedStagingAdminBootstrapEligibility("founder@example.test", {
+        ...enabledEnvironment,
+        RAILWAY_ENVIRONMENT_NAME: "production",
+      }),
+    ).toBe("environment_not_staging");
+    expect(
+      isolatedStagingAdminBootstrapEligibility("founder@example.test", {
+        ...enabledEnvironment,
+        KINFOLK_MEMORY_STAGING_ISOLATION: "false",
+      }),
+    ).toBe("staging_isolation_disabled");
+    expect(
+      isolatedStagingAdminBootstrapEligibility("founder@example.test", {
+        ...enabledEnvironment,
+        KINFOLK_STAGING_ADMIN_BOOTSTRAP_ENABLED: "false",
+      }),
+    ).toBe("bootstrap_disabled");
+    expect(
+      isolatedStagingAdminBootstrapEligibility(
+        "other@example.test",
+        enabledEnvironment,
+      ),
+    ).toBe("email_not_allowlisted");
   });
 
   it("installs the tester exclusion in one transaction before the first bootstrap claim", async () => {

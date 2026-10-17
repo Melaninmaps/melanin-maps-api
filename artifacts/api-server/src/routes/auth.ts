@@ -860,6 +860,20 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           });
           return;
         }
+        if (
+          stagingAdminBootstrap.status === "not_requested" &&
+          process.env.RAILWAY_ENVIRONMENT_NAME === "staging"
+        ) {
+          req.log.info(
+            {
+              ...diagBase,
+              event: "AUTH_REGISTER_STAGING_BOOTSTRAP_NOT_ELIGIBLE",
+              emailMasked,
+              bootstrapEligibility: stagingAdminBootstrap.reason,
+            },
+            "auth diagnostic",
+          );
+        }
         const authorizedStagingAdminBootstrap =
           stagingAdminBootstrap.status === "granted";
 
