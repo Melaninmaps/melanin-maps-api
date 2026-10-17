@@ -148,9 +148,11 @@ export function KinfolkEntertainmentSettings() {
       <Text style={{ color: colors.mutedForeground, lineHeight: 18 }}>
         Choose only services you want Kinfolk to remember. Ordinary chat never
         changes this list. When you explicitly ask a current availability or
-        showtime question, Kinfolk may return cited web sources for the title
-        and selected location; it will not claim a service, price, theater, or
-        ticket result without an approved provider.
+        showtime question, Kinfolk checks cited current sources for the title
+        and selected location. It gives a direct answer only when an official
+        cited page establishes the title, location, and availability; otherwise
+        it gives source links without guessing a service, price, theater, or
+        ticket result.
       </Text>
       {error ? (
         <Text accessibilityRole="alert" style={{ color: "#B42318" }}>
@@ -241,8 +243,9 @@ export function KinfolkEntertainmentSettings() {
             lineHeight: 17,
           }}
         >
-          A verified provider will exclude rentals and purchases. Kinfolk does
-          not show live availability yet.
+          A verified provider will exclude rentals and purchases. Until then,
+          Kinfolk may show an option only when an official cited page explicitly
+          says it is included.
         </Text>
       </TouchableOpacity>
       <Text

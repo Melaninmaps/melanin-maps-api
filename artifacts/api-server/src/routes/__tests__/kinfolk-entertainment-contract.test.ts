@@ -33,8 +33,12 @@ describe("Kinfolk entertainment source contracts", () => {
   });
   it("guards current availability questions before model chat", () => {
     expect(kinfolk).toContain("parseEntertainmentAvailabilityRequest");
+    expect(kinfolk).toContain("resolveUnambiguousEntertainmentFollowUpTitle");
+    expect(kinfolk).toContain("entertainmentSessionMessages");
+    expect(kinfolk).toContain("persistDeterministicDiscoveryTurn");
     expect(kinfolk).toContain("entertainment_availability_unavailable");
     expect(kinfolk).toContain("entertainment_availability_web_sources");
+    expect(kinfolk).toContain("entertainment_availability_web_verified");
     expect(kinfolk).toContain("entertainmentAvailability.sources.map");
     expect(kinfolk).toContain("Model memory must never fabricate");
   });

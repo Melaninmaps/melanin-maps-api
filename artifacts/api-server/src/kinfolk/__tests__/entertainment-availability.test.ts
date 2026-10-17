@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isEntertainmentPreferenceStatement,
   parseEntertainmentAvailabilityRequest,
+  resolveUnambiguousEntertainmentFollowUpTitle,
   resolveEntertainmentAvailability,
 } from "../entertainment-availability";
 
@@ -25,7 +26,9 @@ describe("Kinfolk entertainment availability", () => {
       countryCode: "US",
     });
     expect(request).toMatchObject({ mode: "streaming", title: null });
-    await expect(resolveEntertainmentAvailability(request!)).resolves.toMatchObject({
+    await expect(
+      resolveEntertainmentAvailability(request!),
+    ).resolves.toMatchObject({
       status: "title_required",
       offers: [],
       showtimes: [],
@@ -33,8 +36,36 @@ describe("Kinfolk entertainment availability", () => {
   });
 
   it("turns a subscription statement into a consent prompt, not a silent save", () => {
-    expect(isEntertainmentPreferenceStatement("I have Netflix and Max.")).toBe(true);
-    expect(isEntertainmentPreferenceStatement("Tell me about Black cinema.")).toBe(false);
+    expect(isEntertainmentPreferenceStatement("I have Netflix and Max.")).toBe(
+      true,
+    );
+    expect(
+      isEntertainmentPreferenceStatement("Tell me about Black cinema."),
+    ).toBe(false);
+  });
+
+  it("resolves a follow-up reference only from one unambiguous current-session title", () => {
+    expect(
+      resolveUnambiguousEntertainmentFollowUpTitle({
+        message: "Where can I watch it?",
+        sessionMessages: [
+          { role: "user", content: "Where can I watch Jessica Jones?" },
+          {
+            role: "assistant",
+            content: "I can check current sources for Jessica Jones.",
+          },
+        ],
+      }),
+    ).toBe("Jessica Jones");
+    expect(
+      resolveUnambiguousEntertainmentFollowUpTitle({
+        message: "Where can I watch it?",
+        sessionMessages: [
+          { role: "user", content: "Where can I watch Jessica Jones?" },
+          { role: "user", content: "Where can I watch Moonlight?" },
+        ],
+      }),
+    ).toBeNull();
   });
 
   it("requires a location for showtimes and never invents a cinema", async () => {

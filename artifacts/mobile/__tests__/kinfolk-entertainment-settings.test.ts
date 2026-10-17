@@ -20,13 +20,12 @@ const home = readFileSync(
 );
 
 describe("native Kinfolk entertainment settings", () => {
-  it("uses authenticated saved preference controls without claiming live data", () => {
+  it("uses authenticated saved preference controls with an evidence-only availability boundary", () => {
     expect(settings).toContain("auth_session_token");
     expect(settings).toContain("api/kinfolk/entertainment/preferences");
     expect(settings).toContain("entertainmentCostPolicy");
-    expect(settings).toContain(
-      "it will not claim a service, price, theater, or",
-    );
+    expect(settings).toContain("cited page establishes the title");
+    expect(settings).toContain("without guessing a service, price, theater");
   });
   it("exposes an accessible navigation route", () => {
     expect(route).toContain("KinfolkEntertainmentSettings");
