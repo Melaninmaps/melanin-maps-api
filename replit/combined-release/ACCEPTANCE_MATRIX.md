@@ -77,6 +77,8 @@ The evidence packet must include raw logs, migration result, API requests/respon
 
 **Source implementation commit:** `1f00d195cb12ded23a0ccded6fbb80bbc7e52ec4`
 
+**Cited web-search extension commit:** `7c4dacf7196b5a4998740cccdad9915738b2f645`
+
 | Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
 |---|---:|---:|---:|---:|---:|---:|---|
 | Provider selection and licensing boundary | Yes | Yes | No | No | No | No | JustWatch is the proposed streaming provider and International Showtimes the proposed theatrical provider; neither is contracted, configured, or called. The source candidate is preserved for controlled integration. |
