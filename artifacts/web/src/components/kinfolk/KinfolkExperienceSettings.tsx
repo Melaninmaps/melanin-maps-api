@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { KinfolkMemoryManager } from "./KinfolkMemoryManager";
 import { PrivatePlacesSettings } from "./PrivatePlacesSettings";
+import { KinfolkEntertainmentSettings } from "./KinfolkEntertainmentSettings";
 import { TemporaryStaysSettings } from "./TemporaryStaysSettings";
 
 const BASE = import.meta.env.BASE_URL;
@@ -507,6 +508,7 @@ export function KinfolkExperienceSettings() {
             </button>
           </section>
 
+          <KinfolkEntertainmentSettings />
           <PrivatePlacesSettings />
           <TemporaryStaysSettings />
         </div>

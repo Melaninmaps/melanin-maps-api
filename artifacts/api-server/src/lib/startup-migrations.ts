@@ -252,6 +252,29 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ON community_language_proposals (city, status);`,
   },
   {
+    // Explicit, member-owned entertainment preferences only. This does not
+    // seed subscriptions, infer taste, configure a provider, or make any live
+    // availability/showtime request.
+    name: "kinfolk_entertainment_preferences_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS streaming_services JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS entertainment_country VARCHAR(2);
+    DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+         WHERE conname = 'user_preferences_entertainment_country_check'
+           AND conrelid = 'user_preferences'::regclass
+      ) THEN
+        ALTER TABLE user_preferences
+          ADD CONSTRAINT user_preferences_entertainment_country_check
+          CHECK (entertainment_country IS NULL OR entertainment_country ~ '^[A-Z]{2}$')
+          NOT VALID;
+      END IF;
+    END $$;
+    ALTER TABLE user_preferences
+      VALIDATE CONSTRAINT user_preferences_entertainment_country_check;`,
+  },
+  {
     name: "kinfolk_response_feedback_v1",
     sql: `CREATE TABLE IF NOT EXISTS kinfolk_response_feedback (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -19116,6 +19139,30 @@ export async function ensureKinfolkPrivatePlacesSchema(
     // Do not include driver data: a database error must never echo a ciphertext
     // envelope, an address-derived query, or any raw request payload to logs.
     warn("ensureKinfolkPrivatePlacesSchema failed");
+  }
+}
+
+/**
+ * Creates only explicit member entertainment preference columns. It neither
+ * invokes a provider nor creates any subscription, title, or location record.
+ */
+export async function ensureKinfolkEntertainmentSchemaOnly(): Promise<void> {
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "kinfolk_entertainment_preferences_v1",
+  );
+  if (!migration) {
+    throw new Error("Kinfolk entertainment preference migration definition is missing.");
+  }
+  await pool.query(migration.sql);
+  const { rows } = await pool.query<{ country_column: string | null }>(
+    `SELECT column_name::text AS country_column
+       FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'user_preferences'
+        AND column_name = 'entertainment_country'`,
+  );
+  if (!rows[0]?.country_column) {
+    throw new Error("Kinfolk entertainment preference schema verification failed.");
   }
 }
 
