@@ -96,6 +96,13 @@ import SubmitEvent from "@/pages/submit-event";
 import LocationShareView from "@/pages/location-share-view";
 import MemberProfile from "@/pages/member-profile";
 import Messages from "@/pages/messages";
+import {
+  OrganizationTransparencyDirectory,
+  OrganizationTransparencyProfile,
+} from "@/pages/organization-transparency";
+import OrganizationTransparencySubmit from "@/pages/organization-transparency-submit";
+import OrganizationTransparencyActivity from "@/pages/organization-transparency-activity";
+import FounderOrganizationTransparency from "@/pages/founder-organization-transparency";
 
 const BASE = import.meta.env.BASE_URL;
 const ROUTER_BASE = (() => {
@@ -328,6 +335,22 @@ function Router() {
       <Route path="/business/:id">
         <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
       </Route>
+      {import.meta.env.VITE_ORGANIZATION_TRANSPARENCY_ENABLED === "true" && (
+        <>
+          <Route path="/organizations/submit">
+            <PreLaunchRoute><OrganizationTransparencySubmit /></PreLaunchRoute>
+          </Route>
+          <Route path="/organizations/:id">
+            <PreLaunchRoute><OrganizationTransparencyProfile /></PreLaunchRoute>
+          </Route>
+          <Route path="/organizations">
+            <PreLaunchRoute><OrganizationTransparencyDirectory /></PreLaunchRoute>
+          </Route>
+          <Route path="/my-organization-activity">
+            <PreLaunchRoute><OrganizationTransparencyActivity /></PreLaunchRoute>
+          </Route>
+        </>
+      )}
       <Route path="/safety">
         <Layout><PreLaunchRoute><Safety /></PreLaunchRoute></Layout>
       </Route>
@@ -474,6 +497,11 @@ function Router() {
       <Route path="/founder/business-submissions">
         <FounderBusinessSubmissions />
       </Route>
+      {import.meta.env.VITE_ORGANIZATION_TRANSPARENCY_ENABLED === "true" && (
+        <Route path="/founder/organization-transparency">
+          <FounderOrganizationTransparency />
+        </Route>
+      )}
       {import.meta.env.VITE_DIRECTORY_IMPORT_REVIEW_ENABLED === "true" && (
         <Route path="/founder/directory-imports">
           <FounderDirectoryImports />

@@ -291,6 +291,10 @@ import {
 } from "../kinfolk/health-retrieval";
 import { buildHealthCareOverride } from "../kinfolk/health-care-override";
 import {
+  buildOrganizationTransparencyPrompt,
+  classifyOrganizationTransparencyTurn,
+} from "../kinfolk/organization-transparency-turn-policy";
+import {
   buildLifeIntentSourceQuery,
   getLifeIntentGuidance,
 } from "../kinfolk/life-intent-guidance";
@@ -11031,6 +11035,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     );
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
+    // A current-turn classifier keeps factual organization identity, workplace
+    // perspective, and care research distinct within broad Kinfolk intents. It
+    // only adds constraints; medical, legal, and safety routes stay authoritative.
+    const organizationTransparencyPrompt = buildOrganizationTransparencyPrompt(
+      classifyOrganizationTransparencyTurn(message),
+    );
     // A care-navigation request is a narrow current-turn exception to ordinary
     // ownership-scoped business discovery. It never changes saved preferences
     // and it never turns an unqualified directory listing into a medical referral.
@@ -13455,6 +13465,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       _discoveryInstruction || null,
       platformPolicyAnswerContract || null,
       intentPolicyPrompt || null,
+      organizationTransparencyPrompt || null,
       healthCareOverride.promptBlock || null,
       evidenceRoutePromptBlock(evidenceRoute, permittedIdentity),
       stableEducationalPartialRecovery

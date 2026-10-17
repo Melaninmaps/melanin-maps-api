@@ -79,6 +79,7 @@ import {
   getProtectedAdminAccessRecoveryStatus,
 } from "./lib/startup-migrations";
 import { getLatinxLehighValleyPublicationRuntimeStatus } from "./directoryImport/latinxLehighValleyPublication";
+import { registerOrganizationTransparencyRoutes } from "./organizationTransparency/registerOrganizationTransparencyRoutes";
 
 // Defined by esbuild in build.mjs. These values are substituted into the
 // current dist/index.mjs and therefore cannot retain an older generated file.
@@ -431,6 +432,12 @@ if (assertDirectoryReviewLocalStaging(process.env)) {
 }
 if (process.env.DIRECTORY_REVIEW_ENABLED === "1" && directoryReviewPool) {
   registerAutomatedDirectoryRoutes(app, directoryReviewPool, pool);
+}
+// The Organization Transparency foundation is source-only until its separate
+// approval-required migration and release review have completed. A false/missing
+// flag leaves the established business, review, map, and Kinfolk routes unchanged.
+if (process.env.ORGANIZATION_TRANSPARENCY_ENABLED === "true") {
+  registerOrganizationTransparencyRoutes(app);
 }
 
 // ── Living Library public read routes ──────────────────────────────────────
