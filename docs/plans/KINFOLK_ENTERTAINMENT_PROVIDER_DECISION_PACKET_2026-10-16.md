@@ -1,43 +1,71 @@
 # Kinfolk Entertainment Provider Decision Packet
 
-**Decision status:** recommendation only. No provider was selected, contracted, configured, called, or paid for.
+**Research date:** 2026-10-16
+**Decision status:** **No provider decision or activation.** This packet records current public terms for a future founder decision; no account, trial, credential, API request, contract, payment, migration, deployment, or member-facing result was created.
 
-## Recommendation
+## Executive decision
 
-Use **JustWatch Content Partner API** as the preferred streaming-availability source and **International Showtimes** as the preferred cinema/showtime source. Use two providers. Neither public offering documents a reliable single-source answer for both streaming availability and global theater showtimes.
+The existing entertainment source candidate remains the correct state: **provider-disabled by default, source complete, and truthful about live availability not being connected.**
 
-JustWatch is the stronger primary streaming candidate because its content-partner documentation describes VOD availability for up to 250,000 films and 60,000 TV shows, more than 500 providers in more than 100 countries, daily availability updates, provider offer categories including `flatrate`, `rent`, `buy`, `ads`, and `free`, direct provider destination URLs, and active-country information. Its formal partner API requires a concluded contract and a partner token. It also requires branded JustWatch linking alongside every where-to-watch integration. Public documentation does not publish a price, so a commercial quote is required before approval. [1] [2]
+There is **no single public, low-cost, legally cleared source** that can be selected today for both commercial streaming availability and theatrical showtimes without a further founder decision and provider-specific written terms.
 
-International Showtimes is the preferred showtime candidate because its public pricing page lists cinema metadata, published showtimes, language/subtitle data, formats, and ticket links. It offers a 7-day free trial, but this task must not start it. Its published Basic tier starts at €149 per month per market and Business at €299 per month per market; the page positions Business for startup, discovery, and ticketing platforms. Before any selection, verify the exact countries, freshness, ticket-link conditions, permitted caching, attribution, and production support terms in a written agreement. [3]
+- **Streaming candidate:** JustWatch is strongest on documented breadth/freshness, but public documentation requires a concluded partner contract and partner token; it publishes no commercial evaluation/sandbox terms or price. Its mandatory branded-link treatment must be designed before approval.
+- **Showtime candidate:** International Showtimes publishes a **7-day free trial per market**, Basic from **€149/month per market**, and Business from **€299/month per market**. Basic omits cinema websites/geolocations, formats, and ticket links; Business includes them. Its public marketing says 120+ countries and 25,000+ cinemas, but it does **not** publish a city-by-city U.S. coverage list.
+- **Lowest public commercial streaming alternative:** Watchmode’s **Startup plan is $349/month** for commercial use, 40,000 monthly credits, 50+ countries, and native deep links. Its free Developer plan is explicitly non-commercial.
+- **Evaluation-only showtime alternative:** MovieGlu documents a 75-request selected-country evaluation and an unlimited development sandbox, but its evaluation terms forbid publishing the returned data to members of the public. It is not a member-facing staging substitute.
+- **Do not select for Kinfolk availability:** TMDB’s terms require a separate written agreement for commercial use and specifically name AI/chatbot/query-response use as commercial.
 
-Watchmode is the lower-friction streaming fallback. Its public site states it covers streaming sources in more than 50 countries, differentiates subscription/rental/purchase/free sources, and has daily updates. Its free Developer tier has 2,500 monthly credits but is non-commercial and restricted to three countries. Its listed commercial Startup tier begins at $349/month for 40,000 credits and 50+ country sources. Its terms require compliance with the applicable plan, may require attribution, and acknowledge that availability can be incomplete or inaccurate. Use it only if JustWatch commercial terms are unsuitable and only after commercial approval. [4] [5]
+## Provider comparison
 
-MovieGlu is a showtime fallback with claimed coverage in more than 90 countries and quote-based pricing. It is suitable for a later commercial comparison but does not provide publicly posted comparable pricing. [6]
+| Provider | Capability | Public evaluation / lowest published price | Commercial or usage boundary | Attribution / product constraints | Coverage evidence and unresolved point | Decision |
+|---|---|---|---|---|---|---|
+| **JustWatch Content Partner API** | Streaming availability, offers, prices, provider links, countries | No published evaluation, sandbox, or price located. API access occurs after a concluded contract and partner token issuance. | Must be a contracted partner. Partner-dashboard access is for active partner accounts. | A branded **JustWatch** link beside every where-to-watch integration is mandatory and must point to the country-specific title page. | Docs state 3,900+ local provider catalogues, 500+ providers, 100+ countries, daily updates, and include `en_US`. Exact commercial price, evaluation access, caching, and permitted staging use require written confirmation. | **Best quality candidate; not approval-ready.** Request a written commercial quote and terms only after founder approval to contact/activate a provider. |
+| **International Showtimes** | Theatrical showtimes, cinemas, formats, subtitles/languages, ticket links | **7-day free trial** per market; **Basic €149/month/market**; **Business €299/month/market**. Starting a trial requires a registration form and territory selection. | Public pricing is not the complete data-license agreement. Final caching, attribution, ticket-link, and public-display rights still require provider confirmation. | Business includes cinema geo/website data, formats, and ticketing links; Basic omits those fields. Never perform ticket checkout in Kinfolk. | Public site claims 120+ countries / 25,000+ cinemas and cites U.S./Canada use in a customer testimonial. Its Markets page does not enumerate U.S. cities or theaters. | **Best published showtime candidate.** The minimum plan for full near-me format/ticket-link scope appears to be Business; city coverage must be confirmed first. |
+| **Watchmode** | Streaming availability, provider links, web/native deep links, title metadata | Developer: **free**, 2,500 monthly credits, up to three countries, **non-commercial**. Startup: **$349/month**, 40,000 credits, commercial, 50+ countries. | Terms permit non-image API data in the owner’s website/app, prohibit resale/sharing, and require data to remain reasonably current. The Developer plan cannot be used for a commercial product. | Developer requires attribution and has a 30-day cache/refresh ceiling. Startup removes the stated attribution requirement and includes iOS/Android deep links. Do not use third-party images without separate rights. | Public site says 200+ services / 50+ countries and country-level availability, including the U.S. | **Most transparent commercial streaming fallback.** A realistic paid streaming comparison baseline, not a free launch option. |
+| **MovieGlu** | Theatrical showtimes, cinema data, deep links | 75 free requests for selected countries and unlimited development sandbox use; commercial pricing is quote-based. | Evaluation data may not be published to members of the public, may not be stored, and MovieGlu may inspect the product before release. | Deep links send users to cinemas; no seat selection or payment is supported by the API. | Public site claims 90+ countries; exact U.S. city coverage and commercial price are not published. | **Internal technical evaluation only** if later approved. Not appropriate for member-facing staging under the published evaluation terms. |
+| **TMDB** | Metadata / watch-provider references | No usable public commercial price/evaluation conclusion for Kinfolk’s use case. | Commercial and AI/chatbot/query-response use require a separate written commercial agreement. | Requires TMDB attribution/logo and disclaimer if used. | Not selected for current availability/showtimes. | **Exclude from this decision.** |
 
-TMDB is not recommended for Kinfolk’s availability/chat capability. TMDB’s terms require a separate written agreement for commercial use and specifically identify use in an AI/chatbot or interactive query-response system as commercial. [7]
+## Required written confirmation before any activation
 
-## Credentials and permissions required after approval
+1. **JustWatch:** whether a commercial evaluation/sandbox exists; quotation; allowed locales; rate limits; caching/retention; required branded-link design; and a non-production credential policy.
+2. **International Showtimes:** exact coverage for the founder-selected initial U.S. city/cities; whether the 7-day trial permits the intended non-production display; licensing/caching rules; freshness SLA; attribution; and ticket-link rules. The existing source does not identify a controlled initial U.S. city list, so city coverage cannot honestly be pre-verified from public pages.
+3. **Watchmode:** paid-plan order form/terms, rate/credit estimate for the intended query volume, allowed caching, and whether source attribution will still be shown voluntarily for transparency.
+4. **MovieGlu:** commercial quote, selected U.S. territories, public-display permission, retention/caching rules, and launch inspection process.
 
-| Provider | Minimum requirement |
-|---|---|
-| JustWatch | Executed partner agreement, partner token, confirmed approved locales/markets, approved attribution/link treatment, and non-production credential. |
-| International Showtimes | Commercial account or authorized test access, scoped market entitlement, API credential, confirmation of ticket-link and caching terms, and non-production credential. |
-| Watchmode fallback | Commercial Startup-or-higher account/key for commercial use, approved attribution/link treatment if applicable, and non-production credential. |
+## Least-cost legally permitted paths
 
-## Minimum non-production validation
+| Stage | Lowest apparent public-cost path | What it can safely prove | What it cannot authorize |
+|---|---|---|---|
+| Source/unit testing | Existing offline fixtures | Parsing, consent, filters, provider failure, payload validation, and UI behavior | Any claim about a real offer, theater, showtime, price, freshness, or geographic coverage |
+| Private developer evaluation | MovieGlu sandbox or 75-request evaluation, both **$0** publicly | Adapter contract only, if separately approved | Any public/member-facing display, stored provider data, checkout, or production use |
+| Limited showtime evaluation | International Showtimes 7-day trial, **€0** for one market | Provider output and a named-city coverage test, if terms allow the intended non-production display | Assumed U.S. city coverage, member release, or continuation after seven days |
+| Commercial streaming availability | Watchmode Startup, **$349/month** | Commercial streaming availability in 50+ countries, including web/native deep links | Theatrical showtimes or any image right not separately cleared |
+| Commercial showtime feature, full intended fields | International Showtimes Business, **€299/month per market** | Cinema geo/website data, formats, subtitles/languages, ticket links, subject to agreement | Unapproved markets, purchase flows, or data beyond contract terms |
+| Premium streaming candidate | JustWatch quote required | Potential broad daily streaming availability once contracted | Any budget estimate, sandbox, or launch commitment until the provider responds in writing |
 
-Use a narrow test database and one approved non-production credential per provider. Verify a small set of fixtures against live responses only after authorization: one subscription-included title, one rent/buy-only title, one no-result title, one current theatrical title, one expired showtime, one city with multiple cinemas, and one city with no coverage. Confirm country/city gates, freshness timestamp, provider attribution, safe HTTPS destination links, included-only filtering, error fallback, no raw-coordinate storage, and Web/iOS/Android rendering. Do not perform checkout or ticket purchase.
+> **Budget floor if both live capabilities are selected:** published pricing supports a planning floor of **$349/month + €299/month per market**, before taxes, usage overages, or any JustWatch quote. This is **not** an authorization to purchase or an estimate of a complete contract.
 
-## Limited mode before approval
+## Smallest safe staging acceptance plan — after separate approval
 
-Yes. Kinfolk can safely operate in its current limited mode: discuss culture and entertainment normally, retain only explicitly confirmed preferences, show those preferences in Settings, and return a truthful provider-not-connected response for current availability/showtime requests. It must not display any provider offer, price, showtime, theater, or ticket link until the selected provider is configured and verified.
+1. Select **one named U.S. city**, one country (`US`), and six non-sensitive test titles. Do not infer a city from device, family, or saved-place data.
+2. Use one **non-production, server-side credential** per approved provider; keep it out of Web/native clients and logs.
+3. Run only the provider-backed `ENT-01`–`ENT-08` flows against a narrow approved test database: consent add/replace/cancel/dismiss, saved-service reload/clear, included-only filtering, country/city/title clarification, provider unavailable/error, and safe-link rejection.
+4. Review every response for title match, country, city, freshness timestamp, provider attribution, safe HTTPS destination, provider error behavior, and the absence of raw-coordinate retention.
+5. Confirm that `rent` and `buy` offers never appear under a member’s `included_only` policy; do not make an entitlement claim from a saved streaming-service preference.
+6. Do **not** display checkout, invoke ticket purchase, activate a production key, publish a mobile build, run Device Farm, or describe the capability as accepted until later authorization and evidence.
 
-## References
+## Source truthfulness remains unchanged
 
-[1]: https://apis.justwatch.com/docs/content_partner/ "JustWatch Content Partner: Getting Started"
-[2]: https://apis.justwatch.com/docs/api/ "JustWatch Content Partner API"
-[3]: https://www.internationalshowtimes.com/pricing "International Showtimes Pricing"
-[4]: https://api.watchmode.com/ "Watchmode Streaming Availability API and Pricing"
-[5]: https://api.watchmode.com/tc "Watchmode API Terms and Conditions"
-[6]: https://movieglu.com/pricing/ "MovieGlu Pricing"
-[7]: https://www.themoviedb.org/api-terms-of-use "TMDB API Terms of Use"
+The current source returns a deterministic provider-not-connected result for current availability and showtime requests. It does not call a provider, scrape, use a trial, carry a provider credential, display an offer, display a price, display a theater/showtime, or create a ticket link.
+
+## Sources reviewed
+
+1. [JustWatch Content Partner: Getting Started](https://apis.justwatch.com/docs/content_partner/) — catalogue/provider/country coverage, daily updates, offer fields, branding requirement.
+2. [JustWatch Content Partner API](https://apis.justwatch.com/docs/api/) — concluded-contract token requirement, API flow, locale evidence, required branded links.
+3. [JustWatch Partner Dashboard Terms](https://partners.justwatch.com/legal/termsofuse) — active-account/contract-bound dashboard access; no public evaluation terms found.
+4. [International Showtimes Pricing](https://www.internationalshowtimes.com/pricing) — trial, Basic/Business prices and included fields.
+5. [International Showtimes API](https://www.internationalshowtimes.com/showtimes-api) and [Markets](https://www.internationalshowtimes.com/markets) — claimed coverage and absence of a city-level inventory.
+6. [International Showtimes subscription page](https://www.internationalshowtimes.com/subscription) — trial requires registration and territory selection.
+7. [Watchmode plans](https://api.watchmode.com/) and [terms](https://api.watchmode.com/tc) — commercial/non-commercial tiers, usage, retention, image restrictions, and accuracy caveat.
+8. [MovieGlu FAQ](https://movieglu.com/contact/), [evaluation terms](https://developer.movieglu.com/company/terms-of-use/), and [pricing](https://movieglu.com/pricing/) — evaluation/sandbox limitations and quote-based commercial pricing.
+9. [TMDB API Terms](https://www.themoviedb.org/api-terms-of-use) — commercial/AI-chatbot restriction and attribution terms.

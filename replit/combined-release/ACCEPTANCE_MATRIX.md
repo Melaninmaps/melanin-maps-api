@@ -79,10 +79,10 @@ The evidence packet must include raw logs, migration result, API requests/respon
 
 | Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
 |---|---:|---:|---:|---:|---:|---:|---|
-| Provider selection and licensing boundary | Yes | Yes | Yes | No | No | No | JustWatch is the proposed streaming provider and International Showtimes the proposed theatrical provider; neither is contracted, configured, or called. |
-| Current-availability / showtime guard | Yes | Yes | Yes | No | No | No | Explicit current questions never reach model-memory availability claims. The source result is deterministic and provider-disabled. |
-| Explicit entertainment preferences and consent | Yes | Yes | Yes | No | No | No | Streaming services and country are explicit, private, clearable settings. Ordinary subscription/favorite chat prompts for consent rather than saving. |
-| Web and native controls | Yes | Yes | Yes | No | No | No | Both platforms expose service/country settings and clearly label live data as unavailable. No offer/showtime card is rendered without an attributed provider response. |
+| Provider selection and licensing boundary | Yes | Yes | No | No | No | No | JustWatch is the proposed streaming provider and International Showtimes the proposed theatrical provider; neither is contracted, configured, or called. The source candidate is preserved for controlled integration. |
+| Current-availability / showtime guard | Yes | Yes | No | No | No | No | Explicit current questions never reach model-memory availability claims. The source result is deterministic and provider-disabled. |
+| Explicit entertainment preferences and consent | Yes | Yes | No | No | No | No | Streaming services and country are explicit, private, clearable settings. Ordinary subscription/favorite chat prompts for consent rather than saving. |
+| Web and native controls | Yes | Yes | No | No | No | No | Both platforms expose service/country settings and clearly label live data as unavailable. No offer/showtime card is rendered without an attributed provider response. |
 | Streaming offers, rentals/purchases, and showtimes | Yes | No | No | No | No | No | Requires a separately authorized provider contract/key, attribution implementation, staging database migration, controlled provider-response inspection, location checks, and device acceptance. |
 
 > **Status boundary:** No provider account, trial, key, paid service, live request, scraping, migration, deployment, mobile build, Device Farm run, ticket checkout, or member acceptance occurred. Kinfolk does not currently claim live availability or showtimes.
@@ -104,9 +104,9 @@ The evidence packet must include raw logs, migration result, API requests/respon
 
 | Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
 |---|---:|---:|---:|---:|---:|---:|---|
-| Subscription changes, consent, private retention, and no-extra-cost preference | Yes | Yes | Yes | No | No | No | Deterministic parser, member-confirmed endpoint, and Web/native consent/settings source tests are present. No preference was written in this workstream. |
-| Offline provider-shaped offers and showtimes | Yes | Yes | Yes | No | No | No | Test-only fixtures validate filtering, city/country/title gates, safe HTTPS links, attribution structure, and provider failure. No live data was requested. |
-| Provider decision packet | Yes | Yes | Yes | No | No | No | JustWatch + International Showtimes are recommended for later founder approval; contracts, credentials, terms confirmation, and non-production testing remain required. |
-| Web and native continuation controls | Yes | Yes | Yes | No | No | No | Source typechecks and focused tests pass; no mobile build, Device Farm session, or member test occurred. |
+| Subscription changes, consent, private retention, and no-extra-cost preference | Yes | Yes | No | No | No | No | Deterministic parser, member-confirmed endpoint, and Web/native consent/settings source tests are present. No preference was written in this workstream. |
+| Offline provider-shaped offers and showtimes | Yes | Yes | No | No | No | No | Test-only fixtures validate filtering, city/country/title gates, safe HTTPS links, attribution structure, and provider failure. No live data was requested. |
+| Provider decision packet | Yes | Yes | No | No | No | No | Current public commercial/evaluation research is recorded; contracts, credentials, terms confirmation, controlled integration, and non-production testing remain required. |
+| Web and native continuation controls | Yes | Yes | No | No | No | No | Source typechecks and focused tests pass; no mobile build, Device Farm session, or member test occurred. |
 
 > **Continuation status boundary:** This is **SOURCE COMPLETE / AWAITING PROVIDER APPROVAL AND STAGING ACCEPTANCE**. It does not authorize a provider trial, account, API key, payment, migration, deploy, mobile build, Device Farm run, live result, ticket link, or member acceptance.
