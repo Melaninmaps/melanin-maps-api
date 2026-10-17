@@ -246,6 +246,7 @@ const ARRAY_FIELDS = [
   "cultures",
   "preferredLanguages",
   "lifestyleServices",
+  "streamingServices",
 ] as const;
 
 export type PreferenceValidation =
@@ -333,6 +334,26 @@ export function validateKinfolkPreferenceUpdate(
     issues.push(
       "supportLensMode must be all_businesses or strict_documented_designations",
     );
+  }
+  if (
+    body.entertainmentCountry !== undefined &&
+    body.entertainmentCountry !== null &&
+    (typeof body.entertainmentCountry !== "string" ||
+      !/^[A-Za-z]{2}$/.test(body.entertainmentCountry))
+  ) {
+    issues.push("entertainmentCountry must be a two-letter country code or null");
+  }
+  if (
+    Array.isArray(body.streamingServices) &&
+    (body.streamingServices.length > 20 ||
+      body.streamingServices.some(
+        (service) =>
+          typeof service !== "string" ||
+          service.trim().length < 2 ||
+          service.trim().length > 60,
+      ))
+  ) {
+    issues.push("streamingServices may contain up to 20 entries of 2–60 characters");
   }
   return issues.length ? { ok: false, issues } : { ok: true };
 }

@@ -72,3 +72,17 @@ The evidence packet must include raw logs, migration result, API requests/respon
 | Native controls | Yes | Yes | Yes | No | No | No | Native typecheck (with existing TypeScript 6 compatibility override) and focused regression suite passed; no mobile build or device run was created. |
 
 > **Status boundary:** This source work is not deployable evidence by itself. No migration, deployment, provider activation, seeded reference data, mobile build, Device Farm session, or member acceptance occurred in this workstream.
+
+## Kinfolk Entertainment Discovery & Availability — Completion Status
+
+**Source implementation commit:** pending final source commit
+
+| Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Provider selection and licensing boundary | Yes | Yes | Yes | No | No | No | JustWatch is the proposed streaming provider and International Showtimes the proposed theatrical provider; neither is contracted, configured, or called. |
+| Current-availability / showtime guard | Yes | Yes | Yes | No | No | No | Explicit current questions never reach model-memory availability claims. The source result is deterministic and provider-disabled. |
+| Explicit entertainment preferences and consent | Yes | Yes | Yes | No | No | No | Streaming services and country are explicit, private, clearable settings. Ordinary subscription/favorite chat prompts for consent rather than saving. |
+| Web and native controls | Yes | Yes | Yes | No | No | No | Both platforms expose service/country settings and clearly label live data as unavailable. No offer/showtime card is rendered without an attributed provider response. |
+| Streaming offers, rentals/purchases, and showtimes | Yes | No | No | No | No | No | Requires a separately authorized provider contract/key, attribution implementation, staging database migration, controlled provider-response inspection, location checks, and device acceptance. |
+
+> **Status boundary:** No provider account, trial, key, paid service, live request, scraping, migration, deployment, mobile build, Device Farm run, ticket checkout, or member acceptance occurred. Kinfolk does not currently claim live availability or showtimes.

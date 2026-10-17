@@ -84,6 +84,11 @@ import {
 } from "../kinfolk/community-need-feedback";
 import { ensureKinfolkFeedbackFlywheelSchema } from "../lib/startup-migrations";
 import {
+  isEntertainmentPreferenceStatement,
+  parseEntertainmentAvailabilityRequest,
+  resolveEntertainmentAvailability,
+} from "../kinfolk/entertainment-availability";
+import {
   classifyKinfolkRequest,
   buildDiscoveryInstruction,
 } from "../kinfolk/request-classifier";
@@ -4854,6 +4859,12 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
               ? prefs.aaveLevel
               : 0,
           regionalFlavor: normalizeRegionalFlavor(prefs.regionalFlavor),
+          streamingServices: normalizeArr(prefs.streamingServices),
+          entertainmentCountry:
+            typeof prefs.entertainmentCountry === "string" &&
+            /^[A-Z]{2}$/i.test(prefs.entertainmentCountry)
+              ? prefs.entertainmentCountry.toUpperCase()
+              : null,
           ...normalizeMemberLanguagePreferences(prefs),
         }
       : {
@@ -4879,6 +4890,8 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           personalityMode: "neighborhood_guide",
           emojiLevel: "some",
           humorLevel: "light",
+          streamingServices: [],
+          entertainmentCountry: null,
           ...defaultVoicePreferences(),
           ...normalizeMemberLanguagePreferences(null),
         };
@@ -4942,6 +4955,8 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     pronunciationAssistance,
     languageDetectionMode,
     codeSwitchingMode,
+    streamingServices,
+    entertainmentCountry,
     preferredOwnershipTypes,
     ownershipTypes,
     diasporaCountries,
@@ -5056,6 +5071,15 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           typeof languageDetectionMode === "string" ? languageDetectionMode : undefined,
         codeSwitchingMode:
           typeof codeSwitchingMode === "string" ? codeSwitchingMode : undefined,
+        streamingServices: Array.isArray(streamingServices)
+          ? (streamingServices as string[])
+          : undefined,
+        entertainmentCountry:
+          typeof entertainmentCountry === "string"
+            ? entertainmentCountry.trim().toUpperCase()
+            : entertainmentCountry === null
+              ? null
+              : undefined,
         kinfolkVoice:
           typeof kinfolkVoice === "string"
             ? normalizeKinfolkVoice(kinfolkVoice)
@@ -5128,6 +5152,15 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(typeof pronunciationAssistance === "boolean" && { pronunciationAssistance }),
           ...(typeof languageDetectionMode === "string" && { languageDetectionMode }),
           ...(typeof codeSwitchingMode === "string" && { codeSwitchingMode }),
+          ...(Array.isArray(streamingServices) && {
+            streamingServices: streamingServices as string[],
+          }),
+          ...(entertainmentCountry !== undefined && {
+            entertainmentCountry:
+              typeof entertainmentCountry === "string"
+                ? entertainmentCountry.trim().toUpperCase()
+                : null,
+          }),
           ...(typeof kinfolkVoice === "string" && {
             kinfolkVoice: normalizeKinfolkVoice(kinfolkVoice),
           }),
@@ -8697,6 +8730,76 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           fallbackUsed: false,
           partial: false,
         },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  if (isEntertainmentPreferenceStatement(message)) {
+    return void res.json({
+      sessionId,
+      reply:
+        "I will not save entertainment preferences from ordinary chat. If you want Kinfolk to remember a streaming service, choose it in Kinfolk Settings or say “Remember that I subscribe to [service].” You can change or clear it any time.",
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: ["Open Kinfolk Settings", "Keep this conversation private"],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "personalization",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "entertainment_preference_consent",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: { attempted: false, state: "not_needed", provider: null, fallbackUsed: false, partial: false },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  // Current watch/showtime questions have a different truth boundary from an
+  // ordinary culture conversation. Model memory must never fabricate a service,
+  // rental, price, cinema, or showtime while no approved provider is configured.
+  const entertainmentAvailabilityRequest = parseEntertainmentAvailabilityRequest({
+    message,
+  });
+  if (entertainmentAvailabilityRequest) {
+    const entertainmentAvailability = await resolveEntertainmentAvailability(
+      entertainmentAvailabilityRequest,
+    );
+    return void res.json({
+      sessionId,
+      reply: entertainmentAvailability.message,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [
+        "Discuss the title or artist",
+        "Open Kinfolk Settings to choose entertainment preferences",
+      ],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "culture_entertainment",
+      sources: [],
+      needsClarification: entertainmentAvailability.status === "invalid_request",
+      originalQuery: message,
+      answerMode: "entertainment_availability_unavailable",
+      entertainmentAvailability,
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: true,
+        web: { attempted: false, state: "not_needed", provider: null, fallbackUsed: false, partial: false },
         asOf: new Date().toISOString(),
       },
     });

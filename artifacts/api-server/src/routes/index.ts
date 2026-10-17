@@ -30,6 +30,7 @@ import businessIngestRouter from "./business-ingest";
 import kinfolkRouter, { probeKinfolkAI } from "./kinfolk";
 import kinfolkPrivatePlacesRouter from "./kinfolk-private-places";
 import kinfolkRegionalDialectRouter from "./kinfolk-regional-dialect";
+import kinfolkEntertainmentRouter from "./kinfolk-entertainment";
 import kinfolkTemporaryStaysRouter from "./kinfolk-temporary-stays";
 import wishlistRouter from "./wishlist";
 import claimsRouter from "./claims";
@@ -292,6 +293,9 @@ router.use(adminRouter);
 router.use(businessIngestRouter);
 router.use(libraryGrowthAdminRouter);
 router.use(kinfolkRouter);
+// Live entertainment facts remain provider-gated. The route returns an explicit
+// unavailable state until an approved provider is separately configured.
+router.use(kinfolkEntertainmentRouter);
 // Private, explicit regional-language preferences and pronunciation corrections.
 // This route does not enable automatic language detection or code switching.
 router.use(kinfolkRegionalDialectRouter);

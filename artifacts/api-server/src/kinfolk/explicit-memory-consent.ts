@@ -70,8 +70,8 @@ function ordinaryLabel(content: string): string {
   if (/\b(?:prefer|support|owned\s+business|minority[-\s]?owned)\b/i.test(content)) {
     return "Support preference";
   }
-  if (/\b(?:enjoy|like|love|hobby|hobbies|travel|concerts?|food)\b/i.test(content)) {
-    return "Interest or lifestyle preference";
+  if (/\b(?:enjoy|like|love|hobby|hobbies|travel|concerts?|food|film|movie|show|series|music|book|game|stream(?:ing)?|netflix|hulu|prime|max|disney\+?)\b/i.test(content)) {
+    return "Entertainment or lifestyle preference";
   }
   if (/\b(?:project manager|work|job|career|profession)\b/i.test(content)) {
     return "Work or planning preference";

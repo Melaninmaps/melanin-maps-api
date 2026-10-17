@@ -54,6 +54,10 @@ export const userPreferencesTable = pgTable("user_preferences", {
   codeSwitchingMode: varchar("code_switching_mode", { length: 16 })
     .notNull()
     .default("manual"),
+  // Member-selected only. These are not inferred from entertainment chat and
+  // do not prove current provider availability in any country.
+  streamingServices: jsonb("streaming_services").$type<string[]>().default([]),
+  entertainmentCountry: varchar("entertainment_country", { length: 2 }),
   kinfolkVoice: varchar("kinfolk_voice", { length: 20 })
     .notNull()
     .default("onyx"),
