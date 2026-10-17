@@ -147,6 +147,20 @@ function containsWholeTerm(text: string, term: string): boolean {
   return new RegExp(`(?:^|[^a-z0-9])${pattern}(?=$|[^a-z0-9])`, "i").test(text);
 }
 
+function currentRequestConstraints(value: string): {
+  avoidsLoudSetting: boolean;
+  excludedDirectTerms: Set<string>;
+} {
+  const request = value.toLowerCase();
+  const avoidsLoudSetting = /\b(?:do\s+not|don(?:['’ ]?)t|not|avoid|without)\b[^.!?]{0,20}\b(?:loud|noisy|high[ -]?energy)\b/.test(request);
+  return {
+    avoidsLoudSetting,
+    excludedDirectTerms: new Set(
+      avoidsLoudSetting ? ["loud", "noisy", "high energy"] : [],
+    ),
+  };
+}
+
 function scoredBusiness(
   business: GovernedKinfolkBusiness,
   index: number,
@@ -191,10 +205,23 @@ function scoredBusiness(
   );
   const request = cleanTerm(personalization.currentRequest);
   if (request) {
+    const constraints = currentRequestConstraints(request);
+    if (
+      constraints.avoidsLoudSetting &&
+      ["loud", "noisy", "high energy", "nightlife", "live music"].some(
+        (term) => containsWholeTerm(text, term),
+      )
+    ) {
+      // A direct “not loud” request is a current-turn exclusion, not merely a
+      // soft saved preference. A later turn can expressly change that request.
+      return null;
+    }
     // The current turn is the member's direct instruction. Saved preferences may
     // refine a tied result but cannot win against a clear, current request.
-    const directRequestTerms = requestTerms(request).filter((term) =>
-      containsWholeTerm(text, term),
+    const directRequestTerms = requestTerms(request).filter(
+      (term) =>
+        !constraints.excludedDirectTerms.has(term) &&
+        containsWholeTerm(text, term),
     );
     if (directRequestTerms.length > 0) {
       score += Math.min(64, 40 + directRequestTerms.length * 8);

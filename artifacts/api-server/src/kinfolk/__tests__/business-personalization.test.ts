@@ -130,6 +130,21 @@ describe("Kinfolk business personalization", () => {
     expect(ranked[0]?.matchReasons[0]).toBe("Matches what you asked for right now");
   });
 
+  it("hard-excludes a documented loud setting when the member asks for romantic but not loud", () => {
+    const quiet = business("quiet", "Candlelight Dining", "Food & Drink", "Restaurants", ["romantic", "quiet"]);
+    const loud = {
+      ...business("loud", "Late Room", "Food & Drink", "Restaurants", ["romantic", "live music"]),
+      environmentTags: ["high energy"],
+    };
+
+    const ranked = rankGovernedBusinessesForMember([loud, quiet], {
+      ageBand: "18_plus",
+      currentRequest: "Find a restaurant that is romantic but not loud",
+    });
+
+    expect(ranked.map((entry) => entry.id)).toEqual(["quiet"]);
+  });
+
   it("soft-ranks only a listing's documented metadata for saved planning context", () => {
     const documentedLuxurySpa = business("luxury", "Documented Luxury Spa", "Beauty & Wellness", "Spa", [
       "luxury spa experience",

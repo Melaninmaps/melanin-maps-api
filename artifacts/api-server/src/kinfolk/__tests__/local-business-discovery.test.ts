@@ -66,6 +66,19 @@ describe("immediate dining intent", () => {
       phone: null,
       website: "https://dinner.example.com",
     }, subject)).toBe(true);
+    expect(eligibleForImmediateDining({
+      name: "Morning Bakes",
+      category: "Food & Drink",
+      subcategory: "Bakery",
+      description: "Pastries and packaged treats.",
+      tags: ["bakery"],
+      specialties: [],
+      address: "789 Market St",
+      phone: null,
+      website: "https://bakery.example.com",
+    }, subject)).toBe(false);
+    expect(deriveFoodIntent("Friday night dinner in Philadelphia")).toBe("dining_now");
+    expect(deriveFoodIntent("Find a salon Friday night in Philadelphia")).toBeUndefined();
   });
 });
 
@@ -391,6 +404,84 @@ describe("deterministic local business discovery", () => {
       expect.objectContaining({ title: "Ethiopian restaurant guide" }),
     ]);
     expect(result.recommendations?.summary).toContain("Ethiopian restaurants");
+  });
+
+  it("requires every requested wig-installation service detail from the published record", async () => {
+    const subject = deriveBusinessSubject(
+      "Find a wig installation in Philadelphia that includes shampoo and detangling",
+    )!;
+    expect(subject).toMatchObject({
+      key: "salon",
+      documentedServiceRequirement: {
+        label: "wig installation with shampoo and detangling included",
+        allOfSearchTerms: ["shampoo", "detangling"],
+      },
+    });
+    const included = {
+      ...governedBusiness,
+      id: "complete-wig-service",
+      name: "Complete Wig Studio",
+      city: "Philadelphia",
+      stateCode: "PA",
+      category: "Beauty & Wellness",
+      subcategory: "Salon",
+      description: "Wig installation includes shampoo and detangling before fitting.",
+      tags: ["wig installation", "shampoo", "detangling"],
+      matchReasons: ["category", "documented service"],
+    };
+    const incomplete = {
+      ...included,
+      id: "partial-wig-service",
+      name: "Install Only Studio",
+      description: "Wig installation with shampoo before fitting.",
+      tags: ["wig installation", "shampoo"],
+    };
+
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      subject,
+      repository: repository({ businesses: [incomplete, included] }),
+      webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({ id: "complete-wig-service" }),
+    ]);
+    expect(result.discovery.platformBusinesses).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "partial-wig-service" })]),
+    );
+  });
+
+  it("keeps Friday-night dining-now results actionable and excludes cultural map records", async () => {
+    const subject = deriveBusinessSubject(
+      "Friday night dinner in Philadelphia",
+    )!;
+    expect(subject).toMatchObject({ key: "restaurant", foodIntent: "dining_now" });
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      subject,
+      repository: repository({
+        businesses: [{
+          ...governedBusiness,
+          id: "friday-restaurant",
+          name: "Friday Dinner",
+          city: "Philadelphia",
+          stateCode: "PA",
+          category: "Food & Drink",
+          subcategory: "Restaurant",
+          description: "Counter-service dinner.",
+          tags: ["restaurant", "dinner"],
+          website: "https://dinner.example.com",
+        }],
+        places: [forKeepsPlace],
+      }),
+      webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({ id: "friday-restaurant" }),
+    ]);
+    expect(result.discovery.mapPlaces).toEqual([]);
   });
 
   it("uses one generic Philadelphia activity request to produce four distinct profile-backed cards", async () => {
