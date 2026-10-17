@@ -72,7 +72,7 @@ describe("Kinfolk cited entertainment web research", () => {
     expect(query.text).toContain("ticket information");
   });
 
-  it("returns title-matched cited sources rather than provider-shaped offers", async () => {
+  it("returns cited links without making an availability claim when evidence is incomplete", async () => {
     const search = vi.fn().mockResolvedValue(citedOutcome());
     const result = await resolveEntertainmentAvailabilityWithWebSources({
       request,
@@ -97,8 +97,44 @@ describe("Kinfolk cited entertainment web research", () => {
       provider: "openai",
       evidenceBoundary: "cited_web_sources_only",
     });
-    expect(result.message).toContain(
-      "does not treat web-search results as a verified offer",
+    expect(result.webVerification).toEqual({
+      state: "insufficient",
+      claims: [],
+    });
+    expect(result.message).toContain("could not verify");
+  });
+
+  it("renders a direct answer only from complete official cited availability evidence", async () => {
+    const search = vi.fn().mockResolvedValue({
+      ...citedOutcome(),
+      results: [
+        {
+          ...citedOutcome().results[0],
+          title: "Watch The Woman King | Netflix Official Site",
+          url: "https://www.netflix.com/title/81153020",
+          publisher: "Netflix",
+          citationText:
+            "The Woman King is currently available to watch on Netflix in the United States with a subscription.",
+        },
+      ],
+    } satisfies WebSearchOutcome);
+    const result = await resolveEntertainmentAvailabilityWithWebSources({
+      request,
+      preferences,
+      search,
+      now: () => Date.UTC(2026, 9, 16),
+    });
+
+    expect(result.status).toBe("web_availability_verified");
+    expect(result.message).toContain("currently available on Netflix");
+    expect(result.webVerification).toMatchObject({
+      state: "verified",
+      claims: [{ providerName: "Netflix" }],
+    });
+    expect(result.sources).toHaveLength(1);
+    expect(search).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ countryCode: "US" }),
     );
   });
 

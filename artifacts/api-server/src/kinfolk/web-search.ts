@@ -19,6 +19,11 @@ export type WebResult = {
   title: string;
   url: string;
   content: string;
+  /**
+   * The complete response sentence/line associated with this URL citation.
+   * It is not source-page text and must be separately validated before use.
+   */
+  citationText?: string;
   providerScore: number;
   publisher?: string;
   sourceDate?: string;
@@ -72,13 +77,16 @@ type WebSearchBatch = Readonly<{
   results: WebResult[];
 }>;
 
-type SearchLocation = Readonly<{
-  city: string;
-  stateCode: string;
+export type SearchLocation = Readonly<{
+  city?: string;
+  stateCode?: string;
   countryCode?: string;
 }>;
 
-type WebResearchPurpose = "local_business" | "general_current";
+type WebResearchPurpose =
+  | "local_business"
+  | "general_current"
+  | "entertainment_current";
 
 // Real Responses web-search calls can legitimately exceed 12 seconds while the
 // provider gathers and cites sources. Keep this bounded, but align it with the
@@ -114,6 +122,22 @@ export function openAiWebSearchConfigured(
 
 function citationPublisher(url: string): string {
   return new URL(url).hostname.replace(/^www\./, "");
+}
+
+function citationContext(text: string, startIndex: number): string {
+  if (startIndex < 0 || startIndex > text.length) return "";
+  const beforeCitation = text.slice(0, startIndex).trimEnd();
+  const boundary = Math.max(
+    beforeCitation.lastIndexOf("\n"),
+    beforeCitation.lastIndexOf(". "),
+    beforeCitation.lastIndexOf("! "),
+    beforeCitation.lastIndexOf("? "),
+  );
+  return beforeCitation
+    .slice(boundary >= 0 ? boundary + 1 : Math.max(0, beforeCitation.length - 640))
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 640);
 }
 
 /**
@@ -162,6 +186,7 @@ export function parseOpenAiResponseCitations(response: unknown, queries: SearchQ
             : citationPublisher(url),
           url,
           content: supportText,
+          citationText: citationContext(text, start),
           providerScore: 0.8,
           publisher: typeof citation.publisher === "string" && citation.publisher.trim()
             ? citation.publisher.trim()
@@ -185,9 +210,9 @@ async function searchOpenAiQuery(
 ): Promise<WebSearchBatch> {
   const userLocation = location ? {
     type: "approximate",
-    city: location.city,
-    region: location.stateCode,
-    country: location.countryCode ?? "US",
+    ...(location.city ? { city: location.city } : {}),
+    ...(location.stateCode ? { region: location.stateCode } : {}),
+    ...(location.countryCode ? { country: location.countryCode } : {}),
   } : undefined;
   try {
     const response = await openai.responses.create({
@@ -200,10 +225,14 @@ async function searchOpenAiQuery(
       input: [
         purpose === "local_business"
           ? "Research current local-business options for this query:"
-          : "Research this current-information question:",
+          : purpose === "entertainment_current"
+            ? "Research this exact current entertainment availability question:"
+            : "Research this current-information question:",
         query.text,
-          purpose === "local_business"
-            ? "Prefer official business websites, official tourism/chamber sources, and reputable local reporting."
+        purpose === "local_business"
+          ? "Prefer official business websites, official tourism/chamber sources, and reputable local reporting."
+          : purpose === "entertainment_current"
+            ? "Use only official streaming-service title pages or official cinema showtime pages as factual support. Do not rely on aggregators, search-result snippets, generic service pages, fan pages, or stale articles. For every potential answer, write one complete sentence that names the exact title, requested country (and city for showtimes), the service or cinema, and the explicit current status. For showtimes, include the exact ISO date and local start time. Cite that official page at the end of the same sentence. If a source does not establish every required fact, do not turn it into an availability claim."
             : "Prefer current authoritative primary sources and reputable reporting appropriate to the question.",
           purpose === "general_current"
             ? "For public affairs, separate verified facts, a speaker's claim, and unconfirmed material. If the question explicitly requests perspectives from a named community or public-facing group, seek multiple directly attributed on-record perspectives; do not generalize a group or infer identities."
@@ -276,6 +305,7 @@ async function searchQueryWithFallback(
   imageRequested: boolean,
   location?: SearchLocation,
   runtime: WebSearchRuntime = DEFAULT_WEB_SEARCH_RUNTIME,
+  allowTavilyFallback = true,
 ): Promise<QuerySearchOutcome> {
   const safeQuery = { ...query, text: enforceDiasporaFirstProviderQuery(query.text) };
   if (openAiWebSearchConfigured()) {
@@ -284,7 +314,7 @@ async function searchQueryWithFallback(
     if (primary.kind === "cited") {
       return { ...primary, provider: "openai", fallbackUsed: false, attempts: [primaryAttempt] };
     }
-    if (kinfolkTavilyApiKey()) {
+    if (allowTavilyFallback && kinfolkTavilyApiKey()) {
       const fallback = await searchTavilyQuery(safeQuery, imageRequested);
       return {
         ...fallback,
@@ -310,9 +340,10 @@ async function searchQueriesWithState(
   _imageRequested: boolean,
   location?: SearchLocation,
   runtime: WebSearchRuntime = DEFAULT_WEB_SEARCH_RUNTIME,
+  allowTavilyFallback = true,
 ): Promise<WebSearchOutcome> {
   const hasOpenAi = openAiWebSearchConfigured();
-  const hasTavily = Boolean(kinfolkTavilyApiKey());
+  const hasTavily = allowTavilyFallback && Boolean(kinfolkTavilyApiKey());
   if (!queries.length || (!hasOpenAi && !hasTavily)) {
     return {
       state: "unavailable", attempted: false, providerAttempted: false, providerUsed: false,
@@ -320,7 +351,16 @@ async function searchQueriesWithState(
     };
   }
   const outcomes = await Promise.all(
-    queries.map((query) => searchQueryWithFallback(query, purpose, _imageRequested, location, runtime)),
+    queries.map((query) =>
+      searchQueryWithFallback(
+        query,
+        purpose,
+        _imageRequested,
+        location,
+        runtime,
+        allowTavilyFallback,
+      ),
+    ),
   );
   const cited = outcomes.filter((outcome) => outcome.kind === "cited");
   const attempts = outcomes.flatMap((outcome) => outcome.attempts);
@@ -369,13 +409,15 @@ export async function searchAllQueriesWithState(
 /** One cited, low-budget lookup for an exact current entertainment question. */
 export async function searchCurrentEntertainmentQueriesWithState(
   queries: SearchQuery[],
+  location?: SearchLocation,
 ): Promise<WebSearchOutcome> {
   return searchQueriesWithState(
     queries.slice(0, 1),
-    "general_current",
+    "entertainment_current",
     false,
-    undefined,
+    location,
     ENTERTAINMENT_WEB_SEARCH_RUNTIME,
+    false,
   );
 }
 

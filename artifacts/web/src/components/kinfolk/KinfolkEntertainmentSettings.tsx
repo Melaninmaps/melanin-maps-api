@@ -107,7 +107,7 @@ export function KinfolkEntertainmentSettings() {
         );
       setPreferences(normalize(payload.preferences ?? next));
       setStatus(
-        "Saved privately. Kinfolk will not check live availability until an approved provider is connected.",
+        "Saved privately. Kinfolk may verify a current answer only when an official cited source establishes the exact title, location, and availability.",
       );
     } catch (cause) {
       setPreferences(previous);
@@ -142,9 +142,11 @@ export function KinfolkEntertainmentSettings() {
       <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">
         Choose only services you want Kinfolk to remember. Ordinary chat never
         changes this list. When you explicitly ask a current availability or
-        showtime question, Kinfolk may return cited web sources for the title
-        and selected location; it will not claim a service, price, theater, or
-        ticket result without an approved provider.
+        showtime question, Kinfolk checks cited current sources for the title
+        and selected location. It gives a direct answer only when an official
+        cited page establishes the title, location, and availability; otherwise
+        it gives source links without guessing a service, price, theater, or
+        ticket result.
       </p>
       {error ? (
         <p role="alert" className="mt-3 text-xs font-semibold text-red-700">
@@ -206,7 +208,8 @@ export function KinfolkEntertainmentSettings() {
             </strong>
             <br />
             When a verified provider is connected, Kinfolk will exclude rentals
-            and purchases. No current availability is shown yet.
+            and purchases. Until then, Kinfolk may show an option only when an
+            official cited page explicitly says it is included.
           </span>
         </label>
       </fieldset>
