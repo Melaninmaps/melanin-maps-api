@@ -147,8 +147,11 @@ describe("Kinfolk chat presentation", () => {
     expect(memoryManagerSource).toContain("const [continuityEnabled, setContinuityEnabled] = useState(false)");
     expect(memoryManagerSource).toContain('fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include" })');
     expect(memoryManagerSource).toContain('method: "PUT", credentials: "include"');
-    expect(memoryManagerSource).toContain("body: JSON.stringify({ enabled })");
+    expect(memoryManagerSource).toContain("body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) })");
+    expect(memoryManagerSource).toContain("KinfolkContinuityDisclosure");
+    expect(memoryManagerSource).toContain("visible={!loading && disclosureRequired}");
     expect(memoryManagerSource).toContain("Turn it off immediately any time");
+    expect(memoryManagerSource).toContain("setDisclosureRequired(true)");
     expect(travelPageSource).toContain("KinfolkContinuityDisclosure");
     expect(disclosureSource).toContain("Let Kinfolk remember");
     expect(disclosureSource).toContain("Keep memory off");

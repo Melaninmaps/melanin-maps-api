@@ -19,4 +19,10 @@ describe("native generic private-memory lifecycle controls", () => {
     expect(memory).toContain("Revoke use");
     expect(memory).not.toContain("Delete this memory permanently");
   });
+
+  it("keeps every undecided native member behind the first-use disclosure", () => {
+    expect(memory).toContain("KinfolkContinuityDisclosure");
+    expect(memory).toContain("visible={!loading && continuityDisclosureRequired}");
+    expect(memory).toContain("body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) })");
+  });
 });

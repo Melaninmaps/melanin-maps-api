@@ -26,7 +26,9 @@ describe("Kinfolk first-use continuity disclosure", () => {
 
   it("offers accept and decline without enrolling an existing member silently", () => {
     expect(route).toContain('KINFOLK_CONTINUITY_DECISION_MISMATCH');
-    expect(route).toContain('requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined")');
+    expect(route).toContain('KINFOLK_CONTINUITY_DECISION_REQUIRED');
+    expect(route).toContain('if (currentDecision === null && requestedDecision === null)');
+    expect(route).not.toContain('requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined")');
     expect(route).toContain("const updatedExisting = await db");
     expect(route).toContain("if (updatedExisting.length === 0)");
     expect(route).toContain("kinfolkMemoryEnabled: enabled");

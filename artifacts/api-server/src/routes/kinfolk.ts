@@ -5724,7 +5724,16 @@ router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
       .where(eq(userSettingsTable.userId, req.user.id))
       .limit(1);
     const currentDecision = normalizeKinfolkContinuityDecision(current?.decision);
-    const decision = requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined");
+    // A legacy member has no current decision. Do not infer acceptance from an
+    // old client toggling the feature; every first-use choice must state whether
+    // the member accepted or declined after seeing the disclosure.
+    if (currentDecision === null && requestedDecision === null) {
+      return void res.status(409).json({
+        error: "Choose whether Kinfolk may remember before changing continuity.",
+        code: "KINFOLK_CONTINUITY_DECISION_REQUIRED",
+      });
+    }
+    const decision: KinfolkContinuityDecision = requestedDecision ?? currentDecision!;
     const disclosedAt = current?.disclosedAt ?? updatedAt;
     const continuityUpdate = {
       // Keep the existing legacy memory flag aligned with the explicit modern

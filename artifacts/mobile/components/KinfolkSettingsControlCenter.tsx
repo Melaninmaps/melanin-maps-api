@@ -337,7 +337,7 @@ export default function KinfolkSettingsControlCenter() {
   }, [draft.profile]);
 
   const requestContinuity = (next: boolean) => {
-    if (next && disclosureRequired) { setDisclosureOpen(true); return; }
+    if (disclosureRequired) { setDisclosureOpen(true); return; }
     replaceDraft({ ...draft, continuityEnabled: next });
   };
 
