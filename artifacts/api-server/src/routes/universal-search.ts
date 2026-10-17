@@ -813,7 +813,10 @@ async function searchBusinesses(opts: {
       if (!isExactRawNameLookup && !isNamedBusiness && lat !== undefined && lng !== undefined) {
         geoClause = `AND ${appendBusinessRadiusFilter(params, lat, lng, radius)}`;
       }
-      const designationClause = appendDesignationScope(params);
+      // A literal public-directory retrieval is profile-only. It must remain
+      // findable even when the member has a Support Lens, but cannot reuse that
+      // lens as ownership-filtered Discovery or serialize ownership evidence.
+      const designationClause = isExactRawNameLookup ? "" : appendDesignationScope(params);
       const eligibilityPredicate = isExactRawNameLookup
         ? mwmPublicDirectorySqlPredicate("b.id")
         : mwmDiasporaPromotionSqlPredicate("b.id");
@@ -857,9 +860,12 @@ async function searchBusinesses(opts: {
           reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
           longitude: row.longitude ? parseFloat(row.longitude) : undefined,
-          ownershipDesignations: safeParseArray(row.ownership_designations),
-           blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
-           instagram: row.instagram ?? undefined,
+          ...(!isExactRawNameLookup ? {
+            ownershipDesignations: safeParseArray(row.ownership_designations),
+            blackOwned: row.black_owned,
+            ownershipClaim: row.ownership_claim ?? null,
+          } : {}),
+          instagram: row.instagram ?? undefined,
           website: row.website ?? undefined, phone: row.phone ?? undefined,
           priceRange: row.price_range ?? undefined,
           confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
@@ -1496,7 +1502,10 @@ async function searchBusinesses(opts: {
 
   // Sort: best tier first, then by confidence/rating
   return [...results.values()]
-    .filter((business) => matchesDocumentedDesignationScope(business, requiredDesignationIds))
+    .filter((business) =>
+      business.isExactPublicDirectoryLookup === true
+      || matchesDocumentedDesignationScope(business, requiredDesignationIds),
+    )
     .sort((a, b) => {
     const tierDiff = TIER_RANK[b.matchTier] - TIER_RANK[a.matchTier];
     if (tierDiff !== 0) return tierDiff;

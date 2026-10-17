@@ -106,8 +106,9 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
       ...publicBusiness(),
       id: "ordinary-directory-market",
       name: "Ordinary Market",
-      ownership_designations: [],
-      black_owned: false,
+      ownership_designations: ["Black-Owned"],
+      black_owned: true,
+      ownership_claim: "source-claimed ownership",
     };
     poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
       calls.push([query, params]);
@@ -129,6 +130,7 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
         state: "DC",
         lat: 38.9072,
         lng: -77.0369,
+        designations: "latino-hispanic",
         resultTypes: "businesses",
       });
 
@@ -142,6 +144,9 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
       }),
     ]);
     expect(response.body.results.businesses[0]).not.toHaveProperty("isExactPublicDirectoryLookup");
+    expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipDesignations");
+    expect(response.body.results.businesses[0]).not.toHaveProperty("blackOwned");
+    expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipClaim");
     expect(findSafeSearchClarification).toHaveBeenCalledWith({
       query: "ordinary market",
       catalogTerms: [],
@@ -156,6 +161,7 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(directNameRead![0]).not.toContain("b.city ILIKE");
     expect(directNameRead![0]).not.toContain("b.state ILIKE");
     expect(directNameRead![0]).not.toContain("REGEXP_REPLACE");
+    expect(directNameRead![0].slice(directNameRead![0].indexOf("WHERE"))).not.toContain("ownership_designations");
     expect(directNameRead![1]).toEqual(["ordinary market"]);
   });
 
@@ -342,7 +348,10 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     };
     poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
       calls.push([query, params]);
-      if (query.includes("FROM public.public_businesses b")) {
+      if (
+        query.includes("FROM public.public_businesses b")
+        && query.includes("b.ownership_claim = 'community_reported_minority_owned'")
+      ) {
         return { rows: [legacyMinorityBusiness] };
       }
       return { rows: [] };
@@ -363,7 +372,9 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipClaim");
 
     const businessReads = calls.filter(([query]) =>
-      query.includes("FROM public.public_businesses b") && query.includes("LIMIT"),
+      query.includes("FROM public.public_businesses b")
+      && query.includes("b.ownership_claim = 'community_reported_minority_owned'")
+      && query.includes("LIMIT"),
     );
     expect(businessReads.length).toBeGreaterThan(0);
     for (const [query, params] of businessReads) {
