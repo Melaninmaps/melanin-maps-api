@@ -287,6 +287,12 @@ import {
   buildPronounInstruction,
   buildReproductiveContextInstruction,
 } from "../kinfolk/member-context";
+import {
+  buildFamilyModeSystemInstruction,
+  familyModeAudienceBand,
+  familyModeRestrictedResponse,
+  isFamilyModeRestrictedRequest,
+} from "../kinfolk/family-mode-safety";
 import { resolveRecommendationLifeStage } from "../kinfolk/recommendation-life-stage";
 import {
   enforceKinfolkResponse,
@@ -4168,6 +4174,8 @@ function buildSystemPrompt(opts: {
   catalogSource?: "city" | "radius" | "home" | "named" | "none";
   /** Intent classification — gates which optional prompt modules are injected. */
   intentClass?: string | null;
+  /** Explicit request-time safety preference; never changes stored preferences. */
+  familyModeEnabled?: boolean;
 }): string {
   const {
     prefs,
@@ -4184,20 +4192,28 @@ function buildSystemPrompt(opts: {
   const catalogSource = opts.catalogSource ?? "none";
   const aaveLevel = opts.aaveLevel ?? 0;
   const tier = opts.tier ?? "free";
+  const familyModeEnabled = opts.familyModeEnabled === true;
   const languagePreferences = normalizeMemberLanguagePreferences(prefs);
-  const languagePersonalization = [
-    buildLanguagePersonalizationPrompt({
-      aaveLevel,
-      regionalFlavor: prefs?.regionalFlavor,
-      destination,
-      intentClass: opts.intentClass,
-    }),
-    buildRegionalComprehensionPrompt({
-      preferences: languagePreferences,
-      destination,
-      intentClass: opts.intentClass,
-    }),
-  ].filter(Boolean).join("\n\n");
+  const languagePersonalization = familyModeEnabled
+    ? ""
+    : [
+        buildLanguagePersonalizationPrompt({
+          aaveLevel,
+          regionalFlavor: prefs?.regionalFlavor,
+          destination,
+          intentClass: opts.intentClass,
+        }),
+        buildRegionalComprehensionPrompt({
+          preferences: languagePreferences,
+          destination,
+          intentClass: opts.intentClass,
+        }),
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+  const familyModeSafetyBlock = familyModeEnabled
+    ? buildFamilyModeSystemInstruction()
+    : "";
 
   const localTerms = destination ? getCityLocalTerms(destination) : null;
   const cityLanguageRecognitionSection = buildCityLanguageRecognitionPrompt(destination);
@@ -4517,7 +4533,10 @@ Set "smartPromotion": null when nothing clearly applies.`
     : "";
 
   const tierSection =
-    tier === "trailblazer" || tier === "founding"
+    familyModeEnabled
+      ? `
+FAMILY MODE DISCOVERY: When the member asks about a city, trip, or outing, recommend only all-ages restaurants, museums, parks, bookstores, classes, and age-appropriate cultural events. Do not add nightlife, adult events, alcohol-focused venues, or age-restricted media as a tier benefit.`
+      : tier === "trailblazer" || tier === "founding"
       ? `\nTRAILBLAZER / FOUNDING EXPERIENCE — FULL LIFESTYLE BUNDLE (always on):
 Every city or trip response automatically includes ALL of the following without being asked:
 1. 🍽  Restaurants & cafes matching their taste, dietary notes, and budget
@@ -4671,11 +4690,9 @@ SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 - NEVER read out full addresses, complete reviews, long lists, or full safety ratings — summarize and let the visual carry the rest
 - Lead with the finding: "I found three places nearby…" not "Based on your preferences I have identified…"
 - One sentence, one follow-up maximum when voice is likely: "Want relaxed, lively, or something more upscale?"
-
 ${voiceInstructions}
-
+${familyModeSafetyBlock ? `\n${familyModeSafetyBlock}` : ""}
 ${buildKinfolkEmotionalCheckInContract(normalizedConversationMode)}
-
 ${naturalConversationContract}${destinationLocalTimeSection}${
     languagePersonalization
       ? `
@@ -7727,6 +7744,35 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   ) {
     return false;
   }
+  const familyModeEnabled = input.req.user?.id
+    ? await pool
+        .query<{ family_mode_enabled: boolean | null }>(
+          `SELECT family_mode_enabled FROM family_settings WHERE user_id = $1 LIMIT 1`,
+          [input.req.user.id],
+        )
+        .then((result) => result.rows[0]?.family_mode_enabled === true)
+        .catch(() => false)
+    : false;
+  if (familyModeEnabled && isFamilyModeRestrictedRequest(input.message)) {
+    const familyModeResponse = familyModeRestrictedResponse();
+    input.res.status(200).json({
+      sessionId: input.sessionId,
+      reply: familyModeResponse.reply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: familyModeResponse.followUpSuggestions,
+      resultView: null,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "business_discovery",
+      sources: [],
+      sourceNote:
+        "Family Mode prevented an adult-oriented recommendation for this request.",
+      educationalStatus: "limited",
+    });
+    return true;
+  }
   let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
   if (input.memoryEnabled && input.sessionId && input.req.user?.id) {
     try {
@@ -7897,7 +7943,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       ])
     : [null, "mixed_all_ages" as const];
   const ageBand = effectiveBusinessAudienceBand(
-    assuredAgeBand,
+    familyModeEnabled ? familyModeAudienceBand(assuredAgeBand) : assuredAgeBand,
     temporaryBusinessAudienceBand(input.message),
   );
   const explicitDesignationIds = extractExplicitOwnershipDesignationFilterIds(discoveryMessage);
@@ -10276,11 +10322,36 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           audienceBand: "unknown" as const,
           recommendationLifeStage: "unspecified" as const,
           pronounMode: "none" as const,
+          familyModeEnabled: false,
         };
+    const familyModeEnabled = memberCtx.familyModeEnabled === true;
+    const familyModeAudience = familyModeEnabled
+      ? familyModeAudienceBand(memberCtx.audienceBand)
+      : memberCtx.audienceBand;
+    const effectiveConversationVoiceMode = familyModeEnabled
+      ? "business_manager"
+      : conversationVoiceMode;
     const effectiveAudienceBand = effectiveBusinessAudienceBand(
-      memberCtx.audienceBand,
+      familyModeAudience,
       temporaryBusinessAudienceBand(message),
     );
+    if (familyModeEnabled && isFamilyModeRestrictedRequest(message)) {
+      const familyModeResponse = familyModeRestrictedResponse();
+      res.status(200).json({
+        sessionId: memoryEnabled ? sessionId : undefined,
+        reply: familyModeResponse.reply,
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: familyModeResponse.followUpSuggestions,
+        sources: [],
+        sourceNote:
+          "Family Mode prevented an adult-oriented recommendation for this request.",
+        educationalStatus: "limited",
+        intentClass,
+        degraded: false,
+      });
+      return;
+    }
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
     // A care-navigation request is a narrow current-turn exception to ordinary
@@ -12464,8 +12535,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         dislikedSpots,
         savedPlaces,
         destination: promptDestination,
-        voiceMode: conversationVoiceMode,
-        aaveLevel: prefs?.aaveLevel ?? 0,
+        voiceMode: effectiveConversationVoiceMode,
+        aaveLevel: familyModeEnabled ? 0 : (prefs?.aaveLevel ?? 0),
         businessCatalog: promptBusinessCatalog,
         activeJourney: currentRequestUsesLocation ? activeJourney : null,
         crossCityBridge: currentRequestUsesLocation ? crossCityBridge : null,
@@ -12483,6 +12554,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         privacySuppressed: effectivePrivacySuppressed,
         catalogSource: promptCatalogSource,
         intentClass,
+        familyModeEnabled,
       }) +
       (lifeGuidance ? `\n\n${lifeGuidance.responseInstruction}` : "") +
       ownerBusinessContext +
@@ -12662,7 +12734,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}${privateMemoryBlock}\n\n${responseDepthPrompt}`
+      ? `${buildLeanGeneralChatPrompt(effectiveConversationVoiceMode)}${familyModeEnabled ? `\n\n${buildFamilyModeSystemInstruction()}` : ""}\n\n${temporalContext}${privateMemoryBlock}\n\n${responseDepthPrompt}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +

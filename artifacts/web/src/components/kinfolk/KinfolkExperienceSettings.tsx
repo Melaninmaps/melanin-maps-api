@@ -10,6 +10,7 @@ import {
 import { KinfolkMemoryManager } from "./KinfolkMemoryManager";
 import { PrivatePlacesSettings } from "./PrivatePlacesSettings";
 import { KinfolkEntertainmentSettings } from "./KinfolkEntertainmentSettings";
+import { KinfolkFamilyModeControl } from "./KinfolkFamilyModeControl";
 import { KinfolkRegionalLanguageSettings } from "./KinfolkRegionalLanguageSettings";
 import { TemporaryStaysSettings } from "./TemporaryStaysSettings";
 
@@ -511,6 +512,7 @@ export function KinfolkExperienceSettings() {
 
           <KinfolkRegionalLanguageSettings />
           <KinfolkEntertainmentSettings />
+          <KinfolkFamilyModeControl />
           <PrivatePlacesSettings />
           <TemporaryStaysSettings />
         </div>

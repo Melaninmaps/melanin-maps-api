@@ -108,7 +108,7 @@ export default function FamilySettingsScreen() {
 
       <Text style={[styles.title, { color: colors.foreground }]}>Community Guidance</Text>
       <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Choose which content tiers are visible. These settings help you guide the experience for younger family members — not a content block.
+        Choose content tiers and Family Mode for a more protective, family-safe experience.
       </Text>
 
       {/* Family Mode toggle */}
@@ -117,7 +117,7 @@ export default function FamilySettingsScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.familyModeTitle, { color: "#92400E" }]}>🤎 Family Mode</Text>
             <Text style={[styles.familyModeDesc, { color: "#78350F" }]}>
-              Curated content for families — travel, culture, history, STEM, and youth opportunities. Perfect for browsing together.
+              A family-safe delivery profile for feeds, events, and every Kinfolk chat. It uses all-ages recommendations and does not change the account age or saved Kinfolk voice settings.
             </Text>
           </View>
           <Switch
@@ -189,7 +189,7 @@ export default function FamilySettingsScreen() {
       <View style={[styles.infoBox, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         <Feather name="info" size={14} color={colors.mutedForeground} />
         <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-          Community Guidance is informative, not restrictive. Content creators choose their audience rating, and moderators can adjust it. Each rating shows a reason so you always understand the context.
+          Family Mode is stricter in Kinfolk chat: adult venues, nightlife, gambling, alcohol-focused suggestions, and explicit content are not recommended while it is on. Content creators choose their audience rating, and moderators can adjust it. Each rating shows a reason so you always understand the context.
         </Text>
       </View>
 

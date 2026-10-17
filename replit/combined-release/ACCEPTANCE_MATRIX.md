@@ -48,6 +48,7 @@ The combined candidate is **NO-GO** until each row is PASS against the reviewed 
 | KIN-19 | Scoped member correction | A pronunciation/meaning correction is consented, private by default, viewable, editable, deletable, and excluded from shared cultural data unless separately sourced and reviewed. |
 | KIN-20 | High-stakes clarity | Medical, safety, legal, and financial turns do not introduce regional style; the member receives clear, standard-language guidance. |
 | KIN-21 | Cross-platform dialect parity | The same preference and verified place result pass on Web, iOS, and Android with source/request evidence and native-device voice evidence where audio is enabled. |
+| KIN-22 | Family Mode Kinfolk override | With Family Mode enabled, both standard and deterministic local-discovery Kinfolk paths apply a family-safe delivery profile, limit recommendations to all-ages options, and return a safe substitute for adult-oriented requests. The setting must not mutate age assurance, saved voice, or language preferences. |
 | MED-01 | Community image/video | Select, upload, preview, post, reload, force-close, relaunch, and playback work; completed files survive a later-file failure. |
 | NAT-01 | Native stability | Clean/upgrade install, every tab, denied permission, offline/slow network, expired session, lifecycle, repeated cold launch, and symbolicated crash reporting pass. |
 | REL-01 | Build identity | EAS artifacts show the exact reviewed commit, iOS 104, Android 79, `com.melaninmaps.app`, and remote credentials. |
@@ -72,6 +73,19 @@ The evidence packet must include raw logs, migration result, API requests/respon
 | Native controls | Yes | Yes | Yes | No | No | No | Native typecheck (with existing TypeScript 6 compatibility override) and focused regression suite passed; no mobile build or device run was created. |
 
 > **Status boundary:** This source work is not deployable evidence by itself. No migration, deployment, provider activation, seeded reference data, mobile build, Device Farm session, or member acceptance occurred in this workstream.
+
+## Family Mode Kinfolk Chat Safety — Source Status
+
+**Source candidate:** Pending commit on `fix/kinfolk-family-mode-safety-20261016`.
+
+| Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Request-time Family Mode context | Yes | Yes | No | No | No | No | The existing, explicit `family_settings.family_mode_enabled` control is loaded as a delivery preference only; it does not alter age assurance. |
+| Standard and lean Kinfolk chat | Yes | Yes | No | No | No | No | Family Mode forces a temporary Business Manager-style delivery, suppresses regional/AAVE personalization, adds a family-safe prompt block, and returns a safe alternative for restricted requests. |
+| Deterministic business discovery | Yes | Yes | No | No | No | No | The early no-model discovery path reads the same setting, applies the protective audience band, and blocks adult-venue recommendations before catalog retrieval. |
+| Web and native disclosure | Yes | Yes | No | No | No | No | Web Kinfolk Settings now exposes the existing Family Mode setting; native Family Settings accurately disclose that the protection also covers Kinfolk chats. |
+
+> **Family Mode status boundary:** This is source-only work. It has not been deployed, migrated, device-tested, or member-accepted. It does not add background monitoring, push delivery, or new content moderation claims.
 
 ## Kinfolk Entertainment Discovery & Availability — Completion Status
 

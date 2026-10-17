@@ -45,6 +45,8 @@ export type KinfolkMemberContext = {
   audienceBand: AudienceBand;
   recommendationLifeStage: RecommendationLifeStage;
   pronounMode: PronounMode;
+  /** Explicit family-safe delivery preference; never an age assertion. */
+  familyModeEnabled: boolean;
   customPronounsText?: string | null;
   // Only present when: allowMedicallyRelevantContext=true AND intentClass='medical_health'
   // AND isReproductiveAnatomyRelevant(topic)=true. Never present otherwise.
@@ -66,6 +68,10 @@ interface AgeAssuranceRow {
   age_band: AudienceBand | null;
   date_of_birth: Date | string | null;
   recommendation_life_stage: string | null;
+}
+
+interface FamilySettingsRow {
+  family_mode_enabled: boolean | null;
 }
 
 // Keywords that indicate the question is specifically about reproductive anatomy.
@@ -111,7 +117,7 @@ export async function loadKinfolkMemberContext(
   topic: string,
 ): Promise<KinfolkMemberContext> {
   try {
-    const [ageRow, identityRow] = await Promise.all([
+    const [ageRow, identityRow, familySettingsRow] = await Promise.all([
       pool.query<AgeAssuranceRow>(
         `SELECT uaa.age_band, u.date_of_birth, up.recommendation_life_stage
            FROM users u
@@ -128,6 +134,14 @@ export async function loadKinfolkMemberContext(
          FROM user_identity_context WHERE user_id = $1 LIMIT 1`,
         [userId],
       ).then((r) => r.rows[0] ?? null),
+      // Family Mode is optional delivery policy. If an older environment does
+      // not expose its table, retain the existing non-Family Mode behavior.
+      pool.query<FamilySettingsRow>(
+        `SELECT family_mode_enabled FROM family_settings WHERE user_id = $1 LIMIT 1`,
+        [userId],
+      )
+        .then((r) => r.rows[0] ?? null)
+        .catch(() => null),
     ]);
 
     // A legacy null band can use DOB only to establish adulthood. Minors and
@@ -141,6 +155,7 @@ export async function loadKinfolkMemberContext(
       audienceBand,
       recommendationLifeStage: resolveRecommendationLifeStage(ageRow?.recommendation_life_stage, audienceBand),
       pronounMode: "none",
+      familyModeEnabled: familySettingsRow?.family_mode_enabled === true,
     };
 
     if (identityRow) {
@@ -172,7 +187,12 @@ export async function loadKinfolkMemberContext(
     return out;
   } catch {
     // Non-fatal: return minimal context. Never expose errors to caller.
-    return { audienceBand: "unknown", recommendationLifeStage: "unspecified", pronounMode: "none" };
+    return {
+      audienceBand: "unknown",
+      recommendationLifeStage: "unspecified",
+      pronounMode: "none",
+      familyModeEnabled: false,
+    };
   }
 }
 
