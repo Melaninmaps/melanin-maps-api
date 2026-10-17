@@ -44,4 +44,17 @@ The combined candidate is **NO-GO** until each row is PASS against the reviewed 
 | REL-01 | Build identity | EAS artifacts show the exact reviewed commit, iOS 104, Android 79, `com.melaninmaps.app`, and remote credentials. |
 | REL-02 | Submission control | Automatic submission remains off; no public review or production release occurs without owner approval. |
 
+## Open-platform / verified-minority flywheel source acceptance
+
+The following rows are **source requirements only** for branch `fix/open-platform-verified-flywheel-20261017`. They are not staging, Web, iOS, Android, or founder acceptance evidence, and must be reconciled into the next stable Kinfolk authority rather than treated as a release merge.
+
+| ID | Journey | Required result |
+|---|---|---|
+| BIZ-01 | General business access | A legitimate business can register and maintain a presence, and an authenticated business owner can use general KinfolkAI assistance, without self-identification, a claim, payment, or a membership tier being treated as ownership verification. |
+| BIZ-02 | Verified-minority flywheel access | An approved owner of an active business with `verified = true` and a platform-controlled minority/diaspora value in `verified_designations` can receive targeted owner analytics, private community-need aggregates, business-insight summaries, and business-improvement recommendations. |
+| BIZ-03 | Denied nonqualifying access | An unverified, non-minority, suspended, self-identified-only, claimed-only, paid, or generic-member business receives the stable eligibility limitation and no targeted flywheel response. Self-reported `ownership_designations`, `black_owned`, and client-supplied survey ownership do not satisfy the gate. |
+| BIZ-04 | Recheck before delivery | Revoking the approved owner link, removing the verified designation, or suspending the business prevents the next protected request and city-scoped feedback notification from delivery. No recipient is selected from `submitted_by_id` alone. |
+
+**Source-only status:** implementation and the focused API contracts are pending controlled reconciliation into the moving Kinfolk authority. Authenticated application acceptance, staged push delivery, Web verification, iOS verification, Android verification, and founder acceptance remain unverified.
+
 The evidence packet must include raw logs, migration result, API requests/responses with sensitive values redacted, screenshots or recordings, signed artifact IDs and hashes, device/OS matrix, crash-report event IDs, and a final `GO_NO_GO.md`.

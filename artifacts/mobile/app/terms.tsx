@@ -45,8 +45,9 @@ const SECTIONS = [
     color: "#2D7A4F",
     title: "Business Listings",
     clauses: [
-      { heading: "Listing Your Business", body: "Businesses listed on the Platform must genuinely be minority-owned or substantially Black-led. Submitting false ownership information is a serious violation and may result in removal and legal action." },
-      { heading: "Verification Badges", body: "\"Verified\" badges are granted after document review by our team. \"Self-Identified\" indicates the business owner has attested to ownership without third-party verification. Confidence scores reflect aggregated community signals." },
+      { heading: "Listing Your Business", body: "Any legitimate business may register and maintain a Platform presence, subject to these Terms and applicable laws. Businesses must provide accurate ownership information. Submitting false ownership information is a serious violation and may result in removal and legal action." },
+      { heading: "General KinfolkAI Assistance", body: "Any business owner may use general KinfolkAI assistance for operational questions, planning, writing, and research." },
+      { heading: "Verification Badges & Benefits", body: "\"Verified\" badges and verified Minority-owned designations are granted only after platform review. \"Self-Identified\" indicates an owner attestation and does not create a verified designation. Membership, a paid plan, or a business claim does not create verified Minority-owned status. Private community-demand insights, targeted growth recommendations, and other economic-flywheel benefits require an active platform-verified Minority-owned designation and may be removed if that status changes." },
       { heading: "Business Owner Rights", body: "Verified business owners may respond to reviews and update business information. Owners may not request removal of negative reviews unless the review violates our Community Standards." },
     ],
   },
@@ -57,6 +58,7 @@ const SECTIONS = [
     title: "Membership & Payments",
     clauses: [
       { heading: "Membership Plans", body: "The Platform offers free and paid membership tiers. Paid memberships are billed on a recurring basis (monthly or annually) as selected at signup. All payments are processed securely via Stripe." },
+      { heading: "Membership Is Not Verification", body: "Membership tier or payment does not create a verified Minority-owned designation or economic-flywheel eligibility." },
       { heading: "Cancellation", body: "You may cancel your paid membership at any time through Settings. Cancellation takes effect at the end of the current billing period. We do not provide pro-rated refunds for partial billing periods." },
       { heading: "Refunds", body: "We offer refunds within 7 days of initial purchase if the Platform does not function as described. Refund requests must be submitted via our contact form. Subsequent renewals are non-refundable except where required by applicable law." },
     ],

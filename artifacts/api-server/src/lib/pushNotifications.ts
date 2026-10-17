@@ -3,6 +3,7 @@ import { pool } from "@workspace/db";
 import { eq, inArray, ilike, isNotNull, gte, lte, ne, and, or } from "drizzle-orm";
 import { logger } from "./logger";
 import { normalizeHomeState } from "./happening-personalization";
+import { isVerifiedMinorityFlywheelEligible } from "../businesses/verifiedMinorityFlywheelEligibility";
 
 interface PushMessage {
   title: string;
@@ -308,30 +309,39 @@ export async function sendPushToBusinessOwnersByCity(
   message: PushMessage,
 ): Promise<{ recipientCount: number; delivered: boolean }> {
   try {
-    // Only notify owners of minority-owned businesses — never alert non-minority
-    // businesses that safety reports are being filed in their area.
-    const businesses = await db
-      .select({
-        submittedById: businessesTable.submittedById,
-        id: businessesTable.id,
-        name: businessesTable.name,
-        state: businessesTable.state,
-      })
-      .from(businessesTable)
-      .where(and(
-        ilike(businessesTable.city, city),
-        eq(businessesTable.blackOwned, true),
-      ));
+    // A self-report, paid plan, submission relationship, or legacy black_owned
+    // flag must not receive protected business feedback. Resolve only approved
+    // owners of active, platform-verified minority businesses at send time.
+    const businesses = await pool.query<{
+      owner_user_id: string | null;
+      id: string;
+      state: string | null;
+      status: string | null;
+      verified: boolean | null;
+      verified_designations: unknown;
+    }>(
+      `SELECT owner_link.user_id AS owner_user_id,
+              b.id, b.state, b.status, b.verified, b.verified_designations
+         FROM businesses AS b
+         INNER JOIN business_owner_links AS owner_link
+           ON owner_link.business_id = b.id
+          AND owner_link.role = 'owner'
+          AND owner_link.status = 'approved'
+          AND owner_link.revoked_at IS NULL
+        WHERE LOWER(b.city) = LOWER($1)`,
+      [city],
+    );
 
     const canonicalRegion = normalizeHomeState(region);
     const normalizedRegion = region.trim().toLocaleLowerCase();
 
     const ownerIds = [...new Set(
-      businesses
+      businesses.rows
         .filter((business) => canonicalRegion
           ? normalizeHomeState(business.state) === canonicalRegion
           : business.state?.trim().toLocaleLowerCase() === normalizedRegion)
-        .map((b) => b.submittedById)
+        .filter(isVerifiedMinorityFlywheelEligible)
+        .map((b) => b.owner_user_id)
         .filter((id): id is string => id != null && id.length > 0),
     )];
 

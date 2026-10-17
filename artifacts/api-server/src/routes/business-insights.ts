@@ -1,19 +1,27 @@
 import { Router, type Request, type Response } from "express";
-import { db } from "@workspace/db";
+import { db, businessesTable, pool } from "@workspace/db";
 import { businessInsightSurveysTable } from "@workspace/db/schema";
 import { eq, and, avg, count } from "drizzle-orm";
+import {
+  isVerifiedMinorityFlywheelEligible,
+  resolveVerifiedMinorityFlywheelOwner,
+  VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+} from "../businesses/verifiedMinorityFlywheelEligibility";
 
 const router = Router();
 
 router.post("/business-insights", async (req: Request, res: Response) => {
   try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
     const {
       businessId,
       businessName,
       businessCity,
       businessCategory,
       businessAddress,
-      isMinorityOwned,
       surveyType,
       responses,
     } = req.body as {
@@ -22,7 +30,6 @@ router.post("/business-insights", async (req: Request, res: Response) => {
       businessCity?: string;
       businessCategory?: string;
       businessAddress?: string;
-      isMinorityOwned?: boolean | null;
       surveyType: string;
       responses: Record<string, unknown>;
     };
@@ -40,7 +47,22 @@ router.post("/business-insights", async (req: Request, res: Response) => {
       return;
     }
 
-    const submittedByUserId = (req as any).user?.id ?? null;
+    const submittedByUserId = req.user.id;
+    let isMinorityOwned = false;
+    if (businessId) {
+      const [business] = await db
+        .select({
+          status: businessesTable.status,
+          verified: businessesTable.verified,
+          verifiedDesignations: businessesTable.verifiedDesignations,
+        })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, businessId))
+        .limit(1);
+      // The submitter cannot label a survey as minority-owned. This field is
+      // derived from the same controlled designation used for later delivery.
+      isMinorityOwned = Boolean(business && isVerifiedMinorityFlywheelEligible(business));
+    }
 
     const [inserted] = await db.insert(businessInsightSurveysTable).values({
       businessId: businessId ?? null,
@@ -63,7 +85,26 @@ router.post("/business-insights", async (req: Request, res: Response) => {
 
 router.get("/business-insights/summary/:businessId", async (req: Request, res: Response) => {
   try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
     const { businessId } = req.params;
+    const access = await resolveVerifiedMinorityFlywheelOwner(pool, {
+      businessId: String(businessId),
+      userId: req.user.id,
+    });
+    if (access.kind === "not_owner") {
+      res.status(403).json({ error: "Approved business owner access is required" });
+      return;
+    }
+    if (access.kind === "ineligible") {
+      res.status(403).json({
+        error: VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+        code: "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED",
+      });
+      return;
+    }
     const rows = await db
       .select({
         surveyType: businessInsightSurveysTable.surveyType,

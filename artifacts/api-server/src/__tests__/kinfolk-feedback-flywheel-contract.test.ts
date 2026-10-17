@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const kinfolkRoute = readFileSync(fileURLToPath(new URL("../routes/kinfolk.ts", import.meta.url)), "utf8");
 const ownerRoute = readFileSync(fileURLToPath(new URL("../routes/business-owner-insights.ts", import.meta.url)), "utf8");
+const flywheelEligibility = readFileSync(fileURLToPath(new URL("../businesses/verifiedMinorityFlywheelEligibility.ts", import.meta.url)), "utf8");
 const attachmentRoute = readFileSync(fileURLToPath(new URL("../routes/canonical-mwm-owner-attachment.ts", import.meta.url)), "utf8");
 const migrations = readFileSync(fileURLToPath(new URL("../lib/startup-migrations.ts", import.meta.url)), "utf8");
 const webSource = readFileSync(`${root}artifacts/web/src/pages/travel.tsx`, "utf8");
@@ -41,8 +42,10 @@ describe("Kinfolk feedback flywheel contract", () => {
 
   it("requires an active owner link and never permits admin impersonation", () => {
     expect(ownerRoute).toContain('router.get("/businesses/:id/kinfolk-community-needs"');
-    expect(ownerRoute).toContain("user_id = $2");
-    expect(ownerRoute).toContain("status = 'approved'");
+    expect(ownerRoute).toContain("resolveVerifiedMinorityFlywheelOwner");
+    expect(flywheelEligibility).toContain("owner_link.user_id = $2");
+    expect(flywheelEligibility).toContain("owner_link.status = 'approved'");
+    expect(flywheelEligibility).toContain("owner_link.revoked_at IS NULL");
     expect(ownerRoute).toContain("Approved business owner access is required");
     expect(ownerRoute).not.toContain("isAdmin");
   });

@@ -3,6 +3,10 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, usersTable, businessesTable, businessImprovementPlansTable } from "@workspace/db";
 import { pool } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import {
+  resolveVerifiedMinorityFlywheelOwner,
+  VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+} from "../businesses/verifiedMinorityFlywheelEligibility";
 
 const router: IRouter = Router();
 
@@ -61,18 +65,40 @@ interface ImprovementPlan {
   legalNote: string;
 }
 
+async function requireVerifiedMinorityFlywheelOwner(
+  req: Request,
+  res: Response,
+  businessId: string,
+): Promise<boolean> {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return false;
+  }
+  const access = await resolveVerifiedMinorityFlywheelOwner(pool, { businessId, userId });
+  if (access.kind === "not_owner") {
+    res.status(403).json({ error: "Approved business owner access is required" });
+    return false;
+  }
+  if (access.kind === "ineligible") {
+    res.status(403).json({
+      error: VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+      code: "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED",
+    });
+    return false;
+  }
+  return true;
+}
+
 // ─── POST /api/business-improvement ──────────────────────────────────────────
 router.post("/business-improvement", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const {
-    businessId, businessName, businessCategory, businessCity,
+    businessId,
     issueType, issueDescription, ownershipPreferences = [], serviceTypes = [], budget, timeline,
   } = req.body as {
     businessId: string;
-    businessName: string;
-    businessCategory: string;
-    businessCity: string;
     issueType: string;
     issueDescription?: string;
     ownershipPreferences: string[];
@@ -87,6 +113,21 @@ router.post("/business-improvement", async (req: Request, res: Response) => {
   }
 
   try {
+    if (!await requireVerifiedMinorityFlywheelOwner(req, res, businessId)) return;
+    const [verifiedBusiness] = await db
+      .select({ name: businessesTable.name, category: businessesTable.category, city: businessesTable.city })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId))
+      .limit(1);
+    if (!verifiedBusiness) {
+      res.status(403).json({ error: "Approved business owner access is required" });
+      return;
+    }
+    // Client-supplied names and locations are never trusted for a gated plan.
+    const businessName = verifiedBusiness.name;
+    const businessCategory = verifiedBusiness.category;
+    const businessCity = verifiedBusiness.city;
+
     // ── Find providers matching service types ────────────────────────────────
     const keywords: string[] = serviceTypes.flatMap((st) => SERVICE_TO_KEYWORDS[st] ?? []);
     const keywordConditions = keywords.length > 0
@@ -301,6 +342,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown, no extra text.`;
 router.get("/business-improvement/:businessId", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
+    if (!await requireVerifiedMinorityFlywheelOwner(req, res, String(req.params.businessId))) return;
     const plans = await db
       .select()
       .from(businessImprovementPlansTable)

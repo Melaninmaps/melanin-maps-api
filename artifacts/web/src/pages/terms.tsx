@@ -58,8 +58,11 @@ export default function Terms() {
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">5. Business Listings</h2>
           <p className="leading-relaxed text-[#3A1F0E]/80 mb-3">Business owners who list on our platform agree to:</p>
           <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
+            <li>Any legitimate business may register and maintain a platform presence, subject to these Terms and applicable laws.</li>
+            <li>Any business owner may use general KinfolkAI assistance for operational questions, planning, writing, and research.</li>
             <li>Provide accurate information about their business, including ownership status.</li>
-            <li>Not misrepresent Minority ownership status. Listings claiming Minority ownership are subject to community verification.</li>
+            <li>Not misrepresent Minority ownership status. Self-identification, a business claim, membership, or payment does not create a verified Minority-owned designation.</li>
+            <li>Understand that private community-demand insights, targeted growth recommendations, and other economic-flywheel benefits require an active platform-verified Minority-owned designation and may be removed if that status changes.</li>
             <li>Respond professionally to community feedback and reviews.</li>
             <li>Comply with all applicable laws and regulations for their business type.</li>
           </ul>
@@ -69,6 +72,7 @@ export default function Terms() {
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">6. Membership & Payments</h2>
           <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
             <li>Paid memberships are billed on a recurring basis (monthly or annually).</li>
+            <li>Membership tier or payment does not create a verified Minority-owned designation or economic-flywheel eligibility.</li>
             <li>You may cancel your membership at any time. Cancellation takes effect at the end of the current billing period.</li>
             <li>Refunds are not provided for partial billing periods. Contact <a href="mailto:hello@mappingwithmelanin.com?subject=Billing%20%26%20Refund%20Inquiry" className="text-[#CA922B] underline">hello@mappingwithmelanin.com</a> for exceptional cases.</li>
             <li>We reserve the right to change pricing with 30 days' advance notice.</li>

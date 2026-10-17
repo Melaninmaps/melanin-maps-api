@@ -4,6 +4,10 @@ import { and, avg, count, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import { requireMembership } from "../middleware/requireMembership";
 import { storage } from "../storage";
 import { logger } from "../lib/logger";
+import {
+  isVerifiedMinorityFlywheelEligible,
+  VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+} from "../businesses/verifiedMinorityFlywheelEligibility";
 
 const router: IRouter = Router();
 
@@ -220,14 +224,29 @@ router.get(
           ? "trailblazer"
           : "navigator";
 
+      const hasApprovedOwnerLink = sql<boolean>`EXISTS (
+        SELECT 1 FROM business_owner_links AS owner_link
+        WHERE owner_link.business_id = ${businessesTable.id}
+          AND owner_link.user_id = ${userId}
+          AND owner_link.role = 'owner'
+          AND owner_link.status = 'approved'
+          AND owner_link.revoked_at IS NULL
+      )`;
       const [business] = await db
         .select()
         .from(businessesTable)
-        .where(eq(businessesTable.submittedById, userId))
+        .where(hasApprovedOwnerLink)
         .limit(1);
 
       if (!business) {
         res.status(404).json({ error: "No business found for your account." });
+        return;
+      }
+      if (!isVerifiedMinorityFlywheelEligible(business)) {
+        res.status(403).json({
+          error: VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+          code: "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED",
+        });
         return;
       }
 
