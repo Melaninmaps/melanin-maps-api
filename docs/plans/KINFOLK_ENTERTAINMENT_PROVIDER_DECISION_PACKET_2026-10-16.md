@@ -5,7 +5,7 @@
 
 ## Executive decision
 
-The existing entertainment source candidate remains the correct state: **provider-disabled by default, source complete, and truthful about live availability not being connected.**
+The entertainment source candidate remains **provider-disabled for structured offers and showtimes**. Its bounded cited-web path can be used only through the already configured Kinfolk web-search adapter after an explicit title/country request (and city for showtimes or events). It returns matching source links for review, never a claimed offer or schedule.
 
 There is **no single public, low-cost, legally cleared source** that can be selected today for both commercial streaming availability and theatrical showtimes without a further founder decision and provider-specific written terms.
 
@@ -54,9 +54,11 @@ There is **no single public, low-cost, legally cleared source** that can be sele
 5. Confirm that `rent` and `buy` offers never appear under a member’s `included_only` policy; do not make an entitlement claim from a saved streaming-service preference.
 6. Do **not** display checkout, invoke ticket purchase, activate a production key, publish a mobile build, run Device Farm, or describe the capability as accepted until later authorization and evidence.
 
-## Source truthfulness remains unchanged
+## Source truthfulness and cited-web boundary
 
-The current source returns a deterministic provider-not-connected result for current availability and showtime requests. It does not call a provider, scrape, use a trial, carry a provider credential, display an offer, display a price, display a theater/showtime, or create a ticket link.
+The source still does **not** call an entertainment provider, scrape a site, use a trial, carry a provider credential, display a structured offer, display a price, display a theater/showtime, or create a ticket link. When the already configured Kinfolk web-search capability is available, one explicit title lookup may return short-lived, title-matched HTTPS citations for the member to open. It does not convert an unstructured citation into an availability, entitlement, price, rental/purchase, theater, showtime, ticketing, provider-coverage, or provider-attribution claim.
+
+The cited-web adapter is limited to one low-context, 10-second lookup with an 800-token output ceiling and five-minute non-member-specific result caching. No web request was executed in this source work. It must continue to fail closed—without sources or a fabricated answer—when configuration, title match, city/country prerequisites, or a provider response is unavailable.
 
 ## Sources reviewed
 
@@ -69,3 +71,5 @@ The current source returns a deterministic provider-not-connected result for cur
 7. [Watchmode plans](https://api.watchmode.com/) and [terms](https://api.watchmode.com/tc) — commercial/non-commercial tiers, usage, retention, image restrictions, and accuracy caveat.
 8. [MovieGlu FAQ](https://movieglu.com/contact/), [evaluation terms](https://developer.movieglu.com/company/terms-of-use/), and [pricing](https://movieglu.com/pricing/) — evaluation/sandbox limitations and quote-based commercial pricing.
 9. [TMDB API Terms](https://www.themoviedb.org/api-terms-of-use) — commercial/AI-chatbot restriction and attribution terms.
+10. [OpenAI web search guide](https://platform.openai.com/docs/guides/tools-web-search) — cited-search tool behavior and tool-result handling.
+11. [OpenAI Services Agreement](https://openai.com/policies/services-agreement/) — general API service terms reviewed before reuse of the existing configured search capability.

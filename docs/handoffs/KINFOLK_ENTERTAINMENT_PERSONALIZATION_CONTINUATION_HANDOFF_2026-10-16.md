@@ -64,4 +64,4 @@ No database migration, provider contract, trial, account, credential, API call, 
 2. **Bounded non-production authorization:** configure only approved test credentials, run the additive migration against an approved test database, and inspect redacted responses for accuracy/freshness/attribution/link safety.
 3. **Staging/device acceptance:** execute `ENT-01`–`ENT-08` on Web/iOS/Android, including a recorded device run, without checkout.
 
-Until those approvals occur, Kinfolk must continue to disclose that live availability and showtimes are not connected.
+Until those approvals occur, Kinfolk must continue to disclose that structured live availability and showtimes are not connected. A separately bounded cited-web path may show title-matched source links after an explicit request, but it must not label them as an offer, service, price, theater, showtime, ticket link, or provider result.

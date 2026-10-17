@@ -17,13 +17,13 @@ This is the authoritative handoff for the **Kinfolk Entertainment Discovery, sub
 ## What is source complete
 
 1. **Normal Kinfolk entertainment conversation is preserved.** Movies, television, actors, music, books, entertainment history, and cultural conversation remain on the existing Kinfolk route, persona, research, and citation behavior. They never require a streaming or showtime provider.
-2. **Live availability is safely gated.** Only explicit current-availability/showtime requests enter the deterministic availability path. Without an approved provider, Kinfolk returns a truthful unavailable result and never invents services, rentals, purchases, prices, theaters, showtimes, ticket links, or geographic coverage.
+2. **Current availability is safely gated.** Only explicit current availability, showtime, or named-event requests enter the bounded availability path. Title and country are required; city is also required for showtimes/events. A generic reference such as “this movie” stays in the title-required state. With the existing configured cited-web adapter, Kinfolk can return one short-lived list of title-matched source links; without it, it returns a truthful unavailable result. In neither case does it invent or claim a service, offer, entitlement, rental, purchase, price, theater, showtime, ticket link, geographic coverage, or provider result.
 3. **Subscription changes are consent-first.** “I have Netflix,” “I switched from Hulu to Max,” “I cancelled Peacock,” and an explicit no-extra-cost request produce a specific confirm/dismiss card. Chat text alone does not write a preference.
 4. **No duplicate memory store was created.** Confirmed choices use the existing `user_preferences` record. Settings and chat both support review/edit/clear behavior. The preferences are private and do not change membership pricing, billing, or subscription entitlements.
-5. **No-extra-cost behavior exists in source.** The `included_only` preference filters provider-shaped fixture data to subscription-included, free, or ad-supported options from saved services; rental/purchase options are excluded. It never claims a real offer without a provider.
+5. **No-extra-cost behavior exists in source.** The `included_only` preference filters provider-shaped fixture data to subscription-included, free, or ad-supported options from saved services; rental/purchase options are excluded. The cited-web query can be shaped by saved services but never treats them as an entitlement or claims a real included offer.
 6. **Showtime questions are bounded.** Title-less prompts such as “What Black movies are playing near me?” are recognized. Kinfolk requests a country/city/title as required, does not infer “my mom’s house,” and does not retain raw device coordinates.
 7. **Offline provider fixtures exist only for tests.** Typed fixture data includes offers, showtimes, attribution, freshness, formats, destination validation, and provider failure. There is no runtime fixture switch and no outbound provider call.
-8. **Web and native source paths exist.** Web and native settings include service/country/no-extra-cost controls; Web and native chats render a confirmation card before persisting a natural-language subscription change.
+8. **Web and native source paths exist.** Web and native settings include service/country/no-extra-cost controls and disclose the cited-web boundary. Existing Web/native source-link components render returned citations; chat still renders a confirmation card before persisting a natural-language subscription change.
 
 ## Validation at source commit `77beb13794a1d77f14f5d0ae122f1d82fbee3236`
 
@@ -52,7 +52,7 @@ Read the [provider decision packet](../plans/KINFOLK_ENTERTAINMENT_PROVIDER_DECI
 
 ## Must not be claimed
 
-Do **not** say that Kinfolk currently has live streaming availability, rentals/purchases, prices, showtimes, theaters, ticket links, coverage, a configured provider, device acceptance, or member acceptance. It does not.
+Do **not** say that Kinfolk currently has structured live streaming availability, rentals/purchases, prices, showtimes, theaters, ticket links, coverage, a configured entertainment provider, device acceptance, or member acceptance. It does not. Cited web links are only source links for the member to review, not availability proof.
 
 Do **not** say a plain entertainment statement is saved. It is saved only after the member confirms a dedicated consent card or explicitly changes Settings.
 

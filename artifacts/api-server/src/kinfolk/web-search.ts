@@ -89,6 +89,23 @@ export const KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS = 30_000;
 // message or citations. This matches the real provider-readiness probe.
 export const KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS = 4_000;
 
+type WebSearchRuntime = Readonly<{
+  searchContextSize: "low" | "medium" | "high";
+  timeoutMs: number;
+  maxOutputTokens: number;
+}>;
+const DEFAULT_WEB_SEARCH_RUNTIME: WebSearchRuntime = {
+  searchContextSize: "medium",
+  timeoutMs: KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS,
+  maxOutputTokens: KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS,
+};
+// Current entertainment questions use a single lower-budget source lookup.
+const ENTERTAINMENT_WEB_SEARCH_RUNTIME: WebSearchRuntime = {
+  searchContextSize: "low",
+  timeoutMs: 10_000,
+  maxOutputTokens: 800,
+};
+
 export function openAiWebSearchConfigured(
   environment: NodeJS.ProcessEnv = process.env,
 ): boolean {
@@ -164,6 +181,7 @@ async function searchOpenAiQuery(
   query: SearchQuery,
   purpose: WebResearchPurpose,
   location?: SearchLocation,
+  runtime: WebSearchRuntime = DEFAULT_WEB_SEARCH_RUNTIME,
 ): Promise<WebSearchBatch> {
   const userLocation = location ? {
     type: "approximate",
@@ -176,7 +194,7 @@ async function searchOpenAiQuery(
       model: kinfolkModel("webSearch"),
       tools: [{
         type: "web_search",
-        search_context_size: "medium",
+        search_context_size: runtime.searchContextSize,
         ...(userLocation ? { user_location: userLocation } : {}),
       }],
       input: [
@@ -193,8 +211,8 @@ async function searchOpenAiQuery(
           "Return concise factual findings with web citations. Do not invent facts or sources.",
       ].join("\n"),
       reasoning: { effort: "low" },
-      max_output_tokens: KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS,
-    } as never, { signal: AbortSignal.timeout(KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS) });
+      max_output_tokens: runtime.maxOutputTokens,
+    } as never, { signal: AbortSignal.timeout(runtime.timeoutMs) });
     const results = parseOpenAiResponseCitations(response, [query]);
     return { kind: results.length ? "cited" : "no_citations", results };
   } catch {
@@ -257,10 +275,11 @@ async function searchQueryWithFallback(
   purpose: WebResearchPurpose,
   imageRequested: boolean,
   location?: SearchLocation,
+  runtime: WebSearchRuntime = DEFAULT_WEB_SEARCH_RUNTIME,
 ): Promise<QuerySearchOutcome> {
   const safeQuery = { ...query, text: enforceDiasporaFirstProviderQuery(query.text) };
   if (openAiWebSearchConfigured()) {
-    const primary = await searchOpenAiQuery(safeQuery, purpose, location);
+    const primary = await searchOpenAiQuery(safeQuery, purpose, location, runtime);
     const primaryAttempt = { provider: "openai" as const, used: primary.kind !== "provider_error", outcome: primary.kind };
     if (primary.kind === "cited") {
       return { ...primary, provider: "openai", fallbackUsed: false, attempts: [primaryAttempt] };
@@ -290,6 +309,7 @@ async function searchQueriesWithState(
   purpose: WebResearchPurpose,
   _imageRequested: boolean,
   location?: SearchLocation,
+  runtime: WebSearchRuntime = DEFAULT_WEB_SEARCH_RUNTIME,
 ): Promise<WebSearchOutcome> {
   const hasOpenAi = openAiWebSearchConfigured();
   const hasTavily = Boolean(kinfolkTavilyApiKey());
@@ -300,7 +320,7 @@ async function searchQueriesWithState(
     };
   }
   const outcomes = await Promise.all(
-    queries.map((query) => searchQueryWithFallback(query, purpose, _imageRequested, location)),
+    queries.map((query) => searchQueryWithFallback(query, purpose, _imageRequested, location, runtime)),
   );
   const cited = outcomes.filter((outcome) => outcome.kind === "cited");
   const attempts = outcomes.flatMap((outcome) => outcome.attempts);
@@ -344,6 +364,19 @@ export async function searchAllQueriesWithState(
   imageRequested: boolean,
 ): Promise<WebSearchOutcome> {
   return searchQueriesWithState(queries, "general_current", imageRequested);
+}
+
+/** One cited, low-budget lookup for an exact current entertainment question. */
+export async function searchCurrentEntertainmentQueriesWithState(
+  queries: SearchQuery[],
+): Promise<WebSearchOutcome> {
+  return searchQueriesWithState(
+    queries.slice(0, 1),
+    "general_current",
+    false,
+    undefined,
+    ENTERTAINMENT_WEB_SEARCH_RUNTIME,
+  );
 }
 
 /** Compatibility API for callers that consume rows only. */

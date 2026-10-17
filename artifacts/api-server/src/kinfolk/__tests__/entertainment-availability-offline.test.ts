@@ -15,6 +15,25 @@ describe("offline entertainment availability contract", () => {
     expect(parseEntertainmentAvailabilityRequest({ message: "What Black movies are playing near me?" })).toMatchObject({ mode: "showtimes", title: null });
   });
 
+  it("requires a named location and title for an event lookup", async () => {
+    const request = parseEntertainmentAvailabilityRequest({
+      message: 'Where can I see "The Roots Picnic"?',
+      countryCode: "US",
+      city: "Philadelphia",
+    });
+    expect(request).toMatchObject({
+      mode: "event",
+      title: "The Roots Picnic",
+      countryCode: "US",
+      city: "Philadelphia",
+    });
+    await expect(resolveEntertainmentAvailability(request!)).resolves.toMatchObject({
+      status: "provider_not_configured",
+      offers: [],
+      showtimes: [],
+    });
+  });
+
   it("requires city and title before showtime results", async () => {
     const request = parseEntertainmentAvailabilityRequest({ message: "Find me a showing tonight", countryCode: "US" })!;
     expect((await resolveEntertainmentAvailability(request)).status).toBe("location_required");
