@@ -11,7 +11,9 @@ describe("website map locality-first presentation", () => {
     expect(mapSource).toContain("const exploreAllAreas = false");
     expect(mapSource).toContain("const [nearMeRadius, setNearMeRadius] = useState<number | null>(25)");
     expect(mapSource).toContain("Verified business pins are public map data");
-    expect(mapSource).toContain("const markerBusinesses = businessSearchActive || isDiscoveryFilterActive");
+    expect(mapSource).toContain("const directNameLookupOwnsNoPins = businessSearchActive");
+    expect(mapSource).toContain("const markerBusinesses = directNameLookupOwnsNoPins");
+    expect(mapSource).toContain("const showBiz = !directNameLookupOwnsNoPins");
     expect(mapSource).toContain("if (!activeLocalScope) return false");
     expect(mapSource).toContain("activeLocalScope.lat");
     expect(mapSource).toContain("visibleCulturalSites");

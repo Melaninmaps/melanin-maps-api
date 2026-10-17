@@ -26,6 +26,9 @@ interface UseBusinessesOptions {
   supportScope?: "all_businesses" | "strict_documented_designations";
   /** A server-validated explicit public business-name lookup. */
   directName?: boolean;
+  /** Offset and page size used only for exact-name listing pagination. */
+  offset?: number;
+  limit?: number;
   /** Prevent an unscoped request while a map surface awaits a locality. */
   enabled?: boolean;
 }
@@ -34,10 +37,25 @@ interface UseBusinessesResult {
   businesses: Business[];
   isLoading: boolean;
   error: string | null;
-  searchScope: "diaspora_promotion_catalog" | "all_public_places" | "explicit_public_listing" | null;
+  total: number;
+  searchScope:
+    | "diaspora_promotion_catalog"
+    | "all_public_places"
+    | "explicit_public_listing"
+    | "direct_named_safety_context"
+    | null;
+  /** Current request identity and the identity that produced visible results. */
+  requestKey: string;
+  resultRequestKey: string | null;
   refetch: () => void;
 }
 
+interface SuccessfulBusinessesCache {
+  requestKey: string;
+  businesses: Business[];
+  total: number;
+  searchScope: UseBusinessesResult["searchScope"];
+}
 
 interface UseBusinessByIdResult {
   business: Business | undefined;
@@ -137,16 +155,37 @@ export function useBusinesses(
     designations = [],
     supportScope,
     directName = false,
+    offset = 0,
+    limit,
     enabled = true,
   } = options;
   const designationKey =
     normalizeOwnershipDesignationFilterIds(designations).join(",");
+  // A direct-name listing is a different source contract from ordinary map
+  // discovery. Cache only an identical request so a failed later browse can
+  // never inherit retained public-directory rows from a direct lookup.
+  const requestKey = JSON.stringify({
+    search,
+    category: directName ? "All" : category,
+    city: directName ? "" : city,
+    state: directName ? "" : state,
+    latitude: directName ? null : latitude,
+    longitude: directName ? null : longitude,
+    radiusMiles: directName ? null : radiusMiles,
+    designationKey: directName ? "" : designationKey,
+    supportScope: directName ? undefined : supportScope,
+    directName,
+    offset,
+    limit: limit ?? null,
+  });
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
   const [searchScope, setSearchScope] = useState<UseBusinessesResult["searchScope"]>(null);
+  const [resultRequestKey, setResultRequestKey] = useState<string | null>(null);
   const requestIdRef = useRef(0);
-  const lastSuccessfulBusinessesRef = useRef<Business[]>([]);
+  const lastSuccessfulResultRef = useRef<SuccessfulBusinessesCache | null>(null);
 
   const fetchBusinesses = useCallback(async () => {
     // Advance first so disabling a map scope also invalidates an in-flight
@@ -154,11 +193,15 @@ export function useBusinesses(
     const requestId = ++requestIdRef.current;
     if (!enabled) {
       // Location permission, a brief AppState transition, or an in-progress
-      // map scope calculation must not blank already-visible, valid pins. A
-      // deliberate business search still replaces its result when it resolves.
-      setBusinesses(lastSuccessfulBusinessesRef.current);
+      // map scope calculation must not blank an identical visible result. A
+      // different request must begin empty rather than borrow unrelated pins.
+      const cachedResult = lastSuccessfulResultRef.current;
+      const canRestoreCachedResult = cachedResult?.requestKey === requestKey;
+      setBusinesses(canRestoreCachedResult ? cachedResult.businesses : []);
       setError(null);
-      setSearchScope(null);
+      setTotal(canRestoreCachedResult ? cachedResult.total : 0);
+      setSearchScope(canRestoreCachedResult ? cachedResult.searchScope : null);
+      setResultRequestKey(canRestoreCachedResult ? requestKey : null);
       setIsLoading(false);
       return;
     }
@@ -173,12 +216,14 @@ export function useBusinesses(
       const apiBase = getApiBase();
       const url = buildBusinessesRequestUrl(apiBase, {
         search,
-        category,
+        category: directName ? "All" : category,
         city: directName ? "" : city,
         state: directName ? "" : state,
         designations: directName ? [] : designations,
         supportScope: directName ? undefined : supportScope,
         directName,
+        offset,
+        limit,
       });
       const urlWithGeo = !directName && Number.isFinite(latitude) && Number.isFinite(longitude)
         ? `${url}${url.includes("?") ? "&" : "?"}lat=${latitude}&lng=${longitude}&radius=${Math.min(100, Math.max(1, radiusMiles))}`
@@ -192,7 +237,11 @@ export function useBusinesses(
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as { businesses?: unknown; searchScope?: unknown };
+        const data = (await res.json()) as {
+          businesses?: unknown;
+          searchScope?: unknown;
+          total?: unknown;
+        };
         if (!Array.isArray(data.businesses)) {
           throw new Error("Invalid businesses response");
         }
@@ -201,38 +250,63 @@ export function useBusinesses(
             data.businesses.map((business) =>
               mapApiBusinessToLocal(business as Record<string, unknown>),
             );
-          // An empty successful response is meaningful and must be shown. Only
-          // failed/aborted refreshes retain visible pins so a temporary network
-          // or origin problem cannot make previously loaded businesses vanish.
-          lastSuccessfulBusinessesRef.current = mappedBusinesses;
-          setBusinesses(mappedBusinesses);
-          setSearchScope(
+          const receivedSearchScope =
             data.searchScope === "explicit_public_listing" ||
+            data.searchScope === "direct_named_safety_context" ||
             data.searchScope === "all_public_places" ||
             data.searchScope === "diaspora_promotion_catalog"
               ? data.searchScope
-              : null,
-          );
+              : null;
+          // An empty successful response is meaningful and must be shown. Only
+          // a retry of this identical request retains its visible result so a
+          // temporary network problem cannot make it vanish.
+          const receivedTotal =
+            typeof data.total === "number" && Number.isFinite(data.total)
+              ? Math.max(0, data.total)
+              : mappedBusinesses.length;
+          lastSuccessfulResultRef.current = {
+            requestKey,
+            businesses: mappedBusinesses,
+            total: receivedTotal,
+            searchScope: receivedSearchScope,
+          };
+          setBusinesses(mappedBusinesses);
+          setTotal(receivedTotal);
+          setSearchScope(receivedSearchScope);
+          setResultRequestKey(requestKey);
         }
       } finally {
         clearTimeout(timeout);
       }
     } catch {
       if (requestId === requestIdRef.current) {
-        setBusinesses(lastSuccessfulBusinessesRef.current);
+        const cachedResult = lastSuccessfulResultRef.current;
+        const canRestoreCachedResult = cachedResult?.requestKey === requestKey;
+        setBusinesses(canRestoreCachedResult ? cachedResult.businesses : []);
         setError(BUSINESS_LOAD_ERROR);
-        setSearchScope(null);
+        setTotal(canRestoreCachedResult ? cachedResult.total : 0);
+        setSearchScope(canRestoreCachedResult ? cachedResult.searchScope : null);
+        setResultRequestKey(canRestoreCachedResult ? requestKey : null);
       }
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope, directName]);
+  }, [enabled, requestKey, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope, directName, offset, limit]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);
   }, [fetchBusinesses]);
 
-  return { businesses, isLoading, error, searchScope, refetch: fetchBusinesses };
+  return {
+    businesses,
+    isLoading,
+    error,
+    total,
+    searchScope,
+    requestKey,
+    resultRequestKey,
+    refetch: fetchBusinesses,
+  };
 }
 
 export function useBusinessById(id: string): UseBusinessByIdResult {

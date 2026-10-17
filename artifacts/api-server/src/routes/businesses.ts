@@ -67,6 +67,7 @@ import {
   mwmDiasporaPromotionSqlPredicate,
   mwmPublicDirectorySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
+import { normalizeDirectoryPage } from "../businesses/directoryPage";
 import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import {
   highConfidenceBusinessDuplicateReasons,
@@ -108,6 +109,7 @@ import {
   findBusinessExperienceKeysForSearch,
   findVibeKeysForSearch,
   findSafeSearchClarification,
+  isDeliberateBusinessNameLookup,
   normalizeOwnerExperienceKey,
   VIBES_BY_CATEGORY,
 } from "@workspace/constants";
@@ -437,7 +439,7 @@ function mwmDiasporaPromotionCondition() {
   )}`;
 }
 
-/** General directory visibility is source-backed but never an ownership claim. */
+/** Exact direct-name directory visibility is source-backed but never an ownership claim. */
 function mwmPublicDirectoryCondition() {
   return sql<boolean>`${sql.raw(
     mwmPublicDirectorySqlPredicate('"businesses"."id"'),
@@ -445,28 +447,40 @@ function mwmPublicDirectoryCondition() {
 }
 
 /**
- * A narrow direct-lookup escape hatch. It is intentionally limited to a
- * member-entered, plausible business name after promotion search returned no
- * match; category/browse searches never reach this path.
+ * A direct public-directory name lookup is intentionally narrow. Keep this
+ * request-shape check shared by the ordinary route and its degraded fallback:
+ * an operational query failure must never broaden a filtered/category/map
+ * request into a nationwide public-directory result.
  */
-function isDeliberateNamedBusinessLookup(value: string): boolean {
-  const normalized = value.trim().replace(/\s+/g, " ");
-  if (normalized.length < 3 || normalized.length > 100) return false;
-  const generic = new Set([
-    "business", "businesses", "restaurant", "restaurants", "bar", "bars",
-    "club", "clubs", "hospital", "hospitals", "doctor", "doctors", "near me",
-    "philly", "philadelphia", "houston", "atlanta", "minneapolis",
-  ]);
-  const words = normalized.toLocaleLowerCase("en-US").split(" ");
-  return words.length <= 7 && words.some((word) => !generic.has(word));
-}
+function isEligibleDirectNameLookupRequest(req: Request, search: string): boolean {
+  const {
+    category, subcategory, handle, ownership, designations, vibes, lat, lng, radius,
+    city, state, country, supportScope, culturalPreference,
+  } = req.query;
+  const hasQueryValue = (value: unknown): boolean =>
+    Array.isArray(value)
+      ? value.length > 0
+      : typeof value === "string"
+        ? value.trim().length > 0
+        : value !== undefined;
+  const hasCategoryFilter = Array.isArray(category)
+    || (typeof category === "string" && category.trim() !== "" && category !== "All");
 
-function normalizedDirectBusinessName(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLocaleLowerCase("en-US")
-    .replace(/[^a-z0-9]+/g, "");
+  return isDeliberateBusinessNameLookup(search)
+    && !hasCategoryFilter
+    && !hasQueryValue(subcategory)
+    && !hasQueryValue(handle)
+    && !hasQueryValue(ownership)
+    && !hasQueryValue(designations)
+    && !hasQueryValue(vibes)
+    && !hasQueryValue(lat)
+    && !hasQueryValue(lng)
+    && !hasQueryValue(radius)
+    && !hasQueryValue(city)
+    && !hasQueryValue(state)
+    && !hasQueryValue(country)
+    && !hasQueryValue(supportScope)
+    && !hasQueryValue(culturalPreference);
 }
 
 /**
@@ -480,36 +494,42 @@ async function sendDirectNameAvailabilityFallback(
   res: Response,
 ): Promise<boolean> {
   const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
-  if (!isDeliberateNamedBusinessLookup(search)) return false;
-
-  const city = typeof req.query.city === "string" ? normalizeCityAlias(req.query.city) : "";
-  const state = typeof req.query.state === "string" ? req.query.state.trim() : "";
-  const limitParam = typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 20;
-  const limit = Math.min(50, Math.max(1, Number.isFinite(limitParam) ? limitParam : 20));
-  const params: unknown[] = [normalizedDirectBusinessName(search)];
-  const filters = ["REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = $1"];
-
-  if (city) {
-    params.push(city);
-    filters.push(`LOWER(BTRIM(COALESCE(city, ''))) = LOWER(BTRIM($${params.length}))`);
+  if (req.query.lookup !== "direct_name" || !isEligibleDirectNameLookupRequest(req, search)) {
+    return false;
   }
-  if (state) {
-    params.push(state);
-    filters.push(`UPPER(BTRIM(COALESCE(state, ''))) = UPPER(BTRIM($${params.length}))`);
-  }
-  params.push(limit);
+
+  const { offset, limit } = normalizeDirectoryPage(req.query.offset, req.query.limit);
+  // This function now handles only an explicit direct-name request. Keep it
+  // nationwide: the member named the listing, so an ambient or stale location
+  // must not hide it.
+  const params: unknown[] = [search];
+  const filters = [
+    mwmPublicDirectorySqlPredicate("public.public_businesses.id"),
+    "LOWER(BTRIM(COALESCE(name, ''))) = LOWER(BTRIM($1))",
+  ];
+  params.push(limit, offset);
 
   const { rows } = await pool.query<Record<string, unknown>>(
-    `SELECT * FROM public.public_businesses
+    `SELECT *, COUNT(*) OVER() AS full_count FROM public.public_businesses
       WHERE ${filters.join(" AND ")}
-      ORDER BY name, id
-      LIMIT $${params.length}`,
+      ORDER BY founding_business DESC, confidence_score DESC, name ASC, id ASC
+      LIMIT $${params.length - 1}
+      OFFSET $${params.length}`,
     params,
   );
-  if (rows.length === 0) return false;
+  // Window counts disappear when an out-of-range page has no rows. The healthy
+  // route still returns a normal empty page in that case, so ask the same
+  // literal public-directory scope for its count instead of escalating to 500.
+  const fallbackTotal = rows.length > 0
+    ? Number(rows[0]?.full_count) || rows.length
+    : Number((await pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM public.public_businesses
+          WHERE ${filters.join(" AND ")}`,
+        [search],
+      )).rows[0]?.total ?? 0);
 
   req.log.warn(
-    { search, city: city || null, state: state || null, resultCount: rows.length },
+    { search, resultCount: rows.length },
     "Directory query failed; returned direct-name availability fallback",
   );
   const publicRecords = await attachPublicBusinessPresentation(
@@ -517,8 +537,8 @@ async function sendDirectNameAvailabilityFallback(
   );
   sendDynamicJson(res, {
     businesses: publicRecords,
-    total: rows.length,
-    page: { offset: 0, limit },
+    total: fallbackTotal,
+    page: { offset, limit },
     featuredCount: 0,
     usedFuzzyFallback: false,
     searchScope: "direct_named_safety_context",
@@ -759,14 +779,22 @@ router.get("/businesses", async (req: Request, res: Response) => {
           radius: radiusParam,
             supportScope,
         } = req.query;
-        const offset = Math.max(
-          0,
-          parseInt((offsetParam as string) ?? "0", 10) || 0,
+        const { offset, limit: pageLimit } = normalizeDirectoryPage(
+          offsetParam,
+          limitParam,
         );
-        const pageLimit = Math.min(
-          200,
-          Math.max(1, parseInt((limitParam as string) ?? "200", 10) || 200),
-        );
+        const directSearchText = typeof search === "string" ? search.trim() : "";
+        const directNameLookupRequested = req.query.lookup === "direct_name";
+        if (
+          directNameLookupRequested
+          && !isEligibleDirectNameLookupRequest(req, directSearchText)
+        ) {
+          res.status(400).json({
+            error: "Direct business-name lookup requires one exact name and no filters.",
+            code: "DIRECT_NAME_LOOKUP_REQUIRES_UNFILTERED_EXACT_NAME",
+          });
+          return;
+        }
 
         // Parse optional geo-filter params (lat/lng in decimal degrees, radius in miles)
         const geoLat = latParam ? parseFloat(latParam as string) : null;
@@ -783,11 +811,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const conditions = [];
         const designationConditions: any[] = [];
         const promotionCondition = mwmDiasporaPromotionCondition();
-        const generalDirectoryCondition = mwmPublicDirectoryCondition();
-        // General directory browse can include a source-receipted canonical
-        // listing with official presence but no ownership claim. A map/geo
-        // request and every explicit ownership filter remain in the stricter
-        // documented Diaspora catalog.
+        // Public Directory records outside the documented Kinfolk Current
+        // catalog remain retrievable only by the strict exact-name path below.
+        // Every ordinary browse, keyword search, map query, and fuzzy fallback
+        // stays in the documented Diaspora promotion catalog.
 
         // One canonical database function enforces active/live lifecycle, duplicate,
         // permanent-hide, demo-source/name/description, and reserved test-phone rules.
@@ -881,11 +908,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           );
         }
         conditions.push(...designationConditions);
-        conditions.push(
-          hasGeoFilter || designationFilterIds.length > 0
-            ? promotionCondition
-            : generalDirectoryCondition,
-        );
+        conditions.push(promotionCondition);
 
         const requestedVibes = typeof vibesParam === "string"
           ? [...new Set(
@@ -895,17 +918,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
                 .filter((value) => CANONICAL_VIBE_KEYS.has(value)),
             )].slice(0, 8)
           : [];
-        const directSearchText = typeof search === "string" ? search.trim() : "";
         // A retained public profile can be read only when the member names it
         // exactly. This is a safety/context lookup, never a browse, fuzzy search,
         // map result, or Kinfolk recommendation path.
-        const directNamedSafetyLookup = isDeliberateNamedBusinessLookup(directSearchText)
-          && !hasGeoFilter
-          && !(category && typeof category === "string" && category !== "All")
-          && !(subcategory && typeof subcategory === "string")
-          && !(handle && typeof handle === "string")
-          && requestedDesignationValues.length === 0
-          && requestedVibes.length === 0;
+        const strictDirectNameLookup = directNameLookupRequested;
         if (requestedVibes.length > 0) {
           conditions.push(
             sql<boolean>`${businessesTable.vibes} ?| ARRAY[${sql.join(
@@ -1019,20 +1035,34 @@ router.get("/businesses", async (req: Request, res: Response) => {
           }
         }
 
-        if (city && typeof city === "string") {
+        // The native and website Map send an explicit lookup signal only for a
+        // deliberate member-entered business name. Make that path authoritative:
+        // it is a nationwide, case-insensitive exact public-directory retrieval,
+        // not a partial match, promoted discovery result, or fuzzy suggestion.
+        if (strictDirectNameLookup) {
+          conditions.splice(
+            0,
+            conditions.length,
+            publicBusinessVisibilityCondition(),
+            mwmPublicDirectoryCondition(),
+            sql<boolean>`LOWER(BTRIM(COALESCE(${businessesTable.name}, ''))) = LOWER(BTRIM(${directSearchText}))`,
+          );
+        }
+
+        if (!strictDirectNameLookup && city && typeof city === "string") {
           const canonicalCity = normalizeCityAlias(city);
           conditions.push(
             sql`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${canonicalCity}))`,
           );
         }
 
-        if (state && typeof state === "string") {
+        if (!strictDirectNameLookup && state && typeof state === "string") {
           conditions.push(
             sql`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state}))`,
           );
         }
 
-        if (country && typeof country === "string") {
+        if (!strictDirectNameLookup && country && typeof country === "string") {
           conditions.push(ilike(businessesTable.country, `%${country}%`));
         }
 
@@ -1090,37 +1120,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           .limit(pageLimit)
           .offset(offset);
 
-        let usedDirectNamedSafetyLookup = false;
-        if (businesses.length === 0 && directNamedSafetyLookup) {
-          const exactNameConditions = [
-            publicBusinessVisibilityCondition(),
-            sql<boolean>`REGEXP_REPLACE(LOWER(COALESCE(${businessesTable.name}, '')), '[^a-z0-9]+', '', 'g') = ${normalizedDirectBusinessName(directSearchText)}`,
-          ];
-          if (city && typeof city === "string" && city.trim()) {
-            exactNameConditions.push(
-              sql<boolean>`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`,
-            );
-          }
-          if (state && typeof state === "string" && state.trim()) {
-            exactNameConditions.push(
-              sql<boolean>`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state.trim()}))`,
-            );
-          }
-          if (country && typeof country === "string" && country.trim()) {
-            exactNameConditions.push(
-              sql<boolean>`${businessesTable.country} ILIKE ${`%${country.trim()}%`}`,
-            );
-          }
-          businesses = await db
-            .select()
-            .from(businessesTable)
-            .where(and(...exactNameConditions))
-            .orderBy(asc(businessesTable.name), asc(businessesTable.id))
-            .limit(pageLimit)
-            .offset(offset);
-          totalCount = businesses.length;
-          usedDirectNamedSafetyLookup = businesses.length > 0;
-        }
+        const usedDirectNamedSafetyLookup = strictDirectNameLookup;
 
         // Annotate businesses that have active growth-tool promotions as featured.
         // Only businesses that already matched the search criteria are promoted —
@@ -1215,14 +1215,20 @@ router.get("/businesses", async (req: Request, res: Response) => {
           return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
 
-        const annotated = businesses
+        const annotatedBusinesses = businesses
           .map((b) => ({
             ...b,
             featured: b.featured || promotedIdToType.has(b.id),
             promotionType: promotedIdToType.get(b.id) ?? null,
             culturalMatch: matchesPref(b as any),
-          }))
-          .sort((a, b) => {
+          }));
+
+        // An explicit same-name Directory lookup is not a recommendation.
+        // Preserve the deterministic database ordering so every page remains
+        // identical if the route has to use its public-view fallback.
+        const annotated = strictDirectNameLookup
+          ? annotatedBusinesses
+          : annotatedBusinesses.sort((a, b) => {
             // 1. Search relevance and proximity always come before promotion.
             const relevanceDifference = relevanceScore(b) - relevanceScore(a);
             if (relevanceDifference !== 0) return relevanceDifference;
@@ -1311,6 +1317,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           search &&
           typeof search === "string" &&
           withCaptions.length === 0 &&
+          !strictDirectNameLookup &&
           !fuzzyWouldEscapeRestrictiveFilter
         ) {
           try {
@@ -1343,9 +1350,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
             const fuzzyConditions = [
               publicBusinessVisibilityCondition(),
-              hasGeoFilter || designationFilterIds.length > 0
-                ? mwmDiasporaPromotionCondition()
-                : mwmPublicDirectoryCondition(),
+              mwmDiasporaPromotionCondition(),
             ];
             if (city && typeof city === "string" && city.trim()) {
               fuzzyConditions.push(

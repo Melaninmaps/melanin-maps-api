@@ -58,13 +58,41 @@ describe("founder business discoverability correction", () => {
     expect(businesses).toContain(".from(businessesTable)");
   });
 
-  it("keeps a failed-query name fallback within the documented Kinfolk catalog", () => {
+  it("keeps a failed-query name fallback within the direct public-directory scope", () => {
     expect(businesses).toContain("sendDirectNameAvailabilityFallback");
     expect(businesses).toContain("Directory query failed; returned direct-name availability fallback");
-    expect(businesses).toContain("SELECT * FROM public.public_businesses");
-    expect(businesses).toContain('mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")');
-    expect(businesses).toContain('searchScope: "diaspora_promotion_catalog"');
+    expect(businesses).toContain("SELECT *, COUNT(*) OVER() AS full_count FROM public.public_businesses");
+    expect(businesses).toContain('req.query.lookup !== "direct_name" || !isEligibleDirectNameLookupRequest(req, search)');
+    expect(businesses).toContain('mwmPublicDirectorySqlPredicate("public.public_businesses.id")');
+    expect(businesses).toContain("COUNT(*) OVER() AS full_count");
+    expect(businesses).toContain("ORDER BY founding_business DESC, confidence_score DESC, name ASC, id ASC");
+    expect(businesses).toContain('import { normalizeDirectoryPage } from "../businesses/directoryPage"');
+    expect(businesses.match(/normalizeDirectoryPage\(/g)).toHaveLength(2);
+    expect(businesses).toContain("SELECT COUNT(*)::text AS total FROM public.public_businesses");
+    expect(businesses).toContain("const fallbackTotal = rows.length > 0");
+    expect(businesses).toContain("page: { offset, limit }");
+    expect(businesses).toContain('searchScope: "direct_named_safety_context"');
     expect(businesses).toContain("if (await sendDirectNameAvailabilityFallback(req, res)) return");
+  });
+
+  it("keeps an explicit Map direct-name request nationwide, literal, and non-fuzzy", () => {
+    expect(businesses).toContain('const directNameLookupRequested = req.query.lookup === "direct_name"');
+    expect(businesses).toContain("const strictDirectNameLookup = directNameLookupRequested");
+    expect(businesses).toContain("function isEligibleDirectNameLookupRequest(req: Request, search: string): boolean");
+    expect(businesses).toContain("category, subcategory, handle, ownership, designations, vibes, lat, lng, radius,");
+    expect(businesses).toContain("city, state, country, supportScope, culturalPreference");
+    expect(businesses).toContain("const hasQueryValue = (value: unknown): boolean");
+    for (const parameter of ["lat", "lng", "radius", "city", "state", "country", "supportScope", "culturalPreference"]) {
+      expect(businesses).toContain(`&& !hasQueryValue(${parameter})`);
+    }
+    expect(businesses).toContain("DIRECT_NAME_LOOKUP_REQUIRES_UNFILTERED_EXACT_NAME");
+    expect(businesses).toContain("const strictDirectNameLookup = directNameLookupRequested;");
+    expect(businesses).toContain("LOWER(BTRIM(COALESCE(${businessesTable.name}, ''))) = LOWER(BTRIM(${directSearchText}))");
+    expect(businesses).toContain("!strictDirectNameLookup &&");
+    expect(businesses).toContain("mwmPublicDirectoryCondition()");
+    expect(businesses).toContain("const annotated = strictDirectNameLookup");
+    expect(businesses).toContain("? annotatedBusinesses");
+    expect(businesses).not.toContain("normalizedDirectBusinessName");
   });
 
   it("compiles the canonical visibility predicate to the installed eight-argument function", () => {
