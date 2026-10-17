@@ -19,6 +19,19 @@ describe("Kinfolk entertainment availability", () => {
     ).toBeNull();
   });
 
+  it("keeps a generic reference in the title-required path", async () => {
+    const request = parseEntertainmentAvailabilityRequest({
+      message: "Where can I watch this movie?",
+      countryCode: "US",
+    });
+    expect(request).toMatchObject({ mode: "streaming", title: null });
+    await expect(resolveEntertainmentAvailability(request!)).resolves.toMatchObject({
+      status: "title_required",
+      offers: [],
+      showtimes: [],
+    });
+  });
+
   it("turns a subscription statement into a consent prompt, not a silent save", () => {
     expect(isEntertainmentPreferenceStatement("I have Netflix and Max.")).toBe(true);
     expect(isEntertainmentPreferenceStatement("Tell me about Black cinema.")).toBe(false);

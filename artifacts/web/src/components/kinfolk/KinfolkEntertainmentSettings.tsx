@@ -141,8 +141,10 @@ export function KinfolkEntertainmentSettings() {
       </div>
       <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">
         Choose only services you want Kinfolk to remember. Ordinary chat never
-        changes this list. Live streaming and showtime data are not connected
-        yet, so Kinfolk will not guess.
+        changes this list. When you explicitly ask a current availability or
+        showtime question, Kinfolk may return cited web sources for the title
+        and selected location; it will not claim a service, price, theater, or
+        ticket result without an approved provider.
       </p>
       {error ? (
         <p role="alert" className="mt-3 text-xs font-semibold text-red-700">

@@ -5,7 +5,7 @@ import {
   type EntertainmentCostPolicy,
 } from "./entertainment-personalization";
 
-export type EntertainmentMode = "streaming" | "showtimes";
+export type EntertainmentMode = "streaming" | "showtimes" | "event";
 export type EntertainmentAvailabilityStatus =
   | "provider_not_configured"
   | "location_required"
@@ -13,6 +13,8 @@ export type EntertainmentAvailabilityStatus =
   | "needs_subscription_preference"
   | "invalid_request"
   | "available"
+  | "web_results_available"
+  | "web_search_unavailable"
   | "unavailable"
   | "provider_error";
 export type EntertainmentMonetizationType =
@@ -84,14 +86,26 @@ export type EntertainmentAvailabilityResult = Readonly<{
 }>;
 
 const CURRENT_AVAILABILITY =
-  /\b(where\s+(?:can|do)\s+i\s+watch|where\s+is\s+.+?\s+(?:streaming|playing)|is\s+.+?\s+on\s+(?:netflix|hulu|prime|max|disney\+?)|stream(?:ing)?\s+(?:on|options)|rent|buy|showtimes?|theat(?:er|re)|cinema|playing\s+near\s+me|showing\s+tonight)\b/i;
+  /\b(where\s+(?:can|do)\s+i\s+(?:watch|see)|where\s+is\s+.+?\s+(?:streaming|playing)|is\s+.+?\s+on\s+(?:netflix|hulu|prime|max|disney\+?)|stream(?:ing)?\s+(?:on|options)|rent|buy|showtimes?|theat(?:er|re)|cinema|playing\s+near\s+me|showing\s+tonight|tickets?\s+(?:for|to)|(?:concert|live\s+event|tour)\s+(?:dates?|tickets?|near\s+me))\b/i;
 const SHOWTIMES =
   /\b(showtimes?|theat(?:er|re)s?|cinemas?|playing\s+near\s+me|showing\s+tonight|in\s+theaters?)\b/i;
+const LIVE_EVENT =
+  /\b(?:concert|live\s+event|tour|tickets?\s+(?:for|to)|where\s+can\s+i\s+see)\b/i;
 
 function cleanText(value: unknown, maximum: number): string | null {
   if (typeof value !== "string") return null;
   const cleaned = value.replace(/\s+/g, " ").trim();
   return cleaned.length > 0 && cleaned.length <= maximum ? cleaned : null;
+}
+
+function specificEntertainmentTitle(value: string | null): string | null {
+  if (!value) return null;
+  // Generic references cannot identify a source query. This avoids both an
+  // ungrounded query and any implicit use of previous conversation context.
+  if (/^(?:this|that|the|a)?\s*(?:movie|film|show|series|event|concert|tour|one|it)$/i.test(value)) {
+    return null;
+  }
+  return value;
 }
 
 export function normalizeEntertainmentCountry(value: unknown): string | null {
@@ -107,7 +121,8 @@ function inferredTitle(message: string): string | null {
       message.match(
         /\bis\s+(.+?)\s+on\s+(?:netflix|hulu|prime|max|disney\+?|peacock|paramount\+?)(?:\?|$)/i,
       )?.[1] ??
-      message.match(/\bshowtimes?\s+(?:for|of)\s+(.+?)(?:\?|$)/i)?.[1],
+      message.match(/\bshowtimes?\s+(?:for|of)\s+(.+?)(?:\?|$)/i)?.[1] ??
+      message.match(/\b(?:tickets?\s+for|where\s+can\s+i\s+see)\s+(.+?)(?:\?|$)/i)?.[1],
     180,
   );
 }
@@ -128,12 +143,14 @@ export function parseEntertainmentAvailabilityRequest(input: {
   if (!message || !CURRENT_AVAILABILITY.test(message)) return null;
   const mode: EntertainmentMode = SHOWTIMES.test(message)
     ? "showtimes"
-    : "streaming";
-  const title =
+    : LIVE_EVENT.test(message)
+      ? "event"
+      : "streaming";
+  const title = specificEntertainmentTitle(
     cleanText(input.title, 180) ??
-    cleanText(message.match(/["“]([^"”]{2,180})["”]/)?.[1], 180) ??
-    inferredTitle(message);
-  if (!title && mode === "streaming") return null;
+      cleanText(message.match(/["“]([^"”]{2,180})["”]/)?.[1], 180) ??
+      inferredTitle(message),
+  );
   return {
     mode,
     title,
@@ -256,20 +273,20 @@ export async function resolveEntertainmentAvailability(
         "Choose a country before Kinfolk can check availability. Availability differs by country, and Kinfolk will not guess.",
     };
   }
-  if (request.mode === "showtimes" && !request.city) {
+  if ((request.mode === "showtimes" || request.mode === "event") && !request.city) {
     return {
       status: "location_required",
       ...base,
       message:
-        "Choose a city or allow a request-scoped location before Kinfolk can look for showtimes. Kinfolk does not collect background location.",
+        "Choose a city or allow a request-scoped location before Kinfolk can look for current showtimes or event availability. Kinfolk does not collect background location.",
     };
   }
-  if (request.mode === "showtimes" && !request.title) {
+  if (!request.title) {
     return {
       status: "title_required",
       ...base,
       message:
-        "Tell Kinfolk the movie title before it can check verified showtimes. Kinfolk will not guess which movie or theater you mean.",
+        "Tell Kinfolk the exact title before it can check current availability. Kinfolk will not guess what “this movie,” “that show,” or an unnamed event means.",
     };
   }
   if (

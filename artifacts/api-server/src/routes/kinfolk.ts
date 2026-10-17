@@ -86,8 +86,8 @@ import { ensureKinfolkFeedbackFlywheelSchema } from "../lib/startup-migrations";
 import {
   isEntertainmentPreferenceStatement,
   parseEntertainmentAvailabilityRequest,
-  resolveEntertainmentAvailability,
 } from "../kinfolk/entertainment-availability";
+import { resolveEntertainmentAvailabilityWithWebSources } from "../kinfolk/entertainment-web-research";
 import {
   buildEntertainmentConsentPlan,
   normalizeEntertainmentCostPolicy,
@@ -8698,7 +8698,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
   }
 
-  if (isEntertainmentPreferenceStatement(message)) {
+  if (
+    isEntertainmentPreferenceStatement(message) &&
+    !parseEntertainmentAvailabilityRequest({
+      message,
+      city: typeof cityHint === "string" ? cityHint : undefined,
+    })
+  ) {
     return void res.json({
       sessionId,
       reply:
@@ -8750,21 +8756,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           .map(normalizeStreamingService)
           .filter((service): service is string => Boolean(service))
       : [];
-    const entertainmentAvailability = await resolveEntertainmentAvailability(
-      {
+    const entertainmentAvailability = await resolveEntertainmentAvailabilityWithWebSources({
+      request: {
         ...entertainmentAvailabilityRequest,
         countryCode:
           typeof savedEntertainmentPreferences?.entertainment_country === "string"
             ? savedEntertainmentPreferences.entertainment_country.toUpperCase()
             : null,
       },
-      {
+      preferences: {
         streamingServices: [...new Set(savedStreamingServices)],
         entertainmentCostPolicy: normalizeEntertainmentCostPolicy(
           savedEntertainmentPreferences?.entertainment_cost_policy,
         ),
       },
-    );
+    });
     return void res.json({
       sessionId,
       reply: entertainmentAvailability.message,
@@ -8778,21 +8784,32 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       taskAction: null,
       libraryAction: null,
       intentClass: "culture_entertainment",
-      sources: [],
+      sources: entertainmentAvailability.sources.map((source) => ({
+        title: source.title,
+        url: source.url,
+      })),
       needsClarification:
         entertainmentAvailability.status === "location_required" ||
         entertainmentAvailability.status === "title_required",
       originalQuery: message,
-      answerMode: "entertainment_availability_unavailable",
+      answerMode: entertainmentAvailability.status === "web_results_available"
+        ? "entertainment_availability_web_sources"
+        : "entertainment_availability_unavailable",
       entertainmentAvailability,
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],
       researchStatus: {
         usedInternal: false,
-        usedLiveWeb: false,
-        degraded: true,
-        web: { attempted: false, state: "not_needed", provider: null, fallbackUsed: false, partial: false },
+        usedLiveWeb: entertainmentAvailability.sourceStatus.providerUsed,
+        degraded: entertainmentAvailability.status !== "web_results_available",
+        web: {
+          attempted: entertainmentAvailability.sourceStatus.attempted,
+          state: entertainmentAvailability.sourceStatus.state,
+          provider: entertainmentAvailability.sourceStatus.provider,
+          fallbackUsed: entertainmentAvailability.sourceStatus.fallbackUsed,
+          partial: entertainmentAvailability.sourceStatus.partial,
+        },
         asOf: new Date().toISOString(),
       },
     });
