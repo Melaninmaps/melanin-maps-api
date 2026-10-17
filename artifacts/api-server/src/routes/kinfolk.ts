@@ -29,6 +29,7 @@ import {
 } from "../constants/membershipTiers";
 import { getCachedPrefs, invalidatePrefsCache } from "../kinfolk/preference-cache";
 import { parseKinfolkClientTrace } from "../kinfolk/client-request-trace";
+import { persistKinfolkContinuitySettings } from "../kinfolk/continuity-settings-persistence";
 import crypto from "crypto";
 import { currentChapterPromptForRequest } from "../kinfolk/current-chapter-runtime";
 import {
@@ -5685,35 +5686,19 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
             updatedAt: new Date(),
           },
         });
+      const resetAt = new Date();
+      await persistKinfolkContinuitySettings(tx, {
+        userId,
+        enabled: false,
+        decision: null,
+        disclosureVersion: null,
+        disclosedAt: null,
+        updatedAt: resetAt,
+      });
       await tx
-        .insert(userSettingsTable)
-        .values({
-          userId,
-          // Kinfolk flows must not create sensitive Safety alert consent.
-          safetyAlertPolice: false,
-          safetyAlertIce: false,
-          kinfolkMemoryEnabled: false,
-          kinfolkContinuityEnabled: false,
-          kinfolkContinuityUpdatedAt: new Date(),
-          kinfolkContinuityDisclosureDecision: null,
-          kinfolkContinuityDisclosureVersion: null,
-          kinfolkContinuityDisclosedAt: null,
-          personalisedSuggestions: false,
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: userSettingsTable.userId,
-          set: {
-            kinfolkMemoryEnabled: false,
-            kinfolkContinuityEnabled: false,
-            kinfolkContinuityUpdatedAt: new Date(),
-            kinfolkContinuityDisclosureDecision: null,
-            kinfolkContinuityDisclosureVersion: null,
-            kinfolkContinuityDisclosedAt: null,
-            personalisedSuggestions: false,
-            updatedAt: new Date(),
-          },
-        });
+        .update(userSettingsTable)
+        .set({ personalisedSuggestions: false, updatedAt: resetAt })
+        .where(eq(userSettingsTable.userId, userId));
 
       return {
         deletedSessions: deletedSessions.length,
@@ -5847,19 +5832,14 @@ router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
       .where(eq(userSettingsTable.userId, req.user.id))
       .returning({ userId: userSettingsTable.userId });
     if (updatedExisting.length === 0) {
-      await db
-        .insert(userSettingsTable)
-        .values({
-          userId: req.user.id,
-          // Continuity consent is independent from Safety alert consent.
-          safetyAlertPolice: false,
-          safetyAlertIce: false,
-          ...continuityUpdate,
-        })
-        .onConflictDoUpdate({
-          target: userSettingsTable.userId,
-          set: continuityUpdate,
-        });
+      await persistKinfolkContinuitySettings(db, {
+        userId: req.user.id,
+        enabled,
+        decision,
+        disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+        disclosedAt,
+        updatedAt,
+      });
     }
     invalidatePrefsCache(req.user.id);
     invalidateSessionsCache(req.user.id);
@@ -6931,19 +6911,14 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
           .where(eq(userSettingsTable.userId, req.user!.id))
           .returning({ userId: userSettingsTable.userId });
         if (updated.length === 0) {
-          await tx
-            .insert(userSettingsTable)
-            .values({
-              userId: req.user!.id,
-              // Private-memory consent never creates a Safety alert subscription.
-              safetyAlertPolice: false,
-              safetyAlertIce: false,
-              ...continuityUpdate,
-            })
-            .onConflictDoUpdate({
-              target: userSettingsTable.userId,
-              set: continuityUpdate,
-            });
+          await persistKinfolkContinuitySettings(tx, {
+            userId: req.user!.id,
+            enabled: true,
+            decision: "accepted",
+            disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+            disclosedAt: current?.disclosedAt ?? now,
+            updatedAt: now,
+          });
         }
         for (const item of itemsToSave) {
           const sensitiveCiphertext = item.kind === "sensitive"
