@@ -28,6 +28,7 @@ describe("Kinfolk entertainment settings", () => {
     expect(settings).toContain("Clear saved services");
     expect(settings).toContain("api/kinfolk/entertainment/preferences");
     expect(settings).toContain("entertainmentCostPolicy");
+    expect(settings).toContain("cited page establishes the title");
   });
   it("renders the entertainment controls in the Kinfolk settings home", () => {
     expect(host).toContain("KinfolkEntertainmentSettings");

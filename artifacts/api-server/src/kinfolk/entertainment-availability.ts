@@ -13,6 +13,7 @@ export type EntertainmentAvailabilityStatus =
   | "needs_subscription_preference"
   | "invalid_request"
   | "available"
+  | "web_availability_verified"
   | "web_results_available"
   | "web_search_unavailable"
   | "unavailable"
@@ -102,7 +103,11 @@ function specificEntertainmentTitle(value: string | null): string | null {
   if (!value) return null;
   // Generic references cannot identify a source query. This avoids both an
   // ungrounded query and any implicit use of previous conversation context.
-  if (/^(?:this|that|the|a)?\s*(?:movie|film|show|series|event|concert|tour|one|it)$/i.test(value)) {
+  if (
+    /^(?:this|that|the|a)?\s*(?:movie|film|show|series|event|concert|tour|one|it)$/i.test(
+      value,
+    )
+  ) {
     return null;
   }
   return value;
@@ -122,9 +127,58 @@ function inferredTitle(message: string): string | null {
         /\bis\s+(.+?)\s+on\s+(?:netflix|hulu|prime|max|disney\+?|peacock|paramount\+?)(?:\?|$)/i,
       )?.[1] ??
       message.match(/\bshowtimes?\s+(?:for|of)\s+(.+?)(?:\?|$)/i)?.[1] ??
-      message.match(/\b(?:tickets?\s+for|where\s+can\s+i\s+see)\s+(.+?)(?:\?|$)/i)?.[1],
+      message.match(
+        /\b(?:tickets?\s+for|where\s+can\s+i\s+see)\s+(.+?)(?:\?|$)/i,
+      )?.[1],
     180,
   );
+}
+
+export type EntertainmentConversationMessage = Readonly<{
+  role: "user" | "assistant";
+  content: string;
+}>;
+
+function quotedEntertainmentTitle(message: string): string | null {
+  return specificEntertainmentTitle(
+    cleanText(message.match(/["“]([^"”]{2,180})["”]/)?.[1], 180),
+  );
+}
+
+function mentionedEntertainmentTitle(message: string): string | null {
+  const direct = parseEntertainmentAvailabilityRequest({ message })?.title;
+  if (direct) return direct;
+  const quoted = quotedEntertainmentTitle(message);
+  if (quoted) return quoted;
+  const watched = message.match(
+    /\b(?:watching|watched|watch|about)\s+(?:the\s+)?([A-Z][A-Za-z0-9'’:-]*(?:\s+[A-Z][A-Za-z0-9'’:-]*){1,5})\b/,
+  )?.[1];
+  return specificEntertainmentTitle(cleanText(watched, 180));
+}
+
+/**
+ * Resolves “it” only from the current private session and only if exactly one
+ * explicit or prior availability title is present. It never reaches into a
+ * member's other sessions or long-term memory.
+ */
+export function resolveUnambiguousEntertainmentFollowUpTitle(input: {
+  message: string;
+  sessionMessages: readonly EntertainmentConversationMessage[];
+}): string | null {
+  if (!/\b(?:it|that|this)\b/i.test(input.message)) return null;
+  const candidates = new Map<string, string>();
+  for (const turn of input.sessionMessages.slice(-12)) {
+    const title = mentionedEntertainmentTitle(turn.content);
+    if (title) candidates.set(normalizedTitle(title), title);
+  }
+  return candidates.size === 1 ? [...candidates.values()][0] : null;
+}
+
+function normalizedTitle(value: string): string {
+  return value
+    .toLocaleLowerCase("en-US")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 /**
@@ -273,7 +327,10 @@ export async function resolveEntertainmentAvailability(
         "Choose a country before Kinfolk can check availability. Availability differs by country, and Kinfolk will not guess.",
     };
   }
-  if ((request.mode === "showtimes" || request.mode === "event") && !request.city) {
+  if (
+    (request.mode === "showtimes" || request.mode === "event") &&
+    !request.city
+  ) {
     return {
       status: "location_required",
       ...base,

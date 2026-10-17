@@ -7,9 +7,14 @@ import {
 } from "./entertainment-availability";
 import {
   searchCurrentEntertainmentQueriesWithState,
+  type SearchLocation,
   type WebResult,
   type WebSearchOutcome,
 } from "./web-search";
+import {
+  verifyEntertainmentWebEvidence,
+  type EntertainmentEvidenceVerification,
+} from "./entertainment-web-verification";
 
 export type EntertainmentWebSource = Readonly<{
   title: string;
@@ -36,10 +41,25 @@ export type EntertainmentWebResearchResult = EntertainmentAvailabilityResult &
   Readonly<{
     sources: readonly EntertainmentWebSource[];
     sourceStatus: EntertainmentWebSourceStatus;
+    webVerification: Pick<EntertainmentEvidenceVerification, "state"> &
+      Readonly<{
+        claims: readonly Readonly<{
+          kind: "streaming" | "showtime";
+          providerName: string;
+          monetization:
+            | "included_with_subscription"
+            | "rental"
+            | "purchase"
+            | "availability_not_priced"
+            | null;
+          startsAtLabel: string | null;
+        }>[];
+      }>;
   }>;
 
 export type EntertainmentWebSearch = (
   queries: SearchQuery[],
+  location?: SearchLocation,
 ) => Promise<WebSearchOutcome>;
 
 type CachedSearch = Readonly<{
@@ -196,6 +216,52 @@ function unavailableSourceMessage(
   return `Kinfolk could not obtain cited current ${scope} sources for “${request.title}” right now. It will not guess a service, theater, schedule, price, rental, purchase, or ticket link.`;
 }
 
+function verificationSummary(verification: EntertainmentEvidenceVerification) {
+  return {
+    state: verification.state,
+    claims: verification.claims.map((claim) => ({
+      kind: claim.kind,
+      providerName: claim.providerName,
+      monetization: claim.monetization,
+      startsAtLabel: claim.startsAtLabel,
+    })),
+  } as const;
+}
+
+function verifiedAvailabilityMessage(
+  request: EntertainmentAvailabilityRequest,
+  verification: EntertainmentEvidenceVerification,
+): string {
+  const first = verification.claims[0];
+  if (!first || !request.title) return unavailableSourceMessage(request);
+  if (first.kind === "showtime") {
+    return `Kinfolk could verify that “${request.title}” is listed by ${first.providerName} for ${first.startsAtLabel} in ${request.city}, ${request.countryCode}. The official cinema source is linked below. Kinfolk does not infer a ticket link or additional showtimes.`;
+  }
+  const detail =
+    first.monetization === "included_with_subscription"
+      ? "The cited official title page identifies it as included with a subscription."
+      : first.monetization === "rental"
+        ? "The cited official title page identifies a rental option."
+        : first.monetization === "purchase"
+          ? "The cited official title page identifies a purchase option."
+          : "The cited official title page confirms viewing availability, but does not establish whether it is included with a subscription or requires an extra charge.";
+  return `Kinfolk could verify that “${request.title}” is currently available on ${first.providerName} in ${request.countryCode}. ${detail} The official source is linked below; availability can change.`;
+}
+
+function insufficientEvidenceMessage(input: {
+  request: EntertainmentAvailabilityRequest;
+  verification: EntertainmentEvidenceVerification;
+  hadSources: boolean;
+}): string {
+  if (input.verification.state === "conflicting") {
+    return `Kinfolk found conflicting current claims from an official source for “${input.request.title}” in ${input.request.countryCode}. It will not choose one or state that the title is available. Review the cited source below or try again later.`;
+  }
+  if (input.hadSources) {
+    return `Kinfolk found current source links for “${input.request.title},” but could not verify one complete availability claim for the requested title and location. It will not guess a service, price, theater, schedule, or ticket link.`;
+  }
+  return unavailableSourceMessage(input.request);
+}
+
 /**
  * Uses the already-approved cited web-search adapter as a small, short-lived
  * current-source lookup. This replaces neither the provider adapter nor its
@@ -216,6 +282,7 @@ export async function resolveEntertainmentAvailabilityWithWebSources(input: {
       ...prerequisite,
       sources: [],
       sourceStatus: sourceStatus(null, null, false),
+      webVerification: { state: "insufficient", claims: [] },
     };
   }
 
@@ -233,7 +300,12 @@ export async function resolveEntertainmentAvailabilityWithWebSources(input: {
     try {
       outcome = await (
         input.search ?? searchCurrentEntertainmentQueriesWithState
-      )([buildEntertainmentWebSearchQuery(input.request, input.preferences)]);
+      )([buildEntertainmentWebSearchQuery(input.request, input.preferences)], {
+        ...(input.request.city ? { city: input.request.city } : {}),
+        ...(input.request.countryCode
+          ? { countryCode: input.request.countryCode }
+          : {}),
+      });
     } catch {
       outcome = {
         state: "unavailable",
@@ -261,16 +333,36 @@ export async function resolveEntertainmentAvailabilityWithWebSources(input: {
     input.request.title ?? "",
   );
   const status = sourceStatus(outcome, retrievedAt, cacheHit);
+  const verification = verifyEntertainmentWebEvidence({
+    request: input.request,
+    results: outcome.results,
+    entertainmentCostPolicy: input.preferences.entertainmentCostPolicy,
+    now: now(),
+  });
+  if (verification.state === "verified") {
+    const verifiedUrls = new Set(
+      verification.claims.map((claim) => claim.source.url),
+    );
+    return {
+      ...prerequisite,
+      status: "web_availability_verified",
+      sources: sources.filter((source) => verifiedUrls.has(source.url)),
+      sourceStatus: status,
+      webVerification: verificationSummary(verification),
+      message: verifiedAvailabilityMessage(input.request, verification),
+    };
+  }
   if (sources.length > 0) {
     return {
       ...prerequisite,
       status: "web_results_available",
       sources,
       sourceStatus: status,
-      message: citedSourceMessage({
+      webVerification: verificationSummary(verification),
+      message: insufficientEvidenceMessage({
         request: input.request,
-        count: sources.length,
-        cacheHit,
+        verification,
+        hadSources: true,
       }),
     };
   }
@@ -279,7 +371,12 @@ export async function resolveEntertainmentAvailabilityWithWebSources(input: {
     status: "web_search_unavailable",
     sources: [],
     sourceStatus: status,
-    message: unavailableSourceMessage(input.request),
+    webVerification: verificationSummary(verification),
+    message: insufficientEvidenceMessage({
+      request: input.request,
+      verification,
+      hadSources: false,
+    }),
   };
 }
 

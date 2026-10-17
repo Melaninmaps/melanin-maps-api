@@ -139,7 +139,7 @@ router.get("/kinfolk/entertainment/readiness", async (_req, res) => {
     streamingProvider: null,
     showtimeProvider: null,
     message:
-      "No live entertainment provider is configured. Kinfolk will not guess current availability or showtimes.",
+      "No licensed entertainment provider is configured. An explicit request may use cited official web sources, but Kinfolk will not guess current availability or showtimes.",
   });
 });
 
@@ -246,7 +246,7 @@ router.get(
       ready: false,
       status: "provider_not_configured",
       message:
-        "Country selection is saved privately in Kinfolk preferences; live provider coverage is not configured yet.",
+        "Country selection is saved privately in Kinfolk preferences. Licensed provider coverage is not configured; cited official web evidence is evaluated per explicit request.",
     });
   },
 );

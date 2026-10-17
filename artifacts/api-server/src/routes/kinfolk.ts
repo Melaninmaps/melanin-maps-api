@@ -87,6 +87,7 @@ import { ensureKinfolkFeedbackFlywheelSchema } from "../lib/startup-migrations";
 import {
   isEntertainmentPreferenceStatement,
   parseEntertainmentAvailabilityRequest,
+  resolveUnambiguousEntertainmentFollowUpTitle,
 } from "../kinfolk/entertainment-availability";
 import { resolveEntertainmentAvailabilityWithWebSources } from "../kinfolk/entertainment-web-research";
 import {
@@ -7243,6 +7244,34 @@ async function persistDeterministicDiscoveryTurn(input: {
   }
 }
 
+async function entertainmentSessionMessages(input: {
+  userId: string;
+  memoryEnabled: boolean;
+  sessionId?: string;
+}): Promise<SessionMessage[]> {
+  if (!input.sessionId) return [];
+  if (!input.memoryEnabled) {
+    return readEphemeralKinfolkSession(input.userId, input.sessionId)?.messages ?? [];
+  }
+  try {
+    const [session] = await db
+      .select({ messages: kinfolkSessionsTable.messages })
+      .from(kinfolkSessionsTable)
+      .where(
+        and(
+          eq(kinfolkSessionsTable.id, input.sessionId),
+          eq(kinfolkSessionsTable.userId, input.userId),
+        ),
+      )
+      .limit(1);
+    return session?.messages ?? [];
+  } catch {
+    // A persistence issue never causes a title to be assumed from a different
+    // conversation or from long-term memory.
+    return [];
+  }
+}
+
 /**
  * Weather is a provider-sourced response, not a model-generated or generic-web
  * answer. This keeps the same question aligned across web, iOS, and Android
@@ -8711,11 +8740,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // Current watch/showtime questions have a different truth boundary from an
   // ordinary culture conversation. Model memory must never fabricate a service,
   // rental, price, cinema, or showtime while no approved provider is configured.
-  const entertainmentAvailabilityRequest = parseEntertainmentAvailabilityRequest({
+  const entertainmentCity =
+    typeof cityHint === "string"
+      ? cityHint
+      : resolveTurnGeography(message, null)?.city;
+  let entertainmentAvailabilityRequest = parseEntertainmentAvailabilityRequest({
     message,
-    city: typeof cityHint === "string" ? cityHint : undefined,
+    city: entertainmentCity,
   });
   if (entertainmentAvailabilityRequest) {
+    if (!entertainmentAvailabilityRequest.title) {
+      const followUpTitle = resolveUnambiguousEntertainmentFollowUpTitle({
+        message,
+        sessionMessages: await entertainmentSessionMessages({
+          userId: req.user.id,
+          memoryEnabled,
+          sessionId,
+        }),
+      });
+      if (followUpTitle) {
+        entertainmentAvailabilityRequest = {
+          ...entertainmentAvailabilityRequest,
+          title: followUpTitle,
+        };
+      }
+    }
     const entertainmentPreferenceRow = await pool.query<{
       streaming_services: unknown;
       entertainment_country: string | null;
@@ -8746,8 +8795,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ),
       },
     });
-    return void res.json({
+    const finalSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
       sessionId,
+      message,
+      reply: entertainmentAvailability.message,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [
+        "Discuss the title or artist",
+        "Open Kinfolk Settings to choose entertainment preferences",
+      ],
+      sources: entertainmentAvailability.sources.map((source) => ({
+        title: source.title,
+        url: source.url,
+      })),
+      destination: entertainmentCity ?? "",
+      vibes: Array.isArray(vibes) ? vibes.filter((vibe): vibe is string => typeof vibe === "string") : [],
+    });
+    return void res.json({
+      sessionId: finalSessionId,
       reply: entertainmentAvailability.message,
       recommendations: null,
       itinerary: null,
@@ -8767,9 +8835,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         entertainmentAvailability.status === "location_required" ||
         entertainmentAvailability.status === "title_required",
       originalQuery: message,
-      answerMode: entertainmentAvailability.status === "web_results_available"
-        ? "entertainment_availability_web_sources"
-        : "entertainment_availability_unavailable",
+      answerMode: entertainmentAvailability.status === "web_availability_verified"
+        ? "entertainment_availability_web_verified"
+        : entertainmentAvailability.status === "web_results_available"
+          ? "entertainment_availability_web_sources"
+          : "entertainment_availability_unavailable",
       entertainmentAvailability,
       structuredContent: null,
       mediaLinks: [],
