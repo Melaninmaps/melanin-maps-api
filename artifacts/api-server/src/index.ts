@@ -53,6 +53,10 @@ import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
 import { seedLibraryStarterEntries } from "./library/seedLibraryStarterEntries";
 import { isExplicitFeatureReleaseMode } from "./lib/explicitFeatureReleaseMode";
 import {
+  ensureStagingFounderAdminRecoverySchema,
+  issueStagingFounderAdminRecovery,
+} from "./auth/stagingFounderAdminRecovery.js";
+import {
   startKinfolkQuestionImageRetentionScheduler,
   stopKinfolkQuestionImageRetentionScheduler,
 } from "./kinfolk/question-image-assets";
@@ -165,6 +169,17 @@ try {
   // expose a route that would fail closed only after an administrator acts.
   await ensureMemberActivationInvitationSchema(logger);
   logger.info("Member activation invitation schema ready before traffic acceptance");
+  const founderRecoverySchemaReady = await ensureStagingFounderAdminRecoverySchema(
+    (message) => logger.info(message),
+    (message) => logger.warn(message),
+  );
+  if (founderRecoverySchemaReady) {
+    const founderRecovery = await issueStagingFounderAdminRecovery();
+    logger.info(
+      { state: founderRecovery.status },
+      "Isolated staging founder recovery issuance checked before traffic acceptance",
+    );
+  }
   await ensureBusinessOwnerLinkLifecycleSchema(logger);
   logger.info("Business owner-link lifecycle schema ready before traffic acceptance");
   await ensureBusinessPublicDetailSchema(logger);

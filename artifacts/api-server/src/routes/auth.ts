@@ -22,6 +22,7 @@ import { normalizeHomeState } from "../lib/happening-personalization";
 import { normalizeOwnershipDesignationFilterIds } from "@workspace/constants";
 import { invalidatePrefsCache } from "../kinfolk/preference-cache";
 import { acquireIsolatedStagingAdminBootstrap } from "../auth/isolatedStagingAdminBootstrap.js";
+import { completeStagingFounderAdminRecovery } from "../auth/stagingFounderAdminRecovery.js";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -834,6 +835,34 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           res.status(409).json({
             error:
               "That @username is already taken — please choose a different one. Your email address is fine.",
+          });
+          return;
+        }
+
+        const stagingFounderRecovery = await completeStagingFounderAdminRecovery({
+          activationToken: typeof rawActivationToken === "string" ? rawActivationToken.trim() : undefined,
+          dateOfBirth: dob,
+          email: cleanEmail,
+          firstName,
+          lastName,
+          passwordHash,
+          platform: (req.headers["x-platform"] as string) || "web",
+          username: cleanUsername,
+        });
+        if (stagingFounderRecovery.status === "completed") {
+          req.log.info(
+            {
+              ...diagBase,
+              event: "AUTH_REGISTER_STAGING_FOUNDER_RECOVERY_COMPLETED",
+              emailMasked,
+              status: 201,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          res.status(201).json({
+            token: stagingFounderRecovery.sid,
+            user: stagingFounderRecovery.user,
           });
           return;
         }
