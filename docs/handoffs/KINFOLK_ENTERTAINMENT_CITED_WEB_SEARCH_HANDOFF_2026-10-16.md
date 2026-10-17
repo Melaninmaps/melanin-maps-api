@@ -5,6 +5,8 @@
 **Branch:** `feature/kinfolk-entertainment-web-search-first-20261016`
 **Source commit:** `7c4dacf7196b5a4998740cccdad9915738b2f645` (`feat: add cited entertainment web search`)
 
+> **Superseded for current integration:** Follow [`KINFOLK_ENTERTAINMENT_VERIFIED_CITED_AVAILABILITY_HANDOFF_2026-10-16.md`](KINFOLK_ENTERTAINMENT_VERIFIED_CITED_AVAILABILITY_HANDOFF_2026-10-16.md) and source commit `57f8da7093dd4ee347f897b5c2688f7b9368dfff`. This historical record describes the earlier citation-link-only boundary.
+
 ## Purpose
 
 This additive source change lets Kinfolk handle an **explicit current** question such as:
