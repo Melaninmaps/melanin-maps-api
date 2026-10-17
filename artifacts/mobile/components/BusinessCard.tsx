@@ -13,6 +13,7 @@ import { VerificationBadge } from "./VerificationBadge";
 import { SafetyExperienceSurvey } from "./SafetyExperienceSurvey";
 import { BusinessPreviewModal } from "./BusinessPreviewModal";
 import { getBusinessExperiencePolicy } from "@workspace/constants";
+import { deviceFarmBusinessCardTestID } from "@/lib/deviceFarmSelectors";
 
 function getOpenStatus(hours?: string | null): { open: boolean; label: string } | null {
   if (!hours) return null;
@@ -120,6 +121,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           delayLongPress={400}
           activeOpacity={0.92}
           style={[styles.hCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
+          testID={deviceFarmBusinessCardTestID(business.id)}
           accessibilityRole="button"
           accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
           accessibilityHint="Double tap to view details, hold to preview"
@@ -275,6 +277,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         delayLongPress={400}
         activeOpacity={0.92}
         style={[styles.vCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
+        testID={deviceFarmBusinessCardTestID(business.id)}
         accessibilityRole="button"
         accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
         accessibilityHint="Double tap to view details, hold to preview"

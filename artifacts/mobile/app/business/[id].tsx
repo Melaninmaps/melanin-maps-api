@@ -55,6 +55,7 @@ import CommunityCommentsSection from "@/components/CommunityCommentsSection";
 import { detectSocialVideoPlatform } from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 import { BusinessCulturalTeachingCard } from "@/components/BusinessCulturalTeachingCard";
+import { DEVICE_FARM_TEST_IDS } from "@/lib/deviceFarmSelectors";
 
 const SOCIAL_PROFILE_HOSTS: Record<string, readonly string[]> = {
   tiktok: ["tiktok.com"],
@@ -683,9 +684,16 @@ export default function BusinessDetailScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      testID={DEVICE_FARM_TEST_IDS.businessProfileScreen}
+      accessibilityLabel="Business profile screen"
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
-        <TouchableOpacity activeOpacity={0.85}
+        <TouchableOpacity
+          testID={DEVICE_FARM_TEST_IDS.businessProfileBack}
+          accessibilityLabel="Back to Discover"
+          activeOpacity={0.85}
           onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
@@ -772,7 +780,13 @@ export default function BusinessDetailScreen() {
           {/* Title row + badges */}
           <View style={styles.titleSection}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.name, { color: colors.foreground }]}>{business.name}</Text>
+              <Text
+                testID={DEVICE_FARM_TEST_IDS.businessProfileTitle}
+                accessibilityLabel={`Business profile: ${business.name}`}
+                style={[styles.name, { color: colors.foreground }]}
+              >
+                {business.name}
+              </Text>
               {(business as any).businessTagline ? (
                 <Text style={[styles.taglineLine, { color: colors.primary }]}>&quot;{(business as any).businessTagline}&quot;</Text>
               ) : null}

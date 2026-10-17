@@ -59,6 +59,7 @@ import { AIChatWidget } from "@/components/AIChatWidget";
 import { TesterReportButton } from "@/components/TesterReportButton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { DeviceFarmStagingMarker } from "@/components/DeviceFarmStagingMarker";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SubscriptionProvider } from "@/lib/revenuecat";
@@ -1223,6 +1224,7 @@ function RootLayout() {
                     <CrashLoggerSetup />
                     <KeyboardEscapeGuard />
                     <RootLayoutNav />
+                    <DeviceFarmStagingMarker />
                     <AIChatWidget />
                     <OfflineBanner />
                     <TesterReportButton />

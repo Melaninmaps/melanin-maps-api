@@ -54,6 +54,7 @@ import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
 import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
 import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
+import { DEVICE_FARM_TEST_IDS } from "@/lib/deviceFarmSelectors";
 import {
   KinfolkBusinessRecommendationSheet,
   type KinfolkBusinessRecommendation,
@@ -1438,6 +1439,8 @@ export function AIChatWidget() {
         >
           <TouchableOpacity
             style={styles.fabPill}
+            testID={DEVICE_FARM_TEST_IDS.kinfolkLauncher}
+            accessibilityLabel="Open Kinfolk"
             onPress={() => {
               setWidgetOpen(true);
               pulse.stopAnimation();
@@ -1463,6 +1466,8 @@ export function AIChatWidget() {
       <Modal visible={showImageEdit} transparent animationType="slide" onRequestClose={() => setShowImageEdit(false)}><View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}><View style={{ backgroundColor: colors.card, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18 }}><Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>Edit a private image</Text><Text style={{ color: colors.mutedForeground, fontSize: 11, marginTop: 5 }}>Your selected private image and instruction are sent once to Kinfolk’s configured image provider. The session-only result is not added to memory.</Text><TextInput value={imageEditInstruction} onChangeText={setImageEditInstruction} multiline maxLength={800} placeholder="Example: Change the background to a garden." placeholderTextColor={colors.mutedForeground} accessibilityLabel="Describe the image edit" style={{ minHeight: 86, borderWidth: 1, borderColor: colors.border, borderRadius: 12, marginTop: 12, color: colors.text, padding: 10 }} /><TouchableOpacity onPress={() => setImageEditConsent((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: imageEditConsent }} accessibilityLabel="Confirm image editing provider disclosure" style={{ flexDirection: "row", gap: 8, marginTop: 12 }}><Feather name={imageEditConsent ? "check-square" : "square"} size={18} color={colors.primary} /><Text style={{ flex: 1, color: colors.mutedForeground, fontSize: 10 }}>I consent to send this image and instruction once to Kinfolk’s configured image provider. It is not saved to memory.</Text></TouchableOpacity>{imageEditError ? <Text accessibilityRole="alert" style={{ color: "#B42318", marginTop: 8 }}>{imageEditError}</Text> : null}<View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}><TouchableOpacity onPress={() => setShowImageEdit(false)} style={{ flex: 1, minHeight: 42, borderWidth: 1, borderColor: colors.border, borderRadius: 10, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text }}>Cancel</Text></TouchableOpacity><TouchableOpacity onPress={() => void editWidgetKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} style={{ flex: 1, minHeight: 42, backgroundColor: colors.primary, borderRadius: 10, alignItems: "center", justifyContent: "center", opacity: editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4 ? .45 : 1 }}><Text style={{ color: colors.primaryForeground }}>{editingImage ? "Editing…" : "Edit image"}</Text></TouchableOpacity></View></View></View></Modal>
             <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWidgetOpen(false)}>
         <KeyboardAvoidingView
+          testID={DEVICE_FARM_TEST_IDS.kinfolkPanel}
+          accessibilityLabel="Kinfolk conversation"
           style={[styles.modal, { backgroundColor: colors.background }]}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
@@ -1530,6 +1535,8 @@ export function AIChatWidget() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => { setWidgetOpen(false); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                testID={DEVICE_FARM_TEST_IDS.kinfolkClose}
+                accessibilityLabel="Close Kinfolk"
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
               >
@@ -1587,7 +1594,10 @@ export function AIChatWidget() {
                     item.fromUser
                       ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 }
                       : { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 },
-                  ]}>
+                  ]}
+                    testID={item.fromUser ? undefined : DEVICE_FARM_TEST_IDS.kinfolkAnswer}
+                    accessibilityLabel={item.fromUser ? undefined : "Kinfolk answer"}
+                  >
                     <KinfolkAnswerText
                       content={item.text}
                       color={item.fromUser ? "#FFF" : colors.foreground}
@@ -2122,6 +2132,8 @@ export function AIChatWidget() {
               style={[styles.input, { backgroundColor: colors.card, borderColor: widgetVoiceSource.canStop ? "#DC262640" : colors.border, color: colors.foreground }]}
               placeholder={widgetVoiceSource.canStop ? "Recording… tap mic to stop" : "What's on your mind today?"}
               placeholderTextColor={widgetVoiceSource.canStop ? "#DC2626" : colors.mutedForeground}
+              testID={DEVICE_FARM_TEST_IDS.kinfolkInput}
+              accessibilityLabel="Ask Kinfolk"
               value={input}
               onChangeText={setInput}
               onFocus={() => {
@@ -2137,6 +2149,7 @@ export function AIChatWidget() {
               style={[styles.sendBtn, { backgroundColor: sendDisabled ? colors.muted : colors.primary }]}
               onPress={send}
               disabled={sendDisabled}
+              testID={DEVICE_FARM_TEST_IDS.kinfolkSend}
               accessibilityLabel={authLoading ? "Kinfolk is restoring your secure sign-in" : "Send message to Kinfolk"}
               accessibilityState={{ disabled: sendDisabled, busy: authLoading }}
               activeOpacity={0.8}

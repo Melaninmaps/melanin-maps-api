@@ -42,6 +42,7 @@ import { useDismissedBusinesses } from "@/hooks/useDismissedBusinesses";
 import { useAuth } from "@/lib/auth";
 import { getApiBase } from "@/lib/api";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { DEVICE_FARM_TEST_IDS } from "@/lib/deviceFarmSelectors";
 
 function getTimeGreeting(): string {
   const h = new Date().getHours();
@@ -285,7 +286,11 @@ export default function DiscoverScreen() {
     .slice(0, 10);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      testID={DEVICE_FARM_TEST_IDS.discoverScreen}
+      accessibilityLabel="Discover screen"
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <LinearGradient
         colors={["#CA922B", "#1C0E06"]}
         style={[styles.header, { paddingTop: topPad + 12 }]}

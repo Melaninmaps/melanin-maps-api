@@ -1,0 +1,35 @@
+{
+  "template": true,
+  "scope": "isolated-staging-only",
+  "doNotUseInProduction": true,
+  "credentials": {
+    "email": "REPLACE_WITH_ISOLATED_STAGING_TEST_EMAIL",
+    "passwordSecretReference": "REPLACE_WITH_SECURE_SECRET_REFERENCE"
+  },
+  "account": {
+    "approved": true,
+    "profileSetupComplete": true,
+    "dateOfBirthPresent": true,
+    "mustChangePassword": false,
+    "homeCity": "REPLACE_WITH_SEEDED_CITY_STATE"
+  },
+  "business": {
+    "id": "REPLACE_WITH_SYNTHETIC_PUBLIC_LISTING_ID",
+    "name": "REPLACE_WITH_SYNTHETIC_PUBLIC_LISTING_NAME",
+    "listingStatus": "live",
+    "discoverableInHomeCity": true,
+    "latitude": "REPLACE_WITH_VALID_LATITUDE",
+    "longitude": "REPLACE_WITH_VALID_LONGITUDE"
+  },
+  "kinfolk": {
+    "prompt": "What is the name of the staging verification business?",
+    "minimumUiAssertion": "a non-empty Kinfolk answer is rendered",
+    "deterministicResponseToken": "OPTIONAL—ONLY_IF_A_STAGING_ONLY_DETERMINISTIC_PROVIDER_FIXTURE_IS_SEPARATELY_APPROVED"
+  },
+  "resetRequirements": [
+    "Clear only this account's Kinfolk conversation/session state before each full P0 run.",
+    "Keep the synthetic public listing active and unchanged for the duration of the test cycle.",
+    "Do not reset, query, or alter production data, production accounts, or member records.",
+    "Rotate the isolated-staging test password only through the approved secret-management process."
+  ]
+}
