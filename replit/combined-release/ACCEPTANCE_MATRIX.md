@@ -39,9 +39,28 @@ The combined candidate is **NO-GO** until each row is PASS against the reviewed 
 | KIN-10 | Citations | Website and native source links open safely and correspond to returned research metadata. |
 | KIN-11 | Production private-memory control | Without the exact production enable flag, memory CRUD returns `PRIVATE_MEMORY_DISABLED`, private content is not loaded into prompts or sessions, and settings cannot re-enable it. |
 | KIN-12 | Database control documentation | Plaintext legacy rows remain inaccessible while production memory is disabled; least privilege, encrypted transport/storage, backup retention, access audit, deletion, and future field-encryption requirements are documented. |
+| KIN-ENT-01 | Jessica Jones — United States availability | With country `US` selected, “Where can I watch Jessica Jones?” returns a natural direct answer only when a cited official title page supports the exact title, U.S. geography, a current statement, and the named service; otherwise it returns a clear limitation with legitimate clickable source links. |
+| KIN-ENT-02 | Luke Cage — Disney+ availability | “Is Luke Cage available on Disney+?” never treats a generic Disney+ page or title mention as proof. A direct result requires exact, current, U.S.-relevant official evidence for that title and service; otherwise the response fails closed. |
+| KIN-ENT-03 | The Woman King — availability | “Where can I watch The Woman King?” follows the same exact-title, selected-country, current-evidence rule and visibly cites any accepted source. |
+| KIN-ENT-04 | Disney+ with no extra cost | With Disney+ selected and the no-extra-cost policy enabled, “I already have Disney+. Can I watch it without paying extra?” succeeds only when cited official text explicitly says the title is included with subscription. A saved service is never treated as an entitlement. |
+| KIN-ENT-05 | Single-title conversational follow-up | Discuss Jessica Jones in one authenticated private session, then ask “Where can I watch it?” Kinfolk may resolve that single unambiguous title only from that session; it must not read unrelated sessions or long-term private memory. |
+| KIN-ENT-06 | Ambiguous conversational follow-up | Discuss two distinct shows in one session, then ask an ambiguous follow-up. Kinfolk asks for clarification and makes no availability lookup or title assumption. |
+| KIN-ENT-07 | Evidence reliability failures | Exercise an official confirming source plus stale evidence, geographic mismatch, same-provider conflicts, unavailable search, and no trustworthy evidence. Only the complete official confirming case may make a factual availability claim; all other cases give a truthful limitation and any legitimate available links. |
+| KIN-ENT-08 | Named-city theater showtimes | Ask for a named movie’s showtimes in a member-provided city and country. Return a factual showtime only when a cited allow-listed official cinema page identifies exact title, city, country, ISO date, and local time; never invent theater names, dates, times, availability, or ticket URLs. |
 | MED-01 | Community image/video | Select, upload, preview, post, reload, force-close, relaunch, and playback work; completed files survive a later-file failure. |
 | NAT-01 | Native stability | Clean/upgrade install, every tab, denied permission, offline/slow network, expired session, lifecycle, repeated cold launch, and symbolicated crash reporting pass. |
 | REL-01 | Build identity | EAS artifacts show the exact reviewed commit, iOS 104, Android 79, `com.melaninmaps.app`, and remote credentials. |
 | REL-02 | Submission control | Automatic submission remains off; no public review or production release occurs without owner approval. |
+
+## Kinfolk Entertainment — Controlled Integration Status (2026-10-17)
+
+| Required status | Current factual state |
+|---|---|
+| SOURCE COMPLETE | **Yes.** Original implementation commit [`57f8da70`](https://github.com/Melaninmaps/melanin-maps-api/commit/57f8da7093dd4ee347f897b5c2688f7b9368dfff); preserved documentation head `fbd79208`. |
+| INTEGRATION PREPARED | **Yes.** Isolated branch `integration/kinfolk-entertainment-prepared-20261017` selectively composes the ten Entertainment commits onto pinned active-candidate base `34c0379d`; code-composition head before this status record is `7feda7eb`. |
+| INTEGRATED | **No.** The moving authoritative candidate has not adopted this isolated branch. |
+| STAGING VERIFIED / WEB VERIFIED / IOS VERIFIED / ANDROID VERIFIED / FOUNDER ACCEPTED | **No.** No staging surface, browser member flow, mobile build, device session, provider activation, or founder acceptance was performed. |
+
+> **Controlled real-world boundary:** KIN-ENT-01 through KIN-ENT-08 require an authenticated, controlled application/staging session using the existing cited-web configuration. Offline fixtures and injected test data validate failure handling only; they are **not** proof of current streaming or theater availability. No paid provider, trial, account, subscription, migration execution, deployment, ticket flow, or mobile build is authorized by this record.
 
 The evidence packet must include raw logs, migration result, API requests/responses with sensitive values redacted, screenshots or recordings, signed artifact IDs and hashes, device/OS matrix, crash-report event IDs, and a final `GO_NO_GO.md`.
