@@ -582,21 +582,9 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
         ? req.query.designations.split(",")
         : []),
     ]);
-    if (requestedIds.length === 0 && !allBusinessesOverride && req.user?.id) {
-      const [prefs] = await db
-        .select({
-          supportLensMode: userPreferencesTable.supportLensMode,
-          preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes,
-        })
-        .from(userPreferencesTable)
-        .where(eq(userPreferencesTable.userId, req.user.id))
-        .limit(1);
-      if (prefs?.supportLensMode === "strict_documented_designations") {
-        requestedIds = normalizeOwnershipDesignationFilterIds(
-          (prefs.preferredOwnershipTypes as string[] | null) ?? [],
-        );
-      }
-    }
+    // Standalone Map is deliberately preference-neutral. Only a designation
+    // supplied by this Map request may filter pins; Kinfolk memories and saved
+    // Kinfolk preference fields are never read here.
     const designationClauses: string[] = [];
     const designationParams: unknown[] = [];
     resolveDesignationScope({
@@ -829,36 +817,13 @@ router.get("/businesses", async (req: Request, res: Response) => {
               AND COALESCE(jsonb_array_length(${businessesTable.ownershipDesignations}), 0) = 0`,
           );
         }
-        let savedDesignationFilterIds: string[] = [];
-        if (req.user?.id) {
-          try {
-            const [prefs] = await db
-              .select({
-                supportLensMode: userPreferencesTable.supportLensMode,
-                preferredOwnershipTypes:
-                  userPreferencesTable.preferredOwnershipTypes,
-              })
-              .from(userPreferencesTable)
-              .where(eq(userPreferencesTable.userId, req.user.id))
-              .limit(1);
-            if (
-              supportScope !== "all_businesses" &&
-              prefs?.supportLensMode === "strict_documented_designations"
-            ) {
-              savedDesignationFilterIds =
-                normalizeOwnershipDesignationFilterIds(
-                  (prefs.preferredOwnershipTypes as string[] | null) ?? [],
-                );
-            }
-          } catch {
-            // Discovery remains available if optional preference storage is unavailable.
-          }
-        }
         const designationFilterIds = resolveDesignationScope({
           explicit: explicitDesignationFilterIds,
           supportScope: supportScope as string | undefined,
-          saved: savedDesignationFilterIds,
-          savedMode: supportScope === "all_businesses" ? null : "strict_documented_designations",
+          // Standalone Directory/Explore uses only visible request filters. It
+          // must not read Kinfolk memory or private Kinfolk preference fields.
+          saved: [],
+          savedMode: null,
         });
         for (const designationId of designationFilterIds) {
           const filter = ownershipDesignationStorageValues(designationId);

@@ -40,7 +40,6 @@ import { isDeliberateMapBusinessNameSearch } from "@/hooks/support-lens-request"
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
 import {
   mapLocationFailureNotice,
   mapLocationServicesOffNotice,
@@ -442,7 +441,6 @@ export function FullMapView({
   }, []);
 
   const { user } = useAuth();
-  const { preferences: memberPreferences } = useUserPreferences();
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -479,13 +477,10 @@ export function FullMapView({
   const [selectedEssentialService, setSelectedEssentialService] = useState<EssentialServicePlace | null>(null);
   const [essentialServicesLoading, setEssentialServicesLoading] = useState(false);
   const [essentialServicesError, setEssentialServicesError] = useState<string | null>(null);
-  // The map remains a clean locality-first canvas, but it must honor the
-  // member's saved Support Lens in the same way as Directory and Kinfolk.
-  // Only documented designations are sent; no identity is inferred here.
-  const designationIds =
-    memberPreferences?.supportLensMode === "strict_documented_designations"
-      ? memberPreferences.preferredOwnershipTypes
-      : [];
+  // Map browsing is deliberately preference-neutral. Only an explicit Map
+  // filter may be sent to Map APIs; Kinfolk memory and preferences stay inside
+  // Kinfolk conversations and never shape standalone pins.
+  const designationIds: string[] = [];
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
     null,
   );
@@ -603,7 +598,7 @@ export function FullMapView({
     state: deliberateMapNameSearch ? "" : mapLocality?.state,
     radiusMiles: mapDiscoveryRadius,
     designations: designationIds,
-    supportScope: memberPreferences?.supportLensMode,
+    supportScope: undefined,
     directName: deliberateMapNameSearch,
     enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null,
   });

@@ -394,50 +394,16 @@ export default function Businesses() {
   }, [directorySupportScope, directoryRefreshGeneration, activeOwnership]);
 
   const showAllBusinesses = useCallback(() => {
-    void (async () => {
-      setSupportLensError(null);
-      try {
-        const response = await fetch(`${BASE}api/kinfolk/preferences`, {
-      method: "PUT", credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
-        });
-        if (!response.ok) throw new Error("preference update failed");
-        setDirectorySupportScope("all_businesses");
-        setActiveCategory("All");
-        setActiveOwnership(null);
-      } catch {
-        setSupportLensError("Could not update Support Lens. Please try again.");
-      }
-    })();
-  }, [activeOwnership]);
-  const removeSavedDesignation = useCallback(async (designation: string) => {
     setSupportLensError(null);
-    const result = await persistReducedSupportLensRemoval({
-      baseUrl: BASE, savedDesignations, removeDesignation: designation,
-    });
-    if (result.error) {
-      setSupportLensError(result.error);
-    } else {
-      const update = result.update;
-      setSavedDesignations(update.preferredOwnershipTypes);
-      setDirectorySupportScope(update.preferredOwnershipTypes.length ? null : "all_businesses");
-      setDirectoryRefreshGeneration((generation) => generation + 1);
-    }
+    setDirectorySupportScope("all_businesses");
+    setActiveCategory("All");
+    setActiveOwnership(null);
+  }, [activeOwnership]);
+  const removeSavedDesignation = useCallback((designation: string) => {
+    setSupportLensError(null);
+    setSavedDesignations((current) => current.filter((value) => value !== designation));
+    setDirectoryRefreshGeneration((generation) => generation + 1);
   }, [savedDesignations]);
-
-  useEffect(() => {
-    fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include" })
-      .then((response) => response.ok ? response.json() : null)
-      .then((payload) => {
-        const prefs = payload?.preferences;
-        const values = Array.isArray(prefs?.preferredOwnershipTypes)
-          ? prefs.preferredOwnershipTypes
-          : Array.isArray(prefs?.ownershipTypes) ? prefs.ownershipTypes : [];
-        if (prefs?.supportLensMode === "strict_documented_designations") setSavedDesignations(values);
-      })
-      .catch(() => {});
-  }, []);
 
   // Universal Search — fires on Enter or button click.
   // Architecture mirrors the Map page: geo-extract runs FIRST to detect any
