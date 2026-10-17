@@ -12,6 +12,7 @@ This is the authoritative handoff for the **Kinfolk Entertainment Discovery, sub
 | Branch | `feature/kinfolk-regional-dialect-multilingual-foundation-20261016` |
 | Original availability foundation | `1f00d195cb12ded23a0ccded6fbb80bbc7e52ec4` |
 | Personalization continuation | `77beb13794a1d77f14f5d0ae122f1d82fbee3236` |
+| Cited web-search extension | `7c4dacf7196b5a4998740cccdad9915738b2f645` |
 | Status | **SOURCE COMPLETE / AWAITING PROVIDER APPROVAL AND STAGING ACCEPTANCE** |
 
 ## What is source complete
@@ -63,6 +64,7 @@ The workstream is source complete and awaits **controlled integration**, then **
 ## Related documents
 
 - [Continuation source handoff](KINFOLK_ENTERTAINMENT_PERSONALIZATION_CONTINUATION_HANDOFF_2026-10-16.md)
+- [Cited web-search source handoff](KINFOLK_ENTERTAINMENT_CITED_WEB_SEARCH_HANDOFF_2026-10-16.md)
 - [Provider decision packet](../plans/KINFOLK_ENTERTAINMENT_PROVIDER_DECISION_PACKET_2026-10-16.md)
 - [Continuation implementation plan](../plans/KINFOLK_ENTERTAINMENT_PERSONALIZATION_CONTINUATION_PLAN.md)
 - [Completion checklist](../plans/KINFOLK_ENTERTAINMENT_DISCOVERY_TODO.md)
