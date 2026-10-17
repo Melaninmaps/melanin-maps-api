@@ -23,7 +23,10 @@ import {
   classifyGrowthSensitivity,
 } from "../lib/library-growth-engine";
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
-import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import {
+  mwmDiasporaPromotionSqlPredicate,
+  mwmPublicDirectorySqlPredicate,
+} from "../businesses/mwmCoreDiscoveryPolicy";
 import { sanitizePublicListingCopyOrNull } from "../businesses/publicListingCopy";
 import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
 import {
@@ -609,6 +612,10 @@ function catalogTermsFromBusinessResults(
 ): CatalogSearchTerm[] {
   const terms = new Map<string, CatalogSearchTerm>();
   for (const business of businesses) {
+    // An exact public Directory lookup is a member-requested retrieval, not a
+    // promoted catalog result. It must never seed a correction/suggestion that
+    // could later steer another member toward an otherwise unpromoted listing.
+    if (!isCatalogSearchClarificationEligible(business)) continue;
     for (const value of [
       business.name,
       business.category,
@@ -722,6 +729,8 @@ interface BusinessResult {
   matchTier: MatchTier;
   matchReason: string;
   matchedFields: string[];
+  /** Internal provenance: excluded from suggestions and never serialized. */
+  isExactPublicDirectoryLookup?: boolean;
   // Source records retained as contextual provenance after their duplicate cards
   // are suppressed from this member-facing result set.
   culturalContextSources?: Array<{
@@ -730,6 +739,13 @@ interface BusinessResult {
     reason: "same_canonical_place";
     officialDomainMatch?: boolean;
   }>;
+}
+
+/** Direct-only public Directory records must not become suggestion vocabulary. */
+export function isCatalogSearchClarificationEligible(
+  business: Readonly<{ isExactPublicDirectoryLookup?: boolean }>,
+): boolean {
+  return business.isExactPublicDirectoryLookup !== true;
 }
 
 async function searchBusinesses(opts: {
@@ -766,39 +782,44 @@ async function searchBusinesses(opts: {
       })
       .join("\n            AND ");
   };
-  // A member who deliberately enters a specific business name can find an
-  // otherwise public listing. This does not make that record eligible for
-  // default promotion, suggestions, map discovery, or Kinfolk recommendations.
-  const directPublicLookup = intentType === "named_business";
-  const promotionPredicate = (businessIdExpression: string) =>
-    mwmDiasporaPromotionSqlPredicate(
-      businessIdExpression,
-      directPublicLookup ? "all_public" : undefined,
-    );
-
   // ── PASS 1: Exact name match ──────────────────────────────────────────────
-  // named_business intent: NEVER apply a geo filter here. Someone searching for
-  // "Shawn Hill Homes" from Washington DC must find the LA listing — a 50-mile
-  // geo bound would silently exclude it. Geo filtering belongs in PASS 3 (category
-  // discovery), not in a name-first lookup.
+  // A raw member-entered business name gets one narrow, case-insensitive,
+  // whitespace-trimmed equality lookup against the ordinary public Directory.
+  // This lets a member find an otherwise public, non-Kinfolk-Current business by
+  // its exact name without turning it into a promoted Discovery, map, suggestion,
+  // or Kinfolk recommendation result. Partial-name, category, specialty, and
+  // description matching remain on the documented Diaspora promotion catalog.
+  // Exact name lookups are nationwide: someone searching for "Shawn Hill Homes"
+  // from Washington DC must find the LA listing. Geo filtering belongs in category
+  // discovery, not in the literal business-name lookup.
   const isNamedBusiness = intentType === "named_business";
 
   for (const token of searchTokens.slice(0, 3)) {
     if (token.length < 2) continue;
     try {
-      const params: unknown[] = [`%${token}%`];
+      const isExactRawNameLookup = token === q.trim();
+      const params: unknown[] = [isExactRawNameLookup ? token : `%${token}%`];
       let cityClause = "";
       let stateClause = "";
       let geoClause = "";
 
-      if (city) { params.push(`%${city}%`); cityClause = `AND b.city ILIKE $${params.length}`; }
-      if (state) { params.push(`%${state}%`); stateClause = `AND b.state ILIKE $${params.length}`; }
+      // An exact raw-name retrieval intentionally ignores an ambient map/search
+      // location. Location filters remain available to disambiguate promoted
+      // discovery, but cannot hide a public listing the member named directly.
+      if (!isExactRawNameLookup && city) { params.push(`%${city}%`); cityClause = `AND b.city ILIKE $${params.length}`; }
+      if (!isExactRawNameLookup && state) { params.push(`%${state}%`); stateClause = `AND b.state ILIKE $${params.length}`; }
 
-      // Skip geo radius for named-business searches — name lookup is always nationwide.
-      if (!isNamedBusiness && lat !== undefined && lng !== undefined) {
+      // Skip geo radius for exact-name searches — names are always nationwide.
+      if (!isExactRawNameLookup && !isNamedBusiness && lat !== undefined && lng !== undefined) {
         geoClause = `AND ${appendBusinessRadiusFilter(params, lat, lng, radius)}`;
       }
       const designationClause = appendDesignationScope(params);
+      const eligibilityPredicate = isExactRawNameLookup
+        ? mwmPublicDirectorySqlPredicate("b.id")
+        : mwmDiasporaPromotionSqlPredicate("b.id");
+      const namePredicate = isExactRawNameLookup
+        ? "LOWER(BTRIM(COALESCE(b.name, ''))) = LOWER(BTRIM($1))"
+        : "b.name ILIKE $1";
 
       const rows = await pool.query<{
         id: string; name: string; category: string; subcategory: string;
@@ -817,8 +838,8 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
-           AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
-           AND b.name ILIKE $1
+           AND ${eligibilityPredicate}
+           AND ${namePredicate}
            ${cityClause} ${stateClause} ${geoClause}
            ${designationClause ? `AND ${designationClause}` : ""}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
@@ -843,8 +864,11 @@ async function searchBusinesses(opts: {
           priceRange: row.price_range ?? undefined,
           confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
           matchTier: "exact_name",
-          matchReason: `Business name matches "${token}"`,
+          matchReason: isExactRawNameLookup
+            ? `Exact public directory business name matches "${token}"`
+            : `Business name matches "${token}"`,
           matchedFields: ["name"],
+          ...(isExactRawNameLookup ? { isExactPublicDirectoryLookup: true } : {}),
         });
       }
     } catch { /* column may not exist in all envs — skip */ }
@@ -1479,7 +1503,10 @@ async function searchBusinesses(opts: {
     return (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0);
     })
     .slice(0, limit)
-    .map(({ ownershipClaim: _ownershipClaim, ...business }) => business);
+    .map(({
+      ownershipClaim: _ownershipClaim,
+      ...business
+    }) => business);
 }
 
 // ── Event search ──────────────────────────────────────────────────────────────
@@ -2263,7 +2290,13 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       });
     }
 
-    const publicBusinesses = await attachEligibleBusinessImages(pool, businesses);
+    // Preserve internal direct-lookup provenance through all server-side quality
+    // decisions above, then remove it at the sole member-response boundary.
+    const publicBusinesses = (await attachEligibleBusinessImages(pool, businesses))
+      .map(({
+        isExactPublicDirectoryLookup: _isExactPublicDirectoryLookup,
+        ...business
+      }) => business);
     res.json({
       query: trimmedQ,
       normalizedConcept,
