@@ -62,22 +62,32 @@ const environment: StagingFounderAdminRecoveryEnvironment = {
   RESEND_API_KEY: "test-configured-provider",
 };
 
-function standardPreflight(query: string): unknown | undefined {
+function standardPreflight(
+  query: string,
+  overrides: {
+    targetExists?: boolean;
+    historicalAdminCount?: number;
+    pendingTesterExists?: boolean;
+  } = {},
+): unknown | undefined {
   if (query.includes("SELECT EXISTS(SELECT 1 FROM users")) {
-    return { rows: [{ exists: false }] };
+    return { rows: [{ exists: overrides.targetExists ?? false }] };
   }
   if (query.includes("SELECT COUNT(*)::int AS count")) {
-    return { rows: [{ count: 1 }] };
+    return { rows: [{ count: overrides.historicalAdminCount ?? 1 }] };
   }
   if (query.includes("SELECT EXISTS(SELECT 1 FROM pending_tester_emails")) {
-    return { rows: [{ exists: false }] };
+    return { rows: [{ exists: overrides.pendingTesterExists ?? false }] };
   }
   return undefined;
 }
 
-function issuanceClient(existing: unknown[] = []) {
+function issuanceClient(
+  existing: unknown[] = [],
+  preflightOverrides: Parameters<typeof standardPreflight>[1] = {},
+) {
   return createClient((query, params) => {
-    const preflight = standardPreflight(query);
+    const preflight = standardPreflight(query, preflightOverrides);
     if (preflight) return preflight;
     if (query.includes("SELECT id, state, expires_at"))
       return { rows: existing };
@@ -138,8 +148,34 @@ describe("staging founder recovery issuance behavior", () => {
 
     await expect(
       issueStagingFounderAdminRecovery(environment),
-    ).resolves.toEqual({ status: "blocked" });
+    ).resolves.toEqual({ status: "blocked", reason: "delivery_failed" });
     expect(state.sent).toHaveLength(1);
+  });
+
+  it("reports a provider-unavailable block without opening a database connection", async () => {
+    state.clients = [];
+    state.sent = [];
+    await expect(
+      issueStagingFounderAdminRecovery({ ...environment, RESEND_API_KEY: "" }),
+    ).resolves.toEqual({
+      status: "blocked",
+      reason: "email_provider_unavailable",
+    });
+    expect(state.sent).toHaveLength(0);
+  });
+
+  it("reports a target-account preflight block without sending a recovery link", async () => {
+    state.clients = [issuanceClient([], { targetExists: true })];
+    state.sent = [];
+    state.sendFailure = false;
+
+    await expect(
+      issueStagingFounderAdminRecovery(environment),
+    ).resolves.toEqual({
+      status: "blocked",
+      reason: "target_account_exists",
+    });
+    expect(state.sent).toHaveLength(0);
   });
 
   it("requires a second explicit flag before superseding a non-redeemable pending attempt", async () => {

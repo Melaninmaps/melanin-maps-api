@@ -1,8 +1,18 @@
 import app, { directoryReviewPool } from "./app";
 import { logger } from "./lib/logger";
-import { setDbLogger, pool, getPool, getPoolStats, initPoolInstrumentation } from "@workspace/db";
+import {
+  setDbLogger,
+  pool,
+  getPool,
+  getPoolStats,
+  initPoolInstrumentation,
+} from "@workspace/db";
 import { getStripeSync, endStripeSyncPool } from "./stripeClient";
-import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/healthMonitor";
+import {
+  startHealthMonitor,
+  setMonitorLogger,
+  stopHealthMonitor,
+} from "./lib/healthMonitor";
 import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
@@ -40,15 +50,20 @@ import { ensureKinfolkCurrentChaptersSchema } from "./lib/kinfolk-current-chapte
 import { bootstrapDirectoryReviewSchema } from "./directoryImport/reviewDatabase";
 import { startDirectoryPublicationWorker } from "./directoryImport/publicationWorker";
 import { startFounderMapRestorationWorker } from "./businesses/mapRestorationWorker";
-import {
-  startLatinxLehighValleyPublication,
-} from "./directoryImport/latinxLehighValleyPublication";
+import { startLatinxLehighValleyPublication } from "./directoryImport/latinxLehighValleyPublication";
 
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
 setDbLogger(logger);
-import { startCityRequestFlush, stopCityRequestFlush } from "./lib/cityRequestTracker";
-import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogger } from "./lib/library-growth-worker";
+import {
+  startCityRequestFlush,
+  stopCityRequestFlush,
+} from "./lib/cityRequestTracker";
+import {
+  startLibraryGrowthWorker,
+  stopLibraryGrowthWorker,
+  setGrowthWorkerLogger,
+} from "./lib/library-growth-worker";
 import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
 import { seedLibraryStarterEntries } from "./library/seedLibraryStarterEntries";
 import { isExplicitFeatureReleaseMode } from "./lib/explicitFeatureReleaseMode";
@@ -95,21 +110,28 @@ async function initStripe() {
     // (e.g. ledger thinks it already ran; table was dropped between deploys).
     // The stripe_accounts_recovery_v1 startup migration creates the table as a
     // fallback, so this check should only fail in edge-case dev environments.
-    const { rows: [stripeCheck] } = await pool.query<{ exists: boolean }>(
+    const {
+      rows: [stripeCheck],
+    } = await pool.query<{ exists: boolean }>(
       `SELECT to_regclass('stripe.accounts') IS NOT NULL AS exists`,
     );
     if (!stripeCheck?.exists) {
-      logger.warn("stripe.accounts not present after runMigrations — Stripe sync disabled for this boot");
+      logger.warn(
+        "stripe.accounts not present after runMigrations — Stripe sync disabled for this boot",
+      );
       return;
     }
 
     const stripeSync = await getStripeSync();
 
     const webhookBase = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
-    await stripeSync.findOrCreateManagedWebhook(`${webhookBase}/api/stripe/webhook`);
+    await stripeSync.findOrCreateManagedWebhook(
+      `${webhookBase}/api/stripe/webhook`,
+    );
     logger.info("Stripe webhook configured");
 
-    stripeSync.syncBackfill()
+    stripeSync
+      .syncBackfill()
       .then(() => logger.info("Stripe backfill complete"))
       .catch((err) => logger.error({ err }, "Stripe backfill error"));
   } catch (err) {
@@ -122,18 +144,29 @@ async function initStripe() {
   const critical: string[] = [];
 
   if (!process.env.ADMIN_EMAILS) {
-    critical.push("ADMIN_EMAILS — No admin email configured. After your first login, call POST /api/admin/bootstrap to promote yourself. Then set ADMIN_EMAILS=your@email.com for future server restarts.");
+    critical.push(
+      "ADMIN_EMAILS — No admin email configured. After your first login, call POST /api/admin/bootstrap to promote yourself. Then set ADMIN_EMAILS=your@email.com for future server restarts.",
+    );
   }
   if (!process.env.GOOGLE_MAPS_API_KEY) {
-    critical.push("GOOGLE_MAPS_API_KEY — Map embeds and business enrichment will be unavailable.");
+    critical.push(
+      "GOOGLE_MAPS_API_KEY — Map embeds and business enrichment will be unavailable.",
+    );
   }
 
   // Apple Sign-In requires four env vars. If any is missing, new Apple
   // registrations return HTTP 500 — an instant App Store rejection.
-  const appleVars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
+  const appleVars = [
+    "APPLE_TEAM_ID",
+    "APPLE_KEY_ID",
+    "APPLE_PRIVATE_KEY",
+    "APPLE_TOKEN_ENCRYPTION_KEY",
+  ];
   const missingApple = appleVars.filter((v) => !process.env[v]);
   if (missingApple.length > 0) {
-    critical.push(`Apple Sign-In INCOMPLETE — missing: ${missingApple.join(", ")}. New Apple registrations will fail with HTTP 500.`);
+    critical.push(
+      `Apple Sign-In INCOMPLETE — missing: ${missingApple.join(", ")}. New Apple registrations will fail with HTTP 500.`,
+    );
   }
 
   if (critical.length > 0) {
@@ -143,11 +176,15 @@ async function initStripe() {
 
   // ── OPTIONAL — degrades specific features, does not break core ────────────
   const optional: string[] = [];
-  if (!process.env.RESEND_API_KEY) optional.push("RESEND_API_KEY (emails disabled)");
-  if (!process.env.WMATA_API_KEY) optional.push("WMATA_API_KEY (DC transit disabled)");
+  if (!process.env.RESEND_API_KEY)
+    optional.push("RESEND_API_KEY (emails disabled)");
+  if (!process.env.WMATA_API_KEY)
+    optional.push("WMATA_API_KEY (DC transit disabled)");
 
   if (optional.length > 0) {
-    logger.info(`[config] Optional features not configured: ${optional.join(", ")}`);
+    logger.info(
+      `[config] Optional features not configured: ${optional.join(", ")}`,
+    );
   }
 })();
 
@@ -157,7 +194,9 @@ try {
   // skips broad migrations, so verify this exact request-path schema before
   // accepting traffic rather than returning a misleading save/read 500.
   await ensureKinfolkDeliveryProfileSchema(logger);
-  logger.info("Kinfolk delivery-profile schema ready before traffic acceptance");
+  logger.info(
+    "Kinfolk delivery-profile schema ready before traffic acceptance",
+  );
   await ensureKinfolkPreferredNameSchema(logger);
   logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
   await ensureKinfolkCurrentChaptersSchema(
@@ -168,20 +207,27 @@ try {
   // Keep it outside the broad runner so explicit feature-release mode cannot
   // expose a route that would fail closed only after an administrator acts.
   await ensureMemberActivationInvitationSchema(logger);
-  logger.info("Member activation invitation schema ready before traffic acceptance");
-  const founderRecoverySchemaReady = await ensureStagingFounderAdminRecoverySchema(
-    (message) => logger.info(message),
-    (message) => logger.warn(message),
+  logger.info(
+    "Member activation invitation schema ready before traffic acceptance",
   );
+  const founderRecoverySchemaReady =
+    await ensureStagingFounderAdminRecoverySchema(
+      (message) => logger.info(message),
+      (message) => logger.warn(message),
+    );
   if (founderRecoverySchemaReady) {
     const founderRecovery = await issueStagingFounderAdminRecovery();
     logger.info(
-      { state: founderRecovery.status },
+      "reason" in founderRecovery
+        ? { state: founderRecovery.status, reason: founderRecovery.reason }
+        : { state: founderRecovery.status },
       "Isolated staging founder recovery issuance checked before traffic acceptance",
     );
   }
   await ensureBusinessOwnerLinkLifecycleSchema(logger);
-  logger.info("Business owner-link lifecycle schema ready before traffic acceptance");
+  logger.info(
+    "Business owner-link lifecycle schema ready before traffic acceptance",
+  );
   await ensureBusinessPublicDetailSchema(logger);
   logger.info("Business public-detail schema ready before traffic acceptance");
   if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
@@ -190,7 +236,10 @@ try {
     await ensureKinfolkQuestionImageSchemaOnly();
     logger.info("Kinfolk private image schema ready before traffic acceptance");
   }
-  if (process.env.KINFOLK_PRIVATE_PLACES_ENABLED === "true" || shouldRunPrivatePlacesSyntheticQaAcceptance()) {
+  if (
+    process.env.KINFOLK_PRIVATE_PLACES_ENABLED === "true" ||
+    shouldRunPrivatePlacesSyntheticQaAcceptance()
+  ) {
     // Private Places and Temporary Stays must have encrypted-only structures
     // before their explicitly enabled runtime can accept a member request. This
     // bootstrap is idempotent schema work only; it never geocodes, seeds, or
@@ -203,17 +252,25 @@ try {
       (message) => logger.info(message),
       (message) => logger.warn(message),
     );
-    logger.info("Kinfolk encrypted Private Places and Temporary Stays schemas ready before traffic acceptance");
+    logger.info(
+      "Kinfolk encrypted Private Places and Temporary Stays schemas ready before traffic acceptance",
+    );
   }
   // The reconciliation ledger is a schema-only safety gate. It must be ready
   // even when explicit feature-release mode correctly suppresses broad startup
   // writers, publishers, and enrichment work.
   await ensureDirectoryReconciliationLedgerSchema(logger);
-  logger.info("Directory reconciliation ledger schema ready before traffic acceptance");
+  logger.info(
+    "Directory reconciliation ledger schema ready before traffic acceptance",
+  );
   await ensureFounderMapRestorationSchema(logger);
-  logger.info("Founder map restoration outcome schema ready before traffic acceptance");
+  logger.info(
+    "Founder map restoration outcome schema ready before traffic acceptance",
+  );
   await ensureLegacyMapLocationAttestationSchema(logger);
-  logger.info("Legacy map location attestation schema ready before traffic acceptance");
+  logger.info(
+    "Legacy map location attestation schema ready before traffic acceptance",
+  );
   // Website cleanup is likewise a schema-only safety control. It is required
   // for an evidence-bound removal of a bad public URL, and it never changes a
   // business row by itself.
@@ -226,7 +283,9 @@ try {
   // plane. They must retain their receipt and audit schemas even when explicit
   // feature-release mode correctly skips unrelated startup migration writers.
   await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
-  logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
+  logger.info(
+    "Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance",
+  );
   // Trusted contacts, temporary live-location sessions, durable alert auditing,
   // and Family Impact intelligence have authenticated request paths even during
   // a narrow feature release. Their canonical migrations are additive and do
@@ -241,16 +300,22 @@ try {
   // validation control. It is deliberately absent in every other environment
   // and does not create public notices or notification delivery work.
   await ensureIsolatedSeriousThreatPrivateReviewSchema(logger);
-  logger.info("Isolated serious-threat private-review schema gate checked before traffic acceptance");
+  logger.info(
+    "Isolated serious-threat private-review schema gate checked before traffic acceptance",
+  );
   // Ownership-claim reviewer access is a separate default-off isolated test
   // entitlement. It creates no role, allowlist entry, or business data and is
   // considered only by three canonical claim-decision routes.
   await ensureIsolatedOwnerClaimReviewerFixtureSchema(logger);
-  logger.info("Isolated owner-claim reviewer fixture schema gate checked before traffic acceptance");
+  logger.info(
+    "Isolated owner-claim reviewer fixture schema gate checked before traffic acceptance",
+  );
   // Activation-delivery validation is separately default-off and accepts only
   // one synthetic Resend test mailbox; it cannot become general waitlist admin.
   await ensureIsolatedActivationInvitationReviewerFixtureSchema(logger);
-  logger.info("Isolated activation-invitation reviewer fixture schema gate checked before traffic acceptance");
+  logger.info(
+    "Isolated activation-invitation reviewer fixture schema gate checked before traffic acceptance",
+  );
   // The protected Community feed reads reactions and block/follow boundaries on
   // every authenticated request. These additive relations must exist even when
   // narrow release mode skips broad publication migrations and background work.
@@ -265,26 +330,40 @@ try {
   // The additive gate prevents a missing legacy seed table from turning a valid
   // Explore deep link into a 500 while leaving site and contribution data untouched.
   await ensureTourCulturalSiteContributionSchema(logger);
-  logger.info("Tour cultural-site contribution schema ready before traffic acceptance");
+  logger.info(
+    "Tour cultural-site contribution schema ready before traffic acceptance",
+  );
   // The Explore HBCU lens reads the canonical cultural-site catalogue directly.
   // Verify its additive publication column before traffic so feature-release
   // mode cannot convert a valid empty result into a generic server failure.
   await ensureHbcuExplorePublicationSchema(logger);
-  logger.info("Explore HBCU publication schema ready before traffic acceptance");
+  logger.info(
+    "Explore HBCU publication schema ready before traffic acceptance",
+  );
   // Ordinary Kinfolk questions consult only published, cited Living Library
   // content before the model. Establish its empty additive read structure here
   // so explicit feature-release mode cannot convert an absent legacy table into
   // a generic model fallback or an invented Library answer.
   await ensureKinfolkLivingLibraryReadSchema(logger);
-  logger.info("Kinfolk Living Library read schema ready before traffic acceptance");
+  logger.info(
+    "Kinfolk Living Library read schema ready before traffic acceptance",
+  );
   await ensureIsolatedGovernedDiscoverySchema(logger);
-  logger.info("Isolated governed discovery schema ready before traffic acceptance");
+  logger.info(
+    "Isolated governed discovery schema ready before traffic acceptance",
+  );
   if (explicitFeatureReleaseMode) {
-    logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
+    logger.info(
+      "Explicit feature release mode: skipping boot-time schema and publication writers",
+    );
   } else {
-    if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
-        (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
-      throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+    if (
+      process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
+      (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32
+    ) {
+      throw new Error(
+        "DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.",
+      );
     }
     if (directoryReviewPool) {
       await bootstrapDirectoryReviewSchema(directoryReviewPool);
@@ -294,21 +373,28 @@ try {
     logger.info("Required safety report schema ready");
   }
 } catch (error) {
-  logger.fatal({ error }, "Required safety report schema failed — server will not accept traffic");
+  logger.fatal(
+    { error },
+    "Required safety report schema failed — server will not accept traffic",
+  );
   await pool.end().catch(() => undefined);
   process.exit(1);
 }
 
 try {
   if (!explicitFeatureReleaseMode) {
-    const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
-    if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
-      throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
-    }
-    await ensureRequiredPublicationSchema(
-      false,
-      logger,
+    const directoryReviewEnabled = assertDirectoryReviewLocalStaging(
+      process.env,
     );
+    if (
+      directoryReviewEnabled &&
+      (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32
+    ) {
+      throw new Error(
+        "DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.",
+      );
+    }
+    await ensureRequiredPublicationSchema(false, logger);
     logger.info("Required publication schema ready before traffic acceptance");
   }
 } catch (error) {
@@ -326,9 +412,15 @@ try {
 if (shouldRunPrivatePlacesSyntheticQaAcceptance()) {
   try {
     const result = await runPrivatePlacesProductionSyntheticAcceptance();
-    logger.info({ checks: result.checks, cleanupVerified: result.cleanupVerified }, "Private Places synthetic acceptance passed before traffic");
+    logger.info(
+      { checks: result.checks, cleanupVerified: result.cleanupVerified },
+      "Private Places synthetic acceptance passed before traffic",
+    );
   } catch (_error) {
-    logger.fatal({ code: "kinfolk_private_places_synthetic_acceptance_failed" }, "Private Places synthetic acceptance failed — server will not accept traffic");
+    logger.fatal(
+      { code: "kinfolk_private_places_synthetic_acceptance_failed" },
+      "Private Places synthetic acceptance failed — server will not accept traffic",
+    );
     await pool.end().catch(() => undefined);
     process.exit(1);
   }
@@ -348,7 +440,10 @@ const onListening = (err?: Error) => {
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
-  stopFounderMapRestorationWorker = startFounderMapRestorationWorker(pool, logger);
+  stopFounderMapRestorationWorker = startFounderMapRestorationWorker(
+    pool,
+    logger,
+  );
   if (privatePlacesRuntimeState().enabled) {
     startTemporaryStayRetentionScheduler(logger);
   }
@@ -358,11 +453,14 @@ const onListening = (err?: Error) => {
     );
     return;
   }
-  if (directoryReviewPool) startDirectoryPublicationWorker(directoryReviewPool, pool);
+  if (directoryReviewPool)
+    startDirectoryPublicationWorker(directoryReviewPool, pool);
 
   // Route monitor log events through pino so they appear in Railway's log stream.
   setMonitorLogger(logger);
-  setGrowthWorkerLogger((msg, data) => logger.info(data ?? {}, `[library-growth-worker] ${msg}`));
+  setGrowthWorkerLogger((msg, data) =>
+    logger.info(data ?? {}, `[library-growth-worker] ${msg}`),
+  );
   // 5-minute synthetic DB health checks — maintains 12-hour evidence ring buffer.
   // Results visible at GET /api/readyz/history.
   startHealthMonitor();
@@ -374,7 +472,9 @@ const onListening = (err?: Error) => {
   // (separate Railway service). Re-enable only after external monitor is deployed.
   // startBuild97Monitor();
 
-  initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
+  initStripe().catch((err) =>
+    logger.error({ err }, "Background Stripe init failed"),
+  );
 
   // The explicit founder-authorized Lehigh Valley publication must not wait for
   // optional migrations. It is receipt-idempotent and begins only after the
@@ -393,11 +493,20 @@ const onListening = (err?: Error) => {
     .then(async () => {
       try {
         const insertedLibraryTopics = await seedLibraryStarterTopics(pool);
-        logger.info({ insertedLibraryTopics }, "Living Library starter topics ready");
+        logger.info(
+          { insertedLibraryTopics },
+          "Living Library starter topics ready",
+        );
         const insertedLibraryEntries = await seedLibraryStarterEntries(pool);
-        logger.info({ insertedLibraryEntries }, "Living Library starter guides ready");
+        logger.info(
+          { insertedLibraryEntries },
+          "Living Library starter guides ready",
+        );
       } catch (error) {
-        logger.error({ error }, "Living Library starter content failed to seed");
+        logger.error(
+          { error },
+          "Living Library starter content failed to seed",
+        );
       }
       // startCityHealthAlertScheduler is async: it probes information_schema to
       // confirm the three lease columns actually exist before registering the cron
@@ -411,7 +520,10 @@ const onListening = (err?: Error) => {
     .catch((err) => {
       // Top-level migration runner rejected — lease columns may be absent.
       // Do NOT start the scheduler; it will self-verify and refuse on any column gap.
-      logger.error({ err }, "Startup migrations failed — city health alert scheduler NOT started");
+      logger.error(
+        { err },
+        "Startup migrations failed — city health alert scheduler NOT started",
+      );
     });
 
   startNudgeCronScheduler();
@@ -452,7 +564,10 @@ function gracefulShutdown(signal: string) {
 
   // Log pool state at the moment shutdown fires — key diagnostic data
   // if this deployment event later shows pool exhaustion in the next process.
-  logger.info({ signal, pool: getPoolStats() }, "Received shutdown signal — pool state at drain start");
+  logger.info(
+    { signal, pool: getPoolStats() },
+    "Received shutdown signal — pool state at drain start",
+  );
 
   // 1. Stop accepting new connections and wait for in-flight requests to finish.
   server.close(async () => {
@@ -486,7 +601,10 @@ function gracefulShutdown(signal: string) {
   // pool.end() has time to complete before the T=25s force-exit.
   // Requests still open at this point have already had 22s to complete.
   setTimeout(() => {
-    logger.warn({ pool: getPoolStats() }, "approaching force-exit deadline — closing remaining active connections");
+    logger.warn(
+      { pool: getPoolStats() },
+      "approaching force-exit deadline — closing remaining active connections",
+    );
     server.closeAllConnections();
   }, 22_000);
 

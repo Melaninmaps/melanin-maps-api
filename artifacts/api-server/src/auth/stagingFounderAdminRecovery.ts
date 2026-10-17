@@ -52,6 +52,13 @@ export type StagingFounderAdminRecoveryEligibility =
   | "eligible"
   | StagingFounderAdminRecoveryIneligibility;
 
+export type StagingFounderAdminRecoveryBlockedReason =
+  | "email_provider_unavailable"
+  | "target_account_exists"
+  | "historical_admin_count_not_one"
+  | "pending_tester_conflict"
+  | "delivery_failed";
+
 export type StagingFounderAdminRecoveryIssueResult =
   | {
       readonly status: "not_requested";
@@ -59,7 +66,10 @@ export type StagingFounderAdminRecoveryIssueResult =
     }
   | { readonly status: "issued" }
   | { readonly status: "already_recorded" }
-  | { readonly status: "blocked" };
+  | {
+      readonly status: "blocked";
+      readonly reason: StagingFounderAdminRecoveryBlockedReason;
+    };
 
 export type StagingFounderAdminRecoveryCompletion =
   | { readonly status: "not_requested" }
@@ -346,28 +356,30 @@ export async function ensureStagingFounderAdminRecoverySchema(
 async function recoveryPreflight(
   client: { query: typeof pool.query },
   targetEmail: string,
-): Promise<boolean> {
-  const [target, historicalAdmins, pendingTester] = await Promise.all([
-    client.query<{ exists: boolean }>(
-      "SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(TRIM(email)) = $1) AS exists",
-      [targetEmail],
-    ),
-    client.query<{ count: number }>(
-      `SELECT COUNT(*)::int AS count
-         FROM users
-        WHERE role = 'admin' AND LOWER(TRIM(email)) <> $1`,
-      [targetEmail],
-    ),
-    client.query<{ exists: boolean }>(
-      "SELECT EXISTS(SELECT 1 FROM pending_tester_emails WHERE LOWER(TRIM(email)) = $1) AS exists",
-      [targetEmail],
-    ),
-  ]);
-  return (
-    target.rows[0]?.exists !== true &&
-    historicalAdmins.rows[0]?.count === 1 &&
-    pendingTester.rows[0]?.exists !== true
+): Promise<StagingFounderAdminRecoveryBlockedReason | null> {
+  const target = await client.query<{ exists: boolean }>(
+    "SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(TRIM(email)) = $1) AS exists",
+    [targetEmail],
   );
+  if (target.rows[0]?.exists === true) return "target_account_exists";
+
+  const historicalAdmins = await client.query<{ count: number }>(
+    `SELECT COUNT(*)::int AS count
+       FROM users
+      WHERE role = 'admin' AND LOWER(TRIM(email)) <> $1`,
+    [targetEmail],
+  );
+  if (historicalAdmins.rows[0]?.count !== 1) {
+    return "historical_admin_count_not_one";
+  }
+
+  const pendingTester = await client.query<{ exists: boolean }>(
+    "SELECT EXISTS(SELECT 1 FROM pending_tester_emails WHERE LOWER(TRIM(email)) = $1) AS exists",
+    [targetEmail],
+  );
+  return pendingTester.rows[0]?.exists === true
+    ? "pending_tester_conflict"
+    : null;
 }
 
 /**
@@ -385,9 +397,15 @@ export async function issueStagingFounderAdminRecovery(
   if (eligibility !== "eligible") {
     return { status: "not_requested", reason: eligibility };
   }
-  if (!environment.RESEND_API_KEY?.trim()) return { status: "blocked" };
+  if (!environment.RESEND_API_KEY?.trim()) {
+    return { status: "blocked", reason: "email_provider_unavailable" };
+  }
   const targetEmail = configuredRecoveryTarget(environment);
-  if (!targetEmail) return { status: "blocked" };
+  if (!targetEmail) {
+    throw new Error(
+      "Eligible staging founder recovery has no configured target",
+    );
+  }
 
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + RECOVERY_TTL_MS);
@@ -420,9 +438,10 @@ export async function issueStagingFounderAdminRecovery(
       await client.query("COMMIT");
       return { status: "already_recorded" };
     }
-    if (!(await recoveryPreflight(client, targetEmail))) {
+    const preflightFailure = await recoveryPreflight(client, targetEmail);
+    if (preflightFailure) {
       await client.query("ROLLBACK");
-      return { status: "blocked" };
+      return { status: "blocked", reason: preflightFailure };
     }
     if (currentRecovery) {
       await client.query(
@@ -547,7 +566,7 @@ export async function issueStagingFounderAdminRecovery(
     } finally {
       clientForFailure.release();
     }
-    return { status: "blocked" };
+    return { status: "blocked", reason: "delivery_failed" };
   }
   return { status: "issued" };
 }
