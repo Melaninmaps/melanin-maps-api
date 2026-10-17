@@ -22,4 +22,13 @@ describe("web map discovery card", () => {
     expect(mapSource).toContain("This grouping uses existing listing categories and tags; it does not replace a direct search.");
     expect(mapSource).toContain("A direct request always takes precedence over an exploratory grouping.");
   });
+
+  it("preserves an explicitly selected Explore area when the map provider is unavailable", () => {
+    expect(mapSource).toContain("const resolvedHandoffAreaRef = useRef");
+    expect(mapSource).toContain("if (!handoffArea) return;");
+    expect(mapSource).not.toContain("if (!handoffArea || !ready) return;");
+    expect(mapSource).toContain("resolvedHandoffAreaRef.current = {");
+    expect(mapSource).toContain('data-testid="map-area-handoff-context"');
+    expect(mapSource).toContain("This is the public area selected in Explore, not a live location.");
+  });
 });
