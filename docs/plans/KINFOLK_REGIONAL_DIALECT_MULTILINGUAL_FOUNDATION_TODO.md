@@ -14,7 +14,7 @@
 - [x] Add matching Web and native Kinfolk settings controls without a full translation project.
 - [x] Run focused API, Web, and native source tests and TypeScript checks.
 - [x] Update the cumulative completion matrix with DOCUMENTED, SOURCE IMPLEMENTED, INTEGRATED, STAGING VERIFIED, DEVICE VERIFIED, and MEMBER ACCEPTED statuses.
-- [ ] Commit and publish the isolated source candidate; state remaining provider/staging/audio/device blockers accurately.
+- [x] Commit and publish the isolated source candidate; state remaining provider/staging/audio/device blockers accurately.
 
 ## Deliberately deferred (not implemented or activated)
 

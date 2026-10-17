@@ -58,6 +58,8 @@ The evidence packet must include raw logs, migration result, API requests/respon
 
 ## Regional Dialect Intelligence & Multilingual Foundation — Completion Status
 
+**Source implementation commit:** `d9af34636b7c547758334185cee2705cb1f415b8`
+
 | Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
 |---|---:|---:|---:|---:|---:|---:|---|
 | Cultural-language principle and release criteria (KIN-13–KIN-21) | Yes | Yes | Yes | No | No | No | Existing acceptance criteria remain the controlling staging/device evidence standard. |
