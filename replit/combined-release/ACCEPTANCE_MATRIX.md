@@ -54,3 +54,19 @@ The combined candidate is **NO-GO** until each row is PASS against the reviewed 
 | REL-02 | Submission control | Automatic submission remains off; no public review or production release occurs without owner approval. |
 
 The evidence packet must include raw logs, migration result, API requests/responses with sensitive values redacted, screenshots or recordings, signed artifact IDs and hashes, device/OS matrix, crash-report event IDs, and a final `GO_NO_GO.md`.
+
+
+## Regional Dialect Intelligence & Multilingual Foundation — Completion Status
+
+| Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Cultural-language principle and release criteria (KIN-13–KIN-21) | Yes | Yes | Yes | No | No | No | Existing acceptance criteria remain the controlling staging/device evidence standard. |
+| Explicit English/Spanish foundation and separate regional comprehension/style controls | Yes | Yes | Yes | No | No | No | Stored controls are source complete; detection, switching, and translation remain disabled. |
+| Governed place-language schema, evidence, versioning, and resolver | Yes | Yes | Yes | No | No | No | No production reference is seeded. A controlled source/evidence review must approve references before they can supply provider context. |
+| Bounded transcription context and raw-transcript review | Yes | Yes | Yes | No | No | No | Focused provider-handler regression passed; later staging must confirm request contents and ambiguity behavior. |
+| Reviewed TTS pronunciation guidance | Yes | Yes | Yes | No | No | No | Prompt guidance is source-only. Recorded output, authoritative/local-speaker comparison, and device playback remain required under KIN-17. |
+| Private member corrections | Yes | Yes | Yes | No | No | No | Authenticated create/list/edit/pause/delete source behavior is present; must be exercised on the approved test database. |
+| Web controls | Yes | Yes | Yes | No | No | No | Web typecheck, focused regression suite, and production build passed. |
+| Native controls | Yes | Yes | Yes | No | No | No | Native typecheck (with existing TypeScript 6 compatibility override) and focused regression suite passed; no mobile build or device run was created. |
+
+> **Status boundary:** This source work is not deployable evidence by itself. No migration, deployment, provider activation, seeded reference data, mobile build, Device Farm session, or member acceptance occurred in this workstream.

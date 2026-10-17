@@ -464,6 +464,13 @@ import {
   validateKinfolkPreferenceUpdate,
 } from "../kinfolk/voice-personalization";
 import {
+  buildBoundedVoiceLanguageContext,
+  buildRegionalComprehensionPrompt,
+  buildReviewedPronunciationGuidance,
+  loadReviewedPlaceReferences,
+  normalizeMemberLanguagePreferences,
+} from "../kinfolk/regional-dialect-intelligence";
+import {
   buildVoiceTranscriptMeaningPrompt,
   parseVoiceTranscriptMeaningReview,
 } from "../kinfolk/transcript-meaning-review";
@@ -4167,12 +4174,20 @@ function buildSystemPrompt(opts: {
   const catalogSource = opts.catalogSource ?? "none";
   const aaveLevel = opts.aaveLevel ?? 0;
   const tier = opts.tier ?? "free";
-  const languagePersonalization = buildLanguagePersonalizationPrompt({
-    aaveLevel,
-    regionalFlavor: prefs?.regionalFlavor,
-    destination,
-    intentClass: opts.intentClass,
-  });
+  const languagePreferences = normalizeMemberLanguagePreferences(prefs);
+  const languagePersonalization = [
+    buildLanguagePersonalizationPrompt({
+      aaveLevel,
+      regionalFlavor: prefs?.regionalFlavor,
+      destination,
+      intentClass: opts.intentClass,
+    }),
+    buildRegionalComprehensionPrompt({
+      preferences: languagePreferences,
+      destination,
+      intentClass: opts.intentClass,
+    }),
+  ].filter(Boolean).join("\n\n");
 
   const localTerms = destination ? getCityLocalTerms(destination) : null;
   const cityLanguageRecognitionSection = buildCityLanguageRecognitionPrompt(destination);
@@ -4839,6 +4854,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
               ? prefs.aaveLevel
               : 0,
           regionalFlavor: normalizeRegionalFlavor(prefs.regionalFlavor),
+          ...normalizeMemberLanguagePreferences(prefs),
         }
       : {
           userId: req.user.id,
@@ -4864,6 +4880,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           emojiLevel: "some",
           humorLevel: "light",
           ...defaultVoicePreferences(),
+          ...normalizeMemberLanguagePreferences(null),
         };
     const status = 200;
     res.json({
@@ -4919,6 +4936,12 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     culturalInterests,
     knowBeforeYouGo,
     regionalFlavor,
+    preferredConversationLanguage,
+    regionalSpeechComprehension,
+    regionalSpeakingStyle,
+    pronunciationAssistance,
+    languageDetectionMode,
+    codeSwitchingMode,
     preferredOwnershipTypes,
     ownershipTypes,
     diasporaCountries,
@@ -5021,6 +5044,18 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
         regionalFlavor:
           typeof regionalFlavor === "string" ? regionalFlavor : undefined,
+        preferredConversationLanguage:
+          typeof preferredConversationLanguage === "string" ? preferredConversationLanguage : undefined,
+        regionalSpeechComprehension:
+          typeof regionalSpeechComprehension === "string" ? regionalSpeechComprehension : undefined,
+        regionalSpeakingStyle:
+          typeof regionalSpeakingStyle === "string" ? regionalSpeakingStyle : undefined,
+        pronunciationAssistance:
+          typeof pronunciationAssistance === "boolean" ? pronunciationAssistance : undefined,
+        languageDetectionMode:
+          typeof languageDetectionMode === "string" ? languageDetectionMode : undefined,
+        codeSwitchingMode:
+          typeof codeSwitchingMode === "string" ? codeSwitchingMode : undefined,
         kinfolkVoice:
           typeof kinfolkVoice === "string"
             ? normalizeKinfolkVoice(kinfolkVoice)
@@ -5087,6 +5122,12 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           }),
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
+          ...(typeof preferredConversationLanguage === "string" && { preferredConversationLanguage }),
+          ...(typeof regionalSpeechComprehension === "string" && { regionalSpeechComprehension }),
+          ...(typeof regionalSpeakingStyle === "string" && { regionalSpeakingStyle }),
+          ...(typeof pronunciationAssistance === "boolean" && { pronunciationAssistance }),
+          ...(typeof languageDetectionMode === "string" && { languageDetectionMode }),
+          ...(typeof codeSwitchingMode === "string" && { codeSwitchingMode }),
           ...(typeof kinfolkVoice === "string" && {
             kinfolkVoice: normalizeKinfolkVoice(kinfolkVoice),
           }),
@@ -5165,6 +5206,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           prefs?.supportLensMode ?? resolvedSupportLensMode,
           canonicalOwnershipTypes,
         ),
+        ...normalizeMemberLanguagePreferences(prefs),
       },
     });
   } catch (err) {
@@ -14969,6 +15011,43 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   const timeout = setTimeout(() => controller.abort(), 15_000);
   const startMs = Date.now();
   const transcriptionModel = kinfolkModel("transcription");
+  // Stored consent controls whether the provider can receive this small,
+  // reviewed vocabulary. The request body cannot enable it by itself.
+  let memberLanguagePreferences = normalizeMemberLanguagePreferences(null);
+  let voiceLanguageContext = buildBoundedVoiceLanguageContext({
+    preferences: memberLanguagePreferences,
+    references: [],
+  });
+  try {
+    const [languageRow] = await db
+      .select({
+        preferredConversationLanguage: userPreferencesTable.preferredConversationLanguage,
+        regionalSpeechComprehension: userPreferencesTable.regionalSpeechComprehension,
+        regionalSpeakingStyle: userPreferencesTable.regionalSpeakingStyle,
+        pronunciationAssistance: userPreferencesTable.pronunciationAssistance,
+        languageDetectionMode: userPreferencesTable.languageDetectionMode,
+        codeSwitchingMode: userPreferencesTable.codeSwitchingMode,
+        regionalFlavor: userPreferencesTable.regionalFlavor,
+        personalityMode: userPreferencesTable.personalityMode,
+      })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+    memberLanguagePreferences = normalizeMemberLanguagePreferences(languageRow);
+    const destination = typeof req.body?.destination === "string"
+      ? req.body.destination.slice(0, 120)
+      : null;
+    const references = await loadReviewedPlaceReferences({
+      preferences: memberLanguagePreferences,
+      destination,
+    });
+    voiceLanguageContext = buildBoundedVoiceLanguageContext({
+      preferences: memberLanguagePreferences,
+      references,
+    });
+  } catch {
+    // The optional foundation must never block otherwise available voice input.
+  }
 
   try {
     const file = await createAudioUploadFile(
@@ -14978,7 +15057,14 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     );
 
     const transcription = await audioOpenai.audio.transcriptions.create(
-      { file, model: transcriptionModel },
+      {
+        file,
+        model: transcriptionModel,
+        language: voiceLanguageContext.languageCode,
+        ...(voiceLanguageContext.transcriptionPrompt
+          ? { prompt: voiceLanguageContext.transcriptionPrompt }
+          : {}),
+      },
       { signal: controller.signal },
     );
 
@@ -15009,10 +15095,13 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     // for this one review suggestion. It cannot write or change preferences,
     // and unknown/legacy values fail closed to Off. The raw transcript remains
     // the composer default regardless of this hint.
-    const regionalFlavor = normalizeRegionalFlavor(req.body?.regionalFlavor);
+    const regionalFlavor = memberLanguagePreferences.regionalSpeechComprehension !== "off"
+      ? memberLanguagePreferences.regionalSpeechComprehension
+      : normalizeRegionalFlavor(req.body?.regionalFlavor);
     const reviewPrompt = buildVoiceTranscriptMeaningPrompt({
       transcript: transcriptText,
       regionalFlavor,
+      approvedPlaceNames: voiceLanguageContext.approvedReferences.map((reference) => reference.writtenName),
     });
     let reviewContent: string | null = null;
     if (resolveOpenAIConfiguration()) {
@@ -15169,6 +15258,60 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       speechConfig,
       voicePreferences?.kinfolkVoice,
     );
+    // Proper-name assistance is opt-in and uses only reviewed references. It
+    // never rewrites visible text or asks the provider to imitate an accent.
+    let pronunciationGuidance: string | null = null;
+    try {
+      const preferenceResult = await pool.query<{
+        preferred_conversation_language: string | null;
+        regional_speech_comprehension: string | null;
+        regional_speaking_style: string | null;
+        pronunciation_assistance: boolean | null;
+        language_detection_mode: string | null;
+        code_switching_mode: string | null;
+        regional_flavor: string | null;
+        personality_mode: string | null;
+      }>(
+        `SELECT preferred_conversation_language, regional_speech_comprehension,
+                regional_speaking_style, pronunciation_assistance,
+                language_detection_mode, code_switching_mode, regional_flavor,
+                personality_mode
+           FROM user_preferences WHERE user_id = $1 LIMIT 1`,
+        [req.user.id],
+      );
+      const languagePreferences = normalizeMemberLanguagePreferences(
+        preferenceResult.rows[0]
+          ? {
+              preferredConversationLanguage: preferenceResult.rows[0].preferred_conversation_language,
+              regionalSpeechComprehension: preferenceResult.rows[0].regional_speech_comprehension,
+              regionalSpeakingStyle: preferenceResult.rows[0].regional_speaking_style,
+              pronunciationAssistance: preferenceResult.rows[0].pronunciation_assistance,
+              languageDetectionMode: preferenceResult.rows[0].language_detection_mode,
+              codeSwitchingMode: preferenceResult.rows[0].code_switching_mode,
+              regionalFlavor: preferenceResult.rows[0].regional_flavor,
+              personalityMode: preferenceResult.rows[0].personality_mode,
+            }
+          : null,
+      );
+      const destination = typeof req.body?.destination === "string"
+        ? req.body.destination.slice(0, 120)
+        : null;
+      const references = await loadReviewedPlaceReferences({
+        preferences: languagePreferences,
+        destination,
+      });
+      pronunciationGuidance = buildReviewedPronunciationGuidance({
+        spokenText: text,
+        references,
+      });
+    } catch {
+      // No reference data, a pre-migration schema, or optional query trouble
+      // must never make standard TTS unavailable.
+    }
+    const baseStyleInstruction = buildKinfolkSpeechInstruction(delivery, speakerProfile);
+    const styleInstruction = [baseStyleInstruction, pronunciationGuidance]
+      .filter(Boolean)
+      .join("\n\n");
     const clips: Array<{ audio: string; spokenText: string; bytes: number }> = [];
     for (const spokenText of speechChunks) {
       const audioBuffer = await Promise.race([
@@ -15177,7 +15320,7 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
           voice: speakerProfile.voice,
           format: "wav",
           model: speechConfig.model,
-          styleInstruction: buildKinfolkSpeechInstruction(delivery, speakerProfile),
+          styleInstruction,
         }),
         new Promise<never>((_resolve, reject) => {
           ttsTimer = setTimeout(() => reject(new Error("TTS_TIMEOUT")), 15_000);

@@ -251,6 +251,75 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     CREATE INDEX IF NOT EXISTS community_language_proposals_city_status_idx
       ON community_language_proposals (city, status);`,
   },
+  // Source-only foundation for explicit member language preferences, reviewed
+  // place-language references, and private corrections. It does not seed any
+  // reference, alter existing member settings, or activate provider behavior.
+  {
+    name: "kinfolk_regional_dialect_multilingual_foundation_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS preferred_conversation_language VARCHAR(16) DEFAULT 'en',
+      ADD COLUMN IF NOT EXISTS regional_speech_comprehension VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS regional_speaking_style VARCHAR(24),
+      ADD COLUMN IF NOT EXISTS pronunciation_assistance BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS language_detection_mode VARCHAR(16) NOT NULL DEFAULT 'off',
+      ADD COLUMN IF NOT EXISTS code_switching_mode VARCHAR(16) NOT NULL DEFAULT 'manual';
+    CREATE TABLE IF NOT EXISTS kinfolk_place_language_references (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      canonical_id VARCHAR(160) NOT NULL UNIQUE,
+      written_name VARCHAR(200) NOT NULL,
+      aliases JSONB NOT NULL DEFAULT '[]'::jsonb,
+      language_code VARCHAR(16) NOT NULL DEFAULT 'en',
+      regional_profile VARCHAR(64),
+      locality VARCHAR(120),
+      region VARCHAR(120),
+      country_code VARCHAR(8),
+      pronunciation_guidance VARCHAR(500),
+      review_status VARCHAR(24) NOT NULL DEFAULT 'pending' CHECK (review_status IN ('pending', 'approved', 'retired')),
+      current_version INTEGER NOT NULL DEFAULT 1 CHECK (current_version >= 1),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS kinfolk_place_language_references_review_region_idx
+      ON kinfolk_place_language_references (review_status, regional_profile, written_name);
+    CREATE TABLE IF NOT EXISTS kinfolk_place_language_evidence (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      reference_id UUID NOT NULL REFERENCES kinfolk_place_language_references(id) ON DELETE CASCADE,
+      source_type VARCHAR(48) NOT NULL,
+      source_locator TEXT NOT NULL,
+      source_title VARCHAR(300),
+      evidence_summary VARCHAR(1200) NOT NULL,
+      review_status VARCHAR(24) NOT NULL DEFAULT 'pending' CHECK (review_status IN ('pending', 'approved', 'rejected')),
+      reviewed_by VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+      reviewed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS kinfolk_place_language_evidence_reference_idx
+      ON kinfolk_place_language_evidence (reference_id, review_status, created_at DESC);
+    CREATE TABLE IF NOT EXISTS kinfolk_place_language_reference_revisions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      reference_id UUID NOT NULL REFERENCES kinfolk_place_language_references(id) ON DELETE CASCADE,
+      version INTEGER NOT NULL CHECK (version >= 1),
+      change_reason VARCHAR(500) NOT NULL,
+      snapshot JSONB NOT NULL,
+      changed_by VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (reference_id, version)
+    );
+    CREATE TABLE IF NOT EXISTS kinfolk_member_pronunciation_corrections (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      reference_id UUID REFERENCES kinfolk_place_language_references(id) ON DELETE SET NULL,
+      written_form VARCHAR(200) NOT NULL,
+      pronunciation_guidance VARCHAR(500) NOT NULL,
+      scope VARCHAR(24) NOT NULL DEFAULT 'member_only' CHECK (scope = 'member_only'),
+      consented_at TIMESTAMPTZ NOT NULL,
+      status VARCHAR(24) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'deleted')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS kinfolk_member_pronunciation_corrections_member_idx
+      ON kinfolk_member_pronunciation_corrections (user_id, status, updated_at DESC);`,
+  },
   {
     name: "kinfolk_response_feedback_v1",
     sql: `CREATE TABLE IF NOT EXISTS kinfolk_response_feedback (
@@ -19116,6 +19185,30 @@ export async function ensureKinfolkPrivatePlacesSchema(
     // Do not include driver data: a database error must never echo a ciphertext
     // envelope, an address-derived query, or any raw request payload to logs.
     warn("ensureKinfolkPrivatePlacesSchema failed");
+  }
+}
+
+/**
+ * Creates only additive language-preference and private-correction structure.
+ * It never seeds references, changes an existing preference, or calls a provider.
+ */
+export async function ensureKinfolkRegionalDialectIntelligenceSchemaOnly(): Promise<void> {
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "kinfolk_regional_dialect_multilingual_foundation_v1",
+  );
+  if (!migration) {
+    throw new Error("Regional dialect intelligence migration definition is missing.");
+  }
+  await pool.query(migration.sql);
+  const { rows } = await pool.query<{
+    references_table: string | null;
+    corrections_table: string | null;
+  }>(
+    `SELECT to_regclass('public.kinfolk_place_language_references')::text AS references_table,
+            to_regclass('public.kinfolk_member_pronunciation_corrections')::text AS corrections_table`,
+  );
+  if (!rows[0]?.references_table || !rows[0]?.corrections_table) {
+    throw new Error("Regional dialect intelligence schema verification failed.");
   }
 }
 

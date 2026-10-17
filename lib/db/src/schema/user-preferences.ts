@@ -35,6 +35,25 @@ export const userPreferencesTable = pgTable("user_preferences", {
   culturalInterests: jsonb("cultural_interests").$type<string[]>().default([]),
   knowBeforeYouGo: boolean("know_before_you_go").default(true),
   regionalFlavor: varchar("regional_flavor", { length: 30 }).default("off"),
+  // These fields are intentionally distinct from the legacy regionalFlavor
+  // selection. Null regionalSpeechComprehension preserves that selection for
+  // existing rows until a member makes an explicit new choice.
+  preferredConversationLanguage: varchar("preferred_conversation_language", {
+    length: 16,
+  }).default("en"),
+  regionalSpeechComprehension: varchar("regional_speech_comprehension", {
+    length: 30,
+  }),
+  regionalSpeakingStyle: varchar("regional_speaking_style", { length: 24 }),
+  pronunciationAssistance: boolean("pronunciation_assistance")
+    .notNull()
+    .default(false),
+  languageDetectionMode: varchar("language_detection_mode", { length: 16 })
+    .notNull()
+    .default("off"),
+  codeSwitchingMode: varchar("code_switching_mode", { length: 16 })
+    .notNull()
+    .default("manual"),
   kinfolkVoice: varchar("kinfolk_voice", { length: 20 })
     .notNull()
     .default("onyx"),

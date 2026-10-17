@@ -227,6 +227,10 @@ const ENUM_FIELDS: Record<string, readonly string[]> = {
   ],
   emojiLevel: ["none", "some", "lots"],
   humorLevel: ["none", "light", "playful"],
+  preferredConversationLanguage: ["en", "es"],
+  regionalSpeakingStyle: ["standard", "member_selected"],
+  languageDetectionMode: ["off", "ask", "automatic"],
+  codeSwitchingMode: ["manual", "ask", "automatic"],
 };
 
 const ARRAY_FIELDS = [
@@ -296,13 +300,21 @@ export function validateKinfolkPreferenceUpdate(
     );
   }
   if (
+    body.regionalSpeechComprehension !== undefined &&
+    !isRegionalFlavor(body.regionalSpeechComprehension)
+  ) {
+    issues.push(
+      `regionalSpeechComprehension must be one of: ${REGIONAL_FLAVORS.join(", ")}`,
+    );
+  }
+  if (
     body.aaveLevel !== undefined &&
     (!Number.isInteger(body.aaveLevel) ||
       !AAVE_LEVELS.includes(body.aaveLevel as AaveLevel))
   ) {
     issues.push("aaveLevel must be an integer from 0 through 3");
   }
-  for (const field of ["autoSpeak", "knowBeforeYouGo", "useMemberContextByDefault"] as const) {
+  for (const field of ["autoSpeak", "knowBeforeYouGo", "useMemberContextByDefault", "pronunciationAssistance"] as const) {
     if (body[field] !== undefined && typeof body[field] !== "boolean")
       issues.push(`${field} must be a boolean`);
   }

@@ -50,11 +50,21 @@ function selectedRegionalLanguage(value: unknown): {
 export function buildVoiceTranscriptMeaningPrompt(input: {
   transcript: string;
   regionalFlavor: unknown;
+  /** Reviewed canonical place names only; no free-form location history. */
+  approvedPlaceNames?: readonly string[];
 }): { system: string; user: string } {
   const regional = selectedRegionalLanguage(input.regionalFlavor);
   const regionalInstruction = regional.label
     ? `The member explicitly selected ${regional.label} regional language. You may recognize only a clearly spoken expression from that selected setting, but you must not add slang, infer identity, dialect, location, or language, or rewrite the member into a regional register.`
     : "No member-confirmed regional language applies. Do not infer, add, or normalize regional vocabulary, dialect, identity, or language.";
+  const reviewedPlaceNames = (input.approvedPlaceNames ?? [])
+    .filter((name): name is string => typeof name === "string")
+    .map((name) => name.replace(/\s+/g, " ").trim())
+    .filter((name) => name.length > 0 && name.length <= 200)
+    .slice(0, 8);
+  const placeInstruction = reviewedPlaceNames.length
+    ? `REVIEWED PLACE REFERENCES: The only reviewed canonical forms available are ${reviewedPlaceNames.map((name) => JSON.stringify(name)).join(", ")}. You may use one only when the transcript clearly supports it. If a named place is uncertain or could mean multiple places, keep the raw wording and ask one focused clarification.`
+    : "PLACE REFERENCES: No reviewed place reference applies. Never guess, invent, or silently replace a named place.";
 
   return {
     system: [
@@ -67,6 +77,7 @@ export function buildVoiceTranscriptMeaningPrompt(input: {
       "A rambling or list-like request may be made easier to read only when every requested item remains present.",
       "The member must review or edit the original before anything is sent. A suggestion is optional and never becomes a chat message by itself.",
       regionalInstruction,
+      placeInstruction,
     ].join("\n"),
     user: `Original voice transcript:\n${input.transcript}`,
   };
