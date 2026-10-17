@@ -15,7 +15,16 @@ interface Listing {
 }
 
 const CATEGORIES = ["All", "Furniture", "Clothing", "Electronics", "Books", "Food & Baked Goods", "Art & Crafts", "Services", "Housing", "Other"];
-const CONDITIONS = ["New", "Like New", "Good", "Fair"];
+const CONDITIONS = [
+  { value: "new", label: "New" },
+  { value: "like_new", label: "Like New" },
+  { value: "good", label: "Good" },
+  { value: "fair", label: "Fair" },
+] as const;
+
+function formatConditionLabel(condition: string): string {
+  return CONDITIONS.find(({ value }) => value === condition)?.label ?? condition;
+}
 
 export default function Marketplace() {
   const { data: auth } = useGetCurrentAuthUser();
@@ -38,7 +47,7 @@ export default function Marketplace() {
   const [newCategory, setNewCategory] = useState("Other");
   const [newPrice, setNewPrice] = useState("");
   const [newIsFree, setNewIsFree] = useState(false);
-  const [newCondition, setNewCondition] = useState("Good");
+  const [newCondition, setNewCondition] = useState("good");
   const [newCity, setNewCity] = useState("");
   const [newContact, setNewContact] = useState("");
 
@@ -197,7 +206,7 @@ export default function Marketplace() {
               <span className={`text-2xl font-bold ${selected.isFree ? "text-green-600" : "text-[#CA922B]"}`}>
                 {selected.isFree ? "Free" : selected.price ? `$${selected.price}` : "Make Offer"}
               </span>
-              {selected.condition && <span className="text-sm px-3 py-1 bg-[#FAF6EF] text-[#3A1F0E]/60 rounded-full">{selected.condition}</span>}
+              {selected.condition && <span className="text-sm px-3 py-1 bg-[#FAF6EF] text-[#3A1F0E]/60 rounded-full">{formatConditionLabel(selected.condition)}</span>}
             </div>
             <p className="text-[#3A1F0E]/70 mb-4">{selected.description}</p>
             <div className="flex flex-wrap gap-2 text-sm text-[#3A1F0E]/50 mb-6">
@@ -256,7 +265,7 @@ export default function Marketplace() {
                   <label className="text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wide mb-1 block">Condition</label>
                   <select value={newCondition} onChange={e => setNewCondition(e.target.value)}
                     className="w-full border border-[#E8DDD0] rounded-xl px-4 py-3 text-[#2B1507] focus:outline-none focus:ring-2 focus:ring-[#CA922B]">
-                    {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                    {CONDITIONS.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
                   </select>
                 </div>
               </div>
