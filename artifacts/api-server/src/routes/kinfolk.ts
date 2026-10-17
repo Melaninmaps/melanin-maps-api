@@ -89,6 +89,11 @@ import {
   resolveEntertainmentAvailability,
 } from "../kinfolk/entertainment-availability";
 import {
+  buildEntertainmentConsentPlan,
+  normalizeEntertainmentCostPolicy,
+  normalizeStreamingService,
+} from "../kinfolk/entertainment-personalization";
+import {
   classifyKinfolkRequest,
   buildDiscoveryInstruction,
 } from "../kinfolk/request-classifier";
@@ -8647,6 +8652,41 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
   const memoryEnabled = resolvedMemoryEnabled;
 
+  // A subscription, cancellation, replacement, or included-only statement is
+  // never a silent memory write. It gets a dedicated, reviewable preference
+  // plan before the generic long-term-memory parser sees the same wording.
+  const entertainmentConsentPlan = staffAuditPolicy
+    ? null
+    : buildEntertainmentConsentPlan(message);
+  if (entertainmentConsentPlan) {
+    return void res.json({
+      sessionId,
+      reply: `I heard: “${entertainmentConsentPlan.summary}” Nothing has been saved yet. Review and confirm it below, or dismiss it and keep this conversation unchanged.`,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: ["Open Kinfolk Settings"],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "personalization",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "entertainment_preference_consent",
+      entertainmentConsentPlan,
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: { attempted: false, state: "not_needed", provider: null, fallbackUsed: false, partial: false },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
   // A clear "remember …" statement is a first-party consent command, not an
   // ordinary chat turn. Save exactly the member's own words, acknowledge it,
   // and avoid sending their profile detail to a model unnecessarily.
@@ -8769,10 +8809,38 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // rental, price, cinema, or showtime while no approved provider is configured.
   const entertainmentAvailabilityRequest = parseEntertainmentAvailabilityRequest({
     message,
+    city: typeof cityHint === "string" ? cityHint : undefined,
   });
   if (entertainmentAvailabilityRequest) {
+    const entertainmentPreferenceRow = await pool.query<{
+      streaming_services: unknown;
+      entertainment_country: string | null;
+      entertainment_cost_policy: unknown;
+    }>(
+      `SELECT streaming_services, entertainment_country, entertainment_cost_policy
+         FROM user_preferences WHERE user_id = $1`,
+      [req.user.id],
+    );
+    const savedEntertainmentPreferences = entertainmentPreferenceRow.rows[0];
+    const savedStreamingServices = Array.isArray(savedEntertainmentPreferences?.streaming_services)
+      ? savedEntertainmentPreferences.streaming_services
+          .map(normalizeStreamingService)
+          .filter((service): service is string => Boolean(service))
+      : [];
     const entertainmentAvailability = await resolveEntertainmentAvailability(
-      entertainmentAvailabilityRequest,
+      {
+        ...entertainmentAvailabilityRequest,
+        countryCode:
+          typeof savedEntertainmentPreferences?.entertainment_country === "string"
+            ? savedEntertainmentPreferences.entertainment_country.toUpperCase()
+            : null,
+      },
+      {
+        streamingServices: [...new Set(savedStreamingServices)],
+        entertainmentCostPolicy: normalizeEntertainmentCostPolicy(
+          savedEntertainmentPreferences?.entertainment_cost_policy,
+        ),
+      },
     );
     return void res.json({
       sessionId,
@@ -8788,7 +8856,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       libraryAction: null,
       intentClass: "culture_entertainment",
       sources: [],
-      needsClarification: entertainmentAvailability.status === "invalid_request",
+      needsClarification:
+        entertainmentAvailability.status === "location_required" ||
+        entertainmentAvailability.status === "title_required",
       originalQuery: message,
       answerMode: "entertainment_availability_unavailable",
       entertainmentAvailability,

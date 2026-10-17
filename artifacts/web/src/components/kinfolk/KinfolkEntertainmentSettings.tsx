@@ -22,10 +22,12 @@ const COUNTRIES = [
 type EntertainmentPreferences = {
   streamingServices: string[];
   entertainmentCountry: string | null;
+  entertainmentCostPolicy: "any" | "included_only";
 };
 const empty: EntertainmentPreferences = {
   streamingServices: [],
   entertainmentCountry: null,
+  entertainmentCostPolicy: "any",
 };
 
 function normalize(value: unknown): EntertainmentPreferences {
@@ -42,6 +44,10 @@ function normalize(value: unknown): EntertainmentPreferences {
       /^[A-Z]{2}$/.test(source.entertainmentCountry)
         ? source.entertainmentCountry
         : null,
+    entertainmentCostPolicy:
+      source.entertainmentCostPolicy === "included_only"
+        ? "included_only"
+        : "any",
   };
 }
 
@@ -53,9 +59,12 @@ export function KinfolkEntertainmentSettings() {
   const [status, setStatus] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const response = await fetch(`${BASE}api/kinfolk/preferences`, {
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${BASE}api/kinfolk/entertainment/preferences`,
+      {
+        credentials: "include",
+      },
+    );
     if (!response.ok)
       throw new Error("Entertainment settings could not be loaded.");
     const payload = (await response.json()) as { preferences?: unknown };
@@ -79,12 +88,15 @@ export function KinfolkEntertainmentSettings() {
     setError(null);
     setStatus(null);
     try {
-      const response = await fetch(`${BASE}api/kinfolk/preferences`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(next),
-      });
+      const response = await fetch(
+        `${BASE}api/kinfolk/entertainment/preferences`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(next),
+        },
+      );
       const payload = (await response.json().catch(() => ({}))) as {
         preferences?: unknown;
         error?: string;
@@ -167,6 +179,35 @@ export function KinfolkEntertainmentSettings() {
           </option>
         ))}
       </select>
+      <fieldset className="mt-4 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3">
+        <legend className="px-1 text-xs font-bold text-[#2B1507]">
+          Cost preference
+        </legend>
+        <label className="mt-1 flex cursor-pointer items-start gap-2 text-xs leading-5 text-[#3A1F0E]/70">
+          <input
+            type="checkbox"
+            checked={preferences.entertainmentCostPolicy === "included_only"}
+            disabled={saving}
+            onChange={(event) =>
+              void save({
+                ...preferences,
+                entertainmentCostPolicy: event.target.checked
+                  ? "included_only"
+                  : "any",
+              })
+            }
+            className="mt-1 accent-[#8D5C17]"
+          />
+          <span>
+            <strong className="text-[#2B1507]">
+              Only show options included with my saved services.
+            </strong>
+            <br />
+            When a verified provider is connected, Kinfolk will exclude rentals
+            and purchases. No current availability is shown yet.
+          </span>
+        </label>
+      </fieldset>
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {SERVICES.map((service) => {
           const selected = preferences.streamingServices.includes(service);

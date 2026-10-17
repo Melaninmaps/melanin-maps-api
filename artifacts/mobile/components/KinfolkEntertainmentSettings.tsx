@@ -22,10 +22,12 @@ const COUNTRIES = [
 type Preferences = {
   streamingServices: string[];
   entertainmentCountry: string | null;
+  entertainmentCostPolicy: "any" | "included_only";
 };
 const blank: Preferences = {
   streamingServices: [],
   entertainmentCountry: null,
+  entertainmentCostPolicy: "any",
 };
 
 function base(): string {
@@ -47,6 +49,10 @@ function normalize(value: unknown): Preferences {
       /^[A-Z]{2}$/.test(input.entertainmentCountry)
         ? input.entertainmentCountry
         : null,
+    entertainmentCostPolicy:
+      input.entertainmentCostPolicy === "included_only"
+        ? "included_only"
+        : "any",
   };
 }
 
@@ -63,9 +69,12 @@ export function KinfolkEntertainmentSettings() {
         throw new Error(
           "Please sign in again to manage entertainment preferences.",
         );
-      const response = await fetch(`${base()}/api/kinfolk/preferences`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${base()}/api/kinfolk/entertainment/preferences`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!response.ok)
         throw new Error("Entertainment settings could not be loaded.");
       const payload = (await response.json()) as { preferences?: unknown };
@@ -93,14 +102,17 @@ export function KinfolkEntertainmentSettings() {
       const token = await SecureStore.getItemAsync("auth_session_token");
       if (!token || !base())
         throw new Error("Please sign in again before saving.");
-      const response = await fetch(`${base()}/api/kinfolk/preferences`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${base()}/api/kinfolk/entertainment/preferences`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(next),
         },
-        body: JSON.stringify(next),
-      });
+      );
       const payload = (await response.json().catch(() => ({}))) as {
         preferences?: unknown;
         error?: string;
@@ -178,6 +190,59 @@ export function KinfolkEntertainmentSettings() {
           </TouchableOpacity>
         ))}
       </View>
+      <Text
+        style={{
+          color: colors.foreground,
+          fontFamily: "Inter_600SemiBold",
+          marginTop: 4,
+        }}
+      >
+        Cost preference
+      </Text>
+      <TouchableOpacity
+        disabled={saving}
+        accessibilityRole="checkbox"
+        accessibilityState={{
+          checked: preferences.entertainmentCostPolicy === "included_only",
+        }}
+        onPress={() =>
+          void save({
+            ...preferences,
+            entertainmentCostPolicy:
+              preferences.entertainmentCostPolicy === "included_only"
+                ? "any"
+                : "included_only",
+          })
+        }
+        style={{
+          borderWidth: 1,
+          borderColor:
+            preferences.entertainmentCostPolicy === "included_only"
+              ? colors.primary
+              : colors.border,
+          backgroundColor:
+            preferences.entertainmentCostPolicy === "included_only"
+              ? colors.primary + "18"
+              : colors.card,
+          padding: 10,
+          borderRadius: 10,
+        }}
+      >
+        <Text style={{ color: colors.foreground }}>
+          {preferences.entertainmentCostPolicy === "included_only" ? "✓ " : ""}
+          Only show options included with my saved services
+        </Text>
+        <Text
+          style={{
+            color: colors.mutedForeground,
+            marginTop: 4,
+            lineHeight: 17,
+          }}
+        >
+          A verified provider will exclude rentals and purchases. Kinfolk does
+          not show live availability yet.
+        </Text>
+      </TouchableOpacity>
       <Text
         style={{
           color: colors.foreground,
