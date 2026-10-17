@@ -2745,7 +2745,9 @@ export default function Profile() {
         {impact &&
           (impact.reviewCount > 0 ||
             impact.communityPosts > 0 ||
-            impact.savedBusinesses > 0) && (
+            impact.savedBusinesses > 0 ||
+            impact.eventsAttended > 0 ||
+            impact.referralsMade > 0) && (
             <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
               <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-5 flex items-center gap-2">
                 <Zap className="w-5 h-5 text-[#CA922B]" /> My Community Impact

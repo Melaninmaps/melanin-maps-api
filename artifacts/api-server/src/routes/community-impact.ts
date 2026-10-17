@@ -23,9 +23,9 @@ router.get("/community-impact/:userId", async (req: Request, res: Response) => {
     );
     const businessesReviewedCount = Number(businessesReviewedRes.rows[0]?.cnt ?? 0);
 
-    // Events attended (RSVP'd yes)
+    // Current RSVPs. The event_rsvps table represents a going RSVP by row presence.
     const eventsRes = await pool.query<{ cnt: string }>(
-      `SELECT count(*)::int AS cnt FROM event_rsvps WHERE user_id = $1 AND status = 'going'`,
+      `SELECT count(*)::int AS cnt FROM event_rsvps WHERE user_id = $1`,
       [userId]
     );
     const eventsAttended = Number(eventsRes.rows[0]?.cnt ?? 0);
