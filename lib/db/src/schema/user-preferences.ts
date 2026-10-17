@@ -35,6 +35,10 @@ export const userPreferencesTable = pgTable("user_preferences", {
   culturalInterests: jsonb("cultural_interests").$type<string[]>().default([]),
   knowBeforeYouGo: boolean("know_before_you_go").default(true),
   regionalFlavor: varchar("regional_flavor", { length: 30 }).default("off"),
+  // Member-selected only. These are not inferred from entertainment chat and
+  // do not prove current provider availability in any country.
+  streamingServices: jsonb("streaming_services").$type<string[]>().default([]),
+  entertainmentCountry: varchar("entertainment_country", { length: 2 }),
   kinfolkVoice: varchar("kinfolk_voice", { length: 20 })
     .notNull()
     .default("onyx"),

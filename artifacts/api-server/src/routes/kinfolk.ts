@@ -4839,6 +4839,12 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
               ? prefs.aaveLevel
               : 0,
           regionalFlavor: normalizeRegionalFlavor(prefs.regionalFlavor),
+          streamingServices: normalizeArr(prefs.streamingServices),
+          entertainmentCountry:
+            typeof prefs.entertainmentCountry === "string" &&
+            /^[A-Z]{2}$/i.test(prefs.entertainmentCountry)
+              ? prefs.entertainmentCountry.toUpperCase()
+              : null,
         }
       : {
           userId: req.user.id,
@@ -4863,6 +4869,8 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           personalityMode: "neighborhood_guide",
           emojiLevel: "some",
           humorLevel: "light",
+          streamingServices: [],
+          entertainmentCountry: null,
           ...defaultVoicePreferences(),
         };
     const status = 200;
@@ -4919,6 +4927,8 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     culturalInterests,
     knowBeforeYouGo,
     regionalFlavor,
+    streamingServices,
+    entertainmentCountry,
     preferredOwnershipTypes,
     ownershipTypes,
     diasporaCountries,
@@ -5021,6 +5031,15 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
         regionalFlavor:
           typeof regionalFlavor === "string" ? regionalFlavor : undefined,
+        streamingServices: Array.isArray(streamingServices)
+          ? (streamingServices as string[])
+          : undefined,
+        entertainmentCountry:
+          typeof entertainmentCountry === "string"
+            ? entertainmentCountry.trim().toUpperCase()
+            : entertainmentCountry === null
+              ? null
+              : undefined,
         kinfolkVoice:
           typeof kinfolkVoice === "string"
             ? normalizeKinfolkVoice(kinfolkVoice)
@@ -5087,6 +5106,15 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           }),
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
+          ...(Array.isArray(streamingServices) && {
+            streamingServices: streamingServices as string[],
+          }),
+          ...(entertainmentCountry !== undefined && {
+            entertainmentCountry:
+              typeof entertainmentCountry === "string"
+                ? entertainmentCountry.trim().toUpperCase()
+                : null,
+          }),
           ...(typeof kinfolkVoice === "string" && {
             kinfolkVoice: normalizeKinfolkVoice(kinfolkVoice),
           }),
