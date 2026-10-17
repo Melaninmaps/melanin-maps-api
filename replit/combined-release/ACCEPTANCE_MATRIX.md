@@ -76,7 +76,7 @@ The evidence packet must include raw logs, migration result, API requests/respon
 
 ## Family Mode Kinfolk Chat Safety — Source Status
 
-**Source candidate:** Pending commit on `fix/kinfolk-family-mode-safety-20261016`.
+**Source candidate:** [`85e066dbbd8917ac4a1dddaddea6f78e9515f5ef`](https://github.com/Melaninmaps/melanin-maps-api/commit/85e066dbbd8917ac4a1dddaddea6f78e9515f5ef) on `fix/kinfolk-family-mode-safety-20261016`.
 
 | Area | DOCUMENTED | SOURCE IMPLEMENTED | INTEGRATED | STAGING VERIFIED | DEVICE VERIFIED | MEMBER ACCEPTED | Evidence / remaining dependency |
 |---|---:|---:|---:|---:|---:|---:|---|
