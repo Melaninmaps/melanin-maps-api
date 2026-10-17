@@ -1,5 +1,7 @@
 # Kinfolk Entertainment Discovery & Availability — Source Handoff
 
+> **Superseded for continuation purposes:** Read [the Personalization & Provider Readiness handoff](KINFOLK_ENTERTAINMENT_PERSONALIZATION_CONTINUATION_HANDOFF_2026-10-16.md) and [the single ChatGPT handoff](CHATGPT_HANDOFF_KINFOLK_ENTERTAINMENT_DISCOVERY_2026-10-16.md) for the current status, continuation commit, provider decision, and next authorization boundary.
+
 **Status:** **SOURCE IMPLEMENTED — PROVIDER GATED**  
 **Source branch:** `feature/kinfolk-regional-dialect-multilingual-foundation-20261016`  
 **Source implementation commit:** `1f00d195cb12ded23a0ccded6fbb80bbc7e52ec4`  
