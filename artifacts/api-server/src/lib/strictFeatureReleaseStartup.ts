@@ -2,6 +2,7 @@ import {
   communityBusinessIsPublicFunctionIsSafe,
   communityPublicViewDefinitionIsSafe,
 } from "./startup-migrations";
+import { privatePlacesRuntimeState } from "../kinfolk/private-places-policy";
 
 export const NON_STRICT_STARTUP_SCHEMA_OPERATIONS = [
   "ensureKinfolkPreferredNameSchema",
@@ -473,7 +474,7 @@ export function strictFeatureReleaseSchemaRequirementsFromEnvironment(
 ): StrictFeatureReleaseSchemaRequirements {
   return {
     requireQuestionImageSchema: Boolean(environment.KINFOLK_MEDIA_BUCKET_ID?.trim()),
-    requirePrivatePlacesSchema: environment.KINFOLK_PRIVATE_PLACES_ENABLED === "true",
+    requirePrivatePlacesSchema: privatePlacesRuntimeState(environment).enabled,
   };
 }
 

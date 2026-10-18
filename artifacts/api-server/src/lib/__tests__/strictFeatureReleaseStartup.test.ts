@@ -30,6 +30,7 @@ const safePublicBusinessFunction = `SELECT COALESCE(p_status, 'active') NOT IN (
   );`;
 const safePublicBusinessesView = `SELECT b.* FROM public.businesses b
   WHERE public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)`;
+const validPrivatePlacesKeyring = `v1:${Buffer.alloc(32, 7).toString("base64")}`;
 
 describe("strict feature-release startup", () => {
   it("runs only the read-only compatibility preflight in strict mode", async () => {
@@ -259,6 +260,7 @@ describe("strict feature-release startup", () => {
     expect(strictFeatureReleaseSchemaRequirementsFromEnvironment({
       KINFOLK_MEDIA_BUCKET_ID: "bucket-id",
       KINFOLK_PRIVATE_PLACES_ENABLED: "true",
+      KINFOLK_PRIVATE_PLACES_ENCRYPTION_KEYS: validPrivatePlacesKeyring,
     })).toEqual({
       requireQuestionImageSchema: true,
       requirePrivatePlacesSchema: true,
@@ -268,6 +270,26 @@ describe("strict feature-release startup", () => {
     })).toEqual({
       requireQuestionImageSchema: false,
       requirePrivatePlacesSchema: false,
+    });
+    expect(strictFeatureReleaseSchemaRequirementsFromEnvironment({
+      KINFOLK_PRIVATE_PLACES_ENABLED: "true",
+    })).toEqual({
+      requireQuestionImageSchema: false,
+      requirePrivatePlacesSchema: false,
+    });
+    expect(strictFeatureReleaseSchemaRequirementsFromEnvironment({
+      KINFOLK_PRIVATE_PLACES_ENABLED: "true",
+      KINFOLK_PRIVATE_PLACES_ENCRYPTION_KEYS: "v1:not-a-32-byte-key",
+    })).toEqual({
+      requireQuestionImageSchema: false,
+      requirePrivatePlacesSchema: false,
+    });
+    expect(strictFeatureReleaseSchemaRequirementsFromEnvironment({
+      KINFOLK_PRIVATE_PLACES_ENABLED: "true",
+      KINFOLK_PRIVATE_PLACES_ENCRYPTION_KEYS: validPrivatePlacesKeyring,
+    })).toEqual({
+      requireQuestionImageSchema: false,
+      requirePrivatePlacesSchema: true,
     });
   });
 
