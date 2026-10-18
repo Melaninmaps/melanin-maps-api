@@ -361,7 +361,10 @@ describe("ordinary waitlist registration visibility", () => {
       .post("/api/waitlist")
       .send({ email: firstEntry.email, signupSource: "web" });
     expect(firstResponse.status).toBe(201);
-    expect(firstResponse.body.created).toBe(true);
+    expect(firstResponse.body).toMatchObject({
+      created: true,
+      referralCode: firstEntry.referralCode,
+    });
 
     const repeatedEntry = ordinaryEntry({ signupSources: "web,ios" });
     queueRegistration(repeatedEntry, firstEntry);
@@ -373,6 +376,7 @@ describe("ordinary waitlist registration visibility", () => {
     expect(secondResponse.body).toMatchObject({
       created: false,
       signupSources: "web,ios",
+      referralCode: firstEntry.referralCode,
     });
     expect(harness.state.insertedValues).toHaveLength(1);
     expect(harness.state.updates).toContainEqual(

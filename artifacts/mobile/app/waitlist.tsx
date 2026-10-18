@@ -289,8 +289,8 @@ export default function WaitlistScreen() {
   const [cityNomination, setCityNomination] = useState("");
   const [joinError, setJoinError] = useState("");
   const [testerAccessActive, setTesterAccessActive] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
 
-  const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
 
   const emailValid = email.includes("@") && email.includes(".");
@@ -329,6 +329,7 @@ export default function WaitlistScreen() {
         position?: number;
         familyAdded?: number;
         testerAccessActive?: boolean;
+        referralCode?: string;
         error?: string;
       };
       if (!res.ok) {
@@ -338,6 +339,7 @@ export default function WaitlistScreen() {
       if (data.position) setPosition(data.position);
       if (data.familyAdded) setFamilyAdded(data.familyAdded);
       setTesterAccessActive(data.testerAccessActive === true);
+      setReferralCode(data.referralCode ?? code);
       setSubmitted(true);
     } catch {
       setJoinError("We could not connect. Please check your connection and try again.");

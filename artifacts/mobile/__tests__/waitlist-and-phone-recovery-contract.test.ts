@@ -33,6 +33,16 @@ describe("mobile waitlist and password recovery contract", () => {
     expect(mobileWaitlist).toContain("No wait for approval is required");
   });
 
+  it("uses the existing API's canonical referral code for post-signup sharing", () => {
+    expect(mobileWaitlist).toContain('const [referralCode, setReferralCode] = useState("");');
+    expect(mobileWaitlist).toContain("referralCode?: string;");
+    expect(mobileWaitlist).toContain("setReferralCode(data.referralCode ?? code);");
+    expect(mobileWaitlist.indexOf("setReferralCode(data.referralCode ?? code);")).toBeLessThan(
+      mobileWaitlist.indexOf("setSubmitted(true);"),
+    );
+    expect(mobileWaitlist).toContain("referralLink = REFERRAL_URL + referralCode");
+  });
+
   it("keeps email recovery and adds verified-phone recovery rather than phone login", () => {
     expect(mobileRecovery).toContain('useState<"email" | "phone">("email")');
     expect(mobileRecovery).toContain('"/api/auth/phone/forgot-password/send"');
