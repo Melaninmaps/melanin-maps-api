@@ -121,8 +121,8 @@ describe("FullMapView locality-first contracts", () => {
 
   it("does not fit an ordinary map to a country-wide coordinate spread", () => {
     expect(fullMapSource).toContain("if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;");
-    expect(fullMapSource).toContain("const pinsToFit = submittedBusinessSearch.trim()");
-    expect(fullMapSource).toContain("? focusedMappedBusinesses");
+    expect(fullMapSource).toContain("const pinsToFit = hasSubmittedBusinessSearch");
+    expect(fullMapSource).toContain("? currentMappedBusinesses");
     expect(fullMapSource).toContain(": nearbyCanonicalMapPins;");
     expect(fullMapSource).toContain("const coordinates = pinsToFit.map");
   });
@@ -147,7 +147,7 @@ describe("FullMapView locality-first contracts", () => {
   });
 
   it("keeps a submitted service search focused on its matches and makes those listings selectable", () => {
-    expect(fullMapSource).toContain("if (submittedBusinessSearch.trim()) return focusedMappedBusinesses;");
+    expect(fullMapSource).toContain("if (hasSubmittedBusinessSearch) return currentMappedBusinesses;");
     expect(fullMapSource).toContain('accessibilityLabel="Matched business cards"');
     expect(fullMapSource).toContain("const submittedMappedBusinessResults");
     expect(fullMapSource).toContain("Choose one of {mapped.length} mapped");
@@ -155,31 +155,59 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("{mapLocality && !hasSubmittedBusinessSearch && (");
   });
 
-  it("keeps ordinary service browse local while allowing a deliberate public business name to show its pin", () => {
+  it("keeps ordinary service browse local while making a deliberate public business name a direct listing, never a Map pin", () => {
     expect(isDeliberateMapBusinessNameSearch("AMINA")).toBe(true);
+    expect(isDeliberateMapBusinessNameSearch("Amina Restaurant")).toBe(true);
     expect(isDeliberateMapBusinessNameSearch("restaurants")).toBe(false);
+    expect(isDeliberateMapBusinessNameSearch("vegan restaurants")).toBe(false);
+    expect(isDeliberateMapBusinessNameSearch("Black-owned restaurants")).toBe(false);
     expect(isDeliberateMapBusinessNameSearch("girls clothes")).toBe(false);
+    expect(isDeliberateMapBusinessNameSearch("Café Mūse")).toBe(true);
+    expect(isDeliberateMapBusinessNameSearch("Atlanta")).toBe(false);
     expect(
       buildBusinessesRequestUrl("https://api.example.test", {
         search: "AMINA",
         directName: true,
+        offset: 50,
+        limit: 50,
       }),
-    ).toBe("https://api.example.test/api/businesses?search=AMINA&lookup=direct_name");
+    ).toBe("https://api.example.test/api/businesses?search=AMINA&lookup=direct_name&offset=50&limit=50");
     expect(fullMapSource).toContain("const deliberateMapNameSearch = isDeliberateMapBusinessNameSearch");
     expect(fullMapSource).toContain("directName: deliberateMapNameSearch");
     expect(fullMapSource).toContain('searchScope: businessSearchScope');
-    expect(fullMapSource).toContain("const showDirectMatchOnMap = useCallback");
-    expect(fullMapSource).toContain("Show pin");
-  });
-
-  it("centers a deliberate exact-name search on the matched pin and opens its MWM card", () => {
-    expect(fullMapSource).toContain("const pendingBusinessFocusRef = useRef<Business | null>(null)");
-    expect(fullMapSource).toContain("if (directMatchHasCoordinates && directMatch) return [directMatch]");
-    expect(fullMapSource).toContain("const focusDirectBusinessOnMap = useCallback");
-    expect(fullMapSource).toContain("pendingBusinessFocusRef.current = business");
-    expect(fullMapSource).toContain("const pendingBusiness = pendingBusinessFocusRef.current");
-    expect(fullMapSource).toContain("latitudeDelta: 0.025");
-    expect(fullMapSource).toContain("if (directMatchHasCoordinates) return;");
+    expect(businessHookSource).toContain('"direct_named_safety_context"');
+    expect(fullMapSource).toContain('businessSearchScope === "direct_named_safety_context"');
+    expect(fullMapSource).toContain("const directMatches = hasCurrentBusinessSearchResults");
+    expect(fullMapSource).toContain("{directMatches.map((business) => (");
+    expect(fullMapSource).toContain("if (deliberateMapNameSearch) return [];");
+    expect(fullMapSource).not.toContain("if (directMatch) return [];");
+    expect(businessHookSource).toContain("const lastSuccessfulResultRef = useRef<SuccessfulBusinessesCache | null>(null);");
+    expect(businessHookSource).toContain("const requestKey = JSON.stringify({");
+    expect(businessHookSource).toContain("const canRestoreCachedResult = cachedResult?.requestKey === requestKey;");
+    expect(businessHookSource).toContain("setBusinesses(canRestoreCachedResult ? cachedResult.businesses : []);");
+    expect(businessHookSource).toContain("setSearchScope(canRestoreCachedResult ? cachedResult.searchScope : null);");
+    expect(businessHookSource).toContain("resultRequestKey: string | null;");
+    expect(businessHookSource).toContain("setResultRequestKey(requestKey);");
+    expect(businessHookSource).toContain("resultRequestKey,");
+    expect(fullMapSource).toContain("requestKey: businessSearchRequestKey");
+    expect(fullMapSource).toContain("resultRequestKey: businessSearchResultRequestKey");
+    expect(fullMapSource).toContain("businessSearchResultRequestKey === businessSearchRequestKey");
+    expect(fullMapSource).toContain("const currentMappedBusinesses = hasCurrentBusinessSearchResults");
+    expect(fullMapSource).toContain("including after clearing a\n  // direct-name search");
+    expect(fullMapSource).toContain("if (hasSubmittedBusinessSearch) return currentMappedBusinesses;");
+    expect(fullMapSource).toContain("currentMappedBusinesses.slice(0, 5)");
+    expect(businessHookSource).not.toContain("lastSuccessfulBusinessesRef");
+    expect(fullMapSource).toContain("const [directNameOffset, setDirectNameOffset] = useState(0)");
+    expect(fullMapSource).toContain("offset: deliberateMapNameSearch ? directNameOffset : 0");
+    expect(fullMapSource).toContain('accessibilityLabel="More exact-name listings"');
+    expect(fullMapSource).toContain('accessibilityLabel="Previous exact-name listings"');
+    expect(fullMapSource).toContain('accessibilityLabel={`View ${business.name} listing`}');
+    expect(businessHookSource).toContain('category: directName ? "All" : category');
+    expect(businessHookSource).toContain('city: directName ? "" : city');
+    expect(businessHookSource).toContain('state: directName ? "" : state');
+    expect(fullMapSource).toContain('pathname: "/business/[id]", params: { id: business.id }');
+    expect(fullMapSource).toContain("View listing");
+    expect(fullMapSource).not.toContain("showDirectMatchOnMap");
   });
 
   it("offers 50 miles for business discovery without widening public-facility availability", () => {

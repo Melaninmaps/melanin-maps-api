@@ -2,8 +2,9 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import supertest from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { captureLibraryGrowthSignal, poolQuery } = vi.hoisted(() => ({
+const { captureLibraryGrowthSignal, findSafeSearchClarification, poolQuery } = vi.hoisted(() => ({
   captureLibraryGrowthSignal: vi.fn().mockResolvedValue(undefined),
+  findSafeSearchClarification: vi.fn().mockReturnValue(null),
   poolQuery: vi.fn(),
 }));
 
@@ -12,6 +13,11 @@ vi.mock("@workspace/db", () => ({
   pool: { query: poolQuery },
 }));
 
+vi.mock("@workspace/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@workspace/constants")>();
+  return { ...actual, findSafeSearchClarification };
+});
+
 vi.mock("../../lib/library-growth-engine", () => ({
   captureLibraryGrowthSignal,
   classifyGrowthSensitivity: () => "standard",
@@ -19,6 +25,7 @@ vi.mock("../../lib/library-growth-engine", () => ({
 
 import universalSearchRouter, {
   appendBusinessRadiusFilter,
+  isCatalogSearchClarificationEligible,
   searchPublishedMapEntities,
 } from "../universal-search";
 
@@ -91,6 +98,111 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "Authentication required" });
     expect(poolQuery).not.toHaveBeenCalled();
+  });
+
+  it("finds an exact public directory name nationwide without promoting that business through partial Discovery search", async () => {
+    const calls: QueryCall[] = [];
+    const ordinaryDirectoryBusiness = {
+      ...publicBusiness(),
+      id: "ordinary-directory-market",
+      name: "Ordinary Market",
+      ownership_designations: ["Black-Owned"],
+      black_owned: true,
+      ownership_claim: "source-claimed ownership",
+    };
+    poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
+      calls.push([query, params]);
+      if (
+        query.includes("FROM public.public_businesses b")
+        && query.includes("business_source_directory_receipts")
+        && query.includes("LOWER(BTRIM(COALESCE(b.name, ''))) = LOWER(BTRIM($1))")
+      ) {
+        return { rows: [ordinaryDirectoryBusiness] };
+      }
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({
+        q: "ordinary market",
+        city: "Washington",
+        state: "DC",
+        lat: 38.9072,
+        lng: -77.0369,
+        designations: "latino-hispanic",
+        resultTypes: "businesses",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.businesses).toEqual([
+      expect.objectContaining({
+        id: "ordinary-directory-market",
+        name: "Ordinary Market",
+        matchTier: "exact_name",
+        matchReason: 'Exact public directory business name matches "ordinary market"',
+      }),
+    ]);
+    expect(response.body.results.businesses[0]).not.toHaveProperty("isExactPublicDirectoryLookup");
+    expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipDesignations");
+    expect(response.body.results.businesses[0]).not.toHaveProperty("blackOwned");
+    expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipClaim");
+    expect(findSafeSearchClarification).toHaveBeenCalledWith({
+      query: "ordinary market",
+      catalogTerms: [],
+    });
+
+    const directNameRead = calls.find(([query]) =>
+      query.includes("business_source_directory_receipts")
+      && query.includes("LOWER(BTRIM(COALESCE(b.name, ''))) = LOWER(BTRIM($1))"),
+    );
+    expect(directNameRead).toBeDefined();
+    expect(directNameRead![0]).not.toContain("b.name ILIKE $1");
+    expect(directNameRead![0]).not.toContain("b.city ILIKE");
+    expect(directNameRead![0]).not.toContain("b.state ILIKE");
+    expect(directNameRead![0]).not.toContain("REGEXP_REPLACE");
+    expect(directNameRead![0].slice(directNameRead![0].indexOf("WHERE"))).not.toContain("ownership_designations");
+    expect(directNameRead![1]).toEqual(["ordinary market"]);
+    expect(calls.filter(([query]) => query.includes("FROM public.public_businesses b"))).toHaveLength(1);
+  });
+
+  it("compares Unicode names directly instead of collapsing unrelated names through ASCII-only normalization", async () => {
+    const calls: QueryCall[] = [];
+    const tokyoBusiness = {
+      ...publicBusiness(),
+      id: "tokyo-directory-business",
+      name: "東京",
+      ownership_designations: [],
+      black_owned: false,
+    };
+    poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
+      calls.push([query, params]);
+      if (
+        query.includes("FROM public.public_businesses b")
+        && query.includes("business_source_directory_receipts")
+        && params?.[0] === "東京"
+      ) return { rows: [tokyoBusiness] };
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({ q: "東京", resultTypes: "businesses" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.businesses).toEqual([
+      expect.objectContaining({ id: "tokyo-directory-business", name: "東京" }),
+    ]);
+    const directNameRead = calls.find(([query, params]) =>
+      query.includes("business_source_directory_receipts") && params?.[0] === "東京",
+    );
+    expect(directNameRead?.[0]).toContain("LOWER(BTRIM(COALESCE(b.name, ''))) = LOWER(BTRIM($1))");
+    expect(directNameRead?.[0]).not.toContain("REGEXP_REPLACE");
+  });
+
+  it("never lets a direct-only public-directory record supply catalog search suggestions", () => {
+    expect(isCatalogSearchClarificationEligible({ isExactPublicDirectoryLookup: true })).toBe(false);
+    expect(isCatalogSearchClarificationEligible({})).toBe(true);
   });
 
   it("does not persist the raw query or a zero-result inquiry for exactly smart_search plus discovery_v1", async () => {
@@ -237,7 +349,10 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     };
     poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
       calls.push([query, params]);
-      if (query.includes("FROM public.public_businesses b")) {
+      if (
+        query.includes("FROM public.public_businesses b")
+        && query.includes("b.ownership_claim = 'community_reported_minority_owned'")
+      ) {
         return { rows: [legacyMinorityBusiness] };
       }
       return { rows: [] };
@@ -258,7 +373,9 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipClaim");
 
     const businessReads = calls.filter(([query]) =>
-      query.includes("FROM public.public_businesses b") && query.includes("LIMIT"),
+      query.includes("FROM public.public_businesses b")
+      && query.includes("b.ownership_claim = 'community_reported_minority_owned'")
+      && query.includes("LIMIT"),
     );
     expect(businessReads.length).toBeGreaterThan(0);
     for (const [query, params] of businessReads) {

@@ -1,5 +1,8 @@
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
-import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
+import {
+  isDeliberateBusinessNameLookup,
+  OWNERSHIP_FILTER_OPTIONS,
+} from "@workspace/constants";
 import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
 import {
   countMapDiscoveryFocuses,
@@ -21,30 +24,30 @@ import AddPlaceModal from "@/components/AddPlaceModal";
 import UniversalSearchResults, { type UniversalSearchResult } from "@/components/UniversalSearchResults";
 
 const BASE = import.meta.env.BASE_URL;
+const DIRECT_NAME_PAGE_SIZE = 20;
 
 /** Guard external URLs before rendering — rejects javascript:, data:, relative,
  *  and malformed values. Returns the absolute href or null. */
 function safePublicUrl(value?: string | null): string | null {
   if (!value) return null;
   try {
-    const url = new URL(value.trim());
-    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null;
   } catch {
     return null;
   }
 }
 
-/** Mirrors the server's narrow direct-name exception; category browse never uses it. */
-function isDeliberateBusinessNameLookup(value: string): boolean {
-  const normalized = value.trim().replace(/\s+/g, " ");
-  if (normalized.length < 3 || normalized.length > 100) return false;
-  const generic = new Set([
-    "business", "businesses", "restaurant", "restaurants", "bar", "bars",
-    "club", "clubs", "hospital", "hospitals", "doctor", "doctors", "near me",
-    "philly", "philadelphia", "houston", "atlanta", "minneapolis",
-  ]);
-  const words = normalized.toLocaleLowerCase("en-US").split(" ");
-  return words.length <= 7 && words.some((word) => !generic.has(word));
+/**
+ * Keep the member's literal name intact for strict direct lookup. Local Map
+ * parsing intentionally reduces categories (for example, "restaurant"), but
+ * a legitimate business name may itself contain one of those words.
+ */
+function literalDirectNameCandidate(query: string, hasParsedLocation: boolean): string {
+  const trimmed = query.trim();
+  return hasParsedLocation
+    ? trimmed.replace(/\s+(?:in|near|at|around)\s+.+$/i, "").trim()
+    : trimmed;
 }
 
 function escapeHtml(value: string): string {
@@ -281,6 +284,13 @@ export default function MapPage() {
   }, []);
   const removeMapDesignation = async (designation: string) => {
     setSupportLensError(null);
+    // The preference write changes this Map's discovery contract. Cancel any
+    // pending search before awaiting it so an older direct-only response cannot
+    // briefly commit results or pins while the mutation is in flight.
+    invalidateUniversalSearch();
+    setUniversalResults(null);
+    setDirectNamePage(null);
+    setDetectedLocation(null);
     const result = await persistReducedSupportLensRemoval({
       baseUrl: `${BASE.replace(/\/$/, "")}/`, savedDesignations, removeDesignation: designation,
     });
@@ -291,7 +301,6 @@ export default function MapPage() {
       setSavedDesignations(update.preferredOwnershipTypes);
       setMapSupportScope(update.preferredOwnershipTypes.length ? null : "all_businesses");
       setMapRefreshGeneration((generation) => generation + 1);
-      setUniversalResults(null);
     }
   };
   const { data: authData } = useGetCurrentAuthUser();
@@ -392,6 +401,10 @@ export default function MapPage() {
   );
   const appliedHandoffQueryRef = useRef<string | null>(null);
   const appliedHandoffAreaRef = useRef<string | null>(null);
+  // Every explicit Map search owns one monotonically increasing turn. A late
+  // response from an earlier direct-name lookup must never overwrite a newer
+  // ordinary search and accidentally turn a direct-only listing into a pin.
+  const universalSearchRequestIdRef = useRef(0);
   // Prevent home-city geocoder and GPS from overriding a user-initiated search viewport
   const searchViewportLockedRef = useRef(false);
   const searchViewportSequenceRef = useRef(0);
@@ -438,6 +451,20 @@ export default function MapPage() {
     directNameLookup?: boolean;
   } | null>(null);
   const [universalLoading, setUniversalLoading] = useState(false);
+  const [directNamePage, setDirectNamePage] = useState<{
+    offset: number;
+    limit: number;
+    total: number;
+  } | null>(null);
+
+  const invalidateUniversalSearch = useCallback(() => {
+    universalSearchRequestIdRef.current += 1;
+    setUniversalLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!universalResults?.directNameLookup) setDirectNamePage(null);
+  }, [universalResults?.directNameLookup]);
 
   // Detected geography from the last natural-language search.
   // Used to pan the map and show honest zero-result messaging.
@@ -736,9 +763,11 @@ export default function MapPage() {
     return true;
   }, []);
 
-  const runUniversalSearch = useCallback(async (queryOverride?: string) => {
+  const runUniversalSearch = useCallback(async (queryOverride?: string, directNameOffset = 0) => {
     const q = (queryOverride ?? search).trim();
     if (!q || q.length < 2) return;
+    const requestId = ++universalSearchRequestIdRef.current;
+    const isCurrentRequest = () => universalSearchRequestIdRef.current === requestId;
     const localIntent = parseLocalMapSearch(q);
     // Lock synchronously, before geo-extract awaits, so an older asynchronous
     // browser GPS callback can never recenter over a city or ZIP the member typed.
@@ -750,10 +779,69 @@ export default function MapPage() {
     // A direct request always takes precedence over an exploratory grouping.
     setMapDiscoveryFocus("all");
     setUniversalResults(null);
+    setDirectNamePage(null);
     setUniversalLoading(true);
     setDetectedLocation(null);
 
     const apiBase = import.meta.env.VITE_API_URL ?? "";
+    const parsed = parseBusinessMapSearchPhrase(q);
+    const directNameQuery = literalDirectNameCandidate(q, Boolean(localIntent.city));
+    const deliberateDirectNameLookup = isDeliberateBusinessNameLookup(directNameQuery)
+      && !parsed.ownership;
+
+    // Deliberate business-name retrieval is a self-contained, exact public
+    // Directory read. Do it before—and independently from—geocoding or
+    // Universal Search, so an outage in either cannot downgrade it into a
+    // nearby/category search or create Map pins from ordinary records.
+    if (deliberateDirectNameLookup) {
+      let directNameBusinesses: any[] = [];
+      let directNamePagination: { offset: number; limit: number; total: number } | null = null;
+      try {
+        const direct = new URLSearchParams({
+          search: directNameQuery,
+          lookup: "direct_name",
+          limit: String(DIRECT_NAME_PAGE_SIZE),
+          offset: String(directNameOffset),
+        });
+        const directRes = await fetch(`${apiBase}/api/businesses?${direct}`, { credentials: "include" });
+        if (!isCurrentRequest()) return;
+        if (directRes.ok) {
+          const directPayload = await directRes.json();
+          if (!isCurrentRequest()) return;
+          if (directPayload?.searchScope === "direct_named_safety_context" && Array.isArray(directPayload.businesses)) {
+            directNameBusinesses = directPayload.businesses;
+            const total = typeof directPayload.total === "number" && Number.isFinite(directPayload.total)
+              ? Math.max(0, directPayload.total)
+              : directNameBusinesses.length;
+            const offset = typeof directPayload?.page?.offset === "number"
+              ? Math.max(0, directPayload.page.offset)
+              : directNameOffset;
+            const limit = typeof directPayload?.page?.limit === "number"
+              ? Math.max(1, directPayload.page.limit)
+              : DIRECT_NAME_PAGE_SIZE;
+            directNamePagination = { offset, limit, total };
+          }
+        }
+      } catch { /* A direct lookup failure is an honest empty exact result. */ }
+
+      if (!isCurrentRequest()) return;
+      setUniversalResults({
+        query: q,
+        totalResults: directNamePagination?.total ?? directNameBusinesses.length,
+        fallbackMessage: null,
+        results: {
+          businesses: directNameBusinesses,
+          events: [],
+          heritage: [],
+          libraryTopics: [],
+        },
+        exactDirectorySearch: true,
+        directNameLookup: true,
+      });
+      setDirectNamePage(directNamePagination);
+      setUniversalLoading(false);
+      return;
+    }
 
     // Step 1 — geography extraction + map pan
     // Sends q to /api/maps/geo-extract which strips intent words (e.g.
@@ -770,11 +858,13 @@ export default function MapPage() {
           )}`,
           { credentials: "include" }
         );
+        if (!isCurrentRequest()) return;
         if (geoRes.ok) {
           const gd = await geoRes.json() as {
             hasLocation: boolean; locationQuery: string | null;
             contentQuery: string; lat: number | null; lng: number | null;
           };
+          if (!isCurrentRequest()) return;
           if (gd.hasLocation && typeof gd.lat === "number" && typeof gd.lng === "number") {
             geoLat = gd.lat;
             geoLng = gd.lng;
@@ -818,8 +908,10 @@ export default function MapPage() {
         p.set("lng", String(userCoords.lng));
       }
       const res = await fetch(`${apiBase}/api/search/universal?${p}`, { credentials: "include" });
+      if (!isCurrentRequest()) return;
       if (res.ok) {
         const payload = await res.json();
+        if (!isCurrentRequest()) return;
         const universalBusinesses: any[] = payload?.results?.businesses ?? [];
 
         // A structured phrase ("Black-owned restaurants in Philadelphia, PA")
@@ -828,7 +920,6 @@ export default function MapPage() {
         // broad universal search happened to return unrelated records.
         let phraseBusinesses: any[] = [];
         let usedExactDirectorySearch = false;
-        const parsed = parseBusinessMapSearchPhrase(q);
         if (parsed.ownership || parsed.category || parsed.city) {
           try {
             const bp = new URLSearchParams({ limit: "200" });
@@ -839,52 +930,40 @@ export default function MapPage() {
             if (parsed.category) bp.set("category", parsed.category);
             if (mapSupportScope) bp.set("supportScope", mapSupportScope);
             const bizRes = await fetch(`${apiBase}/api/businesses?${bp}`, { credentials: "include" });
+            if (!isCurrentRequest()) return;
             if (bizRes.ok) {
               const bizPayload = await bizRes.json();
+              if (!isCurrentRequest()) return;
               phraseBusinesses = Array.isArray(bizPayload.businesses) ? bizPayload.businesses : [];
               usedExactDirectorySearch = phraseBusinesses.length > 0;
             }
           } catch { /* exact directory request failed — continue with universal results */ }
         }
 
-        let directNameBusinesses: any[] = [];
-        if (phraseBusinesses.length === 0 && universalBusinesses.length === 0 && isDeliberateBusinessNameLookup(q)) {
-          try {
-            const direct = new URLSearchParams({ search: q.trim(), lookup: "direct_name", limit: "20" });
-            const directRes = await fetch(`${apiBase}/api/businesses?${direct}`, { credentials: "include" });
-            if (directRes.ok) {
-              const directPayload = await directRes.json();
-              if (directPayload?.searchScope === "explicit_public_listing" && Array.isArray(directPayload.businesses)) {
-                directNameBusinesses = directPayload.businesses;
-              }
-            }
-          } catch { /* never broaden an unavailable direct-name lookup into category discovery */ }
-        }
-
         const finalBusinesses = phraseBusinesses.length > 0
           ? phraseBusinesses
-          : directNameBusinesses.length > 0
-            ? directNameBusinesses
-            : universalBusinesses;
-        const finalPayload = phraseBusinesses.length > 0 || directNameBusinesses.length > 0
+          : universalBusinesses;
+        const finalPayload = phraseBusinesses.length > 0
           ? {
               ...payload,
               results: { ...payload.results, businesses: finalBusinesses },
               totalResults: finalBusinesses.length,
               fallbackMessage: null,
-              exactDirectorySearch: usedExactDirectorySearch || directNameBusinesses.length > 0,
-              directNameLookup: directNameBusinesses.length > 0,
+              exactDirectorySearch: usedExactDirectorySearch,
+              directNameLookup: false,
             }
           : payload;
 
+        if (!isCurrentRequest()) return;
         setUniversalResults(finalPayload);
+        setDirectNamePage(null);
 
         // Fit canvas to MWM results so the viewport reflects where businesses
         // actually are, not just the geocoded city center.
         // When coordinates are available, LocalBusinessResults.onPinsChange → applyLocalMapViewport
         // manages the business viewport. Skip fitMapToBusinessResults to avoid overriding it.
         const useLocalSearch = (geoLat !== null && geoLng !== null) || (userCoords !== null && localIntent.usesDeviceLocation === true);
-        if (!useLocalSearch && !directNameBusinesses.length) {
+        if (!useLocalSearch) {
           const fitted = fitMapToBusinessResults(finalBusinesses);
           if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
             // No MWM records with valid coords — keep the geocoded pan.
@@ -900,7 +979,9 @@ export default function MapPage() {
         }
       }
     } catch { /* fall through to client-side filtered list */ }
-    finally { setUniversalLoading(false); }
+    finally {
+      if (isCurrentRequest()) setUniversalLoading(false);
+    }
   }, [search, userCoords, mapSupportScope, fitMapToBusinessResults, clearEssentialServices]);
 
   // ── Apply directory ?q= handoff exactly once after the map is ready ──────────
@@ -1127,6 +1208,15 @@ export default function MapPage() {
       ? source.filter((business: any) => matchesMapDiscoveryFocus(business, mapDiscoveryFocus))
       : source;
   }, [isDiscoveryFilterActive, mapDiscoveryFocus, mapDiscoveryRecords, universalResults]);
+  // Exact-name isolation is intent-based, not response-based. It must cover
+  // the interval while the direct read is pending or unavailable as well as a
+  // completed exact result, so no ordinary local-query component can mount.
+  const activeMapSearchIntent = parseLocalMapSearch(search);
+  const activeOwnershipFilter = parseBusinessMapSearchPhrase(search).ownership;
+  const activeDirectNameQuery = literalDirectNameCandidate(search, Boolean(activeMapSearchIntent.city));
+  const directNameLookupOwnsNoPins = businessSearchActive
+    && isDeliberateBusinessNameLookup(activeDirectNameQuery)
+    && !activeOwnershipFilter;
   const discoveryScopeLabel = activeLocalScope?.label ?? "this map area";
   const activeDiscoveryLabel = isDiscoveryFilterActive
     ? discoveryCounts.find((focus) => focus.id === mapDiscoveryFocus)?.label ?? "Your selection"
@@ -1134,6 +1224,7 @@ export default function MapPage() {
   const activateMapDiscoveryFocus = useCallback((focus: MapDiscoveryFocus) => {
     // A discovery card is an intentional, reversible map filter. It never
     // changes listings, pins, saves, or the member's stored preferences.
+    invalidateUniversalSearch();
     setSearch("");
     setUniversalResults(null);
     setDetectedLocation(null);
@@ -1141,7 +1232,7 @@ export default function MapPage() {
     setBusinessSearchActive(true);
     setLegendFilter("business");
     setSidebarOpen(true);
-  }, []);
+  }, [invalidateUniversalSearch]);
 
   // One canonical `items` array drives every non-business pin and its matching
   // category row. A panel can never truthfully show zero while these records
@@ -1662,10 +1753,14 @@ export default function MapPage() {
     // viewport. Direct search and discovery filters remain narrow overlays;
     // their result sets are the only time the default viewport collection is
     // reduced. A local-search layer continues to own its own result markers.
-    const markerBusinesses = businessSearchActive || isDiscoveryFilterActive
+    const markerBusinesses = directNameLookupOwnsNoPins
+      ? []
+      : businessSearchActive || isDiscoveryFilterActive
       ? displayedBusinessResults
       : businesses;
-    const showBiz = !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
+    const showBiz = !directNameLookupOwnsNoPins
+      && !localSearchOwnsPins
+      && (!legendFilter || legendFilter === "business");
     const activeIds = new Set(markerBusinesses.map((business: any) => business.id as string));
     markerClustererRef.current?.clearMarkers();
     markerClustererRef.current = null;
@@ -1680,7 +1775,7 @@ export default function MapPage() {
       clusterer.clearMarkers();
       if (markerClustererRef.current === clusterer) markerClustererRef.current = null;
     };
-  }, [businesses, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, detectedLocation, userCoords, search]);
+  }, [businesses, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, detectedLocation, userCoords, search, directNameLookupOwnsNoPins]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
   const activeCulturalSites = legendFilter && legendFilter !== "business"
@@ -1801,10 +1896,12 @@ export default function MapPage() {
                 <input
                   value={search}
                   onChange={(e) => {
+                    invalidateUniversalSearch();
                     setSearch(e.target.value);
                     setMapDiscoveryFocus("all");
                     if (businessSearchActive) setBusinessSearchActive(false);
-                    if (universalResults) setUniversalResults(null);
+                    setUniversalResults(null);
+                    setDirectNamePage(null);
                     if (detectedLocation) setDetectedLocation(null);
                     localSearchMarkersRef.current.forEach((m) => m.setMap(null));
                     localSearchMarkersRef.current = [];
@@ -1816,6 +1913,7 @@ export default function MapPage() {
                 {search && (
                   <button
                     onClick={() => {
+                      invalidateUniversalSearch();
                       setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
                       localSearchMarkersRef.current.forEach((m) => m.setMap(null)); localSearchMarkersRef.current = [];
                     }}
@@ -2192,7 +2290,7 @@ export default function MapPage() {
                 )}
 
                 {/* Business results — local-scoped endpoint when coordinates are known */}
-                {!isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
+                {!directNameLookupOwnsNoPins && !isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
                   <LocalBusinessResults
                     query={search}
                     subject={parseLocalMapSearch(search).subject}
@@ -2207,12 +2305,33 @@ export default function MapPage() {
                     }
                     onPinsChange={(pins, area) => applyLocalMapViewport(makeMapAdapter(), area, pins)}
                   />
-                ) : !isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch ? (
+                ) : !directNameLookupOwnsNoPins && !isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch ? (
                   <div className="p-8 text-center">
                     <p className="text-sm font-semibold text-[#2B1507] mb-1">Add a city or ZIP code</p>
                     <p className="text-xs text-[#3A1F0E]/50 leading-relaxed">
                       Search nearby needs a location. Try “bookstores in Atlanta” or enable your location.
                     </p>
+                  </div>
+                ) : directNameLookupOwnsNoPins && displayedBusinessResults.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-[#2B1507] mb-1">No exact Directory listing found</p>
+                    <p className="text-xs text-[#3A1F0E]/50 mb-4 leading-relaxed">
+                      Check the business name and try again. Exact lookup does not substitute nearby or recommended businesses.
+                    </p>
+                    <button
+                      onClick={() => {
+                        invalidateUniversalSearch();
+                        setSearch("");
+                        setMapDiscoveryFocus("all");
+                        setBusinessSearchActive(false);
+                        setUniversalResults(null);
+                        setDirectNamePage(null);
+                      }}
+                      className="text-xs font-bold text-[#CA922B] hover:underline"
+                    >
+                      Clear exact search
+                    </button>
                   </div>
                 ) : displayedBusinessResults.length === 0 ? (
                   <div className="p-8 text-center">
@@ -2229,6 +2348,7 @@ export default function MapPage() {
                         {/* "View all" resets the content filter, keeps the map centered on detected city */}
                         <button
                           onClick={() => {
+                            invalidateUniversalSearch();
                             setSearch(detectedLocation.name);
                             setUniversalResults(null);
                             setDetectedLocation(null);
@@ -2252,7 +2372,7 @@ export default function MapPage() {
                         Keep exact focus
                       </button>
                       <button
-                        onClick={() => { setSearch(""); setMapDiscoveryFocus("all"); setUniversalResults(null); }}
+                        onClick={() => { invalidateUniversalSearch(); setSearch(""); setMapDiscoveryFocus("all"); setUniversalResults(null); }}
                         className="px-4 py-2 rounded-full border border-[#3A1F0E]/20 text-[#3A1F0E] text-xs font-bold"
                       >
                         Choose another community
@@ -2272,6 +2392,13 @@ export default function MapPage() {
                       <button
                         onClick={() => { void (async () => {
                           setSupportLensError(null);
+                          // Do this before the network request, not only on a
+                          // successful response, for the same stale-result
+                          // protection as the individual-removal path.
+                          invalidateUniversalSearch();
+                          setUniversalResults(null);
+                          setDirectNamePage(null);
+                          setDetectedLocation(null);
                           try {
                             const response = await fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, {
                             method: "PUT", credentials: "include",
@@ -2306,6 +2433,7 @@ export default function MapPage() {
                     </button>
                     <button
                       onClick={() => {
+                        invalidateUniversalSearch();
                         setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
                         localSearchMarkersRef.current.forEach((m) => m.setMap(null)); localSearchMarkersRef.current = [];
                       }}
@@ -2317,12 +2445,15 @@ export default function MapPage() {
                 ) : (
                   displayedBusinessResults.map((biz: any) => {
                 const isRouting = routingBizId === biz.id;
+                const isDirectListingResult = universalResults?.directNameLookup === true;
                 return (
                   <div
                     key={biz.id}
-                    onClick={() => !apiKeyError && selectBusiness(biz.id, biz)}
+                    onClick={() => {
+                      if (!apiKeyError && !isDirectListingResult) selectBusiness(biz.id, biz);
+                    }}
                     className={`p-4 border-b border-[#3A1F0E]/6 transition-colors flex gap-3 ${
-                      !apiKeyError ? "cursor-pointer" : ""
+                      !apiKeyError && !isDirectListingResult ? "cursor-pointer" : ""
                     } ${selected === biz.id ? "bg-[#CA922B]/8 border-l-2 border-l-[#CA922B]" : "hover:bg-[#FAF6EF]"}`}
                   >
                     <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-[#3A1F0E]/8">
@@ -2357,24 +2488,54 @@ export default function MapPage() {
                       >
                         View →
                       </Link>
-                      <button
-                        onClick={(e) => handleDirections(biz, e)}
-                        title={isPaidMember ? "Get in-app directions" : "Open in Google Maps"}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
-                          isRouting
-                            ? "bg-[#CA922B]/20 text-[#CA922B] animate-pulse"
-                            : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#CA922B]/15 hover:text-[#CA922B]"
-                        }`}
-                      >
-                        {isRouting ? <Navigation2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
-                        {isPaidMember ? "Route" : "Directions"}
-                      </button>
+                      {!isDirectListingResult && (
+                        <button
+                          onClick={(e) => handleDirections(biz, e)}
+                          title={isPaidMember ? "Get in-app directions" : "Open in Google Maps"}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
+                            isRouting
+                              ? "bg-[#CA922B]/20 text-[#CA922B] animate-pulse"
+                              : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#CA922B]/15 hover:text-[#CA922B]"
+                          }`}
+                        >
+                          {isRouting ? <Navigation2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
+                          {isPaidMember ? "Route" : "Directions"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
               })
             )
           }
+          {universalResults?.directNameLookup && directNamePage && directNamePage.total > displayedBusinessResults.length && (
+            <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-[#3A1F0E]/6 bg-[#FAF6EF]">
+              <button
+                type="button"
+                aria-label="Previous exact-name listings"
+                disabled={directNamePage.offset === 0 || universalLoading}
+                onClick={() => void runUniversalSearch(search, Math.max(0, directNamePage.offset - directNamePage.limit))}
+                className="px-3 py-1.5 rounded-lg border border-[#3A1F0E]/20 text-[11px] font-bold text-[#3A1F0E] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="text-[10px] font-semibold text-[#3A1F0E]/60 text-center">
+                {directNamePage.offset + 1}–{directNamePage.offset + displayedBusinessResults.length} of {directNamePage.total} exact-name listings
+              </span>
+              <button
+                type="button"
+                aria-label="More exact-name listings"
+                disabled={
+                  universalLoading ||
+                  directNamePage.offset + displayedBusinessResults.length >= directNamePage.total
+                }
+                onClick={() => void runUniversalSearch(search, directNamePage.offset + directNamePage.limit)}
+                className="px-3 py-1.5 rounded-lg bg-[#CA922B] text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                More
+              </button>
+            </div>
+          )}
         </div>
         )
       )}

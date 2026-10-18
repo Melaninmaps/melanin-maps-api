@@ -1,11 +1,7 @@
-import { normalizeOwnershipDesignationFilterIds } from "@workspace/constants";
-
-const MAP_DIRECT_NAME_GENERIC_TERMS = new Set([
-  "a", "an", "and", "attorney", "bar", "bars", "bookstore", "business",
-  "businesses", "cafe", "clothes", "club", "clubs", "doctor", "doctors",
-  "food", "girls", "hair", "hospital", "hospitals", "near", "me", "pharmacy",
-  "restaurant", "restaurants", "salon", "service", "services", "shop", "stores",
-]);
+import {
+  isDeliberateBusinessNameLookup,
+  normalizeOwnershipDesignationFilterIds,
+} from "@workspace/constants";
 
 /**
  * Deliberate name lookup is the narrow public-listing exception to ordinary
@@ -13,16 +9,7 @@ const MAP_DIRECT_NAME_GENERIC_TERMS = new Set([
  * browse cannot become an all-public search.
  */
 export function isDeliberateMapBusinessNameSearch(value: string): boolean {
-  const normalized = value.trim().replace(/\s+/g, " ");
-  if (normalized.length < 3 || normalized.length > 100) return false;
-  const words = normalized
-    .toLocaleLowerCase("en-US")
-    .split(" ")
-    .map((word) => word.replace(/[^a-z0-9'&-]/g, ""))
-    .filter(Boolean);
-  return words.length > 0 && words.length <= 7 && words.some(
-    (word) => !MAP_DIRECT_NAME_GENERIC_TERMS.has(word),
-  );
+  return isDeliberateBusinessNameLookup(value);
 }
 
 export function buildBusinessesRequestUrl(
@@ -36,6 +23,9 @@ export function buildBusinessesRequestUrl(
     supportScope?: "all_businesses" | "strict_documented_designations";
     /** Validated direct-name lookup: public listing discovery, never promotion. */
     directName?: boolean;
+    /** Pagination is used only to expose every same-name direct listing. */
+    offset?: number;
+    limit?: number;
   },
 ): string {
   const params = new URLSearchParams();
@@ -47,6 +37,12 @@ export function buildBusinessesRequestUrl(
   const designationKey = normalizeOwnershipDesignationFilterIds(options.designations ?? []).join(",");
   if (designationKey) params.set("designations", designationKey);
   if (options.supportScope) params.set("supportScope", options.supportScope);
+  if (typeof options.offset === "number" && Number.isInteger(options.offset) && options.offset > 0) {
+    params.set("offset", String(options.offset));
+  }
+  if (typeof options.limit === "number" && Number.isInteger(options.limit) && options.limit > 0) {
+    params.set("limit", String(options.limit));
+  }
   const query = params.toString();
   return `${apiBase}/api/businesses${query ? `?${query}` : ""}`;
 }

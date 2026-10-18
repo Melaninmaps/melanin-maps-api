@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isDeliberateBusinessNameLookup } from "@workspace/constants";
 import { describe, expect, it } from "vitest";
 
 const source = (relative: string) => readFileSync(
@@ -19,6 +20,18 @@ const discoverySources = {
 };
 
 describe("documented Discovery surface coverage", () => {
+  it("shares a Unicode-safe direct-name classifier while rejecting generic browse phrases", () => {
+    expect(isDeliberateBusinessNameLookup("Café Mūse")).toBe(true);
+    expect(isDeliberateBusinessNameLookup("AMINA")).toBe(true);
+    expect(isDeliberateBusinessNameLookup("Amina Restaurant")).toBe(true);
+    expect(isDeliberateBusinessNameLookup("restaurants")).toBe(false);
+    expect(isDeliberateBusinessNameLookup("vegan restaurants")).toBe(false);
+    expect(isDeliberateBusinessNameLookup("Black-owned restaurants")).toBe(false);
+    expect(isDeliberateBusinessNameLookup("Black / African American-Owned businesses")).toBe(false);
+    expect(isDeliberateBusinessNameLookup("girls clothes")).toBe(false);
+    expect(isDeliberateBusinessNameLookup("Atlanta")).toBe(false);
+  });
+
   it("uses the shared documented eligibility policy on every ordinary discovery and recommendation surface", () => {
     for (const [surface, contents] of Object.entries(discoverySources)) {
       expect(contents, surface).toContain("mwmCoreDiscoveryPolicy");
@@ -28,9 +41,10 @@ describe("documented Discovery surface coverage", () => {
     expect(discoverySources.businessDirectory).toContain('"map"');
   });
 
-  it("keeps source-backed general browse separate from Kinfolk and map promotion", () => {
+  it("keeps ordinary browse, Map, and Kinfolk discovery in the documented promotion catalog", () => {
     expect(discoverySources.businessDirectory).toContain("mwmPublicDirectorySqlPredicate");
-    expect(discoverySources.businessDirectory).toContain("hasGeoFilter || designationFilterIds.length > 0");
+    expect(discoverySources.businessDirectory).toContain("conditions.push(promotionCondition);");
+    expect(discoverySources.businessDirectory).not.toContain("generalDirectoryCondition");
     expect(discoverySources.businessDirectory).toContain("mwmDiasporaPromotionSqlPredicate");
     expect(discoverySources.kinfolk).not.toContain("mwmPublicDirectorySqlPredicate");
   });
@@ -46,8 +60,15 @@ describe("documented Discovery surface coverage", () => {
     const kinfolk = discoverySources.kinfolk;
     const businesses = discoverySources.businessDirectory;
     expect(kinfolk).toContain("Exact named lookup is a safety/context read");
-    expect(businesses).toContain("isDeliberateNamedBusinessLookup(directSearchText)");
-    expect(businesses).toContain("REGEXP_REPLACE(LOWER(COALESCE(${businessesTable.name}, ''))");
+    expect(businesses).toContain('req.query.lookup !== "direct_name" || !isEligibleDirectNameLookupRequest(req, search)');
+    expect(businesses).toContain("const strictDirectNameLookup = directNameLookupRequested");
+    expect(businesses).toContain("DIRECT_NAME_LOOKUP_REQUIRES_UNFILTERED_EXACT_NAME");
+    expect(businesses).toContain("&& !isEligibleDirectNameLookupRequest(req, directSearchText)");
+    expect(businesses).not.toContain("if (businesses.length === 0 && directNamedSafetyLookup");
+    expect(businesses).toContain("LOWER(BTRIM(COALESCE(${businessesTable.name}, ''))) = LOWER(BTRIM(${directSearchText}))");
+    expect(businesses).toContain('mwmPublicDirectorySqlPredicate("public.public_businesses.id")');
+    expect(businesses).toContain("!strictDirectNameLookup &&");
+    expect(businesses).not.toContain("normalizedDirectBusinessName");
     expect(businesses).not.toContain("ilike(businessesTable.name, `${directSearchText}%`)");
   });
 });

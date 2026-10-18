@@ -44,6 +44,9 @@ export {
   matchesBusinessCategoryIntent,
 } from "./business-search-normalization";
 
+// ── Direct public-directory name lookup ───────────────────────────────────
+export { isDeliberateBusinessNameLookup } from "./business-name-lookup";
+
 // ── Conservative search clarification ─────────────────────────────────────
 export {
   findSafeSearchClarification,

@@ -468,6 +468,7 @@ export function FullMapView({
   // for a city.
   const [businessSearchInput, setBusinessSearchInput] = useState("");
   const [submittedBusinessSearch, setSubmittedBusinessSearch] = useState("");
+  const [directNameOffset, setDirectNameOffset] = useState(0);
   // Reversible local grouping for the map's actual loaded records. It never
   // persists assumptions about a member or suppresses records from search.
   const [mapDiscoveryFocus, setMapDiscoveryFocus] = useState<MapDiscoveryFocus>("all");
@@ -587,6 +588,10 @@ export function FullMapView({
     submittedBusinessSearch,
   );
 
+  useEffect(() => {
+    setDirectNameOffset(0);
+  }, [submittedBusinessSearch]);
+
   // GPS remains on-device. Confirmed device coordinates are proximity-ranked;
   // a profile home locality is a city/state fallback. No ordinary map request
   // is allowed to omit both locality sources.
@@ -594,7 +599,10 @@ export function FullMapView({
     businesses,
     isLoading: isBusinessSearchLoading,
     error: businessSearchError,
+    total: businessSearchTotal,
     searchScope: businessSearchScope,
+    requestKey: businessSearchRequestKey,
+    resultRequestKey: businessSearchResultRequestKey,
   } = useBusinesses({
     search: submittedBusinessSearch,
     latitude: deliberateMapNameSearch ? null : proximityMapLocation?.latitude ?? null,
@@ -605,8 +613,16 @@ export function FullMapView({
     designations: designationIds,
     supportScope: memberPreferences?.supportLensMode,
     directName: deliberateMapNameSearch,
+    offset: deliberateMapNameSearch ? directNameOffset : 0,
+    limit: deliberateMapNameSearch ? 50 : undefined,
     enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null,
   });
+  const hasSubmittedBusinessSearch = submittedBusinessSearch.trim().length > 0;
+  // A request change commits before useEffect starts its fetch. Until the hook
+  // returns a result for that exact request, never reuse an older direct-only
+  // Directory listing as an ordinary map marker, card, or camera target.
+  const hasCurrentBusinessSearchResults =
+    businessSearchResultRequestKey === businessSearchRequestKey;
   // This is the same small, canonical MWM marker feed that keeps the website
   // populated. It is intentionally separate from locality search: a location
   // permission change or an empty 50-mile local response must not clear a pin
@@ -671,6 +687,12 @@ export function FullMapView({
     () => mapped.filter((business) => matchesMapDiscoveryFocus(business, mapDiscoveryFocus)),
     [mapped, mapDiscoveryFocus],
   );
+  // Never reuse results from a prior request, including after clearing a
+  // direct-name search. Until the hook confirms the current ordinary-local
+  // request, the stable canonical pins are the only map fallback.
+  const currentMappedBusinesses = hasCurrentBusinessSearchResults
+    ? focusedMappedBusinesses
+    : [];
   const nearbyCanonicalMapPins = useMemo(() => {
     // Canonical pins remain available during an empty local refresh, but they
     // must still respect the member-selected radius so the map count and camera
@@ -684,27 +706,35 @@ export function FullMapView({
       matchesMapDiscoveryFocus(business, mapDiscoveryFocus),
     );
   }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
-  const directMatch = businessSearchScope === "explicit_public_listing"
-    ? businesses[0] ?? null
-    : null;
+  const directMatches = hasCurrentBusinessSearchResults
+    && businessSearchScope === "direct_named_safety_context"
+    ? businesses
+    : [];
+  const directMatch = directMatches[0] ?? null;
+  const directNamePageStart = directMatches.length > 0 ? directNameOffset + 1 : 0;
+  const directNamePageEnd = directNameOffset + directMatches.length;
+  const hasPreviousDirectNamePage = directNameOffset > 0;
+  const hasMoreDirectNameMatches = directNamePageEnd < businessSearchTotal;
   const displayBusinessPins = useMemo(() => {
     // An exact-name safety/context lookup may identify a retained profile, but
-    // it never creates a map marker. Only the source-qualified map feed can.
-    if (directMatch) return [];
+    // it never creates a map marker. Keep that policy tied to the submitted
+    // direct-name mode rather than a response label so a failed refresh cannot
+    // reclassify cached direct-only listings as map pins.
+    if (deliberateMapNameSearch) return [];
     // A submitted service or keyword search is also a deliberate map request.
     // Do not leave the ordinary nearby fallback pins layered over its results:
     // that hid the matching markers (for example, four hair stores beneath
     // 100+ nearby pins) and made the map appear not to respond to search.
-    if (submittedBusinessSearch.trim()) return focusedMappedBusinesses;
+    if (hasSubmittedBusinessSearch) return currentMappedBusinesses;
     // Local/direct results have richer card data and therefore win when the
     // same business exists in both layers. Canonical pins remain underneath as
     // a stable fallback so valid markers do not disappear during a scope change.
-    const localById = new Map(focusedMappedBusinesses.map((business) => [business.id, business]));
+    const localById = new Map(currentMappedBusinesses.map((business) => [business.id, business]));
     nearbyCanonicalMapPins.forEach((business) => {
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [directMatch, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
+  }, [currentMappedBusinesses, deliberateMapNameSearch, hasSubmittedBusinessSearch, nearbyCanonicalMapPins]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -714,10 +744,9 @@ export function FullMapView({
     : mapLocality?.city
       ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
       : "in your map area";
-  const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
   const submittedMappedBusinessResults = useMemo(
-    () => hasSubmittedBusinessSearch ? focusedMappedBusinesses.slice(0, 5) : [],
-    [focusedMappedBusinesses, hasSubmittedBusinessSearch],
+    () => hasSubmittedBusinessSearch ? currentMappedBusinesses.slice(0, 5) : [],
+    [currentMappedBusinesses, hasSubmittedBusinessSearch],
   );
   const focusDirectBusinessOnMap = useCallback((business: Business) => {
     setSelectedBusiness(business);
@@ -937,10 +966,10 @@ export function FullMapView({
     // Local search results stay first. When a location/radius refresh returns
     // no local rows, fit the stable website-equivalent pins instead of leaving
     // a 50-mile choice on a blank map.
-    const pinsToFit = submittedBusinessSearch.trim()
-      ? focusedMappedBusinesses
-      : focusedMappedBusinesses.length > 0
-        ? focusedMappedBusinesses
+    const pinsToFit = hasSubmittedBusinessSearch
+      ? currentMappedBusinesses
+      : currentMappedBusinesses.length > 0
+        ? currentMappedBusinesses
         : nearbyCanonicalMapPins;
     if (!mapReady || pinsToFit.length === 0 || hasFitToBusinessesRef.current)
       return;
@@ -951,7 +980,7 @@ export function FullMapView({
     if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
     scheduleMapAction(() => safelyFitToCoordinates(coordinates), 600);
-  }, [directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch]);
+  }, [currentMappedBusinesses, directMatch, hasSubmittedBusinessSearch, mapReady, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -1975,7 +2004,9 @@ export function FullMapView({
                 : businessSearchError
                   ? "Couldn’t search local listings. Try again."
                   : directMatch
-                    ? `${directMatch.name} is available by direct name for safety or context. It is not included in map discovery.`
+                    ? directMatches.length === 1
+                      ? `${directMatch.name} is available by exact name from the public Directory. It is not included in map discovery.`
+                      : `${directMatches.length} listings share that exact name in the public Directory. They are not included in map discovery.`
                     : mapped.length + culturalSearchMatchCount > 0
                     ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
                     : "No mapped local results. Try another name, service, or location."}
@@ -2024,6 +2055,84 @@ export function FullMapView({
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+          )}
+
+        {hasSubmittedBusinessSearch &&
+          !isBusinessSearchLoading &&
+          !businessSearchError &&
+          directMatch && (
+            <View
+              accessibilityLabel="Exact-name Directory result"
+              style={[s.mapSearchResults, wideMapOverlayStyle]}
+            >
+              <Text style={s.mapSearchResultsTitle}>
+                {directMatches.length === 1 ? "Exact-name Directory listing" : "Exact-name Directory listings"}
+              </Text>
+              <Text style={s.localityPromptText}>
+                Available by exact name from the public Directory. These are not Map discovery pins.
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.mapSearchResultsRow}
+              >
+                {directMatches.map((business) => (
+                  <View key={business.id} style={s.mapSearchResultCard}>
+                    <Text numberOfLines={1} style={s.mapSearchResultName}>
+                      {business.name}
+                    </Text>
+                    <Text numberOfLines={1} style={s.mapSearchResultMeta}>
+                      {[business.subcategory, business.city, business.state]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </Text>
+                    <TouchableOpacity
+                      accessibilityLabel={`View ${business.name} listing`}
+                      accessibilityRole="button"
+                      activeOpacity={0.86}
+                      onPress={() => router.push({ pathname: "/business/[id]", params: { id: business.id } } as never)}
+                      style={s.directMatchAction}
+                    >
+                      <Feather name="external-link" size={12} color="#FFFFFF" />
+                      <Text style={s.directMatchActionText}>View listing</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+              {(hasPreviousDirectNamePage || hasMoreDirectNameMatches) && (
+                <View style={s.directMatchPagination}>
+                  <TouchableOpacity
+                    accessibilityLabel="Previous exact-name listings"
+                    accessibilityRole="button"
+                    activeOpacity={0.86}
+                    disabled={!hasPreviousDirectNamePage}
+                    onPress={() => setDirectNameOffset((current) => Math.max(0, current - 50))}
+                    style={[
+                      s.directMatchPageButton,
+                      !hasPreviousDirectNamePage && s.directMatchPageButtonDisabled,
+                    ]}
+                  >
+                    <Text style={s.directMatchPageButtonText}>Previous</Text>
+                  </TouchableOpacity>
+                  <Text style={s.directMatchPageStatus}>
+                    {directNamePageStart}–{directNamePageEnd} of {businessSearchTotal}
+                  </Text>
+                  <TouchableOpacity
+                    accessibilityLabel="More exact-name listings"
+                    accessibilityRole="button"
+                    activeOpacity={0.86}
+                    disabled={!hasMoreDirectNameMatches}
+                    onPress={() => setDirectNameOffset((current) => current + 50)}
+                    style={[
+                      s.directMatchPageButton,
+                      !hasMoreDirectNameMatches && s.directMatchPageButtonDisabled,
+                    ]}
+                  >
+                    <Text style={s.directMatchPageButtonText}>More</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           )}
 
@@ -3337,6 +3446,37 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "Inter_700Bold",
     fontSize: 11,
+  },
+  directMatchPagination: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingHorizontal: 10,
+    marginTop: 9,
+  },
+  directMatchPageButton: {
+    minWidth: 70,
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: GOLD,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  directMatchPageButtonDisabled: {
+    opacity: 0.42,
+  },
+  directMatchPageButtonText: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+  },
+  directMatchPageStatus: {
+    flex: 1,
+    color: "#F5EBD8",
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    textAlign: "center",
   },
   localityPrompt: {
     marginHorizontal: 12,

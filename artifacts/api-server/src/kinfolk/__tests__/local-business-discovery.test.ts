@@ -23,8 +23,8 @@ import { searchAllQueriesWithState, searchLocalBusinessQueriesWithState } from "
 const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
-  // Legacy behavioral fixtures exercise general discovery. Production defaults
-  // to the documented Diaspora Promotion Catalog and is covered separately.
+  // The documented Diaspora/Kinfolk Current catalog is intentionally permanent;
+  // test environment variables cannot broaden member-facing discovery.
   vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "all_public");
 });
 
@@ -342,14 +342,8 @@ describe("deterministic local business discovery", () => {
     expect(result.resultView.cards[0]?.matchReason).toContain(
       "vegan restaurants",
     );
-    expect(webSearch.mock.calls[0]?.[0]).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ text: "vegan restaurants Philadelphia, PA" }),
-      ]),
-    );
-    expect(result.discovery.webFindings).toEqual([
-      expect.objectContaining({ title: "Vegan Garden" }),
-    ]);
+    expect(webSearch).not.toHaveBeenCalled();
+    expect(result.discovery.webFindings).toEqual([]);
   });
 
   it("does not substitute general restaurants for an Ethiopian-food request", async () => {
@@ -387,9 +381,7 @@ describe("deterministic local business discovery", () => {
     expect(result.discovery.platformBusinesses).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: "generic-restaurant" })]),
     );
-    expect(result.discovery.webFindings).toEqual([
-      expect.objectContaining({ title: "Ethiopian restaurant guide" }),
-    ]);
+    expect(result.discovery.webFindings).toEqual([]);
     expect(result.recommendations?.summary).toContain("Ethiopian restaurants");
   });
 
@@ -504,7 +496,7 @@ describe("deterministic local business discovery", () => {
     });
   });
 
-  it("merges focused platform businesses, MWM map records, and supplemental web findings", async () => {
+  it("merges focused Kinfolk Current businesses and MWM map records without ungoverned web findings", async () => {
     const db = repository({ businesses: [governedBusiness], places: [forKeepsPlace] });
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",
@@ -526,16 +518,9 @@ describe("deterministic local business discovery", () => {
       webSearch,
     });
 
-    expect(db.findBySubject).toHaveBeenCalledBefore(webSearch);
-    expect(db.findPublishedMapEntities).toHaveBeenCalledBefore(webSearch);
-    expect(webSearch).toHaveBeenCalledWith(
-      [
-        expect.objectContaining({ text: "community and minority-owned bookstores Atlanta, GA" }),
-        expect.objectContaining({ text: "bookstores Atlanta, GA" }),
-      ],
-      false,
-      { city: "Atlanta", stateCode: "GA", countryCode: "US" },
-    );
+    expect(db.findBySubject).toHaveBeenCalled();
+    expect(db.findPublishedMapEntities).toHaveBeenCalled();
+    expect(webSearch).not.toHaveBeenCalled();
     expect(result.recommendations).toMatchObject({
       destination: "Atlanta, GA",
       businesses: [{
@@ -558,20 +543,16 @@ describe("deterministic local business discovery", () => {
       recordType: "mwm_cultural_place",
       isBusiness: false,
     });
-    expect(result.discovery.webFindings[0]).toMatchObject({
-      provenance: "external_web_finding",
-      isMwmVerified: false,
-      url: "https://discoveratlanta.com/bookstores",
+    expect(result.discovery.webFindings).toEqual([]);
+    expect(result.discovery.webSearch).toMatchObject({
+      state: "unavailable", attempted: false, provider: null, fallbackUsed: false, partial: false,
     });
-    expect(result.discovery.webSearch.provider).toBe("openai");
-    expect(result.discovery.webSearch).toMatchObject({ fallbackUsed: false, partial: false });
     expect(result.reply).toContain("For Keeps Books and Auburn Avenue Bookstores");
-    expect(result.reply).toContain("external; not MWM-verified business listings");
+    expect(result.reply).toContain("Current external details are unavailable right now");
     expect(result.reply).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
     expect(result.reply).not.toMatch(/you(?:'re| are) (?:Black|a woman|minority)/i);
     expect(result.sources).toEqual(expect.arrayContaining([
       expect.objectContaining({ title: "For Keeps Books and Auburn Avenue Bookstores", url: forKeepsPlace.detailUrl }),
-      expect.objectContaining({ title: "Official Atlanta bookstore guide", url: "https://discoveratlanta.com/bookstores" }),
     ]));
   });
 
@@ -677,7 +658,7 @@ describe("deterministic local business discovery", () => {
     expect(result.discovery.platformBusinesses[0]?.ownershipEvidence).toBeNull();
   });
 
-  it("keeps current public discovery available during founder-led cleanup", async () => {
+  it("keeps founder-cleanup records out of Kinfolk promotion without documented Current eligibility", async () => {
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",
       attempted: true,
@@ -696,10 +677,8 @@ describe("deterministic local business discovery", () => {
       repository: repository(),
       webSearch,
     });
-    expect(webSearch).toHaveBeenCalled();
-    expect(result.discovery.webFindings).toEqual([
-      expect.objectContaining({ title: "Undocumented business" }),
-    ]);
+    expect(webSearch).not.toHaveBeenCalled();
+    expect(result.discovery.webFindings).toEqual([]);
     expect(result.recommendations).toBeNull();
   });
 
@@ -790,7 +769,9 @@ describe("deterministic local business discovery", () => {
       repository: repository(),
       webSearch: vi.fn().mockResolvedValue({ state: "completed", attempted: true, provider: "openai", results: [] }),
     });
-    expect(completed.reply).toContain("couldn’t find matching MWM records or current web results");
+    expect(completed.reply).toContain("I did not find a matching MWM business or cultural/place record");
+    expect(completed.reply).toContain("Current external details are unavailable");
+    expect(completed.reply).not.toContain("or current web results");
 
     const unavailable = await discoverLocalBusinesses({
       scope: { city: "Atlanta", stateCode: "GA" },
@@ -802,17 +783,17 @@ describe("deterministic local business discovery", () => {
     expect(unavailable.reply).not.toContain("or current web results");
   });
 
-  it("returns a useful deterministic result when the web provider throws", async () => {
+  it("returns a useful deterministic result without calling an unpermitted web provider", async () => {
     const result = await discoverLocalBusinesses({
       scope: { city: "Atlanta", stateCode: "GA" },
       subject: bookstore,
       repository: repository({ places: [forKeepsPlace] }),
       webSearch: vi.fn().mockRejectedValue(Object.assign(new Error("rate limited"), { status: 429 })),
     });
-    expect(result.discovery.webSearch.state).toBe("degraded");
+    expect(result.discovery.webSearch.state).toBe("unavailable");
     expect(result.discovery.webSearch).toMatchObject({ fallbackUsed: false, partial: false });
     expect(result.reply).toContain("For Keeps Books");
-    expect(result.reply).toContain("Current external details could not be confirmed");
+    expect(result.reply).toContain("Current external details are unavailable right now");
     expect(result.recommendations).toBeNull();
   });
 
@@ -835,10 +816,7 @@ describe("deterministic local business discovery", () => {
       category: "bookstore",
       specialty: "bookstore",
     }));
-    expect(signalRepository.recordFlywheelSignal.mock.calls.map(([signal]) => signal.action)).toEqual([
-      "search",
-      "zero_result",
-    ]);
+    expect(signalRepository.recordFlywheelSignal.mock.calls.map(([signal]) => signal.action)).toEqual(["search"]);
     const serialized = JSON.stringify([
       ...signalRepository.recordCoverageGap.mock.calls,
       ...signalRepository.recordFlywheelSignal.mock.calls,
