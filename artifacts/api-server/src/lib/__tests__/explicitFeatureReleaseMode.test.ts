@@ -21,8 +21,9 @@ describe("explicit production feature-release mode", () => {
       "utf8",
     );
     expect(index).toContain("if (explicitFeatureReleaseMode)");
-    expect(index).toContain("skipping boot-time schema and publication writers");
-    expect(index).toContain("skipping automatic startup writers");
+    expect(index).toContain("await assertExplicitFeatureReleaseSchema(process.env, logger)");
+    expect(index).toContain("catalog-only startup gate passed");
+    expect(index).toContain("skipping automatic schema writers");
     expect(index).toContain("runStartupMigrations(logger)");
     expect(index).toContain("startLatinxLehighValleyPublication");
   });

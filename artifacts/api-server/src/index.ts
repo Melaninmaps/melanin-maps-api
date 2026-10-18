@@ -44,6 +44,7 @@ import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogge
 import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
 import { seedLibraryStarterEntries } from "./library/seedLibraryStarterEntries";
 import { isExplicitFeatureReleaseMode } from "./lib/explicitFeatureReleaseMode";
+import { assertExplicitFeatureReleaseSchema } from "./lib/strictFeatureReleaseSchema";
 import {
   startKinfolkQuestionImageRetentionScheduler,
   stopKinfolkQuestionImageRetentionScheduler,
@@ -141,6 +142,9 @@ async function initStripe() {
 })();
 
 try {
+  if (explicitFeatureReleaseMode) {
+    await assertExplicitFeatureReleaseSchema(process.env, logger);
+  } else {
   // Preferred-name controls are visible in Kinfolk Settings and are safe only
   // when their data-neutral structure exists. Explicit feature-release mode
   // skips broad migrations, so verify this exact request-path schema before
@@ -204,22 +208,19 @@ try {
   // schema is data-neutral until an administrator applies a validated manifest.
   await ensureKinfolkCurrentOnlinePresenceReviewSchema(pool);
   logger.info("Kinfolk Current online-presence review schema ready before traffic acceptance");
-  if (explicitFeatureReleaseMode) {
-    logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
-  } else {
-    if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
-        (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
-      throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
-    }
-    if (directoryReviewPool) {
-      await bootstrapDirectoryReviewSchema(directoryReviewPool);
-      logger.info("Isolated directory review schema ready");
-    }
-    await ensureRequiredSafetyReportSchema(pool);
-    logger.info("Required safety report schema ready");
+  if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
+      (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+    throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+  }
+  if (directoryReviewPool) {
+    await bootstrapDirectoryReviewSchema(directoryReviewPool);
+    logger.info("Isolated directory review schema ready");
+  }
+  await ensureRequiredSafetyReportSchema(pool);
+  logger.info("Required safety report schema ready");
   }
 } catch (error) {
-  logger.fatal({ error }, "Required safety report schema failed — server will not accept traffic");
+  logger.fatal({ error }, "Required startup schema gate failed — server will not accept traffic");
   await pool.end().catch(() => undefined);
   process.exit(1);
 }
@@ -249,7 +250,7 @@ try {
   process.exit(1);
 }
 
-if (shouldRunPrivatePlacesSyntheticQaAcceptance()) {
+if (!explicitFeatureReleaseMode && shouldRunPrivatePlacesSyntheticQaAcceptance()) {
   try {
     const result = await runPrivatePlacesProductionSyntheticAcceptance();
     logger.info({ checks: result.checks, cleanupVerified: result.cleanupVerified }, "Private Places synthetic acceptance passed before traffic");
@@ -269,6 +270,13 @@ const onListening = (err?: Error) => {
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready — initial pool state");
 
+  if (explicitFeatureReleaseMode) {
+    logger.info(
+      "Explicit feature release mode: catalog-only startup gate passed; skipping automatic schema writers, seeds, publishers, synthetic QA, and workers",
+    );
+    return;
+  }
+
   // Attach connection lifecycle instrumentation to the pg Pool.
   // Records every connect/remove/query event to a 500-entry ring buffer.
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
@@ -278,12 +286,6 @@ const onListening = (err?: Error) => {
   stopBusinessDeletionHoldWorker = startBusinessDeletionHoldWorker(pool, logger);
   if (privatePlacesRuntimeState().enabled) {
     startTemporaryStayRetentionScheduler(logger);
-  }
-  if (explicitFeatureReleaseMode) {
-    logger.info(
-      "Explicit feature release mode: skipping automatic startup writers, seeds, publishers, and workers",
-    );
-    return;
   }
   if (directoryReviewPool) startDirectoryPublicationWorker(directoryReviewPool, pool);
 
