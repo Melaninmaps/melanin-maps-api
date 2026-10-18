@@ -26,6 +26,32 @@ describe("local business search route", () => {
     expect(response.headers["x-query-retention"]).toBe("none");
   });
 
+  it.each([
+    ["missing search query", "lat=39.95&lng=-75.16&radius=5"],
+    ["blank q", "q=%20%20%20&lat=39.95&lng=-75.16&radius=5"],
+    ["blank subject and q", "subject=%20%20%20&q=%20%20%20&lat=39.95&lng=-75.16&radius=5"],
+  ])("rejects a %s before calling search", async (_case, query) => {
+    const search = vi.fn();
+    const app = express();
+    registerLocalBusinessSearchRoute(app, { search } as never);
+
+    await request(app).get(`/api/map/local-business-search?${query}`).expect(400, { code: "SEARCH_QUERY_REQUIRED" });
+    expect(search).not.toHaveBeenCalled();
+  });
+
+  it("falls back to q when subject is blank", async () => {
+    const search = vi.fn().mockResolvedValue({
+      scope: "local", radiusMi: 5, limit: 2,
+      totalRelevantListings: 0, pinnableCount: 0, results: [], pins: [],
+      expansion: { available: true, nextRadiusMi: 10, message: null },
+    });
+    const app = express();
+    registerLocalBusinessSearchRoute(app, { search } as never);
+
+    await request(app).get("/api/map/local-business-search?subject=%20%20%20&q=bookstore&lat=39.95&lng=-75.16&radius=5").expect(200);
+    expect(search).toHaveBeenCalledWith(expect.objectContaining({ query: "bookstore" }));
+  });
+
   it.each([5, 10, 25])("accepts the governed %i-mile radius", async (radius) => {
     const search = vi.fn().mockResolvedValue({
       scope: radius === 5 ? "local" : "expanded", radiusMi: radius, limit: 2,

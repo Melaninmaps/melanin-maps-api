@@ -39,9 +39,9 @@ export function registerLocalBusinessSearchRoute(
     "/api/map/local-business-search",
     async (request: Request, response: Response, next: NextFunction) => {
       try {
-        const query = typeof request.query["subject"] === "string"
-          ? request.query["subject"]
-          : typeof request.query["q"] === "string" ? request.query["q"] : "";
+        const subject = typeof request.query["subject"] === "string" ? request.query["subject"].trim() : "";
+        const q = typeof request.query["q"] === "string" ? request.query["q"].trim() : "";
+        const query = subject || q;
         const city = typeof request.query["city"] === "string" ? request.query["city"] : undefined;
         const stateCode = typeof request.query["stateCode"] === "string" ? request.query["stateCode"] : undefined;
         const rawLatitude = request.query["lat"];
@@ -56,6 +56,9 @@ export function registerLocalBusinessSearchRoute(
         }
         if (![5, 10, 25].includes(radius)) {
           return response.status(400).json({ code: "INVALID_RADIUS" });
+        }
+        if (!query) {
+          return response.status(400).json({ code: "SEARCH_QUERY_REQUIRED" });
         }
 
         const result = await service.search({
