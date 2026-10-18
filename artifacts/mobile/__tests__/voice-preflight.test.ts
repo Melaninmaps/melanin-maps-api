@@ -66,39 +66,49 @@ describe("Kinfolk Voice Preflight", () => {
 
   it("aborts and deletes a recording when the app backgrounds before it can upload", () => {
     const preflight = source("app/kinfolk-voice-preflight.tsx");
-    const backgroundAbort = preflight.slice(
-      preflight.indexOf("const abortBackgroundRecording = async"),
-      preflight.indexOf('AppState.addEventListener("change"'),
+    const cancellation = preflight.slice(
+      preflight.indexOf("const cancelActiveRecording = useCallback"),
+      preflight.indexOf("const startPreflight = async"),
     );
     const stopAndTranscribe = preflight.slice(
       preflight.indexOf("const stopAndTranscribe = async"),
       preflight.indexOf("const sendTranscript = async"),
     );
     const stopFinally = stopAndTranscribe.slice(stopAndTranscribe.lastIndexOf("} finally {"));
-    expect(backgroundAbort).toContain("backgroundCancelledAttemptIdsRef.current.add(attemptId);");
-    expect(backgroundAbort).toContain("recordingStartedAtRef.current = null;");
-    expect(backgroundAbort).toContain("setRecordedUri(null);");
-    expect(backgroundAbort).toContain("setRecordedDurationMs(0);");
-    expect(backgroundAbort).toContain("if (recorder.isRecording) await recorder.stop();");
-    expect(backgroundAbort).toContain("cleanRecordedFile(recorder.uri);");
+    const layoutUnmountCleanupStart = preflight.indexOf("useLayoutEffect(() => () => {");
+    const layoutUnmountCleanup = preflight.slice(
+      layoutUnmountCleanupStart,
+      preflight.indexOf("useEffect(() => () => {", layoutUnmountCleanupStart),
+    );
+    expect(cancellation).toContain("cancelledRecordingAttemptIdsRef.current.add(attemptId);");
+    expect(cancellation).toContain("recordingStartedAtRef.current = null;");
+    expect(cancellation).toContain("if (showInterruption)");
+    expect(cancellation).toContain("setRecordedUri(null);");
+    expect(cancellation).toContain("setRecordedDurationMs(0);");
+    expect(cancellation).toContain("if (recorder.isRecording) await recorder.stop();");
+    expect(cancellation).toContain("let cancelledRecordingUri: string | null = null;");
+    expect(cancellation).toContain("try { cancelledRecordingUri = recorder.uri; } catch");
+    expect(cancellation).toContain("cleanRecordedFile(cancelledRecordingUri);");
     expect(preflight).toContain("inFlightRecordingAttemptRef.current = attemptId;");
-    expect(preflight).toContain("const backgroundAbortPromiseRef = useRef<Promise<void> | null>(null);");
-    expect(preflight).toContain("backgroundAbortPromiseRef.current = backgroundAbort;");
-    expect(preflight).toContain("const backgroundAbort = abortBackgroundRecording();");
-    expect(preflight).toContain("if (attemptId && !backgroundCancelledAttemptIdsRef.current.has(attemptId))");
+    expect(preflight).toContain("const recordingCancellationPromiseRef = useRef<Promise<void> | null>(null);");
+    expect(preflight).toContain("recordingCancellationPromiseRef.current = cancellation;");
+    expect(preflight).toContain("if (attemptId && !cancelledRecordingAttemptIdsRef.current.has(attemptId)) void cancelActiveRecording(true);");
+    expect(preflight).toContain("useLayoutEffect");
+    expect(layoutUnmountCleanup).toContain("void cancelActiveRecordingRef.current(false);");
+    expect(layoutUnmountCleanup).toContain("}, []);");
     expect(preflight).toContain("isStoppingRef.current || inFlightRecordingAttemptRef.current || recorderState.isRecording");
     expect(stopAndTranscribe).toContain("isStopping || isStoppingRef.current");
     expect(stopAndTranscribe).toContain("isStoppingRef.current = true;");
     expect(stopAndTranscribe).toContain("isStoppingRef.current = false;");
-    expect(stopAndTranscribe.match(/backgroundCancelledAttemptIdsRef\.current\.has\(attemptId\)/g)).toHaveLength(2);
-    expect(stopAndTranscribe.lastIndexOf("backgroundCancelledAttemptIdsRef.current.has(attemptId)")).toBeLessThan(
+    expect(stopAndTranscribe.match(/cancelledRecordingAttemptIdsRef\.current\.has\(attemptId\)/g)).toHaveLength(2);
+    expect(stopAndTranscribe.lastIndexOf("cancelledRecordingAttemptIdsRef.current.has(attemptId)")).toBeLessThan(
       stopAndTranscribe.indexOf("/api/kinfolk/transcribe"),
     );
-    expect(stopFinally).toContain("await waitForBackgroundAbort();");
-    expect(stopFinally.indexOf("await waitForBackgroundAbort();")).toBeLessThan(
+    expect(stopFinally).toContain("await waitForRecordingCancellation();");
+    expect(stopFinally.indexOf("await waitForRecordingCancellation();")).toBeLessThan(
       stopFinally.indexOf("isStoppingRef.current = false;"),
     );
-    expect(backgroundAbort).toContain("if (!isStoppingRef.current && inFlightRecordingAttemptRef.current === attemptId)");
+    expect(cancellation).toContain("if (!isStoppingRef.current && inFlightRecordingAttemptRef.current === attemptId)");
   });
 
   it("keeps the screen reachable from Kinfolk settings and registered in native navigation", () => {
