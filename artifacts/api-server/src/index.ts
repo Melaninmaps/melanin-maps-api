@@ -55,6 +55,14 @@ import {
 import { privatePlacesRuntimeState } from "./kinfolk/private-places-policy";
 import { shouldRunPrivatePlacesSyntheticQaAcceptance } from "./kinfolk/private-places-fictional-qa";
 import { runPrivatePlacesProductionSyntheticAcceptance } from "./kinfolk/private-places-production-acceptance";
+import {
+  initializeFeatureReleasePublicationStartup,
+  initializeFeatureReleaseStartup,
+  type NonStrictPublicationSchemaOperation,
+  type NonStrictStartupSchemaOperation,
+  verifyStrictDirectoryReviewSchema,
+  verifyStrictFeatureReleaseSchema,
+} from "./lib/strictFeatureReleaseStartup";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -140,83 +148,124 @@ async function initStripe() {
   }
 })();
 
+async function runNonStrictStartupSchemaOperation(
+  operation: NonStrictStartupSchemaOperation,
+): Promise<void> {
+  switch (operation) {
+    case "ensureKinfolkPreferredNameSchema":
+      await ensureKinfolkPreferredNameSchema(logger);
+      logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
+      return;
+    case "ensureKinfolkQuestionImageSchemaOnly":
+      if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
+        await ensureKinfolkQuestionImageSchemaOnly();
+        logger.info("Kinfolk private image schema ready before traffic acceptance");
+      }
+      return;
+    case "ensureKinfolkPrivatePlacesSchema":
+      if (process.env.KINFOLK_PRIVATE_PLACES_ENABLED === "true" || shouldRunPrivatePlacesSyntheticQaAcceptance()) {
+        await ensureKinfolkPrivatePlacesSchema(
+          (message) => logger.info(message),
+          (message) => logger.warn(message),
+        );
+        await ensureKinfolkTemporaryStaysSchema(
+          (message) => logger.info(message),
+          (message) => logger.warn(message),
+        );
+        logger.info("Kinfolk encrypted Private Places and Temporary Stays schemas ready before traffic acceptance");
+      }
+      return;
+    case "ensureKinfolkTemporaryStaysSchema":
+      // Temporary Stays shares the Private Places enabled-state and is run above
+      // in the unchanged normal-mode sequence.
+      return;
+    case "ensureDirectoryReconciliationLedgerSchema":
+      await ensureDirectoryReconciliationLedgerSchema(logger);
+      logger.info("Directory reconciliation ledger schema ready before traffic acceptance");
+      return;
+    case "ensureFounderMapRestorationSchema":
+      await ensureFounderMapRestorationSchema(logger);
+      logger.info("Founder map restoration outcome schema ready before traffic acceptance");
+      return;
+    case "ensureLegacyMapLocationAttestationSchema":
+      await ensureLegacyMapLocationAttestationSchema(logger);
+      logger.info("Legacy map location attestation schema ready before traffic acceptance");
+      return;
+    case "ensureInternationalDirectoryOnlyVisibilitySchema":
+      await ensureInternationalDirectoryOnlyVisibilitySchema(
+        (message) => logger.info(message),
+        (message) => logger.warn(message),
+      );
+      logger.info("International Directory-only visibility receipt schema ready before traffic acceptance");
+      return;
+    case "ensureBusinessWebsiteCleanupAuditSchema":
+      await ensureBusinessWebsiteCleanupAuditSchema(
+        (message) => logger.info(message),
+        (message) => logger.warn(message),
+      );
+      logger.info("Website cleanup audit schema ready before traffic acceptance");
+      return;
+    case "ensureAdminBusinessProfileReceiptsAndCatalogSchema":
+      await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
+      logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
+      return;
+    case "ensureBusinessDeletionHoldSchema":
+      await ensureBusinessDeletionHoldSchema(pool);
+      logger.info("Business deletion hold schema ready before traffic acceptance");
+      return;
+    case "ensureKinfolkCurrentOnlinePresenceReviewSchema":
+      await ensureKinfolkCurrentOnlinePresenceReviewSchema(pool);
+      logger.info("Kinfolk Current online-presence review schema ready before traffic acceptance");
+      return;
+    case "bootstrapDirectoryReviewSchema":
+      if (process.env.DIRECTORY_REVIEW_ENABLED === "1"
+        && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+        throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+      }
+      if (directoryReviewPool) {
+        await bootstrapDirectoryReviewSchema(directoryReviewPool);
+        logger.info("Isolated directory review schema ready");
+      }
+      return;
+    case "ensureRequiredSafetyReportSchema":
+      await ensureRequiredSafetyReportSchema(pool);
+      logger.info("Required safety report schema ready");
+      return;
+  }
+}
+
+async function runNonStrictPublicationSchemaOperation(
+  operation: NonStrictPublicationSchemaOperation,
+): Promise<void> {
+  switch (operation) {
+    case "ensureRequiredPublicationSchema": {
+      const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
+      if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+        throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+      }
+      await ensureRequiredPublicationSchema(false, logger);
+      logger.info("Required publication schema ready before traffic acceptance");
+      return;
+    }
+    case "ensureCommunityFeedReadSchema":
+      await ensureCommunityFeedReadSchema(logger);
+      return;
+  }
+}
+
 try {
-  // Preferred-name controls are visible in Kinfolk Settings and are safe only
-  // when their data-neutral structure exists. Explicit feature-release mode
-  // skips broad migrations, so verify this exact request-path schema before
-  // accepting traffic rather than returning a misleading save/read 500.
-  await ensureKinfolkPreferredNameSchema(logger);
-  logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
-  if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
-    // This is the only D18 schema bootstrap allowed in explicit feature-release
-    // mode: idempotent columns plus a cleanup index, with no row mutation.
-    await ensureKinfolkQuestionImageSchemaOnly();
-    logger.info("Kinfolk private image schema ready before traffic acceptance");
-  }
-  if (process.env.KINFOLK_PRIVATE_PLACES_ENABLED === "true" || shouldRunPrivatePlacesSyntheticQaAcceptance()) {
-    // Private Places and Temporary Stays must have encrypted-only structures
-    // before their explicitly enabled runtime can accept a member request. This
-    // bootstrap is idempotent schema work only; it never geocodes, seeds, or
-    // creates a member place/stay.
-    await ensureKinfolkPrivatePlacesSchema(
-      (message) => logger.info(message),
-      (message) => logger.warn(message),
-    );
-    await ensureKinfolkTemporaryStaysSchema(
-      (message) => logger.info(message),
-      (message) => logger.warn(message),
-    );
-    logger.info("Kinfolk encrypted Private Places and Temporary Stays schemas ready before traffic acceptance");
-  }
-  // The reconciliation ledger is a schema-only safety gate. It must be ready
-  // even when explicit feature-release mode correctly suppresses broad startup
-  // writers, publishers, and enrichment work.
-  await ensureDirectoryReconciliationLedgerSchema(logger);
-  logger.info("Directory reconciliation ledger schema ready before traffic acceptance");
-  await ensureFounderMapRestorationSchema(logger);
-  logger.info("Founder map restoration outcome schema ready before traffic acceptance");
-  await ensureLegacyMapLocationAttestationSchema(logger);
-  await ensureInternationalDirectoryOnlyVisibilitySchema(
-    (message) => logger.info(message),
-    (message) => logger.warn(message),
-  );
-  logger.info("Legacy map location attestation schema ready before traffic acceptance");
-  logger.info("International Directory-only visibility receipt schema ready before traffic acceptance");
-  // Website cleanup is likewise a schema-only safety control. It is required
-  // for an evidence-bound removal of a bad public URL, and it never changes a
-  // business row by itself.
-  await ensureBusinessWebsiteCleanupAuditSchema(
-    (message) => logger.info(message),
-    (message) => logger.warn(message),
-  );
-  logger.info("Website cleanup audit schema ready before traffic acceptance");
-  // The Business Admin editor and Kinfolk Catalog are a data-neutral control
-  // plane. They must retain their receipt and audit schemas even when explicit
-  // feature-release mode correctly skips unrelated startup migration writers.
-  await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
-  logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
-  // A requested business deletion starts a seven-day recovery window. This
-  // schema is data-neutral on startup, but it must be present before an admin
-  // request can schedule a hold or a worker can finalize an expired one.
-  await ensureBusinessDeletionHoldSchema(pool);
-  logger.info("Business deletion hold schema ready before traffic acceptance");
-  // This queue is a reversible, evidence-bound public-discovery hold. Its
-  // schema is data-neutral until an administrator applies a validated manifest.
-  await ensureKinfolkCurrentOnlinePresenceReviewSchema(pool);
-  logger.info("Kinfolk Current online-presence review schema ready before traffic acceptance");
-  if (explicitFeatureReleaseMode) {
-    logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
-  } else {
-    if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
-        (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
-      throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
-    }
-    if (directoryReviewPool) {
-      await bootstrapDirectoryReviewSchema(directoryReviewPool);
-      logger.info("Isolated directory review schema ready");
-    }
-    await ensureRequiredSafetyReportSchema(pool);
-    logger.info("Required safety report schema ready");
+  const startupMode = await initializeFeatureReleaseStartup({
+    strictFeatureReleaseMode: explicitFeatureReleaseMode,
+    verifyStrictFeatureReleaseSchema: async () => {
+      await verifyStrictFeatureReleaseSchema(pool);
+      if (directoryReviewPool) {
+        await verifyStrictDirectoryReviewSchema(directoryReviewPool);
+      }
+    },
+    runNonStrictStartupSchemaOperation,
+  });
+  if (startupMode === "strict") {
+    logger.info("Explicit feature release mode: verified required schema read-only; skipping boot-time schema and publication writers");
   }
 } catch (error) {
   logger.fatal({ error }, "Required safety report schema failed — server will not accept traffic");
@@ -225,18 +274,10 @@ try {
 }
 
 try {
-  if (!explicitFeatureReleaseMode) {
-    const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
-    if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
-      throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
-    }
-    await ensureRequiredPublicationSchema(
-      false,
-      logger,
-    );
-    logger.info("Required publication schema ready before traffic acceptance");
-    await ensureCommunityFeedReadSchema(logger);
-  }
+  await initializeFeatureReleasePublicationStartup({
+    strictFeatureReleaseMode: explicitFeatureReleaseMode,
+    runNonStrictPublicationSchemaOperation,
+  });
 } catch (error) {
   for (const detail of publicationSchemaFailureLogLines(error)) {
     logger.error(detail);
@@ -249,7 +290,7 @@ try {
   process.exit(1);
 }
 
-if (shouldRunPrivatePlacesSyntheticQaAcceptance()) {
+if (!explicitFeatureReleaseMode && shouldRunPrivatePlacesSyntheticQaAcceptance()) {
   try {
     const result = await runPrivatePlacesProductionSyntheticAcceptance();
     logger.info({ checks: result.checks, cleanupVerified: result.cleanupVerified }, "Private Places synthetic acceptance passed before traffic");
@@ -274,16 +315,16 @@ const onListening = (err?: Error) => {
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
-  stopFounderMapRestorationWorker = startFounderMapRestorationWorker(pool, logger);
-  stopBusinessDeletionHoldWorker = startBusinessDeletionHoldWorker(pool, logger);
-  if (privatePlacesRuntimeState().enabled) {
-    startTemporaryStayRetentionScheduler(logger);
-  }
   if (explicitFeatureReleaseMode) {
     logger.info(
       "Explicit feature release mode: skipping automatic startup writers, seeds, publishers, and workers",
     );
     return;
+  }
+  stopFounderMapRestorationWorker = startFounderMapRestorationWorker(pool, logger);
+  stopBusinessDeletionHoldWorker = startBusinessDeletionHoldWorker(pool, logger);
+  if (privatePlacesRuntimeState().enabled) {
+    startTemporaryStayRetentionScheduler(logger);
   }
   if (directoryReviewPool) startDirectoryPublicationWorker(directoryReviewPool, pool);
 
