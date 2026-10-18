@@ -43,6 +43,26 @@ describe("mobile waitlist and password recovery contract", () => {
     expect(mobileWaitlist).toContain("referralLink = REFERRAL_URL + referralCode");
   });
 
+  it("shows business-recommendation success only after a successful response", () => {
+    const recommendModal = mobileWaitlist.slice(
+      mobileWaitlist.indexOf("function RecommendModal"),
+      mobileWaitlist.indexOf("export default function WaitlistScreen"),
+    );
+    const submit = recommendModal.slice(
+      recommendModal.indexOf("const handleSubmit = async"),
+      recommendModal.indexOf("const bottomPad"),
+    );
+
+    expect(recommendModal).toContain('const [error, setError] = useState("");');
+    expect(recommendModal).toContain("{!!error && <View style={{ flexDirection: \"row\"");
+    expect(submit).toContain("if (!res.ok)");
+    expect(submit).toContain('setError(data.error ?? "We could not save this recommendation. Please try again.");');
+    expect(submit).toContain('setError("We could not connect. Please check your connection and try again.");');
+    expect(submit.indexOf("if (!res.ok)")).toBeLessThan(submit.indexOf("setDone(true);"));
+    expect(submit).toContain("finally { setLoading(false); }");
+    expect(submit).not.toContain("finally { setLoading(false); setDone(true); }");
+  });
+
   it("keeps email recovery and adds verified-phone recovery rather than phone login", () => {
     expect(mobileRecovery).toContain('useState<"email" | "phone">("email")');
     expect(mobileRecovery).toContain('"/api/auth/phone/forgot-password/send"');

@@ -60,18 +60,19 @@ function RecommendModal({
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<{ recommendationCount: number; pointsEarned: number } | null>(null);
+  const [error, setError] = useState("");
 
   const reset = () => {
     setBizName(""); setWebsite(""); setCity(""); setState("");
     setCategory(""); setNote(""); setBizEmail("");
-    setDone(false); setResult(null);
+    setDone(false); setResult(null); setError("");
   };
 
   const handleClose = () => { reset(); onClose(); };
 
   const handleSubmit = async () => {
     if (!bizName.trim()) return;
-    setLoading(true);
+    setLoading(true); setError("");
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const res = await fetch(`${getApiBase()}/api/waitlist/recommend-business`, {
@@ -87,11 +88,17 @@ function RecommendModal({
           businessEmail: bizEmail.trim() || undefined,
         }),
       });
-      const data = await res.json() as { recommendationCount?: number; pointsEarned?: number };
+      const data = await res.json().catch(() => ({})) as { recommendationCount?: number; pointsEarned?: number; error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "We could not save this recommendation. Please try again.");
+        return;
+      }
       setResult({ recommendationCount: data.recommendationCount ?? 1, pointsEarned: data.pointsEarned ?? 0 });
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {}
-    finally { setLoading(false); setDone(true); }
+      setDone(true);
+    } catch {
+      setError("We could not connect. Please check your connection and try again.");
+    } finally { setLoading(false); }
   };
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -190,6 +197,8 @@ function RecommendModal({
                   <Text style={[s.pointsHintText, { color: colors.primary }]}>You&apos;ll earn <Text style={{ fontFamily: "Inter_700Bold" }}>20 Community Builder Points</Text> for this recommendation.</Text>
                 </View>
               )}
+
+              {!!error && <View style={{ flexDirection: "row", gap: 8, alignItems: "center", borderWidth: 1, borderColor: "#FECACA", backgroundColor: "#FEF2F2", padding: 10, borderRadius: 10 }}><Feather name="alert-circle" size={14} color="#B91C1C" /><Text style={{ flex: 1, fontFamily: "Inter_500Medium", fontSize: 13, color: "#B91C1C" }}>{error}</Text></View>}
 
               <TouchableOpacity
                 style={[s.submitBtn, { backgroundColor: bizName.trim().length >= 2 ? colors.primary : colors.muted, opacity: bizName.trim().length >= 2 ? 1 : 0.5 }]}
