@@ -319,7 +319,7 @@ router.get("/admin/verification-requests/:id/document-url", async (req: any, res
 
 router.patch("/admin/verification-requests/:id", async (req: any, res: Response): Promise<void> => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const { status, adminNotes } = req.body as { status?: string; adminNotes?: string };
+  const { status, adminNotes } = (req.body ?? {}) as { status?: string; adminNotes?: string };
   const allowed = ["pending", "under_review", "approved", "rejected"];
   if (status && !allowed.includes(status)) { res.status(400).json({ error: "Invalid status" }); return; }
 
@@ -327,6 +327,10 @@ router.patch("/admin/verification-requests/:id", async (req: any, res: Response)
     const updates: Record<string, unknown> = {};
     if (status) updates.status = status;
     if (adminNotes !== undefined) updates.adminNotes = adminNotes;
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: "status or adminNotes is required" });
+      return;
+    }
     const [updated] = await db.update(verificationRequestsTable).set(updates).where(eq(verificationRequestsTable.id, req.params.id)).returning();
     if (!updated) { res.status(404).json({ error: "Request not found" }); return; }
 
