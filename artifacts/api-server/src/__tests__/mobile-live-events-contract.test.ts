@@ -40,4 +40,19 @@ describe("live event calendar contract", () => {
     expect(navigatorCap).toContain("Upgrade to Trailblazer for unlimited events.");
     expect(navigatorCap).not.toContain("Upgrade to Navigator for unlimited events.");
   });
+
+  it("rejects malformed or past dates before inserting an event", () => {
+    const routes = source("../routes/events.ts");
+    const creation = routes.slice(
+      routes.indexOf('router.post("/events"'),
+      routes.indexOf('router.patch("/events/:id"'),
+    );
+
+    expect(creation).toContain("if (!title || !city || !state)");
+    expect(creation).toContain('typeof date !== "string" || !isUpcomingOneOffEventDate(date)');
+    expect(creation).toContain('code: "INVALID_EVENT_DATE"');
+    expect(creation.indexOf('code: "INVALID_EVENT_DATE"')).toBeLessThan(
+      creation.indexOf(".insert(eventsTable)"),
+    );
+  });
 });

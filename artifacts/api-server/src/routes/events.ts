@@ -192,8 +192,15 @@ router.post("/events", async (req: Request, res: Response) => {
       latitude, longitude, featured,
     } = req.body as Record<string, unknown>;
 
-    if (!title || !date || !city || !state) {
-      res.status(400).json({ error: "title, date, city, and state are required" });
+    if (!title || !city || !state) {
+      res.status(400).json({ error: "title, city, and state are required" });
+      return;
+    }
+    if (typeof date !== "string" || !isUpcomingOneOffEventDate(date)) {
+      res.status(400).json({
+        error: "A valid upcoming event date is required",
+        code: "INVALID_EVENT_DATE",
+      });
       return;
     }
 

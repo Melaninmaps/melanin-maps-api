@@ -21,6 +21,16 @@ describe("public event feed visibility contract", () => {
     expect(isUpcomingOneOffEventDate("not a scheduled date", now)).toBe(false);
   });
 
+  it("uses the same calendar policy for event creation admission", () => {
+    const now = new Date("2026-08-15T12:00:00.000Z");
+
+    expect(isUpcomingOneOffEventDate("2026-08-15", now)).toBe(true);
+    expect(isUpcomingOneOffEventDate("August 16, 2026", now)).toBe(true);
+    expect(isUpcomingOneOffEventDate("8/17/2026", now)).toBe(true);
+    expect(isUpcomingOneOffEventDate("2026-08-14", now)).toBe(false);
+    expect(isUpcomingOneOffEventDate("February 30, 2027", now)).toBe(false);
+  });
+
   it("uses the same upcoming-date policy for list and direct-detail responses", () => {
     const eventRoutes = source("../routes/events.ts");
     expect(eventRoutes).toContain("events.filter((event) => isUpcomingOneOffEventDate(event.date))");
