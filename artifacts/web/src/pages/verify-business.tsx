@@ -44,9 +44,9 @@ const CERT_ORGS = [
 
 function LevelBadge({ level }: { level: "basic" | "ownership" | "certified" }) {
   const config = {
-    basic: { label: "Verified", color: "bg-blue-100 text-blue-700 border-blue-200", icon: Shield },
-    ownership: { label: "Verified Black-Owned", color: "bg-[#CA922B]/10 text-[#CA922B] border-[#CA922B]/30", icon: BadgeCheck },
-    certified: { label: "Third-Party Certified", color: "bg-green-100 text-green-700 border-green-200", icon: Award },
+    basic: { label: "Verification requested", color: "bg-blue-100 text-blue-700 border-blue-200", icon: Shield },
+    ownership: { label: "Ownership verification requested", color: "bg-[#CA922B]/10 text-[#CA922B] border-[#CA922B]/30", icon: BadgeCheck },
+    certified: { label: "Third-party certification requested", color: "bg-green-100 text-green-700 border-green-200", icon: Award },
   };
   const c = config[level];
   const Icon = c.icon;
