@@ -84,6 +84,7 @@ describe("Kinfolk feedback flywheel contract", () => {
     expect(postNudgeRoute).toContain("business_owner_links");
     expect(postNudgeRoute).not.toContain("reviewsTable");
     expect(postNudgeRoute).not.toContain("reviewSnippets");
+    expect(postNudgeRoute).not.toContain("minority-owned");
   });
 
   it("uses a founder-only, exact-business, append-only attachment operation", () => {

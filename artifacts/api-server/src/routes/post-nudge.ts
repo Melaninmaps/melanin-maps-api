@@ -70,7 +70,7 @@ function buildNudgeMessage(isNearPeak: boolean, bestTimeLabel: string, businessN
 function buildSuggestedCaption(category: string, businessName: string): string {
   const categoryMap: Record<string, string[]> = {
     "Restaurant": [
-      `Fresh, made with love — come through today! 🍽️ #BlackOwned #${businessName.replace(/\s+/g, "")}`,
+      `Fresh, made with love — come through today! 🍽️ #CommunityEats #${businessName.replace(/\s+/g, "")}`,
       `Today's specials are fire. Come eat good and support the culture. 🔥`,
     ],
     "Beauty": [
@@ -78,7 +78,7 @@ function buildSuggestedCaption(category: string, businessName: string): string {
       `Your glow is calling. Come through and let us take care of you. 💅🏾`,
     ],
     "Retail": [
-      `New arrivals just dropped — come see what's fresh in the store. 🛍️ #ShopBlack`,
+      `New arrivals just dropped — come see what's fresh in the store. 🛍️ #ShopLocal`,
       `Shopping Black is a lifestyle. Come through and find something you love. ✊🏾`,
     ],
     "Health": [
@@ -90,7 +90,7 @@ function buildSuggestedCaption(category: string, businessName: string): string {
       `Consistency is culture. Let's build together — drop in this week. 🏋🏾`,
     ],
     "Professional Services": [
-      `Let's build something together. Your vision, our expertise. 🤝🏾 #BlackBusiness`,
+      `Let's build something together. Your vision, our expertise. 🤝🏾 #CommunityBusiness`,
       `We're booking consultations this week — let's talk about your goals. 📊`,
     ],
     "Entertainment": [
@@ -100,8 +100,8 @@ function buildSuggestedCaption(category: string, businessName: string): string {
   };
 
   const options = categoryMap[category] ?? [
-    `Come support the culture — we're open and ready to serve our community. ✊🏾 #BlackOwned`,
-    `When you support a minority-owned business, you support a whole community. Thank you for rolling with us. 💚`,
+    `Come support the community — we're open and ready to serve. ✊🏾 #ShopLocal`,
+    `Your support helps a whole community. Thank you for rolling with us. 💚`,
   ];
 
   return options[Math.floor(Math.random() * options.length)];
@@ -347,7 +347,7 @@ router.get("/businesses/mine/post-nudge/captions", async (req: Request, res: Res
     const currentHour = new Date().getHours();
     const timeOfDay = currentHour < 12 ? "morning" : currentHour < 17 ? "afternoon" : "evening";
 
-    const prompt = `You are a creative social media manager for "${business.name}", a minority-owned ${business.category} business in ${business.city ?? "our city"}.${identityCtx}
+    const prompt = `You are a creative social media manager for "${business.name}", a ${business.category} business in ${business.city ?? "our city"}.${identityCtx}
 
 Write 3 SHORT, engaging social media captions for a community post right now (${timeOfDay}). Each caption should:
 - Feel authentic, warm, and community-centered
