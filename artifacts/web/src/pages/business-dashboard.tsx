@@ -111,6 +111,7 @@ export default function BusinessDashboard() {
   const [gConnection, setGConnection] = useState("");
   const [gSubmitting, setGSubmitting] = useState(false);
   const [gSuccess, setGSuccess] = useState(false);
+  const [communityNeedsAccess, setCommunityNeedsAccess] = useState<"available" | "verification_required" | "unavailable">("unavailable");
 
   useEffect(() => {
     authenticatedFetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
@@ -125,10 +126,24 @@ export default function BusinessDashboard() {
   useEffect(() => {
     if (!selectedId) return;
     authenticatedFetch(`${BASE}api/reviews?businessId=${selectedId}`, { credentials: "include" }).then((r) => r.json()).then((d) => setReviews(d.reviews ?? [])).catch(() => {});
+    setCommunityNeedsAccess("unavailable");
     authenticatedFetch(`${BASE}api/businesses/${selectedId}/kinfolk-community-needs`, { credentials: "include" })
-      .then((r) => r.ok ? r.json() : { insights: [] })
-      .then((d: { insights?: CommunityNeedInsight[] }) => setCommunityNeeds(d.insights ?? []))
-      .catch(() => setCommunityNeeds([]));
+      .then(async (r) => {
+        if (r.ok) {
+          const data = await r.json() as { insights?: CommunityNeedInsight[] };
+          setCommunityNeeds(data.insights ?? []);
+          setCommunityNeedsAccess("available");
+          return;
+        }
+        setCommunityNeeds([]);
+        if (r.status === 403) {
+          const denial = await r.json().catch(() => ({})) as { code?: string };
+          if (denial.code === "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED") {
+            setCommunityNeedsAccess("verification_required");
+          }
+        }
+      })
+      .catch(() => { setCommunityNeeds([]); setCommunityNeedsAccess("unavailable"); });
   }, [selectedId]);
 
   useEffect(() => {
@@ -316,6 +331,19 @@ export default function BusinessDashboard() {
                               <p className="mt-1 text-[11px] text-[#3A1F0E]/45">Threshold reached {new Date(insight.firstReachedAt).toLocaleDateString()}</p>
                             </div>
                           ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {communityNeedsAccess === "verification_required" && (
+                      <section className="rounded-2xl border border-[#2D7A4F]/25 bg-[#2D7A4F]/[0.04] p-5" data-testid="kinfolk-flywheel-verification-required">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 rounded-xl bg-[#2D7A4F]/10 p-2"><Shield className="h-4 w-4 text-[#2D7A4F]" /></div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-[#2B1507]">Verification needed for protected benefits</p>
+                            <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">Your listing, profile tools, reviews, and promotion options remain available. Private community-demand insights and other flywheel benefits require an active platform-verified Minority-owned designation; a claim or membership payment does not establish that status.</p>
+                            <Link href="/verify-business" className="mt-3 inline-flex text-xs font-bold text-[#2D7A4F] hover:underline">Review verification requirements</Link>
+                          </div>
                         </div>
                       </section>
                     )}

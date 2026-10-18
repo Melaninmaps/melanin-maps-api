@@ -9,6 +9,7 @@ import {
 } from "../businesses/verifiedMinorityFlywheelEligibility";
 
 const router = Router();
+const BUSINESS_INSIGHT_MINIMUM_DISTINCT_MEMBERS = 5;
 
 router.post("/business-insights", async (req: Request, res: Response) => {
   try {
@@ -109,24 +110,45 @@ router.get("/business-insights/summary/:businessId", async (req: Request, res: R
       .select({
         surveyType: businessInsightSurveysTable.surveyType,
         responses: businessInsightSurveysTable.responses,
+        submittedByUserId: businessInsightSurveysTable.submittedByUserId,
+        createdAt: businessInsightSurveysTable.createdAt,
       })
       .from(businessInsightSurveysTable)
-      .where(eq(businessInsightSurveysTable.businessId, String(businessId)));
+      .where(and(
+        eq(businessInsightSurveysTable.businessId, String(businessId)),
+        eq(businessInsightSurveysTable.status, "approved"),
+      ));
 
-    const safety = rows.filter(r => r.surveyType === "safety");
-    const employee = rows.filter(r => r.surveyType === "employee");
+    // Use one approved response per member and survey type. This keeps a
+    // repeat submitter from creating the appearance of a community trend.
+    const latestByMemberAndType = new Map<string, typeof rows[number]>();
+    for (const row of rows) {
+      if (!row.submittedByUserId) continue;
+      const key = `${row.submittedByUserId}:${row.surveyType}`;
+      const existing = latestByMemberAndType.get(key);
+      if (!existing || row.createdAt > existing.createdAt) {
+        latestByMemberAndType.set(key, row);
+      }
+    }
+    const approvedDistinctResponses = [...latestByMemberAndType.values()];
+    const safety = approvedDistinctResponses.filter(r => r.surveyType === "safety");
+    const employee = approvedDistinctResponses.filter(r => r.surveyType === "employee");
+    const safetyAvailable = safety.length >= BUSINESS_INSIGHT_MINIMUM_DISTINCT_MEMBERS;
+    const employeeAvailable = employee.length >= BUSINESS_INSIGHT_MINIMUM_DISTINCT_MEMBERS;
 
-    const avgSafetyRating = safety.length
+    const avgSafetyRating = safetyAvailable
       ? Math.round((safety.reduce((s, r) => s + ((r.responses as any)?.overallRating ?? 0), 0) / safety.length) * 10) / 10
       : null;
-    const avgEmployeeRating = employee.length
+    const avgEmployeeRating = employeeAvailable
       ? Math.round((employee.reduce((s, r) => s + ((r.responses as any)?.overallRating ?? 0), 0) / employee.length) * 10) / 10
       : null;
 
     res.json({
-      total: rows.length,
-      safetyCount: safety.length,
-      employeeCount: employee.length,
+      available: safetyAvailable || employeeAvailable,
+      minimumDistinctMembers: BUSINESS_INSIGHT_MINIMUM_DISTINCT_MEMBERS,
+      total: approvedDistinctResponses.length,
+      safetyCount: safetyAvailable ? safety.length : null,
+      employeeCount: employeeAvailable ? employee.length : null,
       avgSafetyRating,
       avgEmployeeRating,
     });

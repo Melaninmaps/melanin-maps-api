@@ -1,102 +1,89 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessSkipFeedbackTable, conversations as convTable, messages as msgsTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
-import { checkContent } from "../lib/contentFilter";
+import { db, businessesTable, businessSkipFeedbackTable, pool } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import {
+  isVerifiedMinorityFlywheelEligible,
+  resolveVerifiedMinorityFlywheelOwner,
+  VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+} from "../businesses/verifiedMinorityFlywheelEligibility";
+import {
+  aggregatePrivateSkipFeedbackSignals,
+  normalizePrivateSkipFeedbackReason,
+  PRIVATE_SKIP_FEEDBACK_MINIMUM_DISTINCT_MEMBERS,
+} from "../businesses/privateSkipFeedback";
 
 const router: IRouter = Router();
 
-const INFLAMMATORY_PATTERNS: RegExp[] = [
-  /\byou('re| are) (trash|garbage|terrible|pathetic|disgusting|worthless|a joke|horrible|awful|disgusting)\b/i,
-  /\bshut (this place|it) down\b/i,
-  /\bnever coming back( here)?\b/i,
-  /\bwaste of (time|money|space)\b/i,
-  /\bworst (place|business|owner|service|experience) (ever|i've)\b/i,
-  /\bterrible (owner|people|person|staff|management)\b/i,
-  /\browns? (this place|the business|it)\b/i,
-  /\bstay away\b/i,
-  /\bscam(mers?)?\b/i,
-  /\bsteal(ing)? from\b/i,
-  /\bfraud\b/i,
-  /\bskip this (place|business)\b/i,
-];
-
-function checkBusinessFeedback(text: string): { ok: boolean; reason?: string } {
-  const base = checkContent(text);
-  if (!base.ok) return { ok: false, reason: base.reason };
-  for (const pat of INFLAMMATORY_PATTERNS) {
-    if (pat.test(text)) {
-      return { ok: false, reason: "Feedback contains language that may be inflammatory or personal. Please focus on specific, actionable suggestions (e.g. parking, accessibility, wait times)." };
-    }
-  }
-  return { ok: true };
+function denyIneligibleFlywheelAccess(res: Response): void {
+  res.status(403).json({
+    error: VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+    code: "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED",
+  });
 }
 
-async function deliverToOwnerInbox(businessId: string, ownerId: string, businessName: string, message: string): Promise<void> {
-  try {
-    const preview = message.length > 80 ? message.slice(0, 77) + "…" : message;
-    const now = new Date();
-
-    const [existing] = await db
-      .select({ id: convTable.id })
-      .from(convTable)
-      .where(
-        and(
-          eq(convTable.businessId, businessId),
-          eq(convTable.title, `🔒 Private Feedback — ${businessName}`)
-        )
-      )
-      .limit(1);
-
-    let convId: number;
-    if (existing) {
-      convId = existing.id;
-    } else {
-      const [created] = await db
-        .insert(convTable)
-        .values({
-          title: `🔒 Private Feedback — ${businessName}`,
-          participantIds: [ownerId],
-          businessId,
-          lastMessageAt: now,
-          lastMessagePreview: preview,
-        })
-        .returning({ id: convTable.id });
-      if (!created) throw new Error("Failed to create feedback conversation");
-      convId = created.id;
-    }
-
-    await db.insert(msgsTable).values({
-      conversationId: convId,
-      role: "feedback",
-      content: message,
-    });
-
-    await db
-      .update(convTable)
-      .set({ lastMessageAt: now, lastMessagePreview: preview })
-      .where(eq(convTable.id, convId));
-  } catch (err) {
-    logger.error({ err, businessId }, "[skip-feedback] failed to deliver to owner inbox");
+async function requireVerifiedMinorityFlywheelOwner(
+  req: Request,
+  res: Response,
+  businessId: string,
+): Promise<boolean> {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required." });
+    return false;
   }
+
+  const access = await resolveVerifiedMinorityFlywheelOwner(pool, {
+    businessId,
+    userId,
+  });
+  if (access.kind === "not_owner") {
+    res.status(403).json({ error: "Approved business owner access is required." });
+    return false;
+  }
+  if (access.kind === "ineligible") {
+    denyIneligibleFlywheelAccess(res);
+    return false;
+  }
+  return true;
 }
 
+/**
+ * A member can share one reviewed category after passing on a listing. The
+ * server never stores the member's free-text explanation, opens an owner
+ * conversation, or sends a direct owner notification. The signal becomes
+ * visible only through thresholded, distinct-member aggregates.
+ */
 router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response) => {
   try {
-    const businessId = String(req.params["id"]);
-    const { message } = req.body as { message?: string };
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required." });
+      return;
+    }
 
-    if (!message?.trim()) {
-      res.status(400).json({ error: "Message is required." });
+    const businessId = String(req.params["id"] ?? "").trim();
+    const reasonCode = normalizePrivateSkipFeedbackReason(
+      (req.body as { reasonCode?: unknown }).reasonCode,
+    );
+    if (!businessId) {
+      res.status(400).json({ error: "Business ID is required." });
+      return;
+    }
+    if (!reasonCode) {
+      res.status(400).json({
+        error: "Select a privacy-protected feedback category.",
+        code: "PRIVATE_SKIP_FEEDBACK_REASON_REQUIRED",
+      });
       return;
     }
 
     const [business] = await db
       .select({
         id: businessesTable.id,
-        name: businessesTable.name,
+        status: businessesTable.status,
+        verified: businessesTable.verified,
+        verifiedDesignations: businessesTable.verifiedDesignations,
         feedbackOptIn: businessesTable.feedbackOptIn,
-        submittedById: businessesTable.submittedById,
       })
       .from(businessesTable)
       .where(eq(businessesTable.id, businessId))
@@ -106,33 +93,33 @@ router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response)
       res.status(404).json({ error: "Business not found." });
       return;
     }
-
-    if (!business.feedbackOptIn) {
-      res.status(403).json({ error: "This business has not enabled direct feedback." });
+    if (!isVerifiedMinorityFlywheelEligible(business)) {
+      denyIneligibleFlywheelAccess(res);
       return;
     }
-
-    const filterResult = checkBusinessFeedback(message.trim());
-    const wasFiltered = !filterResult.ok;
-
-    if (wasFiltered) {
-      res.status(422).json({ filtered: true, reason: filterResult.reason });
+    if (!business.feedbackOptIn) {
+      res.status(403).json({
+        error: "This business has not enabled privacy-protected community feedback.",
+        code: "PRIVATE_SKIP_FEEDBACK_NOT_ENABLED",
+      });
       return;
     }
 
     await db.insert(businessSkipFeedbackTable).values({
       businessId,
-      submittedById: req.user?.id ?? null,
-      message: message.trim(),
+      submittedById: req.user.id,
+      // The existing column now carries only the reviewed reason code. It is
+      // intentionally not a free-text message field for new submissions.
+      message: reasonCode,
       wasFiltered: false,
     });
 
-    if (business.submittedById) {
-      await deliverToOwnerInbox(businessId, business.submittedById, business.name, message.trim());
-    }
-
-    logger.info({ businessId }, "[skip-feedback] feedback submitted and delivered to inbox");
-    res.json({ success: true });
+    logger.info({ businessId, reasonCode }, "[skip-feedback] aggregate-only signal recorded");
+    res.status(201).json({
+      success: true,
+      delivery: "aggregate_only",
+      minimumDistinctMembers: PRIVATE_SKIP_FEEDBACK_MINIMUM_DISTINCT_MEMBERS,
+    });
   } catch (err) {
     req.log.error({ err }, "POST /businesses/:id/skip-feedback error");
     res.status(500).json({ error: "Failed to submit feedback." });
@@ -141,33 +128,24 @@ router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response)
 
 router.patch("/businesses/mine/feedback-opt-in", async (req: Request, res: Response) => {
   try {
-    if (!req.user?.id) {
-      res.status(401).json({ error: "Authentication required." });
+    const businessId = String(req.query["businessId"] ?? "").trim();
+    const { enabled } = req.body as { enabled?: boolean };
+    if (!businessId) {
+      res.status(400).json({ error: "businessId is required." });
       return;
     }
-    const { enabled } = req.body as { enabled?: boolean };
     if (typeof enabled !== "boolean") {
       res.status(400).json({ error: "enabled (boolean) is required." });
       return;
     }
-
-    const [business] = await db
-      .select({ id: businessesTable.id })
-      .from(businessesTable)
-      .where(eq(businessesTable.submittedById, req.user.id))
-      .limit(1);
-
-    if (!business) {
-      res.status(404).json({ error: "No business found for your account." });
-      return;
-    }
+    if (!await requireVerifiedMinorityFlywheelOwner(req, res, businessId)) return;
 
     await db
       .update(businessesTable)
       .set({ feedbackOptIn: enabled })
-      .where(eq(businessesTable.id, business.id));
+      .where(eq(businessesTable.id, businessId));
 
-    logger.info({ businessId: business.id, enabled }, "[skip-feedback] opt-in toggled");
+    logger.info({ businessId, enabled }, "[skip-feedback] aggregate feedback opt-in toggled");
     res.json({ success: true, feedbackOptIn: enabled });
   } catch (err) {
     req.log.error({ err }, "PATCH /businesses/mine/feedback-opt-in error");
@@ -175,31 +153,32 @@ router.patch("/businesses/mine/feedback-opt-in", async (req: Request, res: Respo
   }
 });
 
+/**
+ * Retains the legacy route name for clients that have not moved to the Kinfolk
+ * namespace, but makes the contract business-scoped and aggregate-only.
+ */
 router.get("/businesses/mine/skip-feedback", async (req: Request, res: Response) => {
   try {
-    if (!req.user?.id) {
-      res.status(401).json({ error: "Authentication required." });
+    const businessId = String(req.query["businessId"] ?? "").trim();
+    if (!businessId) {
+      res.status(400).json({ error: "businessId is required." });
       return;
     }
+    if (!await requireVerifiedMinorityFlywheelOwner(req, res, businessId)) return;
 
-    const [business] = await db
-      .select({ id: businessesTable.id })
-      .from(businessesTable)
-      .where(eq(businessesTable.submittedById, req.user.id))
-      .limit(1);
-
-    if (!business) {
-      res.status(404).json({ error: "No business found." });
-      return;
-    }
-
-    const feedback = await db
-      .select()
+    const rows = await db
+      .select({
+        message: businessSkipFeedbackTable.message,
+        submittedById: businessSkipFeedbackTable.submittedById,
+      })
       .from(businessSkipFeedbackTable)
-      .where(eq(businessSkipFeedbackTable.businessId, business.id))
-      .orderBy(businessSkipFeedbackTable.createdAt);
+      .where(eq(businessSkipFeedbackTable.businessId, businessId));
 
-    res.json({ feedback });
+    res.json({
+      businessId,
+      ...aggregatePrivateSkipFeedbackSignals(rows),
+      minimumDistinctMembers: PRIVATE_SKIP_FEEDBACK_MINIMUM_DISTINCT_MEMBERS,
+    });
   } catch (err) {
     req.log.error({ err }, "GET /businesses/mine/skip-feedback error");
     res.status(500).json({ error: "Failed to fetch feedback." });

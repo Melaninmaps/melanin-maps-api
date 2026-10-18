@@ -235,7 +235,19 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
           timeline,
         }),
       });
-      if (!resp.ok) throw new Error("Failed to generate plan");
+      if (!resp.ok) {
+        const denial = await resp.json().catch(() => ({})) as { code?: string; error?: string };
+        if (denial.code === "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED") {
+          Alert.alert(
+            "Verified Minority-Owned Status Required",
+            "This protected business-improvement benefit is available after your active Minority-owned designation is approved. Membership payment or a business claim does not verify a business.",
+          );
+        } else {
+          Alert.alert("Something went wrong", denial.error ?? "We couldn't generate your plan right now. Please try again.");
+        }
+        setStep(4);
+        return;
+      }
       const data = (await resp.json()) as Plan;
       setPlan(data);
     } catch {

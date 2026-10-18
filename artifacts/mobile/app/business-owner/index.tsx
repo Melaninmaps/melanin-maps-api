@@ -76,8 +76,7 @@ export default function BusinessOwnerHome() {
   const [stats, setStats] = useState({ views: 0, saves: 0, reviews: 0 });
   const [clicks, setClicks] = useState<{ tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } | null>(null);
   const [analyticsLocked, setAnalyticsLocked] = useState(false);
-  const [skipInsights, setSkipInsights] = useState<string[]>([]);
-  const [skipExpanded, setSkipExpanded] = useState(false);
+  const [analyticsEligibilityDenied, setAnalyticsEligibilityDenied] = useState(false);
   const [communityNeeds, setCommunityNeeds] = useState<CommunityNeedInsight[]>([]);
 
   const load = useCallback(async () => {
@@ -98,11 +97,8 @@ export default function BusinessOwnerHome() {
             if (aData.clicks30d) setClicks(aData.clicks30d);
           } else if (aRes.status === 403) {
             setAnalyticsLocked(true);
-          }
-          const sRes = await fetch(`${getApiBase()}/api/kinfolk/skip-feedback`, { headers });
-          if (sRes.ok) {
-            const sData = await sRes.json() as { messages?: string[] };
-            setSkipInsights(sData.messages ?? []);
+            const denial = await aRes.json().catch(() => ({})) as { code?: string };
+            setAnalyticsEligibilityDenied(denial.code === "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED");
           }
           const needsRes = await fetch(`${getApiBase()}/api/businesses/${data.business.id}/kinfolk-community-needs`, { headers });
           if (needsRes.ok) {
@@ -324,10 +320,14 @@ export default function BusinessOwnerHome() {
                 <TouchableOpacity
                   style={styles.lockedStats}
                   activeOpacity={0.8}
-                  onPress={() => router.push("/upgrade" as never)}
+                  onPress={() => router.push((analyticsEligibilityDenied ? "/business-verify" : "/upgrade") as never)}
                 >
                   <Feather name="lock" size={13} color="rgba(201,146,43,0.8)" />
-                  <Text style={styles.lockedStatsTxt}>Upgrade to Navigator to see views, saves & reviews</Text>
+                  <Text style={styles.lockedStatsTxt}>
+                    {analyticsEligibilityDenied
+                      ? "Verification is required for protected community benefits"
+                      : "Eligible owners can add Navigator for views, saves & reviews"}
+                  </Text>
                 </TouchableOpacity>
               ) : (
                 <>
@@ -416,44 +416,6 @@ export default function BusinessOwnerHome() {
                   </View>
                 ))}
               </View>
-            )}
-
-            {skipInsights.length > 0 && (
-              <TouchableOpacity
-                style={[styles.skipCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                activeOpacity={0.85}
-                onPress={() => setSkipExpanded((v) => !v)}
-              >
-                <View style={styles.skipHeader}>
-                  <View style={styles.skipHeaderLeft}>
-                    <View style={[styles.skipIcon, { backgroundColor: "#F59E0B18" }]}>
-                      <Feather name="eye-off" size={15} color="#F59E0B" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.skipTitle, { color: colors.foreground }]}>Community Skip Insights</Text>
-                      <Text style={[styles.skipSub, { color: colors.mutedForeground }]}>
-                        {skipInsights.length} reason{skipInsights.length !== 1 ? "s" : ""} community members passed — private to you
-                      </Text>
-                    </View>
-                  </View>
-                  <Feather name={skipExpanded ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
-                </View>
-                {skipExpanded && (
-                  <View style={[styles.skipBody, { borderTopColor: colors.border }]}>
-                    {skipInsights.slice(0, 10).map((msg, i) => (
-                      <View key={i} style={styles.skipRow}>
-                        <Feather name="message-square" size={12} color={colors.mutedForeground} style={{ marginTop: 2 }} />
-                        <Text style={[styles.skipMsg, { color: colors.foreground }]}>{msg}</Text>
-                      </View>
-                    ))}
-                    {skipInsights.length > 10 && (
-                      <Text style={[styles.skipMore, { color: colors.mutedForeground }]}>
-                        +{skipInsights.length - 10} more · Use KinfolkAI → Action Plan for full analysis
-                      </Text>
-                    )}
-                  </View>
-                )}
-              </TouchableOpacity>
             )}
 
             <TouchableOpacity activeOpacity={0.85}

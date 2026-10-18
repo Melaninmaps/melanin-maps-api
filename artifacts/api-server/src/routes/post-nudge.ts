@@ -1,15 +1,48 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessProfileViewsTable, businessIdentityTable, reviewsTable } from "@workspace/db";
+import { db, pool, businessesTable, businessProfileViewsTable, businessIdentityTable, reviewsTable } from "@workspace/db";
 import { and, eq, gt, sql, count, desc } from "drizzle-orm";
 import { sendPushToUser } from "../lib/pushNotifications";
 import { logger } from "../lib/logger";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import {
+  resolveVerifiedMinorityFlywheelOwner,
+  VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+} from "../businesses/verifiedMinorityFlywheelEligibility";
 
 const router: IRouter = Router();
+const POST_NUDGE_MINIMUM_AGGREGATE = 5;
 
 function requireAuth(req: Request, res: Response): string | null {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" }); return null; }
   return req.user.id;
+}
+
+async function requireVerifiedMinorityFlywheelOwner(
+  req: Request,
+  res: Response,
+): Promise<{ userId: string; businessId: string } | null> {
+  const userId = requireAuth(req, res);
+  if (!userId) return null;
+  const businessId = typeof req.query["businessId"] === "string"
+    ? req.query["businessId"].trim()
+    : "";
+  if (!businessId) {
+    res.status(400).json({ error: "businessId is required" });
+    return null;
+  }
+  const access = await resolveVerifiedMinorityFlywheelOwner(pool, { businessId, userId });
+  if (access.kind === "not_owner") {
+    res.status(403).json({ error: "Approved business owner access is required" });
+    return null;
+  }
+  if (access.kind === "ineligible") {
+    res.status(403).json({
+      error: VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+      code: "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED",
+    });
+    return null;
+  }
+  return { userId, businessId };
 }
 
 const HOUR_LABELS: Record<number, string> = {
@@ -76,14 +109,14 @@ function buildSuggestedCaption(category: string, businessName: string): string {
 
 // ─── GET /api/businesses/mine/post-nudge ──────────────────────────────────────
 router.get("/businesses/mine/post-nudge", async (req: Request, res: Response) => {
-  const userId = requireAuth(req, res);
-  if (!userId) return;
+  const access = await requireVerifiedMinorityFlywheelOwner(req, res);
+  if (!access) return;
 
   try {
     const [business] = await db
       .select()
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, userId))
+      .where(eq(businessesTable.id, access.businessId))
       .limit(1);
 
     if (!business) {
@@ -124,6 +157,14 @@ router.get("/businesses/mine/post-nudge", async (req: Request, res: Response) =>
       .groupBy(sql`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`);
 
     const totalViews = hourRows.reduce((s, r) => s + r.count, 0);
+    if (totalViews < POST_NUDGE_MINIMUM_AGGREGATE) {
+      res.json({
+        businessId: business.id,
+        hasSufficientData: false,
+        minimumAggregate: POST_NUDGE_MINIMUM_AGGREGATE,
+      });
+      return;
+    }
 
     // Find top 3 peak hours
     const sortedHours = [...hourRows].sort((a, b) => b.count - a.count);
@@ -168,7 +209,8 @@ router.get("/businesses/mine/post-nudge", async (req: Request, res: Response) =>
       nudgeMessage,
       suggestedCaption,
       hourDistribution,
-      hasSufficientData: totalViews >= 5,
+      hasSufficientData: true,
+      minimumAggregate: POST_NUDGE_MINIMUM_AGGREGATE,
     });
   } catch (err) {
     req.log.error({ err }, "GET /businesses/mine/post-nudge error");
@@ -179,14 +221,14 @@ router.get("/businesses/mine/post-nudge", async (req: Request, res: Response) =>
 // ─── POST /api/businesses/mine/post-nudge/notify ──────────────────────────────
 // Sends a push notification to the business owner at peak time
 router.post("/businesses/mine/post-nudge/notify", async (req: Request, res: Response) => {
-  const userId = requireAuth(req, res);
-  if (!userId) return;
+  const access = await requireVerifiedMinorityFlywheelOwner(req, res);
+  if (!access) return;
 
   try {
     const [business] = await db
       .select({ id: businessesTable.id, name: businessesTable.name, category: businessesTable.category })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, userId))
+      .where(eq(businessesTable.id, access.businessId))
       .limit(1);
 
     if (!business) {
@@ -194,9 +236,26 @@ router.post("/businesses/mine/post-nudge/notify", async (req: Request, res: Resp
       return;
     }
 
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [viewCount] = await db
+      .select({ count: count() })
+      .from(businessProfileViewsTable)
+      .where(and(
+        eq(businessProfileViewsTable.businessId, business.id),
+        gt(businessProfileViewsTable.viewedAt, thirtyDaysAgo),
+      ));
+    if ((viewCount?.count ?? 0) < POST_NUDGE_MINIMUM_AGGREGATE) {
+      res.status(409).json({
+        error: "Not enough aggregate engagement data is available for a timing reminder.",
+        code: "INSUFFICIENT_AGGREGATE_DATA",
+        minimumAggregate: POST_NUDGE_MINIMUM_AGGREGATE,
+      });
+      return;
+    }
+
     const caption = buildSuggestedCaption(business.category, business.name);
 
-    await sendPushToUser(userId, {
+    await sendPushToUser(access.userId, {
       title: `KinfolkAI™ · Time to post, ${business.name}`,
       body: "Your customers are most active right now — tap to post and catch them while they're here.",
       data: {
@@ -208,7 +267,7 @@ router.post("/businesses/mine/post-nudge/notify", async (req: Request, res: Resp
       },
     });
 
-    logger.info({ businessId: business.id, userId }, "[post-nudge] push notification sent");
+    logger.info({ businessId: business.id }, "[post-nudge] push notification sent");
     res.json({ sent: true });
   } catch (err) {
     req.log.error({ err }, "POST /businesses/mine/post-nudge/notify error");

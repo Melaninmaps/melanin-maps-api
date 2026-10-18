@@ -26,4 +26,10 @@ describe("web Kinfolk feedback flywheel", () => {
     expect(dashboard).toContain("kinfolk-community-needs-owner-insight");
     expect(dashboard).toContain("No member identity, message, note, transcript");
   });
+
+  it("explains verification requirements without turning access into a paid-upgrade claim", () => {
+    expect(dashboard).toContain("kinfolk-flywheel-verification-required");
+    expect(dashboard).toContain("membership payment does not establish that status");
+    expect(dashboard).toContain("Review verification requirements");
+  });
 });

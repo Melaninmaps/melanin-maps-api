@@ -285,7 +285,7 @@ export default function BusinessDashboardScreen() {
   const [feeError, setFeeError] = useState(false);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<"membership" | "eligibility" | "error" | null>(null);
   const [nudge, setNudge] = useState<PostNudgeData | null>(null);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [aiCaptions, setAiCaptions] = useState<string[]>([]);
@@ -299,8 +299,15 @@ export default function BusinessDashboardScreen() {
   const [growthTools, setGrowthTools] = useState<GrowthToolsData | null>(null);
   const [growthLoading, setGrowthLoading] = useState(false);
   const [growthCheckoutLoading, setGrowthCheckoutLoading] = useState<string | null>(null);
-  const [skipFeedback, setSkipFeedback] = useState<{ id: string; message: string; createdAt: string }[] | null>(null);
-  const [marketInsights, setMarketInsights] = useState<{ trendingSearches: { query: string; searchCount: number; topCategory: string }[]; opportunityAlerts: { type: string; message: string; action: string; impact: string }[]; targetAudience: { ageGroups: string[]; lifestyleKeywords: string[]; topCities: string[] } | null } | null>(null);
+  const [skipFeedback, setSkipFeedback] = useState<{
+    totalDistinctMembers: number;
+    reasonCounts: Array<{ reasonCode: string; label: string; distinctMemberCount: number }>;
+  } | null>(null);
+  const [marketInsights, setMarketInsights] = useState<{
+    trendingCategories: Array<{ category: string; memberSignalCount: number }>;
+    opportunityAlerts: Array<{ category: string; memberSignalCount: number; alert: string }>;
+    targetAudience?: { ageGroups: string[]; lifestyleKeywords: string[]; topCities: string[] } | null;
+  } | null>(null);
   const [marketInsightsLoading, setMarketInsightsLoading] = useState(false);
   const [targetAudienceInput, setTargetAudienceInput] = useState("");
   const [targetAudienceSaving, setTargetAudienceSaving] = useState(false);
@@ -438,11 +445,14 @@ export default function BusinessDashboardScreen() {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         const base = getApiBase();
-        if (!token || !base) return;
-        const res = await fetch(`${base}/api/businesses/mine/post-nudge`, {
+        if (!token || !base || !business.id) return;
+        const res = await fetch(`${base}/api/businesses/mine/post-nudge?businessId=${encodeURIComponent(business.id)}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.ok) setNudge(await res.json() as PostNudgeData);
+        if (res.ok) {
+          const data = await res.json() as PostNudgeData;
+          setNudge(data.hasSufficientData ? data : null);
+        }
       } catch {}
     })();
   }, [business?.id]);
@@ -458,13 +468,21 @@ export default function BusinessDashboardScreen() {
       const res = await fetch(`${base}/api/businesses/mine/analytics`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 403) { setAnalyticsError("paywall"); return; }
+      if (res.status === 403) {
+        const denial = await res.json().catch(() => ({})) as { code?: string };
+        setAnalyticsError(
+          denial.code === "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED"
+            ? "eligibility"
+            : "membership",
+        );
+        return;
+      }
       if (!res.ok) { setAnalyticsError("error"); return; }
       const data = await res.json() as AnalyticsData;
       setAnalytics(data);
-      fetch(`${base}/api/kinfolk/skip-feedback`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${base}/api/kinfolk/skip-feedback?businessId=${encodeURIComponent(business?.id ?? "")}`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.ok ? r.json() : null)
-        .then((d: { feedback?: { id: string; message: string; createdAt: string }[] } | null) => { if (d?.feedback) setSkipFeedback(d.feedback); })
+        .then((d: typeof skipFeedback) => { if (d) setSkipFeedback(d); })
         .catch(() => {});
       // Load cached AI plan alongside analytics (fire-and-forget)
       if (business?.id) {
@@ -573,16 +591,25 @@ export default function BusinessDashboardScreen() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           businessId: business.id,
-          businessName: business.name,
-          businessCategory: business.category,
-          businessCity: business.city,
         }),
       });
       if (res.status === 403) {
-        Alert.alert("Upgrade Required", "AI Business Insights require a Navigator or Trailblazer membership.", [
-          { text: "Cancel", style: "cancel" },
-          { text: "Upgrade", onPress: () => { void openMembershipWebsite(); } },
-        ]);
+        const denial = await res.json().catch(() => ({})) as { code?: string };
+        if (denial.code === "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED") {
+          Alert.alert(
+            "Verified Minority-Owned Status Required",
+            "This protected flywheel benefit is available after your active Minority-owned designation is approved. Membership payment does not verify a business.",
+            [
+              { text: "Not now", style: "cancel" },
+              { text: "Review Verification", onPress: () => router.push("/business-verify" as never) },
+            ],
+          );
+        } else {
+          Alert.alert("Membership Required", "AI Business Insights require a Navigator or Trailblazer membership after business verification is approved.", [
+            { text: "Cancel", style: "cancel" },
+            { text: "View Membership", onPress: () => { void openMembershipWebsite(); } },
+          ]);
+        }
         return;
       }
       if (res.ok) setActionPlan(await res.json() as ActionPlanData);
@@ -618,14 +645,27 @@ export default function BusinessDashboardScreen() {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getApiBase();
-      if (!token || !base) return;
+      if (!token || !base || !business?.id) return;
       const next = !feedbackOptIn;
-      const res = await fetch(`${base}/api/businesses/mine/feedback-opt-in`, {
+      const res = await fetch(`${base}/api/businesses/mine/feedback-opt-in?businessId=${encodeURIComponent(business.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ enabled: next }),
       });
       if (res.ok) setFeedbackOptIn(next);
+      else if (res.status === 403) {
+        const denial = await res.json().catch(() => ({})) as { code?: string };
+        if (denial.code === "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED") {
+          Alert.alert(
+            "Verified Minority-Owned Status Required",
+            "Privacy-protected community feedback is available after your active Minority-owned designation is approved. Membership payment does not verify a business.",
+            [
+              { text: "Not now", style: "cancel" },
+              { text: "Review Verification", onPress: () => router.push("/business-verify" as never) },
+            ],
+          );
+        }
+      }
     } catch {}
     finally { setTogglingFeedback(false); }
   }
@@ -1438,7 +1478,7 @@ export default function BusinessDashboardScreen() {
                       try {
                         const token = await SecureStore.getItemAsync("auth_session_token");
                         const base = getApiBase();
-                        await fetch(`${base}/api/businesses/mine/post-nudge/notify`, {
+                        await fetch(`${base}/api/businesses/mine/post-nudge/notify?businessId=${encodeURIComponent(business?.id ?? "")}`, {
                           method: "POST",
                           headers: { Authorization: `Bearer ${token ?? ""}` },
                         });
@@ -1456,7 +1496,7 @@ export default function BusinessDashboardScreen() {
               </View>
             )}
 
-            {/* Direct feedback opt-in toggle */}
+            {/* Privacy-protected community feedback opt-in */}
             <TouchableOpacity
               style={[styles.feedbackToggleCard, { backgroundColor: colors.card, borderColor: feedbackOptIn ? "#CA922B" : colors.border }]}
               onPress={toggleFeedbackOptIn}
@@ -1466,11 +1506,11 @@ export default function BusinessDashboardScreen() {
                 <Feather name="message-circle" size={20} color="#CA922B" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.feedbackToggleTitle, { color: colors.foreground }]}>Direct Skip Feedback</Text>
+                <Text style={[styles.feedbackToggleTitle, { color: colors.foreground }]}>Privacy-Protected Community Feedback</Text>
                 <Text style={[styles.feedbackToggleSub, { color: colors.mutedForeground }]}>
                   {feedbackOptIn
-                    ? "On — users who skip your listing can send you a private, constructive note."
-                    : "Off — enable to receive private notes from users who skip your listing."}
+                    ? "On — thresholded category aggregates may appear; individual notes and identities are never delivered."
+                    : "Off — turn on to receive privacy-protected aggregate community signals after verification."}
                 </Text>
               </View>
               {togglingFeedback ? (
@@ -2204,14 +2244,34 @@ export default function BusinessDashboardScreen() {
               </View>
             )}
 
-            {!analyticsLoading && analyticsError === "paywall" && (
+            {!analyticsLoading && analyticsError === "eligibility" && (
+              <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.paywallIcon, { backgroundColor: "#2D7A4F18" }]}>
+                  <Feather name="shield" size={32} color="#2D7A4F" />
+                </View>
+                <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Verification Needed for Protected Benefits</Text>
+                <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
+                  Private community signals, targeted analytics, and other flywheel benefits require an active platform-verified Minority-owned designation. Payment or a business claim does not establish that status.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.paywallBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => router.push("/business-verify" as never)}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="shield" size={15} color="#FFF" />
+                  <Text style={styles.paywallBtnTxt}>Review Verification</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {!analyticsLoading && analyticsError === "membership" && (
               <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.paywallIcon, { backgroundColor: "#CA922B18" }]}>
                   <Feather name="bar-chart-2" size={32} color="#CA922B" />
                 </View>
                 <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Unlock Business Analytics</Text>
                 <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
-                  Navigator and Trailblazer members get profile views, saves data, peer benchmarks, and personalised growth suggestions. Trailblazer unlocks 7-day view trends and a full suggestion suite.
+                  Eligible owners can add a membership for profile views, saves data, peer benchmarks, and personalised growth suggestions. Membership does not establish business verification or flywheel eligibility.
                 </Text>
                 <TouchableOpacity
                   style={[styles.paywallBtn, { backgroundColor: colors.primary }]}
@@ -2392,25 +2452,22 @@ export default function BusinessDashboardScreen() {
 
                     {!marketInsightsLoading && marketInsights && (
                       <>
-                        {/* Trending Searches */}
-                        {marketInsights.trendingSearches.length > 0 && (
+                        {/* Thresholded category-level search interest */}
+                        {marketInsights.trendingCategories.length > 0 && (
                           <View style={{ marginTop: 12 }}>
                             <Text style={{ color: "rgba(255,255,255,0.6)", fontFamily: "Inter_600SemiBold", fontSize: 11, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
-                              What people are searching
+                              Thresholded community interest
                             </Text>
-                            {marketInsights.trendingSearches.slice(0, 4).map((t, i) => (
+                            {marketInsights.trendingCategories.slice(0, 4).map((t, i) => (
                               <View key={i} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.04)" }}>
                                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                                   <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: "#2D7A4F25", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ color: "#2D7A4F", fontFamily: "Inter_700Bold", fontSize: 9 }}>{i + 1}</Text>
                                   </View>
-                                  <Text style={{ color: "#FFF", fontFamily: "Inter_500Medium", fontSize: 13 }}>{t.query}</Text>
+                                  <Text style={{ color: "#FFF", fontFamily: "Inter_500Medium", fontSize: 13 }}>{t.category}</Text>
                                 </View>
                                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                  <Text style={{ color: "#2D7A4F", fontFamily: "Inter_600SemiBold", fontSize: 11 }}>{t.searchCount} searches</Text>
-                                  <View style={{ backgroundColor: "#CA922B18", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                    <Text style={{ color: "#CA922B", fontFamily: "Inter_500Medium", fontSize: 10 }}>{t.topCategory}</Text>
-                                  </View>
+                                  <Text style={{ color: "#2D7A4F", fontFamily: "Inter_600SemiBold", fontSize: 11 }}>{t.memberSignalCount} signals</Text>
                                 </View>
                               </View>
                             ))}
@@ -2424,16 +2481,16 @@ export default function BusinessDashboardScreen() {
                               Opportunities for you
                             </Text>
                             {marketInsights.opportunityAlerts.slice(0, 3).map((alert, i) => {
-                              const impactColor = alert.impact === "high" ? "#CA922B" : alert.impact === "medium" ? "#2D7A4F" : "#6B7280";
+                              const impactColor = "#2D7A4F";
                               return (
                                 <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: impactColor }}>
                                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                                    <Text style={{ color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 13 }}>{alert.message}</Text>
+                                    <Text style={{ color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 13 }}>{alert.category}</Text>
                                     <View style={{ backgroundColor: impactColor + "20", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                      <Text style={{ color: impactColor, fontFamily: "Inter_600SemiBold", fontSize: 10, textTransform: "uppercase" }}>{alert.impact}</Text>
+                                      <Text style={{ color: impactColor, fontFamily: "Inter_600SemiBold", fontSize: 10, textTransform: "uppercase" }}>{alert.memberSignalCount} signals</Text>
                                     </View>
                                   </View>
-                                  <Text style={{ color: "rgba(255,255,255,0.55)", fontFamily: "Inter_400Regular", fontSize: 12 }}>{alert.action}</Text>
+                                  <Text style={{ color: "rgba(255,255,255,0.55)", fontFamily: "Inter_400Regular", fontSize: 12 }}>{alert.alert}</Text>
                                 </View>
                               );
                             })}
@@ -2526,7 +2583,7 @@ export default function BusinessDashboardScreen() {
                         <Text style={[styles.aiInsightTitle, { color: "#FFF" }]}>AI Feedback Analysis</Text>
                         <Text style={[styles.aiInsightSub, { color: "rgba(255,255,255,0.5)" }]}>
                           {A.tier === "trailblazer"
-                            ? "Full analysis — reviews + community skip feedback"
+                            ? "Full analysis — reviews + privacy-protected community signals"
                             : "Basic analysis — top 10 reviews · Upgrade for full depth"}
                         </Text>
                       </View>
@@ -2541,7 +2598,7 @@ export default function BusinessDashboardScreen() {
                             <Feather name="file-text" size={11} color="#7B2D8B" />
                             <Text style={[styles.aiInsightMetaTxt, { color: "rgba(255,255,255,0.4)" }]}>
                               {actionPlan._dataPoints.reviewsAnalyzed} reviews analysed
-                              {actionPlan._dataPoints.skipFeedbackIncluded ? " · skip feedback included" : ""}
+                              {actionPlan._dataPoints.skipFeedbackIncluded ? " · aggregate feedback included" : ""}
                               {actionPlan._cached && actionPlan._cachedAt
                                 ? ` · last run ${Math.round((renderedAt - new Date(actionPlan._cachedAt).getTime()) / 86400000)}d ago`
                                 : ""}
@@ -2660,29 +2717,24 @@ export default function BusinessDashboardScreen() {
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.skipInsightTitle, { color: colors.foreground }]}>Community Skip Insights</Text>
                           <Text style={[styles.skipInsightSub, { color: colors.mutedForeground }]}>
-                            Private notes from people who passed on visiting — use this to improve.
+                            Thresholded broad categories only — no member note, identity, or transcript.
                           </Text>
                         </View>
                         <View style={[styles.skipInsightBadge, { backgroundColor: "#CA922B18" }]}>
-                          <Text style={[styles.skipInsightBadgeTxt, { color: "#CA922B" }]}>{skipFeedback.length}</Text>
+                          <Text style={[styles.skipInsightBadgeTxt, { color: "#CA922B" }]}>{skipFeedback.totalDistinctMembers}</Text>
                         </View>
                       </View>
-                      {skipFeedback.length === 0 ? (
+                      {skipFeedback.reasonCounts.length === 0 ? (
                         <Text style={[styles.skipInsightEmpty, { color: colors.mutedForeground }]}>
-                          No skip feedback yet. Enable &quot;Direct Skip Feedback&quot; in the overview tab to start collecting insights.
+                          No privacy-protected aggregate is available yet. Each category needs at least three distinct member signals.
                         </Text>
                       ) : (
-                        skipFeedback.slice(0, 5).map((item) => (
-                          <View key={item.id} style={[styles.skipInsightRow, { borderTopColor: colors.border }]}>
+                        skipFeedback.reasonCounts.map((item) => (
+                          <View key={item.reasonCode} style={[styles.skipInsightRow, { borderTopColor: colors.border }]}>
                             <Feather name="message-circle" size={13} color={colors.mutedForeground} style={{ marginTop: 2 }} />
-                            <Text style={[styles.skipInsightMsg, { color: colors.foreground }]}>{item.message}</Text>
+                            <Text style={[styles.skipInsightMsg, { color: colors.foreground }]}>{item.label}: {item.distinctMemberCount} distinct members</Text>
                           </View>
                         ))
-                      )}
-                      {skipFeedback.length > 5 && (
-                        <Text style={[styles.skipInsightMore, { color: colors.mutedForeground }]}>
-                          +{skipFeedback.length - 5} more · Generate your Action Plan for AI analysis of all feedback
-                        </Text>
                       )}
                     </View>
                   )}

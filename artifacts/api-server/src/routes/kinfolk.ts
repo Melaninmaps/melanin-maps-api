@@ -83,6 +83,14 @@ import {
   isKinfolkResponseReaction,
   normalizeCommunityNeedTopic,
 } from "../kinfolk/community-need-feedback";
+import {
+  resolveVerifiedMinorityFlywheelOwner,
+  VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+} from "../businesses/verifiedMinorityFlywheelEligibility";
+import {
+  aggregatePrivateSkipFeedbackSignals,
+  PRIVATE_SKIP_FEEDBACK_MINIMUM_DISTINCT_MEMBERS,
+} from "../businesses/privateSkipFeedback";
 import { ensureKinfolkFeedbackFlywheelSchema } from "../lib/startup-migrations";
 import {
   classifyKinfolkRequest,
@@ -13610,20 +13618,52 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 });
 
+async function requireVerifiedMinorityFlywheelBusinessOwner(
+  req: Request,
+  res: Response,
+  businessId: string,
+): Promise<boolean> {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return false;
+  }
+  const access = await resolveVerifiedMinorityFlywheelOwner(pool, {
+    businessId,
+    userId,
+  });
+  if (access.kind === "not_owner") {
+    res.status(403).json({ error: "Approved business owner access is required" });
+    return false;
+  }
+  if (access.kind === "ineligible") {
+    res.status(403).json({
+      error: VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+      code: "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED",
+    });
+    return false;
+  }
+  return true;
+}
+
 // ─── GET /api/kinfolk/business-action-plan/:businessId — fetch cached plan ──────
 router.get(
   "/kinfolk/business-action-plan/:businessId",
   async (req: Request, res: Response) => {
     if (!req.user?.id)
       return void res.status(401).json({ error: "Unauthorized" });
+    const businessId = String(req.params["businessId"] ?? "").trim();
+    if (!businessId)
+      return void res.status(400).json({ error: "businessId is required" });
     try {
+      if (!await requireVerifiedMinorityFlywheelBusinessOwner(req, res, businessId)) return;
       const [cached] = await db
         .select()
         .from(businessAiPlanCacheTable)
         .where(
           eq(
             businessAiPlanCacheTable.businessId,
-            String(req.params["businessId"]),
+            businessId,
           ),
         )
         .orderBy(desc(businessAiPlanCacheTable.createdAt))
@@ -13653,6 +13693,26 @@ router.post(
   async (req: Request, res: Response) => {
     if (!req.user?.id)
       return void res.status(401).json({ error: "Unauthorized" });
+
+    const { businessId: requestedBusinessId } = req.body as { businessId?: string };
+    const businessId = typeof requestedBusinessId === "string"
+      ? requestedBusinessId.trim()
+      : "";
+    if (!businessId)
+      return void res.status(400).json({ error: "businessId is required" });
+    if (!await requireVerifiedMinorityFlywheelBusinessOwner(req, res, businessId)) return;
+
+    const [verifiedBusiness] = await db
+      .select({
+        name: businessesTable.name,
+        category: businessesTable.category,
+        city: businessesTable.city,
+      })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId))
+      .limit(1);
+    if (!verifiedBusiness)
+      return void res.status(403).json({ error: "Approved business owner access is required" });
     if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"])
       return void res.status(503).json({ error: "AI service unavailable" });
 
@@ -13669,14 +13729,9 @@ router.post(
     const isTrailblazer = tier === "trailblazer";
     const CACHE_DAYS = isTrailblazer ? 3 : 7;
     const MAX_ITEMS = isTrailblazer ? 6 : 3;
-
-    const { businessId, businessName, businessCategory, businessCity } =
-      req.body as {
-        businessId?: string;
-        businessName?: string;
-        businessCategory?: string;
-        businessCity?: string;
-      };
+    const businessName = verifiedBusiness.name;
+    const businessCategory = verifiedBusiness.category;
+    const businessCity = verifiedBusiness.city;
 
     // ── Check cache ─────────────────────────────────────────────────────────────
     if (businessId) {
@@ -13748,17 +13803,23 @@ router.post(
             .filter(Boolean)
             .join("\n\n");
 
-    // ── Skip feedback (Trailblazer only) ────────────────────────────────────────
+    // ── Privacy-protected skip feedback (Trailblazer only) ──────────────────────
     let skipInsightsText = "";
+    let skipFeedbackIncluded = false;
     if (businessId && isTrailblazer) {
       try {
         const skipRows = await db
-          .select({ message: businessSkipFeedbackTable.message })
+          .select({
+            message: businessSkipFeedbackTable.message,
+            submittedById: businessSkipFeedbackTable.submittedById,
+          })
           .from(businessSkipFeedbackTable)
           .where(eq(businessSkipFeedbackTable.businessId, businessId))
-          .limit(20);
-        if (skipRows.length > 0) {
-          skipInsightsText = `\nCOMMUNITY SKIP FEEDBACK (private — why people passed on visiting):\n${skipRows.map((r) => `- "${r.message}"`).join("\n")}`;
+          .limit(200);
+        const aggregate = aggregatePrivateSkipFeedbackSignals(skipRows);
+        if (aggregate.reasonCounts.length > 0) {
+          skipFeedbackIncluded = true;
+          skipInsightsText = `\nPRIVACY-PROTECTED COMMUNITY FEEDBACK (only thresholded broad categories; never a member note, identity, or transcript):\n${aggregate.reasonCounts.map((entry) => `- ${entry.distinctMemberCount} distinct members selected ${entry.label}`).join("\n")}`;
         }
       } catch {
         /* non-critical */
@@ -13768,16 +13829,11 @@ router.post(
     // ── Business identity ───────────────────────────────────────────────────────
     let identityContext = "";
     try {
-      const [ownerBiz] = await db
-        .select({ id: businessesTable.id })
-        .from(businessesTable)
-        .where(eq(businessesTable.submittedById, req.user.id))
-        .limit(1);
-      if (ownerBiz) {
+      if (businessId) {
         const [identity] = await db
           .select()
           .from(businessIdentityTable)
-          .where(eq(businessIdentityTable.businessId, ownerBiz.id))
+          .where(eq(businessIdentityTable.businessId, businessId))
           .limit(1);
         if (identity) {
           const parts: string[] = [];
@@ -13860,7 +13916,7 @@ Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA complia
         _generatedAt: new Date().toISOString(),
         _dataPoints: {
           reviewsAnalyzed: dbReviews.length,
-          skipFeedbackIncluded: isTrailblazer,
+          skipFeedbackIncluded,
         },
       };
 
@@ -14506,33 +14562,30 @@ router.post(
 );
 
 // ─── View a shared trip (public) ───────────────────────────────────────────────
-// ─── GET /kinfolk/skip-feedback — owner views why community skipped their business ──
+// ─── GET /kinfolk/skip-feedback — verified owners view aggregate signals ───────
 router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Unauthorized" });
-  const skipTier = await getUserTier(String(req.user!.id));
-  if (skipTier === "free" || skipTier === "navigator") {
-    return void res
-      .status(403)
-      .json({ error: "Trailblazer membership required" });
-  }
+  const businessId = typeof req.query["businessId"] === "string"
+    ? req.query["businessId"].trim()
+    : "";
+  if (!businessId)
+    return void res.status(400).json({ error: "businessId is required" });
   try {
-    const [ownerBiz] = await db
-      .select({ id: businessesTable.id })
-      .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(req.user.id)))
-      .limit(1);
-    if (!ownerBiz) return void res.json({ messages: [], total: 0 });
+    if (!await requireVerifiedMinorityFlywheelBusinessOwner(req, res, businessId)) return;
     const rows = await db
-      .select({ message: businessSkipFeedbackTable.message })
+      .select({
+        message: businessSkipFeedbackTable.message,
+        submittedById: businessSkipFeedbackTable.submittedById,
+      })
       .from(businessSkipFeedbackTable)
-      .where(eq(businessSkipFeedbackTable.businessId, ownerBiz.id))
-      .orderBy(desc(businessSkipFeedbackTable.createdAt))
-      .limit(25);
-    const messages = rows
-      .map((r) => r.message)
-      .filter((m): m is string => typeof m === "string" && m.trim().length > 0);
-    res.json({ messages, total: messages.length });
+      .where(eq(businessSkipFeedbackTable.businessId, businessId))
+      .limit(200);
+    res.json({
+      businessId,
+      ...aggregatePrivateSkipFeedbackSignals(rows),
+      minimumDistinctMembers: PRIVATE_SKIP_FEEDBACK_MINIMUM_DISTINCT_MEMBERS,
+    });
   } catch (err) {
     req.log.error(
       safeKinfolkErrorMetadata(err),

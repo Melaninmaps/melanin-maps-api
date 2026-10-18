@@ -6,6 +6,9 @@ const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const kinfolkRoute = readFileSync(fileURLToPath(new URL("../routes/kinfolk.ts", import.meta.url)), "utf8");
 const ownerRoute = readFileSync(fileURLToPath(new URL("../routes/business-owner-insights.ts", import.meta.url)), "utf8");
 const flywheelEligibility = readFileSync(fileURLToPath(new URL("../businesses/verifiedMinorityFlywheelEligibility.ts", import.meta.url)), "utf8");
+const skipFeedbackRoute = readFileSync(fileURLToPath(new URL("../routes/skip-feedback.ts", import.meta.url)), "utf8");
+const marketIntelligenceRoute = readFileSync(fileURLToPath(new URL("../routes/kinfolk-intelligence.ts", import.meta.url)), "utf8");
+const postNudgeRoute = readFileSync(fileURLToPath(new URL("../routes/post-nudge.ts", import.meta.url)), "utf8");
 const attachmentRoute = readFileSync(fileURLToPath(new URL("../routes/canonical-mwm-owner-attachment.ts", import.meta.url)), "utf8");
 const migrations = readFileSync(fileURLToPath(new URL("../lib/startup-migrations.ts", import.meta.url)), "utf8");
 const webSource = readFileSync(`${root}artifacts/web/src/pages/travel.tsx`, "utf8");
@@ -48,6 +51,32 @@ describe("Kinfolk feedback flywheel contract", () => {
     expect(flywheelEligibility).toContain("owner_link.revoked_at IS NULL");
     expect(ownerRoute).toContain("Approved business owner access is required");
     expect(ownerRoute).not.toContain("isAdmin");
+  });
+
+  it("keeps skip feedback aggregate-only and authorizes every business-facing reader", () => {
+    expect(skipFeedbackRoute).toContain("reasonCode");
+    expect(skipFeedbackRoute).toContain("aggregatePrivateSkipFeedbackSignals");
+    expect(skipFeedbackRoute).toContain("resolveVerifiedMinorityFlywheelOwner");
+    expect(skipFeedbackRoute).not.toContain("deliverToOwnerInbox");
+    expect(skipFeedbackRoute).not.toContain("convTable");
+    expect(kinfolkRoute).toContain("requireVerifiedMinorityFlywheelBusinessOwner");
+    expect(kinfolkRoute).toContain("PRIVACY-PROTECTED COMMUNITY FEEDBACK");
+    expect(kinfolkRoute).toContain("aggregatePrivateSkipFeedbackSignals(skipRows)");
+  });
+
+  it("protects business market intelligence and withholds raw member search text", () => {
+    expect(marketIntelligenceRoute).toContain("resolveVerifiedMinorityFlywheelOwner");
+    expect(marketIntelligenceRoute).toContain("VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED");
+    expect(marketIntelligenceRoute).toContain("HAVING COUNT(*) >= 5");
+    expect(marketIntelligenceRoute).toContain("trendingCategories");
+    expect(marketIntelligenceRoute).toContain("Raw member search text is never");
+  });
+
+  it("protects timing recommendations with ownership and a minimum aggregate", () => {
+    expect(postNudgeRoute).toContain("requireVerifiedMinorityFlywheelOwner");
+    expect(postNudgeRoute).toContain("POST_NUDGE_MINIMUM_AGGREGATE");
+    expect(postNudgeRoute).toContain("hasSufficientData: false");
+    expect(postNudgeRoute).toContain("INSUFFICIENT_AGGREGATE_DATA");
   });
 
   it("uses a founder-only, exact-business, append-only attachment operation", () => {

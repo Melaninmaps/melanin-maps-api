@@ -1,13 +1,13 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, savedPlacesTable, reviewsTable, businessProfileViewsTable, businessSkipFeedbackTable, businessClickEventsTable } from "@workspace/db";
 import { and, avg, count, eq, gt, inArray, ne, sql } from "drizzle-orm";
-import { requireMembership } from "../middleware/requireMembership";
-import { storage } from "../storage";
+import { getUserTier } from "../middleware/requireMembership";
 import { logger } from "../lib/logger";
 import {
   isVerifiedMinorityFlywheelEligible,
   VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
 } from "../businesses/verifiedMinorityFlywheelEligibility";
+import { aggregatePrivateSkipFeedbackSignals } from "../businesses/privateSkipFeedback";
 
 const router: IRouter = Router();
 
@@ -196,8 +196,8 @@ function buildSuggestions(
     suggestions.push({
       priority: tier === "trailblazer" ? "medium" : "low",
       icon: "mail",
-      title: `${metrics.skipFeedbackCount} private feedback note${metrics.skipFeedbackCount > 1 ? "s" : ""} received`,
-      body: "Community members have left constructive notes after skipping your listing. Review them in your Messages to identify quick improvements.",
+      title: `${metrics.skipFeedbackCount} privacy-protected community feedback signal${metrics.skipFeedbackCount > 1 ? "s" : ""}`,
+      body: "Enough distinct members selected broad categories for an aggregate to be available. Individual notes and identities are never exposed.",
     });
   }
 
@@ -211,18 +211,13 @@ function pctVsPeers(value: number, peerAvg: number): number {
 
 router.get(
   "/businesses/mine/analytics",
-  requireMembership("navigator"),
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id as string;
-
-      const user = await storage.getUser(userId);
-      const tier: "navigator" | "trailblazer" =
-        user?.memberType === "trailblazer" ||
-        user?.memberType === "founding" ||
-        user?.memberType === "beta"
-          ? "trailblazer"
-          : "navigator";
+      if (!userId) {
+        res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+        return;
+      }
 
       const hasApprovedOwnerLink = sql<boolean>`EXISTS (
         SELECT 1 FROM business_owner_links AS owner_link
@@ -250,6 +245,26 @@ router.get(
         return;
       }
 
+      // Verification is evaluated before subscription tiering so payment
+      // cannot be mistaken for or used to bypass flywheel eligibility.
+      const membershipTier = await getUserTier(userId);
+      if (membershipTier === "free") {
+        res.status(403).json({
+          error: "This feature requires a Navigator or higher membership.",
+          code: "MEMBERSHIP_REQUIRED",
+          upgradeUrl: "/membership",
+          currentTier: membershipTier,
+          requiredTier: "navigator",
+        });
+        return;
+      }
+      const tier: "navigator" | "trailblazer" =
+        membershipTier === "trailblazer" ||
+        membershipTier === "community_builder" ||
+        membershipTier === "legacy_member"
+          ? "trailblazer"
+          : "navigator";
+
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
@@ -273,10 +288,14 @@ router.get(
           ),
         );
 
-      const [skipRow] = await db
-        .select({ count: count() })
+      const skipRows = await db
+        .select({
+          message: businessSkipFeedbackTable.message,
+          submittedById: businessSkipFeedbackTable.submittedById,
+        })
         .from(businessSkipFeedbackTable)
         .where(eq(businessSkipFeedbackTable.businessId, business.id));
+      const skipFeedbackAggregate = aggregatePrivateSkipFeedbackSignals(skipRows);
 
       const clickRows = await db
         .select({ clickType: businessClickEventsTable.clickType, cnt: count() })
@@ -342,7 +361,7 @@ router.get(
         reviews: reviewRow?.count ?? 0,
         avgRating: Number(reviewRow?.avgRating ?? business.rating ?? 0),
         views30d: viewRow?.count ?? 0,
-        skipFeedbackCount: skipRow?.count ?? 0,
+        skipFeedbackCount: skipFeedbackAggregate.totalDistinctMembers,
       };
 
       const benchmarks = {

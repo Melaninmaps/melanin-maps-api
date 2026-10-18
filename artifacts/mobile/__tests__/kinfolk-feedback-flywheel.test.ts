@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 const widget = readFileSync(`${root}artifacts/mobile/components/AIChatWidget.tsx`, "utf8");
 const ownerDashboard = readFileSync(`${root}artifacts/mobile/app/business-owner/index.tsx`, "utf8");
+const businessDashboard = readFileSync(`${root}artifacts/mobile/app/business-dashboard.tsx`, "utf8");
+const skipFeedbackModal = readFileSync(`${root}artifacts/mobile/components/SkipFeedbackModal.tsx`, "utf8");
 
 describe("native Kinfolk feedback flywheel", () => {
   it("offers explicit helpful, not-helpful, need, and revoke actions", () => {
@@ -26,5 +28,15 @@ describe("native Kinfolk feedback flywheel", () => {
     expect(ownerDashboard).toContain("kinfolk-community-needs");
     expect(ownerDashboard).toContain("Private Kinfolk community needs");
     expect(ownerDashboard).toContain("no member identity, message, note, transcript");
+  });
+
+  it("uses category-only feedback and sends verification denials to review, not checkout", () => {
+    expect(skipFeedbackModal).toContain("Share a community signal");
+    expect(skipFeedbackModal).toContain("reasonCode");
+    expect(skipFeedbackModal).toContain("No personal note or identity is delivered to the business");
+    expect(skipFeedbackModal).not.toContain("Send Privately");
+    expect(businessDashboard).toContain('analyticsError === "eligibility"');
+    expect(businessDashboard).toContain("Membership payment does not verify a business");
+    expect(businessDashboard).toContain("Privacy-Protected Community Feedback");
   });
 });

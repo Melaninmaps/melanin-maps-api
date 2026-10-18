@@ -11,6 +11,10 @@ import {
 import { eq, and, inArray, ne, sql, desc, gte, count } from "drizzle-orm";
 import * as SecureStore from "expo-secure-store";
 import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
+import {
+  resolveVerifiedMinorityFlywheelOwner,
+  VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+} from "../businesses/verifiedMinorityFlywheelEligibility";
 
 const router = Router();
 
@@ -259,33 +263,49 @@ router.get("/kinfolk/community-trends", async (req: Request, res: Response) => {
 // GET /api/businesses/:id/market-insights
 router.get("/businesses/:id/market-insights", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
-  const marketTier = await getUserTier(String(req.user?.id ?? ""));
-  if (marketTier === "free") {
-    return void res.status(403).json({ error: "Navigator or Trailblazer membership required" });
-  }
-  const businessId = req.params.id as string;
+  const businessId = String(req.params.id ?? "").trim();
+  if (!businessId) return void res.status(400).json({ error: "Business ID is required" });
   try {
+    const access = await resolveVerifiedMinorityFlywheelOwner(pool, {
+      businessId,
+      userId: uid(req),
+    });
+    if (access.kind === "not_owner") {
+      return void res.status(403).json({ error: "Approved business owner access is required" });
+    }
+    if (access.kind === "ineligible") {
+      return void res.status(403).json({
+        error: VERIFIED_MINORITY_FLYWHEEL_ACCESS_ERROR,
+        code: "VERIFIED_MINORITY_FLYWHEEL_ELIGIBILITY_REQUIRED",
+      });
+    }
+    // Verification is evaluated before subscription tiering so a payment can
+    // never be mistaken for, or used to bypass, flywheel eligibility.
+    const marketTier = await getUserTier(uid(req));
+    if (marketTier === "free") {
+      return void res.status(403).json({
+        error: "Navigator or Trailblazer membership required",
+        code: "MEMBERSHIP_REQUIRED",
+        upgradeUrl: "/membership",
+      });
+    }
     const [bizResult] = await db.select().from(businessesTable).where(eq(businessesTable.id, businessId));
     if (!bizResult) { res.status(404).json({ error: "Business not found" }); return; }
-
-    // Ownership check
-    const ownership = await pool.query(
-      "SELECT id FROM business_identity WHERE business_id = $1 AND user_id = $2 LIMIT 1",
-      [businessId, uid(req)],
-    );
-    if (!ownership.rows.length) { res.status(403).json({ error: "Not authorized" }); return; }
 
     const { city, state, category } = bizResult;
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    // 1. What people in this city are searching for (trending keywords)
-    const localSearches = await pool.query<{ query: string; search_count: number }>(
-      `SELECT query, COUNT(*) AS search_count
+    // 1. Thresholded category aggregates. Raw member search text is never
+    // delivered to a business because it can contain personal context.
+    const localSearches = await pool.query<{ category: string; search_count: number }>(
+      `SELECT COALESCE(NULLIF(TRIM(category), ''), 'Other') AS category,
+              COUNT(*) AS search_count
        FROM kinfolk_search_events
        WHERE created_at >= $1
        AND (LOWER(city) = LOWER($2) OR LOWER(state) = LOWER($3))
-       AND LENGTH(query) >= 3
-       GROUP BY query
+       AND category IS NOT NULL
+       GROUP BY COALESCE(NULLIF(TRIM(category), ''), 'Other')
+       HAVING COUNT(*) >= 5
        ORDER BY search_count DESC
        LIMIT 20`,
       [since, city, state],
@@ -299,6 +319,7 @@ router.get("/businesses/:id/market-insights", async (req: Request, res: Response
        WHERE sp.created_at >= $1
        AND (LOWER(b.city) = LOWER($2) OR LOWER(b.state) = LOWER($3))
        GROUP BY b.category
+       HAVING COUNT(*) >= 5
        ORDER BY save_count DESC
        LIMIT 10`,
       [since, city, state],
@@ -326,19 +347,17 @@ router.get("/businesses/:id/market-insights", async (req: Request, res: Response
       [category, city, state, since, businessId],
     );
 
-    // 4. Opportunity alerts: top searches in area that aren't well-served by this business
-    const topSearchQueries = localSearches.rows.slice(0, 10).map((r) => r.query);
-    const opportunities: { keyword: string; searchCount: number; alert: string }[] = [];
+    // 4. Opportunity alerts: aggregate category demand only, never a raw
+    // member query or individual search history.
+    const opportunities: { category: string; memberSignalCount: number; alert: string }[] = [];
     for (const row of localSearches.rows.slice(0, 8)) {
-      const keyword = row.query;
+      const category = row.category;
       const searchCount = Number(row.search_count);
-      if (searchCount >= 2) {
-        opportunities.push({
-          keyword,
-          searchCount,
-          alert: `${searchCount} people in your area searched for "${keyword}" recently — consider featuring this or creating an announcement!`,
-        });
-      }
+      opportunities.push({
+        category,
+        memberSignalCount: searchCount,
+        alert: `${searchCount} community searches indicate interest in ${category} in your area. Consider whether it aligns with your offering.`,
+      });
     }
 
     // 5. Target audience match: % of users in area whose preferences align
@@ -349,7 +368,8 @@ router.get("/businesses/:id/market-insights", async (req: Request, res: Response
        OR $1 = ANY(up.lifestyle_services::text[])`,
       [category],
     );
-    const audienceMatchCount = Number(audienceMatchResult.rows[0]?.match_count ?? 0);
+    const rawAudienceMatchCount = Number(audienceMatchResult.rows[0]?.match_count ?? 0);
+    const audienceMatchCount = rawAudienceMatchCount >= 5 ? rawAudienceMatchCount : 0;
 
     res.json({
       business: { id: businessId, name: bizResult.name, city, state, category },
@@ -364,7 +384,10 @@ router.get("/businesses/:id/market-insights", async (req: Request, res: Response
         saveCount: Number(r.save_count),
         isYourCategory: r.category === category,
       })),
-      trendingSearches: localSearches.rows.map((r) => ({ query: r.query, searchCount: Number(r.search_count) })),
+      trendingCategories: localSearches.rows.map((r) => ({
+        category: r.category,
+        memberSignalCount: Number(r.search_count),
+      })),
       opportunityAlerts: opportunities,
       audienceMatchCount,
     });
