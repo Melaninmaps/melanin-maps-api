@@ -146,6 +146,17 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain('accessibilityLabel="Clear map search and return to my local map"');
   });
 
+  it("lets Clear dismiss only the active deep-link locality and restore the local fallback", () => {
+    expect(fullMapSource).toContain("const [dismissedRouteLocalityKey, setDismissedRouteLocalityKey] = useState<string | null>(null);");
+    expect(fullMapSource).toContain("const routeSearchLocalityKey = routeSearchLocality");
+    expect(fullMapSource).toContain("? mapLocalityKey(routeSearchLocality, false)");
+    expect(fullMapSource).toContain("const effectiveRouteSearchLocality = routeSearchLocalityKey === dismissedRouteLocalityKey");
+    expect(fullMapSource).toContain("Boolean(searchedLocality || effectiveRouteSearchLocality)");
+    expect(fullMapSource).toContain("searchedLocality ??\n    effectiveRouteSearchLocality ??");
+    expect(fullMapSource).toContain("searchedLocality || effectiveRouteSearchLocality");
+    expect(fullMapSource).toContain("if (routeSearchLocalityKey) setDismissedRouteLocalityKey(routeSearchLocalityKey);");
+  });
+
   it("keeps a submitted service search focused on its matches and makes those listings selectable", () => {
     expect(fullMapSource).toContain("if (submittedBusinessSearch.trim()) return focusedMappedBusinesses;");
     expect(fullMapSource).toContain('accessibilityLabel="Matched business cards"');

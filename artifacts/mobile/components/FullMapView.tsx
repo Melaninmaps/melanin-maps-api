@@ -459,6 +459,7 @@ export function FullMapView({
   const [searchedLocality, setSearchedLocality] = useState<ReturnType<
     typeof parseMapSearchLocality
   >>(null);
+  const [dismissedRouteLocalityKey, setDismissedRouteLocalityKey] = useState<string | null>(null);
   // Keep the member's draft separate from the submitted request so typing in
   // the single map search field never floods the business API or resets a
   // local map view. A city must include its state (for example, "Atlanta, GA")
@@ -559,12 +560,18 @@ export function FullMapView({
 
   const profileLocality = parseProfileHomeLocality(user?.homeCity);
   const routeSearchLocality = parseMapSearchLocality(searchCity, searchState);
+  const routeSearchLocalityKey = routeSearchLocality
+    ? mapLocalityKey(routeSearchLocality, false)
+    : null;
+  const effectiveRouteSearchLocality = routeSearchLocalityKey === dismissedRouteLocalityKey
+    ? null
+    : routeSearchLocality;
   // A submitted search (including a map deep link) is an explicit geography
   // choice, so it overrides automatic device/profile locality until cleared.
-  const hasExplicitMapLocality = Boolean(searchedLocality || routeSearchLocality);
+  const hasExplicitMapLocality = Boolean(searchedLocality || effectiveRouteSearchLocality);
   const mapLocality =
     searchedLocality ??
-    routeSearchLocality ??
+    effectiveRouteSearchLocality ??
     resolveMapLocality(memberLocation, memberPlace, profileLocality);
   // A selected city and an around-me radius are different member requests.
   // Never combine the device coordinate with an explicit city: a location
@@ -1923,12 +1930,13 @@ export function FullMapView({
           >
             <Feather name="chevron-down" size={18} color="#F5EBD8" />
           </TouchableOpacity>
-          {(businessSearchInput.length > 0 || searchedLocality || routeSearchLocality) && (
+          {(businessSearchInput.length > 0 || searchedLocality || effectiveRouteSearchLocality) && (
             <TouchableOpacity
               onPress={() => {
                 setBusinessSearchInput("");
                 setSubmittedBusinessSearch("");
                 setSearchedLocality(null);
+                if (routeSearchLocalityKey) setDismissedRouteLocalityKey(routeSearchLocalityKey);
                 setSelectedBusiness(null);
               }}
               accessibilityLabel="Clear map search and return to my local map"
