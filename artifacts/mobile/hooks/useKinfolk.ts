@@ -210,7 +210,7 @@ function makeId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-export function useKinfolk() {
+export function useKinfolk(accountId: string | null = null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -228,10 +228,25 @@ export function useKinfolk() {
   const [pendingRetryText, setPendingRetryText] = useState<string | null>(null);
   const activeRequestRef = useRef<AbortController | null>(null);
   const requestGenerationRef = useRef(0);
+  const accountEpochRef = useRef(0);
 
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    accountEpochRef.current += 1;
+    requestGenerationRef.current += 1;
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = null;
+    setMessages([]);
+    setSessionId(null);
+    setConversationHandoff(null);
+    setSessions([]);
+    setKinfolkContinuityEnabled(false);
+    setKinfolkContinuityDisclosureRequired(false);
+    setKinfolkContinuityDecision(null);
+  }, [accountId]);
 
   const interruptCurrentReply = useCallback(() => {
     const request = activeRequestRef.current;
@@ -493,6 +508,7 @@ export function useKinfolk() {
   }, [sessionId]);
 
   const loadSessions = useCallback(async (view: "active" | "archived" = "active") => {
+    const accountEpoch = accountEpochRef.current;
     const token = await getToken();
     const apiBase = getApiBase();
     if (!token || !apiBase) return;
@@ -502,12 +518,14 @@ export function useKinfolk() {
       });
       if (res.ok) {
         const data = (await res.json()) as { sessions: SessionSummary[] };
+        if (accountEpoch !== accountEpochRef.current) return;
         setSessions(data.sessions);
       }
     } catch {}
-  }, []);
+  }, [accountId]);
 
   const loadKinfolkContinuity = useCallback(async () => {
+    const accountEpoch = accountEpochRef.current;
     const token = await getToken();
     const apiBase = getApiBase();
     if (!token || !apiBase) return;
@@ -521,16 +539,18 @@ export function useKinfolk() {
         disclosureRequired?: boolean;
         decision?: "accepted" | "declined" | null;
       };
+      if (accountEpoch !== accountEpochRef.current) return;
       setKinfolkContinuityEnabled(data.enabled === true);
       setKinfolkContinuityDisclosureRequired(data.disclosureRequired === true);
       setKinfolkContinuityDecision(data.decision ?? null);
     } catch {}
-  }, []);
+  }, [accountId]);
 
   const setKinfolkContinuity = useCallback(async (
     enabled: boolean,
     decision?: "accepted" | "declined",
   ): Promise<boolean> => {
+    const accountEpoch = accountEpochRef.current;
     const token = await getToken();
     const apiBase = getApiBase();
     if (!token || !apiBase) return false;
@@ -546,6 +566,7 @@ export function useKinfolk() {
         disclosureRequired?: boolean;
         decision?: "accepted" | "declined" | null;
       };
+      if (accountEpoch !== accountEpochRef.current) return false;
       setKinfolkContinuityEnabled(data.enabled === true);
       setKinfolkContinuityDisclosureRequired(data.disclosureRequired === true);
       setKinfolkContinuityDecision(data.decision ?? null);
@@ -553,7 +574,7 @@ export function useKinfolk() {
       if (data.enabled === true) await loadSessions();
       return true;
     } catch { return false; }
-  }, [loadSessions]);
+  }, [accountId, loadSessions]);
 
   const organizeSession = useCallback(async (
     id: string,

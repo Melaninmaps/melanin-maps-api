@@ -252,7 +252,7 @@ describe("Kinfolk private-memory production control", () => {
     expect(deleteMutation).not.toContain("eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE)");
   });
 
-  it("keeps public shares behind current owner consent without deleting share IDs", () => {
+  it("keeps public shares behind active explicit owner consent without deleting share IDs", () => {
     const routeFile = resolve(
       dirname(fileURLToPath(import.meta.url)),
       "../../routes/kinfolk.ts",
@@ -263,10 +263,11 @@ describe("Kinfolk private-memory production control", () => {
     expect(sharedRoute).toContain("resolvePublicSharedKinfolkSession({");
     expect(sharedRoute).toContain("runtimeEnabled: isKinfolkPrivateMemoryEnabled()");
     expect(sharedRoute).toContain(".innerJoin(usersTable, eq(usersTable.id, kinfolkSessionsTable.userId))");
-    expect(sharedRoute).toMatch(/\.leftJoin\(\s*userSettingsTable,\s*eq\(userSettingsTable\.userId, usersTable\.id\),?\s*\)/);
+    expect(sharedRoute).toMatch(/\.innerJoin\(\s*userSettingsTable,\s*eq\(userSettingsTable\.userId, usersTable\.id\),?\s*\)/);
     expect(sharedRoute).toContain("eq(kinfolkSessionsTable.shareId, shareId)");
-    expect(sharedRoute).toContain("isNull(userSettingsTable.userId)");
-    expect(sharedRoute).toContain("eq(userSettingsTable.kinfolkMemoryEnabled, true)");
+    expect(sharedRoute).toContain("eq(userSettingsTable.kinfolkContinuityEnabled, true)");
+    expect(sharedRoute).toContain('eq(userSettingsTable.kinfolkContinuityDisclosureDecision, "accepted")');
+    expect(sharedRoute).not.toContain("kinfolkMemoryEnabled");
     expect(sharedRoute).toContain('res.status(404).json({ error: "Trip not found" })');
     expect(sharedRoute).not.toContain(".delete(kinfolkSessionsTable)");
     expect(sharedRoute).not.toContain(".update(kinfolkSessionsTable)");

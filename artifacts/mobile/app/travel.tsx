@@ -2035,10 +2035,10 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
+  const { isAuthenticated, user } = useAuth();
+  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, kinfolkContinuityDecision, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk(user?.id ?? null);
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
-  const { isAuthenticated } = useAuth();
   const { subscription } = useMembership();
 
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
@@ -2098,6 +2098,7 @@ export default function TravelScreen() {
   ));
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showContinuityReconsent, setShowContinuityReconsent] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
@@ -2131,7 +2132,8 @@ export default function TravelScreen() {
   useEffect(() => {
     void loadSessions();
     void loadKinfolkContinuity();
-  }, [isAuthenticated, loadSessions, loadKinfolkContinuity]);
+    setShowContinuityReconsent(false);
+  }, [isAuthenticated, user?.id, loadSessions, loadKinfolkContinuity]);
 
   useEffect(() => { void loadWishlist(); }, [loadWishlist]);
 
@@ -2832,8 +2834,12 @@ export default function TravelScreen() {
         feature="KinfolkAI™"
       />
       <KinfolkContinuityDisclosure
-        visible={isAuthenticated && kinfolkContinuityDisclosureRequired}
-        onChoose={(decision) => setKinfolkContinuity(decision === "accepted", decision)}
+        visible={isAuthenticated && (kinfolkContinuityDisclosureRequired || showContinuityReconsent)}
+        onChoose={async (decision) => {
+          const saved = await setKinfolkContinuity(decision === "accepted", decision);
+          if (saved) setShowContinuityReconsent(false);
+          return saved;
+        }}
       />
 
       {/* Premium upsell banner — shown for non-premium, non-trial members */}
@@ -3294,7 +3300,13 @@ export default function TravelScreen() {
         onSelect={handleHistorySelect}
         onNew={handleNewSession}
         continuityEnabled={kinfolkContinuityEnabled}
-        onToggleContinuity={(enabled) => { void setKinfolkContinuity(enabled); }}
+        onToggleContinuity={(enabled) => {
+          if (enabled && kinfolkContinuityDecision !== "accepted") {
+            setShowContinuityReconsent(true);
+            return;
+          }
+          void setKinfolkContinuity(enabled);
+        }}
         onLoadView={(view) => { void loadSessions(view); }}
         onOrganize={(id, action) => { void organizeSession(id, action); }}
         colors={colors}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Lock, Pencil, RotateCcw, Trash2, X } from "lucide-react";
+import { KinfolkContinuityDisclosure } from "./KinfolkContinuityDisclosure";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -38,6 +39,8 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
   const [resetComplete, setResetComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [continuityEnabled, setContinuityEnabled] = useState(false);
+  const [continuityDecision, setContinuityDecision] = useState<"accepted" | "declined" | null>(null);
+  const [showContinuityDisclosure, setShowContinuityDisclosure] = useState(false);
   const [updatingContinuity, setUpdatingContinuity] = useState(false);
   const [editing, setEditing] = useState<{ id: string; content: string; sensitiveConfirmationRequired: boolean } | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -64,27 +67,49 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
         fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include" }),
       ]);
       if (!continuityResponse.ok) throw new Error("Could not load continuity settings.");
-      const continuity = await continuityResponse.json().catch(() => ({})) as { enabled?: boolean };
+      const continuity = await continuityResponse.json().catch(() => ({})) as {
+        enabled?: boolean;
+        decision?: "accepted" | "declined" | null;
+      };
       setMemories(reviewableMemories);
       setContinuityEnabled(continuity.enabled === true);
+      setContinuityDecision(continuity.decision ?? null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not load memory settings.");
     } finally { setLoading(false); }
   }, []);
 
-  const updateContinuity = async (enabled: boolean) => {
+  const updateContinuity = async (
+    enabled: boolean,
+    decision?: "accepted" | "declined",
+  ): Promise<boolean> => {
     setUpdatingContinuity(true); setError(null);
     try {
       const response = await fetch(`${BASE}api/kinfolk/continuity`, {
         method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled }),
+        body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) }),
       });
-      const body = await response.json().catch(() => ({})) as { enabled?: boolean; error?: string };
+      const body = await response.json().catch(() => ({})) as {
+        enabled?: boolean;
+        decision?: "accepted" | "declined" | null;
+        error?: string;
+      };
       if (!response.ok) throw new Error(body.error ?? "Kinfolk could not update continuity. Please try again.");
       setContinuityEnabled(body.enabled === true);
+      setContinuityDecision(body.decision ?? null);
+      return true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Kinfolk could not update continuity. Please try again.");
+      return false;
     } finally { setUpdatingContinuity(false); }
+  };
+
+  const requestContinuity = (enabled: boolean) => {
+    if (enabled && continuityDecision !== "accepted") {
+      setShowContinuityDisclosure(true);
+      return;
+    }
+    void updateContinuity(enabled);
   };
 
   useEffect(() => { void load(); }, [load]);
@@ -151,7 +176,16 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
     } finally { setResetting(false); }
   };
 
-  return <div data-testid="kinfolk-memory-manager" className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center" onClick={onClose}>
+  return <>
+    <KinfolkContinuityDisclosure
+      visible={showContinuityDisclosure}
+      onChoose={async (decision) => {
+        const saved = await updateContinuity(decision === "accepted", decision);
+        if (saved) setShowContinuityDisclosure(false);
+        return saved;
+      }}
+    />
+    <div data-testid="kinfolk-memory-manager" className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center" onClick={onClose}>
     <section className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
       <header className="flex items-start justify-between border-b border-[#3A1F0E]/10 p-5">
         <div><div className="flex items-center gap-2"><Lock className="h-4 w-4 text-[#CA922B]" /><h2 className="font-serif text-xl font-bold text-[#2B1507]">What Kinfolk remembers</h2></div><p className="mt-1 text-xs text-[#3A1F0E]/50">Private to your account. After your first-use choice, Kinfolk can retain useful non-sensitive continuity; sensitive details always need their own confirmation.</p></div>
@@ -201,10 +235,11 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
           </div>
         )}
         <section className="mt-5 rounded-2xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-4" data-testid="kinfolk-continuity-control">
-          <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[#2B1507]">Continue private context between chats</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">When on, Kinfolk can use your saved conversations and relevant ordinary continuity. Turn it off immediately any time; saved items remain until you edit, delete, or reset them.</p></div><button type="button" role="switch" aria-checked={continuityEnabled} aria-label="Continue private context between chats" disabled={updatingContinuity} onClick={() => void updateContinuity(!continuityEnabled)} className={`mt-0.5 h-7 w-12 rounded-full p-1 transition ${continuityEnabled ? "bg-[#CA922B]" : "bg-[#3A1F0E]/20"}`}><span className={`block h-5 w-5 rounded-full bg-white transition ${continuityEnabled ? "translate-x-5" : "translate-x-0"}`} /></button></div>
+          <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[#2B1507]">Continue private context between chats</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">When on, Kinfolk can use your saved conversations and relevant ordinary continuity. Turn it off immediately any time; saved items remain until you edit, delete, or reset them.</p></div><button type="button" role="switch" aria-checked={continuityEnabled} aria-label="Continue private context between chats" disabled={updatingContinuity} onClick={() => requestContinuity(!continuityEnabled)} className={`mt-0.5 h-7 w-12 rounded-full p-1 transition ${continuityEnabled ? "bg-[#CA922B]" : "bg-[#3A1F0E]/20"}`}><span className={`block h-5 w-5 rounded-full bg-white transition ${continuityEnabled ? "translate-x-5" : "translate-x-0"}`} /></button></div>
         </section>
         <div className="mt-5 border-t border-[#3A1F0E]/10 pt-5"><div className="flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-4"><RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-red-700" /><div className="min-w-0"><p className="text-sm font-semibold text-[#2B1507]">Reset Kinfolk</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/65">Clear your Kinfolk chats, private Kinfolk memories, feedback, and Kinfolk-only preferences. Your account, password, profile, Community posts, DMs, circles, saved places, and memberships stay untouched.</p><button type="button" data-testid="reset-kinfolk" onClick={() => void resetKinfolk()} disabled={resetting} className="mt-3 rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60">{resetting ? "Resetting…" : "Start Kinfolk fresh"}</button>{resetComplete && <p role="status" className="mt-2 text-xs text-emerald-700">Kinfolk is fresh. On your next use, choose whether it remembers ordinary continuity.</p>}</div></div></div>
       </div>
     </section>
-  </div>;
+    </div>
+  </>;
 }
