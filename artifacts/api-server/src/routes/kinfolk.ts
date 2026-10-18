@@ -5492,6 +5492,7 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
   const userId = req.user.id;
   try {
     const receipt = await db.transaction(async (tx) => {
+      await acquireKinfolkPrivateMemoryWriteLock(tx, userId);
       const deletedSessions = await tx
         .delete(kinfolkSessionsTable)
         .where(eq(kinfolkSessionsTable.userId, userId))
@@ -5678,69 +5679,79 @@ router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
     });
   }
   try {
-    const updatedAt = new Date();
-    const [current] = await db
-      .select({
-        decision: userSettingsTable.kinfolkContinuityDisclosureDecision,
-        disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt,
-      })
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, req.user.id))
-      .limit(1);
-    const currentDecision = normalizeKinfolkContinuityDecision(current?.decision);
-    const updateResolution = resolveKinfolkContinuityUpdate({
-      currentDecision,
-      requestedDecision,
-      enabled,
-    });
-    if (!updateResolution.ok) {
-      return void res.status(409).json({
-        error: updateResolution.error,
-        code: updateResolution.code,
-      });
-    }
-    const decision = updateResolution.decision;
-    const disclosedAt = current?.disclosedAt ?? updatedAt;
-    const continuityUpdate = {
-      // Keep the existing legacy memory flag aligned with the explicit modern
-      // continuity choice. Older read/share paths still consult this field.
-      kinfolkMemoryEnabled: enabled,
-      kinfolkContinuityEnabled: enabled,
-      kinfolkContinuityUpdatedAt: updatedAt,
-      kinfolkContinuityDisclosureDecision: decision,
-      kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-      kinfolkContinuityDisclosedAt: disclosedAt,
-      updatedAt,
-    };
-    // Update known rows first. PostgreSQL validates the VALUES clause before an
-    // upsert conflict is resolved, so an insert-first upsert can fail for a
-    // legacy user_settings row when an unrelated historical NOT NULL column has
-    // no deployed default. This path lets an existing member change their own
-    // reversible continuity setting without depending on those old defaults.
-    const updatedExisting = await db
-      .update(userSettingsTable)
-      .set(continuityUpdate)
-      .where(eq(userSettingsTable.userId, req.user.id))
-      .returning({ userId: userSettingsTable.userId });
-    if (updatedExisting.length === 0) {
-      await persistKinfolkContinuitySettings(db, {
-        userId: req.user.id,
+    const result = await db.transaction(async (tx) => {
+      await acquireKinfolkPrivateMemoryWriteLock(tx, req.user!.id);
+      const updatedAt = new Date();
+      const [current] = await tx
+        .select({
+          decision: userSettingsTable.kinfolkContinuityDisclosureDecision,
+          disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt,
+        })
+        .from(userSettingsTable)
+        .where(eq(userSettingsTable.userId, req.user!.id))
+        .limit(1);
+      const currentDecision = normalizeKinfolkContinuityDecision(current?.decision);
+      const updateResolution = resolveKinfolkContinuityUpdate({
+        currentDecision,
+        requestedDecision,
         enabled,
-        decision,
-        disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-        disclosedAt,
+      });
+      if (!updateResolution.ok) {
+        return { kind: "rejected" as const, resolution: updateResolution };
+      }
+      const decision = updateResolution.decision;
+      const disclosedAt = current?.disclosedAt ?? updatedAt;
+      const continuityUpdate = {
+        // Keep the legacy marker aligned for old clients, but access authority
+        // remains the explicit decision plus the modern continuity setting.
+        kinfolkMemoryEnabled: enabled,
+        kinfolkContinuityEnabled: enabled,
+        kinfolkContinuityUpdatedAt: updatedAt,
+        kinfolkContinuityDisclosureDecision: decision,
+        kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+        kinfolkContinuityDisclosedAt: disclosedAt,
         updatedAt,
+      };
+      // Update known rows first. PostgreSQL validates the VALUES clause before an
+      // upsert conflict is resolved, so an insert-first upsert can fail for a
+      // legacy user_settings row when an unrelated historical NOT NULL column has
+      // no deployed default. This path lets an existing member change their own
+      // reversible continuity setting without depending on those old defaults.
+      const updatedExisting = await tx
+        .update(userSettingsTable)
+        .set(continuityUpdate)
+        .where(eq(userSettingsTable.userId, req.user!.id))
+        .returning({ userId: userSettingsTable.userId });
+      if (updatedExisting.length === 0) {
+        await persistKinfolkContinuitySettings(tx, {
+          userId: req.user!.id,
+          enabled,
+          decision,
+          disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+          disclosedAt,
+          updatedAt,
+        });
+      }
+      return {
+        kind: "updated" as const,
+        continuity: kinfolkContinuityStatus({
+          enabled,
+          decision,
+          updatedAt,
+          disclosedAt,
+          disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+        }),
+      };
+    });
+    if (result.kind === "rejected") {
+      return void res.status(409).json({
+        error: result.resolution.error,
+        code: result.resolution.code,
       });
     }
     invalidatePrefsCache(req.user.id);
     invalidateSessionsCache(req.user.id);
-    res.json(kinfolkContinuityStatus({
-      enabled,
-      decision,
-      updatedAt,
-      disclosedAt,
-      disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-    }));
+    res.json(result.continuity);
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to update Kinfolk continuity setting");
     res.status(500).json({ error: "Failed to update Kinfolk continuity setting" });
@@ -6338,9 +6349,31 @@ class PrivateMemoryCapacityError extends Error {
   }
 }
 
+class PrivateMemoryContinuityConsentError extends Error {
+  readonly code = "KINFOLK_CONTINUITY_CONSENT_REQUIRED" as const;
+
+  constructor() {
+    super("Choose ‘Let Kinfolk remember’ before saving a private Kinfolk memory.");
+  }
+}
+
 type KinfolkDatabaseTransaction = Parameters<
   Parameters<typeof db.transaction>[0]
 >[0];
+
+/**
+ * Continuity opt-out, reset, and generic-memory saves share one owner-scoped
+ * lock. A save re-reads accepted continuity after it owns this lock so it
+ * cannot insert after a concurrent opt-out or reset has completed.
+ */
+async function acquireKinfolkPrivateMemoryWriteLock(
+  tx: KinfolkDatabaseTransaction,
+  userId: string,
+): Promise<void> {
+  await tx.execute(
+    sql`SELECT pg_advisory_xact_lock(hashtext(${`kinfolk-private-memory:${userId}`}))`,
+  );
+}
 
 /**
  * One owner-scoped advisory lock covers every preferred-name lifecycle change.
@@ -6395,13 +6428,21 @@ async function withSerializedPrivateMemoryWrite<T>(input: {
   userId: string;
   write: (input: {
     activeCount: number;
+    continuityEnabled: boolean;
     tx: KinfolkDatabaseTransaction;
   }) => Promise<T>;
 }): Promise<T> {
   return db.transaction(async (tx) => {
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtext(${`kinfolk-private-memory:${input.userId}`}))`,
-    );
+    await acquireKinfolkPrivateMemoryWriteLock(tx, input.userId);
+    const [settings] = await tx
+      .select({
+        enabled: userSettingsTable.kinfolkContinuityEnabled,
+        decision: userSettingsTable.kinfolkContinuityDisclosureDecision,
+      })
+      .from(userSettingsTable)
+      .where(eq(userSettingsTable.userId, input.userId))
+      .limit(1);
+    const continuityEnabled = kinfolkContinuityStatus(settings).enabled;
     const [countResult] = await tx
       .select({ activeCount: sql<number>`count(*)::integer` })
       .from(kinfolkPrivateMemoriesTable)
@@ -6419,6 +6460,7 @@ async function withSerializedPrivateMemoryWrite<T>(input: {
       );
     return input.write({
       activeCount: Number(countResult?.activeCount ?? 0),
+      continuityEnabled,
       tx,
     });
   });
@@ -6564,7 +6606,8 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
     }
     const result = await withSerializedPrivateMemoryWrite({
       userId: req.user.id,
-      write: async ({ activeCount, tx }) => {
+      write: async ({ activeCount, continuityEnabled, tx }) => {
+        if (!continuityEnabled) throw new PrivateMemoryContinuityConsentError();
         const now = new Date();
         const activeDuplicates = await tx
           .select({ content: kinfolkPrivateMemoriesTable.content })
@@ -6625,6 +6668,9 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
       availableSlots: result.capacity.availableSlots - result.saved,
     });
   } catch (err) {
+    if (err instanceof PrivateMemoryContinuityConsentError) {
+      return void res.status(403).json({ error: err.message, code: err.code });
+    }
     if (err instanceof PrivateMemoryCapacityError) {
       return void res.status(409).json({
         error: err.message,
@@ -6716,7 +6762,8 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
 
     const result = await withSerializedPrivateMemoryWrite({
       userId: req.user.id,
-      write: async ({ activeCount, tx }) => {
+      write: async ({ activeCount, continuityEnabled, tx }) => {
+        if (!continuityEnabled) throw new PrivateMemoryContinuityConsentError();
         const [existing] = await tx
           .select({
             id: kinfolkPrivateMemoriesTable.id,
@@ -6791,6 +6838,12 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
         : "That private note is already active. You can pause, edit, or revoke it in Kinfolk settings.",
     });
   } catch (err) {
+    if (err instanceof PrivateMemoryContinuityConsentError) {
+      return void res.status(403).json({
+        error: "Kinfolk memory is disabled.",
+        code: err.code,
+      });
+    }
     if (err instanceof PrivateMemoryCapacityError) {
       return void res.status(409).json({
         error: err.message,
@@ -15379,17 +15432,15 @@ router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
         })
         .from(kinfolkSessionsTable)
         .innerJoin(usersTable, eq(usersTable.id, kinfolkSessionsTable.userId))
-        .leftJoin(
+        .innerJoin(
           userSettingsTable,
           eq(userSettingsTable.userId, usersTable.id),
         )
         .where(
           and(
             eq(kinfolkSessionsTable.shareId, shareId),
-            or(
-              isNull(userSettingsTable.userId),
-              eq(userSettingsTable.kinfolkMemoryEnabled, true),
-            ),
+            eq(userSettingsTable.kinfolkContinuityEnabled, true),
+            eq(userSettingsTable.kinfolkContinuityDisclosureDecision, "accepted"),
           ),
         )
         .limit(1);

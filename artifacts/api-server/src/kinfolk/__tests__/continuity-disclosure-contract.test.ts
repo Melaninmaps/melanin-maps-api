@@ -34,7 +34,7 @@ describe("Kinfolk first-use continuity disclosure", () => {
     expect(policy).toContain('KINFOLK_CONTINUITY_DECISION_REQUIRED');
     expect(policy).toContain('KINFOLK_CONTINUITY_ACCEPTANCE_REQUIRED');
     expect(route).not.toContain('requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined")');
-    expect(route).toContain("const updatedExisting = await db");
+    expect(route).toContain("const updatedExisting = await tx");
     expect(route).toContain("if (updatedExisting.length === 0)");
     expect(route).toContain("kinfolkMemoryEnabled: enabled");
     expect(route).toContain("PostgreSQL validates the VALUES clause before an");
@@ -53,6 +53,15 @@ describe("Kinfolk first-use continuity disclosure", () => {
     expect(route).toContain("const preservedDecision = normalizeKinfolkContinuityDecision");
     expect(route).toContain("decision: preservedDecision");
     expect(route).not.toContain("decision: null,\n        disclosureVersion: null,\n        disclosedAt: null");
+  });
+
+  it("serializes opt-out and reset with generic memory writes and rechecks consent after the owner lock", () => {
+    expect(route).toContain("async function acquireKinfolkPrivateMemoryWriteLock");
+    expect(route).toContain("await acquireKinfolkPrivateMemoryWriteLock(tx, userId)");
+    expect(route).toContain("await acquireKinfolkPrivateMemoryWriteLock(tx, req.user!.id)");
+    expect(route).toContain("const continuityEnabled = kinfolkContinuityStatus(settings).enabled");
+    expect(route).toContain("class PrivateMemoryContinuityConsentError");
+    expect(route.match(/if \(!continuityEnabled\) throw new PrivateMemoryContinuityConsentError\(\);/g)).toHaveLength(2);
   });
 
   it("uses the same account-level decision gate on web, iOS, and Android controls", () => {
