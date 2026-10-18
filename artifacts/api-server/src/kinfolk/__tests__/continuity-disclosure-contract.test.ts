@@ -40,6 +40,18 @@ describe("Kinfolk first-use continuity disclosure", () => {
     }
   });
 
+  it("keeps either first-use choice retryable when its save callback rejects", () => {
+    for (const source of [webDisclosure, mobileDisclosure]) {
+      const choose = source.slice(source.indexOf("const choose = async"), source.indexOf("return ("));
+      expect(choose).toContain("try {");
+      expect(choose).toContain("const saved = await onChoose(decision);");
+      expect(choose).toContain("catch {");
+      expect(choose).toContain('setError("Kinfolk could not save your choice. Please try again.");');
+      expect(choose).toContain("finally {");
+      expect(choose).toContain("setSaving(null);");
+    }
+  });
+
   it("writes only the stable consent columns when newer optional settings columns are absent", () => {
     expect(route.match(/persistKinfolkContinuitySettings\(/g)).toHaveLength(3);
     expect(persistence).toContain("INSERT INTO user_settings");

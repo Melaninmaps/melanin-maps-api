@@ -18,9 +18,14 @@ export function KinfolkContinuityDisclosure({
     if (saving) return;
     setSaving(decision);
     setError(null);
-    const saved = await onChoose(decision);
-    if (!saved) setError("Kinfolk could not save your choice. Please try again.");
-    setSaving(null);
+    try {
+      const saved = await onChoose(decision);
+      if (!saved) setError("Kinfolk could not save your choice. Please try again.");
+    } catch {
+      setError("Kinfolk could not save your choice. Please try again.");
+    } finally {
+      setSaving(null);
+    }
   };
 
   return (
