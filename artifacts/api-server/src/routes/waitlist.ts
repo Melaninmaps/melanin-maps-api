@@ -265,7 +265,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       for (const fe of validFamilyEmails) {
         try {
           const feCode = fe.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
-          await db
+          const insertedFamilyEntry = await db
             .insert(waitlistTable)
             .values({
               email: fe,
@@ -275,7 +275,9 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
               status: "pending",
               signupSources: source,
             })
-            .onConflictDoNothing();
+            .onConflictDoNothing()
+            .returning({ id: waitlistTable.id });
+          if (insertedFamilyEntry.length === 0) continue;
           const [{ total: feTotal }] = await db.select({ total: count() }).from(waitlistTable);
           sendWaitlistConfirmation(fe, Number(feTotal), feCode, "there")
             .catch((err: unknown) => req.log.error({ err, email: fe }, "Failed to send family member confirmation"));

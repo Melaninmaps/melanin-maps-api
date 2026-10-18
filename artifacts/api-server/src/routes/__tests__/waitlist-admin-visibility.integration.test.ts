@@ -16,13 +16,19 @@ const harness = vi.hoisted(() => {
     selectResults: unknown[][];
     selectCalls: { fields: unknown; where?: Condition }[];
     insertedValues: unknown[];
+    insertReturningResults: unknown[][];
     updates: unknown[];
   } = {
     selectResults: [],
     selectCalls: [],
     insertedValues: [],
+    insertReturningResults: [],
     updates: [],
   };
+
+  const sendWaitlistConfirmation = vi.fn(
+    () => new Promise<void>(() => undefined),
+  );
 
   const condition = (operator: string, ...values: unknown[]): Condition => ({
     operator,
@@ -63,7 +69,7 @@ const harness = vi.hoisted(() => {
         return query;
       },
       onConflictDoNothing: () => query,
-      returning: async () => [{ id: "waitlist-one" }],
+      returning: async () => state.insertReturningResults.shift() ?? [{ id: "waitlist-one" }],
     };
     return query;
   });
@@ -110,6 +116,7 @@ const harness = vi.hoisted(() => {
     dbInsert,
     dbUpdate,
     poolQuery,
+    sendWaitlistConfirmation,
     waitlistTable,
     orm: {
       and: (...conditions: unknown[]) => condition("and", ...conditions),
@@ -167,7 +174,7 @@ vi.mock("../../lib/nudgeScheduler", () => ({
 vi.mock("../../lib/email", () => {
   const pending = () => new Promise<void>(() => undefined);
   return {
-    sendWaitlistConfirmation: pending,
+    sendWaitlistConfirmation: harness.sendWaitlistConfirmation,
     sendWelcomeEmail: pending,
     sendApprovalNotification: pending,
     sendBusinessRecommendationInvite: pending,
@@ -289,6 +296,7 @@ beforeEach(() => {
   harness.state.selectResults.splice(0);
   harness.state.selectCalls.splice(0);
   harness.state.insertedValues.splice(0);
+  harness.state.insertReturningResults.splice(0);
   harness.state.updates.splice(0);
 });
 
@@ -382,6 +390,84 @@ describe("ordinary waitlist registration visibility", () => {
     expect(harness.state.updates).toContainEqual(
       expect.objectContaining({ signupSources: "web,ios" }),
     );
+  });
+
+  it("counts and confirms only family members whose child rows were inserted", async () => {
+    const entry = ordinaryEntry();
+    const familyEmail = "family-member@qa.mwm.dev";
+    const familyCode = "FAMILY-M";
+    harness.state.insertReturningResults.push(
+      [{ id: entry.id }],
+      [{ id: "family-one" }],
+      [],
+    );
+    harness.state.selectResults.push(
+      [],
+      [{ id: entry.id, signupSources: "web", referralCode: entry.referralCode }],
+      [{ id: entry.id }],
+      [{ total: 2 }],
+    );
+
+    const response = await supertest(createApp())
+      .post("/api/waitlist")
+      .send({
+        email: entry.email,
+        signupSource: "web",
+        familyEmails: [familyEmail, familyEmail],
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ created: true, familyAdded: 1 });
+    expect(harness.state.insertedValues).toHaveLength(3);
+    expect(harness.dbSelect).toHaveBeenCalledTimes(4);
+    expect(
+      harness.state.selectCalls.filter(
+        (call) => (call.fields as { total?: { operator?: string } }).total?.operator === "count",
+      ),
+    ).toHaveLength(1);
+    expect(harness.sendWaitlistConfirmation).toHaveBeenCalledWith(
+      familyEmail,
+      2,
+      familyCode,
+      "there",
+    );
+    expect(harness.sendWaitlistConfirmation).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not count or confirm an already-existing family email", async () => {
+    const entry = ordinaryEntry();
+    const familyEmail = "already-present@qa.mwm.dev";
+    harness.state.insertReturningResults.push([{ id: entry.id }], []);
+    harness.state.selectResults.push(
+      [],
+      [{ id: entry.id, signupSources: "web", referralCode: entry.referralCode }],
+      [{ id: entry.id }],
+    );
+
+    const response = await supertest(createApp())
+      .post("/api/waitlist")
+      .send({
+        email: entry.email,
+        signupSource: "web",
+        familyEmails: [familyEmail],
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ created: true, familyAdded: 0 });
+    expect(harness.state.insertedValues).toHaveLength(2);
+    expect(harness.dbSelect).toHaveBeenCalledTimes(3);
+    expect(
+      harness.state.selectCalls.filter(
+        (call) => (call.fields as { total?: { operator?: string } }).total?.operator === "count",
+      ),
+    ).toHaveLength(0);
+    expect(harness.sendWaitlistConfirmation).not.toHaveBeenCalledWith(
+      familyEmail,
+      expect.anything(),
+      expect.anything(),
+      "there",
+    );
+    expect(harness.sendWaitlistConfirmation).toHaveBeenCalledTimes(1);
   });
 
   it("keeps synthetic test records behind the explicit synthetic view", async () => {
