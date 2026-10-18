@@ -37,4 +37,20 @@ describe("documented discovery qualification payload", () => {
     expect(() => buildDocumentedDiscoveryQualification({ ...valid(), officialWebsiteUrl: "http://example.test" })).toThrow("must use HTTPS");
     expect(() => buildDocumentedDiscoveryQualification({ ...valid(), reviewOn: "2026-10-13" })).toThrow("Next review date");
   });
+
+  it("rejects impossible calendar dates instead of silently rolling them forward", () => {
+    expect(() => buildDocumentedDiscoveryQualification({ ...valid(), observedOn: "2026-02-30" })).toThrow("Observed on is invalid.");
+    expect(() => buildDocumentedDiscoveryQualification({ ...valid(), ownershipExpiresOn: "2027-02-30" })).toThrow("Ownership review expiry is invalid.");
+    expect(() => buildDocumentedDiscoveryQualification({ ...valid(), reviewOn: "2027-02-30" })).toThrow("Next review date is invalid.");
+  });
+
+  it("keeps valid leap-day qualification dates unchanged", () => {
+    const payload = buildDocumentedDiscoveryQualification({
+      ...valid(),
+      observedOn: "2024-02-29",
+      ownershipExpiresOn: "2025-02-28",
+      reviewOn: "2024-08-29",
+    });
+    expect(payload.evidence[0]?.observedAt).toBe("2024-02-29T00:00:00.000Z");
+  });
 });
