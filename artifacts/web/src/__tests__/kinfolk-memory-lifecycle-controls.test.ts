@@ -22,4 +22,17 @@ describe("Web generic private-memory lifecycle controls", () => {
     expect(memoryManager).toContain("Revoke use of this memory");
     expect(memoryManager).not.toContain("Delete this memory permanently");
   });
+
+  it("keeps revoke use single-flight and retryable after a rejected request", () => {
+    const revoke = memoryManager.slice(
+      memoryManager.indexOf("const revokeMemory = async"),
+      memoryManager.indexOf("const saveEdit = async"),
+    );
+    expect(revoke).toContain("if (updatingMemoryId) return;");
+    expect(revoke).toContain("setUpdatingMemoryId(id); setError(null);");
+    expect(revoke).toContain('method: "DELETE"');
+    expect(revoke).toContain("catch {");
+    expect(revoke).toContain('setError("Kinfolk could not revoke use of that memory. Please try again.");');
+    expect(revoke).toContain("finally { setUpdatingMemoryId(null); }");
+  });
 });

@@ -105,9 +105,15 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
   };
 
   const revokeMemory = async (id: string) => {
-    const response = await fetch(`${BASE}api/kinfolk/memories/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
-    if (response.ok) setMemories((items) => items.filter((item) => item.id !== id));
-    else setError("Kinfolk could not revoke use of that memory. Please try again.");
+    if (updatingMemoryId) return;
+    setUpdatingMemoryId(id); setError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/memories/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
+      if (response.ok) setMemories((items) => items.filter((item) => item.id !== id));
+      else setError("Kinfolk could not revoke use of that memory. Please try again.");
+    } catch {
+      setError("Kinfolk could not revoke use of that memory. Please try again.");
+    } finally { setUpdatingMemoryId(null); }
   };
 
   const saveEdit = async () => {
