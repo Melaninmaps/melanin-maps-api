@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, pool, businessesTable, businessProfileViewsTable, businessIdentityTable, reviewsTable } from "@workspace/db";
-import { and, eq, gt, sql, count, desc } from "drizzle-orm";
+import { db, pool, businessesTable, businessProfileViewsTable, businessIdentityTable } from "@workspace/db";
+import { and, eq, gt, sql, count } from "drizzle-orm";
 import { sendPushToUser } from "../lib/pushNotifications";
 import { logger } from "../lib/logger";
 import { openai } from "@workspace/integrations-openai-ai-server";
@@ -280,35 +280,40 @@ router.post("/businesses/mine/post-nudge/notify", async (req: Request, res: Resp
 router.get("/businesses/mine/post-nudge/captions", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
+  const businessId = typeof req.query["businessId"] === "string"
+    ? req.query["businessId"].trim()
+    : "";
+  if (!businessId) {
+    res.status(400).json({ error: "businessId is required" });
+    return;
+  }
 
   try {
+    const ownerLink = await pool.query(
+      `SELECT 1
+       FROM business_owner_links
+       WHERE business_id = $1
+         AND user_id = $2
+         AND role = 'owner'
+         AND status = 'approved'
+         AND revoked_at IS NULL
+       LIMIT 1`,
+      [businessId, userId],
+    );
+    if (!ownerLink.rows.length) {
+      res.status(403).json({ error: "Approved business owner access is required" });
+      return;
+    }
     const [business] = await db
       .select()
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, userId))
+      .where(eq(businessesTable.id, businessId))
       .limit(1);
 
     if (!business) {
       res.status(404).json({ error: "No business found for your account." });
       return;
     }
-
-    // Pull recent review snippets for context (non-blocking if unavailable)
-    let reviewSnippets = "";
-    try {
-      const recentReviews = await db
-        .select({ rating: reviewsTable.rating, text: reviewsTable.text })
-        .from(reviewsTable)
-        .where(eq(reviewsTable.businessId, business.id))
-        .orderBy(desc(reviewsTable.createdAt))
-        .limit(5);
-      if (recentReviews.length > 0) {
-        reviewSnippets = recentReviews
-          .filter((r) => r.text)
-          .map((r) => `"${(r.text ?? "").slice(0, 120)}" (${r.rating}★)`)
-          .join("\n");
-      }
-    } catch { /* non-critical */ }
 
     // Pull business identity for personalisation
     let identityCtx = "";
@@ -344,7 +349,6 @@ router.get("/businesses/mine/post-nudge/captions", async (req: Request, res: Res
 
     const prompt = `You are a creative social media manager for "${business.name}", a minority-owned ${business.category} business in ${business.city ?? "our city"}.${identityCtx}
 
-${reviewSnippets ? `RECENT CUSTOMER FEEDBACK:\n${reviewSnippets}\n` : ""}
 Write 3 SHORT, engaging social media captions for a community post right now (${timeOfDay}). Each caption should:
 - Feel authentic, warm, and community-centered
 - Reference Black culture, excellence, and/or community love naturally (not forced)

@@ -565,8 +565,8 @@ export default function BusinessDashboardScreen() {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getApiBase();
-      if (!token || !base) return;
-      const res = await fetch(`${base}/api/businesses/mine/post-nudge/captions`, {
+      if (!token || !base || !business?.id) return;
+      const res = await fetch(`${base}/api/businesses/mine/post-nudge/captions?businessId=${encodeURIComponent(business.id)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

@@ -79,6 +79,13 @@ describe("Kinfolk feedback flywheel contract", () => {
     expect(postNudgeRoute).toContain("INSUFFICIENT_AGGREGATE_DATA");
   });
 
+  it("binds general caption assistance to the current owner without using member review text", () => {
+    expect(postNudgeRoute).toContain("Approved business owner access is required");
+    expect(postNudgeRoute).toContain("business_owner_links");
+    expect(postNudgeRoute).not.toContain("reviewsTable");
+    expect(postNudgeRoute).not.toContain("reviewSnippets");
+  });
+
   it("uses a founder-only, exact-business, append-only attachment operation", () => {
     expect(attachmentRoute).toContain("isAdmin(req) || !isFounderOwnerRequest(req)");
     expect(attachmentRoute).toContain("CANONICAL_MWM_BUSINESS_ID");
