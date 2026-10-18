@@ -5,6 +5,10 @@ const mapSource = readFileSync(
   new URL("../pages/map.tsx", import.meta.url),
   "utf8",
 );
+const localResultsSource = readFileSync(
+  new URL("../features/map/LocalBusinessResults.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("website map locality-first presentation", () => {
   it("keeps business map pins viewport-based while cultural and historical layers remain local", () => {
@@ -33,5 +37,16 @@ describe("website map locality-first presentation", () => {
     expect(mapSource).toContain('onClick={() => requestMapDeviceLocation({ forceViewport: true })}');
     expect(mapSource).toContain('aria-live="polite"');
     expect(mapSource).not.toContain("userCoords ?? { lat: 39.9526, lng: -75.1652 }");
+  });
+
+  it("mounts fresh local results for a new query or area so expansion remains an explicit click", () => {
+    expect(mapSource).toContain("key={JSON.stringify([");
+    expect(mapSource).toContain("search.trim(),");
+    expect(mapSource).toContain("detectedLocation?.lat ?? userCoords?.lat");
+    expect(mapSource).toContain("detectedLocation?.lng ?? userCoords?.lng");
+    expect(mapSource).toContain('parseLocalMapSearch(search).city ?? ""');
+    expect(mapSource).toContain('parseLocalMapSearch(search).stateCode ?? ""');
+    expect(localResultsSource).toContain('useState<5 | 10 | 25>(5)');
+    expect(localResultsSource).toContain('expand: radiusMi > 5 ? "1" : "0"');
   });
 });

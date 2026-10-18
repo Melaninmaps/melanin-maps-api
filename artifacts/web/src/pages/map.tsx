@@ -2194,6 +2194,13 @@ export default function MapPage() {
                 {/* Business results — local-scoped endpoint when coordinates are known */}
                 {!isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
                   <LocalBusinessResults
+                    key={JSON.stringify([
+                      search.trim(),
+                      detectedLocation?.lat ?? userCoords?.lat,
+                      detectedLocation?.lng ?? userCoords?.lng,
+                      detectedLocation ? parseLocalMapSearch(search).city ?? "" : "",
+                      detectedLocation ? parseLocalMapSearch(search).stateCode ?? "" : "",
+                    ])}
                     query={search}
                     subject={parseLocalMapSearch(search).subject}
                     area={
