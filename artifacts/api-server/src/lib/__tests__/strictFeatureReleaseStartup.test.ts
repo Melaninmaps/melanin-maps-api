@@ -124,6 +124,10 @@ describe("strict feature-release startup", () => {
     expect(statements[0]).not.toContain("before update or delete|for each row");
     expect(statements[0]).toContain("pg_get_indexdef");
     expect(statements[0]).toContain("pg_get_triggerdef");
+    expect(statements[0]).toContain("business_directory_reconciliation_audit_business_idx");
+    expect(statements[0]).not.toContain("business_directory_reconciliation_audit_events_business_idx");
+    expect(statements[0]).toContain("user_id|archived_at|is_pinned desc|updated_at desc");
+    expect(statements[0]).not.toContain("user_id|continuity_enabled|updated_at desc");
     expect(statements[0]).toContain("public_function_definition");
     expect(statements[0]).toContain("unexpected_columns");
     expect(statements[0]).toContain("trigger.tgenabled <> 'O'");

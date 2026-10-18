@@ -297,7 +297,7 @@ const CORE_REQUIRED_INDEXES: readonly RequiredIndex[] = [
   ["public", "business_profile_evidence_receipts", "business_profile_evidence_receipts_source_field_idx"],
   ["public", "business_source_directory_receipts", "business_source_directory_receipts_business_idx"],
   ["public", "business_directory_reconciliation_ledger", "business_directory_reconciliation_state_reason_idx"],
-  ["public", "business_directory_reconciliation_audit_events", "business_directory_reconciliation_audit_events_business_idx"],
+  ["public", "business_directory_reconciliation_audit_events", "business_directory_reconciliation_audit_business_idx"],
 ];
 
 const CORE_REQUIRED_TRIGGERS: readonly RequiredTrigger[] = [
@@ -337,7 +337,7 @@ const CORE_REQUIRED_CONSTRAINT_SHAPES: readonly RequiredConstraintShape[] = [
 ];
 
 const CORE_REQUIRED_INDEX_SHAPES: readonly RequiredIndexShape[] = [
-  ["public", "kinfolk_sessions", "kinfolk_sessions_owner_continuity_idx", "false", "user_id|continuity_enabled|updated_at desc"],
+  ["public", "kinfolk_sessions", "kinfolk_sessions_owner_continuity_idx", "false", "user_id|archived_at|is_pinned desc|updated_at desc"],
   ["public", "business_deletion_holds", "business_deletion_holds_due_idx", "false", "state|delete_after|where|pending"],
   ["public", "kinfolk_current_online_presence_reviews", "kinfolk_current_online_presence_reviews_state_queued_idx", "false", "state|queued_at desc"],
   ["public", "businesses", "businesses_canonical_dedupe_key_unique", "true", "dedupe_key|where|is_duplicate|duplicate|permanently_hidden|removed|deleted"],
@@ -346,7 +346,7 @@ const CORE_REQUIRED_INDEX_SHAPES: readonly RequiredIndexShape[] = [
   ["public", "business_discovery_eligibility", "business_discovery_eligibility_qualified_idx", "false", "eligibility_status|ownership_source_expires_at|review_after"],
   ["public", "business_discovery_eligibility_audit_events", "business_discovery_eligibility_audit_events_business_idx", "false", "business_id|created_at desc"],
   ["public", "business_source_directory_receipts", "business_source_directory_receipts_business_idx", "false", "business_id|observed_at desc"],
-  ["public", "business_directory_reconciliation_audit_events", "business_directory_reconciliation_audit_events_business_idx", "false", "business_id|created_at desc"],
+  ["public", "business_directory_reconciliation_audit_events", "business_directory_reconciliation_audit_business_idx", "false", "business_id|created_at desc"],
   ["public", "business_profile_evidence_receipts", "business_profile_evidence_receipts_source_field_idx", "true", "business_id|field_name|source_sha256|where|source_sha256 is not null"],
   ["public", "business_directory_reconciliation_ledger", "business_directory_reconciliation_state_reason_idx", "false", "reconciliation_state|reason_code|updated_at desc"],
 ];
