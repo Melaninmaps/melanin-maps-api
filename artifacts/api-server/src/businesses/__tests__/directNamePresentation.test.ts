@@ -16,6 +16,9 @@ describe("direct-name public-directory presentation", () => {
           status: "documented_by_source",
           labels: ["Black / African American-Owned — documented by source"],
         },
+        featured: true,
+        promotionType: "featured_listing",
+        culturalMatch: true,
       },
     ]);
 
@@ -29,5 +32,8 @@ describe("direct-name public-directory presentation", () => {
     expect(profile).not.toHaveProperty("verifiedDesignations");
     expect(profile).not.toHaveProperty("ownershipClaim");
     expect(profile).not.toHaveProperty("documentedOwnership");
+    expect(profile).not.toHaveProperty("featured");
+    expect(profile).not.toHaveProperty("promotionType");
+    expect(profile).not.toHaveProperty("culturalMatch");
   });
 });

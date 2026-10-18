@@ -163,6 +163,7 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(directNameRead![0]).not.toContain("REGEXP_REPLACE");
     expect(directNameRead![0].slice(directNameRead![0].indexOf("WHERE"))).not.toContain("ownership_designations");
     expect(directNameRead![1]).toEqual(["ordinary market"]);
+    expect(calls.filter(([query]) => query.includes("FROM public.public_businesses b"))).toHaveLength(1);
   });
 
   it("compares Unicode names directly instead of collapsing unrelated names through ASCII-only normalization", async () => {

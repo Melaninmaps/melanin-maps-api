@@ -1223,13 +1223,19 @@ router.get("/businesses", async (req: Request, res: Response) => {
           return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
 
-        const annotatedBusinesses = businesses
-          .map((b) => ({
-            ...b,
-            featured: b.featured || promotedIdToType.has(b.id),
-            promotionType: promotedIdToType.get(b.id) ?? null,
-            culturalMatch: matchesPref(b as any),
-          }));
+        const annotatedBusinesses = strictDirectNameLookup
+          ? businesses.map((b) => ({
+              ...b,
+              featured: false,
+              promotionType: null,
+              culturalMatch: false,
+            }))
+          : businesses.map((b) => ({
+              ...b,
+              featured: b.featured || promotedIdToType.has(b.id),
+              promotionType: promotedIdToType.get(b.id) ?? null,
+              culturalMatch: matchesPref(b as any),
+            }));
 
         // An explicit same-name Directory lookup is not a recommendation.
         // Preserve the deterministic database ordering so every page remains
@@ -1451,7 +1457,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const responseTotal = usedFuzzyFallback
           ? finalResults.length
           : Number(totalCount);
-        const searchClarification = typeof search === "string" && search.trim()
+        const searchClarification = !usedDirectNamedSafetyLookup && typeof search === "string" && search.trim()
           ? findSafeSearchClarification({
               query: search,
               catalogTerms: finalResults.flatMap((business) => [
@@ -1474,7 +1480,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
           businesses: publicResults,
           total: responseTotal,
           page: { offset, limit: pageLimit },
-          featuredCount: withDistance.filter((b: any) => b.featured).length,
+          featuredCount: usedDirectNamedSafetyLookup
+            ? 0
+            : withDistance.filter((b: any) => b.featured).length,
           usedFuzzyFallback,
           searchScope: usedDirectNamedSafetyLookup
             ? "direct_named_safety_context"

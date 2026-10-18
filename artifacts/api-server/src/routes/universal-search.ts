@@ -877,7 +877,22 @@ async function searchBusinesses(opts: {
           ...(isExactRawNameLookup ? { isExactPublicDirectoryLookup: true } : {}),
         });
       }
+      // A successful literal public-directory match owns this request. Do not
+      // add partial-name, specialty, category, geo, or fuzzy recommendations.
+      if (isExactRawNameLookup && rows.rows.length > 0) break;
     } catch { /* column may not exist in all envs — skip */ }
+  }
+
+  const directProfileOnlyResults = [...results.values()]
+    .filter((business) => business.isExactPublicDirectoryLookup === true);
+  if (directProfileOnlyResults.length > 0) {
+    return directProfileOnlyResults
+      .sort((a, b) => (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0))
+      .slice(0, limit)
+      .map(({
+        ownershipClaim: _ownershipClaim,
+        ...business
+      }) => business);
   }
 
   // ── PASS 2: Extended field search (description + community intelligence) ──

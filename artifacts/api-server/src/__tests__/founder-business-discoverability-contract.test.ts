@@ -94,6 +94,11 @@ describe("founder business discoverability correction", () => {
     expect(businesses).toContain("const annotated = strictDirectNameLookup");
     expect(businesses).toContain("? annotatedBusinesses");
     expect(businesses).toContain("usedDirectNamedSafetyLookup\n          ? await attachDirectNameBusinessPresentation(publicResultRecords)");
+    expect(businesses).toContain("const annotatedBusinesses = strictDirectNameLookup\n          ? businesses.map((b) => ({");
+    expect(businesses).toContain("featured: false");
+    expect(businesses).toContain("promotionType: null");
+    expect(businesses).toContain("culturalMatch: false");
+    expect(businesses).toContain("featuredCount: usedDirectNamedSafetyLookup\n            ? 0");
     expect(businesses).not.toContain("normalizedDirectBusinessName");
   });
 

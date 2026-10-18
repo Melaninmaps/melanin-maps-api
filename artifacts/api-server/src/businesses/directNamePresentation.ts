@@ -3,7 +3,10 @@ export type DirectNameOwnershipField =
   | "blackOwned"
   | "verifiedDesignations"
   | "ownershipClaim"
-  | "documentedOwnership";
+  | "documentedOwnership"
+  | "featured"
+  | "promotionType"
+  | "culturalMatch";
 
 /**
  * Exact public-directory retrieval is a profile-only safety/context read. It
@@ -20,6 +23,9 @@ export function stripDirectNameOwnershipPresentation<T extends Record<string, un
       verifiedDesignations: _verifiedDesignations,
       ownershipClaim: _ownershipClaim,
       documentedOwnership: _documentedOwnership,
+      featured: _featured,
+      promotionType: _promotionType,
+      culturalMatch: _culturalMatch,
       ...profileOnlyRecord
     } = record;
     return profileOnlyRecord;
