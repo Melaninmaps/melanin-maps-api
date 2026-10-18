@@ -177,7 +177,7 @@ router.post("/events", async (req: Request, res: Response) => {
         .where(and(eq(eventsTable.createdById, req.user.id), gte(eventsTable.createdAt, startOfMonth)));
       if (count >= 3) {
         res.status(403).json({
-          error: "Explorer+ members can host up to 3 events per month. Upgrade to Navigator for unlimited events.",
+          error: "Navigator members can host up to 3 events per month. Upgrade to Trailblazer for unlimited events.",
           code: "TIER_LIMIT_REACHED",
           upgradeUrl: "/membership",
         });

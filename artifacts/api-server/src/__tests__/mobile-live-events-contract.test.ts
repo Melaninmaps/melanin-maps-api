@@ -27,4 +27,17 @@ describe("live event calendar contract", () => {
     expect(hook).toContain("setEvents([]);");
     expect(fixtures).not.toContain("export const EVENTS");
   });
+
+  it("does not direct a capped Navigator event host to their current tier", () => {
+    const routes = source("../routes/events.ts");
+    const navigatorCap = routes.slice(
+      routes.indexOf('if (tier === "navigator")'),
+      routes.indexOf("// Trailblazer: unlimited, no cap"),
+    );
+
+    expect(navigatorCap).toContain('if (tier === "navigator")');
+    expect(navigatorCap).toContain("Navigator members can host up to 3 events per month.");
+    expect(navigatorCap).toContain("Upgrade to Trailblazer for unlimited events.");
+    expect(navigatorCap).not.toContain("Upgrade to Navigator for unlimited events.");
+  });
 });
