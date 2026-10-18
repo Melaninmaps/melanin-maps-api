@@ -68,6 +68,7 @@ import {
   mwmPublicDirectorySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import { normalizeDirectoryPage } from "../businesses/directoryPage";
+import { stripDirectNameOwnershipPresentation } from "../businesses/directNamePresentation";
 import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import {
   highConfidenceBusinessDuplicateReasons,
@@ -415,6 +416,13 @@ async function attachPublicBusinessPresentation<T extends Record<string, unknown
   return attachDocumentedOwnership(imageSafeRecords);
 }
 
+async function attachDirectNameBusinessPresentation<T extends Record<string, unknown>>(
+  records: T[],
+) {
+  const imageSafeRecords = await attachEligibleBusinessImages(pool, records);
+  return stripDirectNameOwnershipPresentation(imageSafeRecords);
+}
+
 function publicBusinessVisibilityCondition() {
   return sql<boolean>`public.business_record_is_public(
     ${businessesTable.status},
@@ -532,7 +540,7 @@ async function sendDirectNameAvailabilityFallback(
     { search, resultCount: rows.length },
     "Directory query failed; returned direct-name availability fallback",
   );
-  const publicRecords = await attachPublicBusinessPresentation(
+  const publicRecords = await attachDirectNameBusinessPresentation(
     rows.map((business) => toPublicBusinessRecord(business)),
   );
   sendDynamicJson(res, {
@@ -1458,9 +1466,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
               ),
             })
           : null;
-        const publicResults = await attachPublicBusinessPresentation(
-          withDistance.map((business) => toPublicBusinessRecord(business)),
-        );
+        const publicResultRecords = withDistance.map((business) => toPublicBusinessRecord(business));
+        const publicResults = usedDirectNamedSafetyLookup
+          ? await attachDirectNameBusinessPresentation(publicResultRecords)
+          : await attachPublicBusinessPresentation(publicResultRecords);
         sendDynamicJson(res, {
           businesses: publicResults,
           total: responseTotal,

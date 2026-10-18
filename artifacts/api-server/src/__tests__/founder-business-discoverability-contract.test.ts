@@ -72,6 +72,7 @@ describe("founder business discoverability correction", () => {
     expect(businesses).toContain("const fallbackTotal = rows.length > 0");
     expect(businesses).toContain("page: { offset, limit }");
     expect(businesses).toContain('searchScope: "direct_named_safety_context"');
+    expect(businesses).toContain("attachDirectNameBusinessPresentation(");
     expect(businesses).toContain("if (await sendDirectNameAvailabilityFallback(req, res)) return");
   });
 
@@ -92,6 +93,7 @@ describe("founder business discoverability correction", () => {
     expect(businesses).toContain("mwmPublicDirectoryCondition()");
     expect(businesses).toContain("const annotated = strictDirectNameLookup");
     expect(businesses).toContain("? annotatedBusinesses");
+    expect(businesses).toContain("usedDirectNamedSafetyLookup\n          ? await attachDirectNameBusinessPresentation(publicResultRecords)");
     expect(businesses).not.toContain("normalizedDirectBusinessName");
   });
 
