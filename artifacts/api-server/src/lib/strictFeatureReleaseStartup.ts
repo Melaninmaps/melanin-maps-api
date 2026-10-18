@@ -302,7 +302,7 @@ const CORE_REQUIRED_INDEXES: readonly RequiredIndex[] = [
 const CORE_REQUIRED_TRIGGERS: readonly RequiredTrigger[] = [
   ["public", "business_deletion_hold_events", "business_deletion_hold_events_immutable", "prevent_business_deletion_hold_event_mutation"],
   ["public", "businesses", "businesses_prevent_queued_kinfolk_current_review_deletion", "prevent_queued_kinfolk_current_review_deletion"],
-  ["public", "businesses", "businesses_prevent_queued_kinfolk_current_review_lifecycle_mutation", "prevent_queued_kinfolk_current_review_lifecycle_mutation"],
+  ["public", "businesses", "businesses_prevent_queued_kinfolk_current_review_lifecycle_muta", "prevent_queued_kinfolk_current_review_lifecycle_mutation"],
   ["public", "kinfolk_current_online_presence_review_events", "kinfolk_current_online_presence_review_event_mutation", "prevent_kinfolk_current_online_presence_review_event_mutation"],
   ["public", "business_discovery_eligibility_audit_events", "business_discovery_eligibility_audit_immutable", "prevent_business_discovery_eligibility_audit_mutation"],
   ["public", "business_profile_evidence_receipts", "business_profile_evidence_receipts_stored_address_immutable", "prevent_stored_address_evidence_receipt_mutation"],
@@ -351,13 +351,13 @@ const CORE_REQUIRED_INDEX_SHAPES: readonly RequiredIndexShape[] = [
 ];
 
 const CORE_REQUIRED_TRIGGER_SHAPES: readonly RequiredTriggerShape[] = [
-  ["public", "business_deletion_hold_events", "business_deletion_hold_events_immutable", "before update or delete|for each row|prevent_business_deletion_hold_event_mutation"],
+  ["public", "business_deletion_hold_events", "business_deletion_hold_events_immutable", "before delete or update|for each row|prevent_business_deletion_hold_event_mutation"],
   ["public", "businesses", "businesses_prevent_queued_kinfolk_current_review_deletion", "before delete|for each row|prevent_queued_kinfolk_current_review_deletion"],
-  ["public", "businesses", "businesses_prevent_queued_kinfolk_current_review_lifecycle_mutation", "before update of listing_status, status, promotion_eligible, featured, promoted_until|for each row|prevent_queued_kinfolk_current_review_lifecycle_mutation"],
-  ["public", "kinfolk_current_online_presence_review_events", "kinfolk_current_online_presence_review_event_mutation", "before update or delete|for each row|prevent_kinfolk_current_online_presence_review_event_mutation"],
-  ["public", "business_discovery_eligibility_audit_events", "business_discovery_eligibility_audit_immutable", "before update or delete|for each row|prevent_business_discovery_eligibility_audit_mutation"],
-  ["public", "business_profile_evidence_receipts", "business_profile_evidence_receipts_stored_address_immutable", "before update or delete|for each row|prevent_stored_address_evidence_receipt_mutation"],
-  ["public", "business_directory_reconciliation_audit_events", "business_directory_reconciliation_audit_immutable", "before update or delete|for each row|prevent_business_directory_reconciliation_audit_mutation"],
+  ["public", "businesses", "businesses_prevent_queued_kinfolk_current_review_lifecycle_muta", "before update of listing_status, status, promotion_eligible, featured, promoted_until|for each row|prevent_queued_kinfolk_current_review_lifecycle_mutation"],
+  ["public", "kinfolk_current_online_presence_review_events", "kinfolk_current_online_presence_review_event_mutation", "before delete or update|for each row|prevent_kinfolk_current_online_presence_review_event_mutation"],
+  ["public", "business_discovery_eligibility_audit_events", "business_discovery_eligibility_audit_immutable", "before delete or update|for each row|prevent_business_discovery_eligibility_audit_mutation"],
+  ["public", "business_profile_evidence_receipts", "business_profile_evidence_receipts_stored_address_immutable", "before delete or update|for each row|prevent_stored_address_evidence_receipt_mutation"],
+  ["public", "business_directory_reconciliation_audit_events", "business_directory_reconciliation_audit_immutable", "before delete or update|for each row|prevent_business_directory_reconciliation_audit_mutation"],
   ["public", "businesses", "business_directory_reconciliation_ledger_seed", "after insert|for each row|seed_business_directory_reconciliation_ledger"],
 ];
 
@@ -772,13 +772,13 @@ async function verifyReadOnlySchemaContract(
       JOIN pg_class AS relation
         ON relation.relnamespace = namespace.oid
        AND relation.relname = required.relation_name
-      JOIN pg_constraint AS constraint
-        ON constraint.conrelid = relation.oid
-       AND constraint.conname = required.constraint_name
-      WHERE constraint.convalidated = false
+      JOIN pg_constraint AS constraint_row
+        ON constraint_row.conrelid = relation.oid
+       AND constraint_row.conname = required.constraint_name
+      WHERE constraint_row.convalidated = false
          OR NOT (
            SELECT bool_and(
-             position(term IN regexp_replace(lower(pg_get_constraintdef(constraint.oid, true)), '\\s+', ' ', 'g')) > 0
+             position(term IN regexp_replace(lower(pg_get_constraintdef(constraint_row.oid, true)), '\\s+', ' ', 'g')) > 0
            )
            FROM unnest(string_to_array(required.required_terms, '|')) AS term
          )

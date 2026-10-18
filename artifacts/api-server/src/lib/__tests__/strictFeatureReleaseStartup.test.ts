@@ -115,6 +115,12 @@ describe("strict feature-release startup", () => {
     expect(statements[0]).toContain("information_schema.columns");
     expect(statements[0]).toContain("pg_get_viewdef");
     expect(statements[0]).toContain("pg_get_constraintdef");
+    expect(statements[0]).toContain("JOIN pg_constraint AS constraint_row");
+    expect(statements[0]).not.toMatch(/\bAS constraint\s/);
+    expect(statements[0]).toContain("businesses_prevent_queued_kinfolk_current_review_lifecycle_muta");
+    expect(statements[0]).not.toContain("businesses_prevent_queued_kinfolk_current_review_lifecycle_mutation");
+    expect(statements[0]).toContain("before delete or update|for each row");
+    expect(statements[0]).not.toContain("before update or delete|for each row");
     expect(statements[0]).toContain("pg_get_indexdef");
     expect(statements[0]).toContain("pg_get_triggerdef");
     expect(statements[0]).toContain("public_function_definition");
