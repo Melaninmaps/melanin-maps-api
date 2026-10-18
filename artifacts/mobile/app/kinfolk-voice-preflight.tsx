@@ -93,6 +93,7 @@ export default function KinfolkVoicePreflightScreen() {
   const [activeAttemptId, setActiveAttemptId] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const isStoppingRef = useRef(false);
   const [isSending, setIsSending] = useState(false);
   const [isPreparingSpeech, setIsPreparingSpeech] = useState(false);
   const [playRequested, setPlayRequested] = useState(false);
@@ -104,6 +105,9 @@ export default function KinfolkVoicePreflightScreen() {
   const playbackFileRef = useRef<FileSystem.File | null>(null);
   const recordingStartedAtRef = useRef<number | null>(null);
   const activeAttemptRef = useRef<string | null>(null);
+  const backgroundCancelledAttemptIdsRef = useRef(new Set<string>());
+  const inFlightRecordingAttemptRef = useRef<string | null>(null);
+  const backgroundAbortPromiseRef = useRef<Promise<void> | null>(null);
   const player = useAudioPlayer(playbackUri);
   const playerStatus = useAudioPlayerStatus(player);
 
@@ -149,8 +153,17 @@ export default function KinfolkVoicePreflightScreen() {
     setPlayRequested(false);
   }, [cleanPlaybackFile, cleanRecordedFile, recordedUri]);
 
+  const waitForBackgroundAbort = async () => {
+    let observed = backgroundAbortPromiseRef.current;
+    while (observed) {
+      await observed.catch(() => undefined);
+      if (observed === backgroundAbortPromiseRef.current) return;
+      observed = backgroundAbortPromiseRef.current;
+    }
+  };
+
   const startPreflight = async () => {
-    if (Platform.OS === "web" || isStarting || recorderState.isRecording) return;
+    if (Platform.OS === "web" || isStarting || isStoppingRef.current || inFlightRecordingAttemptRef.current || recorderState.isRecording) return;
     if (!isAuthenticated || authLoading) {
       Alert.alert("Sign in required", "Sign in before running Kinfolk Voice Preflight. No recording is made until you start a test.", [
         { text: "Not now", style: "cancel" },
@@ -177,6 +190,8 @@ export default function KinfolkVoicePreflightScreen() {
       ),
     };
     activeAttemptRef.current = attemptId;
+    backgroundCancelledAttemptIdsRef.current.clear();
+    backgroundAbortPromiseRef.current = null;
     setActiveAttemptId(attemptId);
     setAttempts((current) => [initialAttempt, ...current].slice(0, 8));
 
@@ -202,6 +217,7 @@ export default function KinfolkVoicePreflightScreen() {
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, shouldRouteThroughEarpiece: false });
       await recorder.prepareToRecordAsync();
       recorder.record();
+      inFlightRecordingAttemptRef.current = attemptId;
       recordingStartedAtRef.current = Date.now();
       updateStage("recording_started", "passed", "Recording started. Speak the preflight sentence, then tap Stop.");
     } catch (error) {
@@ -215,7 +231,9 @@ export default function KinfolkVoicePreflightScreen() {
   };
 
   const stopAndTranscribe = async () => {
-    if (!recorderState.isRecording || isStopping) return;
+    if (!recorderState.isRecording || isStopping || isStoppingRef.current) return;
+    const attemptId = inFlightRecordingAttemptRef.current;
+    isStoppingRef.current = true;
     setIsStopping(true);
     updateStage("recording_captured", "running", "Stopping recorder and reading technical metadata.");
     let temporaryRecordingUri: string | null = null;
@@ -226,6 +244,10 @@ export default function KinfolkVoicePreflightScreen() {
       recordingStartedAtRef.current = null;
       await recorder.stop();
       const uri = recorder.uri;
+      if (attemptId && backgroundCancelledAttemptIdsRef.current.has(attemptId)) {
+        cleanRecordedFile(uri);
+        return;
+      }
       if (!uri) {
         updateStage("recording_captured", "failed", voicePreflightFailure("recording_captured"));
         return;
@@ -258,6 +280,10 @@ export default function KinfolkVoicePreflightScreen() {
       form.append("audio", file);
       form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
+      if (attemptId && backgroundCancelledAttemptIdsRef.current.has(attemptId)) {
+        cleanRecordedFile(uri);
+        return;
+      }
       const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -284,6 +310,9 @@ export default function KinfolkVoicePreflightScreen() {
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
       cleanRecordedFile(temporaryRecordingUri);
       setRecordedUri(null);
+      await waitForBackgroundAbort();
+      if (inFlightRecordingAttemptRef.current === attemptId) inFlightRecordingAttemptRef.current = null;
+      isStoppingRef.current = false;
       setIsStopping(false);
     }
   };
@@ -401,15 +430,35 @@ export default function KinfolkVoicePreflightScreen() {
   }, [cleanPlaybackFile, playerStatus.didJustFinish, playRequested, updateStage]);
 
   useEffect(() => {
+    const abortBackgroundRecording = async () => {
+      const attemptId = inFlightRecordingAttemptRef.current;
+      if (!attemptId || backgroundCancelledAttemptIdsRef.current.has(attemptId)) return;
+      backgroundCancelledAttemptIdsRef.current.add(attemptId);
+      recordingStartedAtRef.current = null;
+      setRecordedUri(null);
+      setRecordedDurationMs(0);
+      updateStage("recording_started", "failed", "Recording was interrupted because the app left the foreground. Retry the attempt.");
+      try {
+        if (recorder.isRecording) await recorder.stop();
+      } catch { /* background cancellation must never upload audio */ }
+      finally {
+        cleanRecordedFile(recorder.uri);
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        if (!isStoppingRef.current && inFlightRecordingAttemptRef.current === attemptId) inFlightRecordingAttemptRef.current = null;
+      }
+    };
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") return;
       if (player.playing) player.pause();
-      if (recorderState.isRecording) {
-        updateStage("recording_started", "failed", "Recording was interrupted because the app left the foreground. Retry the attempt.");
+      const attemptId = inFlightRecordingAttemptRef.current;
+      if (attemptId && !backgroundCancelledAttemptIdsRef.current.has(attemptId)) {
+        const backgroundAbort = abortBackgroundRecording();
+        backgroundAbortPromiseRef.current = backgroundAbort;
+        void backgroundAbort;
       }
     });
     return () => subscription.remove();
-  }, [player, recorderState.isRecording, updateStage]);
+  }, [cleanRecordedFile, player, recorder, updateStage]);
 
   useEffect(() => () => {
     cleanRecordedFile(recordedUri);
