@@ -105,15 +105,19 @@ export function PrivatePlacesSettings() {
 
   const remove = async (place: PrivatePlace) => {
     setError(null);
-    const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (!response.ok) {
-      setError(await responseMessage(response, "Private Place could not be deleted."));
-      return;
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        setError(await responseMessage(response, "Private Place could not be deleted."));
+        return;
+      }
+      await load();
+    } catch {
+      setError("Private Place could not be deleted.");
     }
-    await load();
   };
 
   const useForNearbySearch = async (place: PrivatePlace) => {

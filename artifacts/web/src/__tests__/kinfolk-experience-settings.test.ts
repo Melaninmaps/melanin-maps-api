@@ -70,6 +70,19 @@ describe("unified Web Kinfolk settings", () => {
     expect(privatePlacesSource).not.toContain("api/kinfolk/chat");
   });
 
+  it("keeps a rejected Private Place deletion retryable without removing the record locally", () => {
+    const remove = privatePlacesSource.slice(
+      privatePlacesSource.indexOf("const remove = async"),
+      privatePlacesSource.indexOf("const useForNearbySearch = async"),
+    );
+    expect(remove).toContain('method: "DELETE"');
+    expect(remove).toContain("try {");
+    expect(remove).toContain("catch {");
+    expect(remove).toContain('setError("Private Place could not be deleted.");');
+    expect(remove).toContain("await load();");
+    expect(remove).not.toContain("setPlaces(");
+  });
+
   it("keeps Temporary Stays in Kinfolk Settings with explicit dates, disclosure, retention, and owner controls", () => {
     expect(settingsSource).toContain("TemporaryStaysSettings");
     expect(temporaryStaysSource).toContain("api/kinfolk/temporary-stays/status");
