@@ -1938,7 +1938,7 @@
     {
       "id": "CR-01-MEMBER-CONTROLLED-CITY-CRISIS-GUIDANCE",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "CR-01",
@@ -1978,7 +1978,22 @@
         "archive": "CR01_MEMBER_CONTROLLED_CITY_CRISIS_GUIDANCE_BASE_2026-10-19.tar.gz",
         "sha256": "45a44c971027eaac7fe27c70794f29fd216489c9f81eac07120fc83fe3900b3e",
         "expiresAt": "2026-10-20T21:26:39.169Z"
-      }
+      },
+      "sourceCommit": "41b4ed9012100b8bec1ff75b007183d1c102d7cd",
+      "carrier": {
+        "handoffId": "hnd_3O-9O_KFp6-uk1SLwcFOwLRe",
+        "archive": "CR01_MEMBER_CONTROLLED_CITY_CRISIS_GUIDANCE_REVIEW_CARRIER_78a17e1d.tar.gz",
+        "archiveSha256": "12df0ca67e26c108f4eab3b3f8e290113e646f67d141e3cf561d6970366fb395",
+        "patchSha256": "d64e4f2172e0356de8812c4213c6c535536ac1e600978711b9f950e3571561a6"
+      },
+      "centralValidation": {
+        "apiVitest": "1 file / 11 tests passed",
+        "apiNoEmit": "passed",
+        "scope": "exact two paths; git diff --check passed",
+        "integrity": "outer/patch/base/result hashes and clean apply verified",
+        "boundary": "explicit-current-turn gate, exact reviewed city+state mapping, official HTTPS/freshness/cross-city controls and unavailable/link-only fallback preserved; no contact/dispatch/monitoring/persistent location/client/route/source-registry/runtime path added."
+      },
+      "externalAcceptance": "PENDING \u2014 legal/compliance and separately authorized runtime/staging/member-visible release gates remain required."
     },
     {
       "id": "FLIGHT-001-PROVIDER-NEUTRAL-READINESS-PACKET",

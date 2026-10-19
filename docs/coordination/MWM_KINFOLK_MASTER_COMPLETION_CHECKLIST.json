@@ -1313,15 +1313,15 @@
       "platform": "API",
       "founder_requirement": "Member-controlled crisis guidance uses only verified jurisdictional resources when a sufficiently reliable city/state is explicitly present; it never dispatches, contacts anyone, exposes member location, promises human monitoring, or infers a crisis from memory or background data.",
       "acceptance_criteria": "Focused pure policy tests prove explicit-current-turn gating; exact city+state jurisdiction resolution; official HTTPS reviewed source/freshness/cross-city controls; privacy/no-location output; and safe unavailable fallback. Source success does not authorize runtime fetching, feature enablement, legal advice, monitoring, notification, deployment, or release.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Read-only trace at authority `78a17e1d647daeec7c9814330910c94ab08f142c` found the narrow existing two-file `city-safety-briefing-v1` pure policy/test seam. It already uses explicit turns, exact reviewed city+state \u2192 city ID matching, source-attributed official HTTPS registry entries, bounded freshness and truthful unavailable fallback.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Read-only trace at authority `78a17e1d647daeec7c9814330910c94ab08f142c` found the narrow existing two-file `city-safety-briefing-v1` pure policy/test seam. It already uses explicit turns, exact reviewed city+state \u2192 city ID matching, source-attributed official HTTPS registry entries, bounded freshness and truthful unavailable fallback. Central local-only two-path integration `41b4ed9012100b8bec1ff75b007183d1c102d7cd` accepted carrier `12df0ca67e26c108f4eab3b3f8e290113e646f67d141e3cf561d6970366fb395` / patch `d64e4f2172e0356de8812c4213c6c535536ac1e600978711b9f950e3571561a6`. Result hashes, base compatibility and clean apply verified; API city-safety contract **1 file / 11 tests PASS**, API no-emit and exact scope/diff passed. The narrow change rejects null/non-string/empty/ambiguous city-state scope and removes contact-style wording while retaining explicit-turn, official HTTPS/freshness/cross-city, no-risk/no-business-recommendation, link-only failure behavior. No route/client/runtime/network/provider action occurred.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); yINBiovLIPiFnyQCFfSycn (active CR-01 carrier)",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central source integration); yINBiovLIPiFnyQCFfSycn (CR-01 carrier claim closed)",
       "dependencies_or_blockers": "Legal/compliance review remains a release gate. No client surface consumes the policy and `routes/kinfolk.ts` is shared/frozen; source expansion, sources, route/UI, location/contact/notification/queue/provider/runtime work require separate authorization.",
-      "next_action": "Receive and centrally validate the exact two-path CR-01 carrier; retain default-off route gating and all non-dispatch/non-contact/non-location boundaries.",
+      "next_action": "Keep the source receipt frozen. Legal/compliance review and separately authorized default-off runtime/staging/member-visible validation are required before any feature enablement or release; no source registry, route/UI, location/contact/notification work is implied.",
       "founder_approval_needed": "No new founder decision for the bounded source contract; yes for a source registry expansion, flag enablement, runtime fetch, legal/compliance approval, notification/contact/location action, deployment, or member-visible release.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1756,6 +1756,10 @@
     {
       "date": "2026-10-19",
       "event": "OAUTH-001 documentation-only NO-GO packet source-integrated locally at cb1609c56371fee40e957aae7d96ad6e7d0ded5a; submitted carrier verified and normalized for trailing whitespace only. No OAuth implementation, client, consent, token, provider, pilot or release action authorized."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "CR-01 two-path member-controlled city crisis-guidance source-integrated locally at 41b4ed9012100b8bec1ff75b007183d1c102d7cd: API 1/11 and no-emit passed; legal/runtime/release gates remain separate."
     }
   ],
   "evidence_gaps": [
@@ -1773,9 +1777,9 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 11,
+      "IN DEVELOPMENT": 10,
       "NOT STARTED": 10,
-      "SOURCE INTEGRATED": 18
+      "SOURCE INTEGRATED": 19
     },
     "by_founder_area": {
       "Core app": 2,
