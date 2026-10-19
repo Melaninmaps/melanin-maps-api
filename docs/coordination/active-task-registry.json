@@ -2244,7 +2244,14 @@
         "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
         "exact two-path scope; git diff --check; static no-URL/no-network/no-token/no-route/no-persistence scan"
       ],
-      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-new-file carrier only; central owner alone integrates."
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-new-file carrier only; central owner alone integrates.",
+      "baseTransfer": {
+        "handoffId": "hnd_owy9Yf_qMA9b3kfRYn9yMZdj",
+        "archive": "OAUTH003_STATE_PKCE_PREPARATION_BASE_2026-10-19.tar.gz",
+        "sha256": "f50a675ba7bd21c509dfc43e0ed01956c7bd61fd6c0f26ff1f7357d403a137b7",
+        "expiresAt": "2026-10-20T21:56:13.899Z",
+        "authority": "9ba944d7fbe8ba44491b089861dee52612cb9d0b"
+      }
     }
   ],
   "globalDirectiveDelivery": [
