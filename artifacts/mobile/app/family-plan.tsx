@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
   Text,
@@ -18,7 +17,6 @@ import { useFamilyPlan } from "@/hooks/useFamilyPlan";
 import * as SecureStore from "expo-secure-store";
 
 import { getApiBase } from "@/lib/api";
-import { openWebPaymentHandoff } from "@/lib/webPaymentHandoff";
 const apiBase = getApiBase();
 
 // ── AI Pool Bar ─────────────────────────────────────────────────────────────
@@ -40,17 +38,47 @@ function AiPoolBar({
 
   return (
     <View style={{ gap: 6 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-        <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: isHighlight ? "rgba(255,255,255,0.65)" : colors.mutedForeground, letterSpacing: 0.3 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 12,
+            fontFamily: "Inter_600SemiBold",
+            color: isHighlight
+              ? "rgba(255,255,255,0.65)"
+              : colors.mutedForeground,
+            letterSpacing: 0.3,
+          }}
+        >
           KINFOLK AI THIS MONTH
         </Text>
-        <Text style={{ fontSize: 14, fontFamily: "Inter_800ExtraBold", color: isHighlight ? "#FFF" : colors.foreground }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontFamily: "Inter_800ExtraBold",
+            color: isHighlight ? "#FFF" : colors.foreground,
+          }}
+        >
           {isUnlimited ? "Unlimited" : `${used} / ${limit}`}
         </Text>
       </View>
       {!isUnlimited && (
         <>
-          <View style={{ height: 6, borderRadius: 3, backgroundColor: isHighlight ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.08)", overflow: "hidden" }}>
+          <View
+            style={{
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: isHighlight
+                ? "rgba(255,255,255,0.15)"
+                : "rgba(0,0,0,0.08)",
+              overflow: "hidden",
+            }}
+          >
             <View
               style={{
                 height: "100%",
@@ -60,7 +88,14 @@ function AiPoolBar({
               }}
             />
           </View>
-          <Text style={{ fontSize: 11, color: isHighlight ? "rgba(255,255,255,0.5)" : colors.mutedForeground }}>
+          <Text
+            style={{
+              fontSize: 11,
+              color: isHighlight
+                ? "rgba(255,255,255,0.5)"
+                : colors.mutedForeground,
+            }}
+          >
             {isExhausted
               ? "Pool exhausted — resets next month"
               : `${Math.max(0, limit - used)} requests remaining this month`}
@@ -96,13 +131,12 @@ function MemberRow({
     member.firstName && member.lastName
       ? `${member.firstName[0]}${member.lastName[0]}`.toUpperCase()
       : member.inviteEmail
-      ? member.inviteEmail[0].toUpperCase()
-      : "?";
+        ? member.inviteEmail[0].toUpperCase()
+        : "?";
 
-  const name =
-    member.firstName
-      ? `${member.firstName} ${member.lastName ?? ""}`.trim()
-      : member.inviteEmail ?? "Invited member";
+  const name = member.firstName
+    ? `${member.firstName} ${member.lastName ?? ""}`.trim()
+    : (member.inviteEmail ?? "Invited member");
 
   const isPending = member.status === "invited" || member.status === "pending";
 
@@ -122,26 +156,64 @@ function MemberRow({
           width: 42,
           height: 42,
           borderRadius: 21,
-          backgroundColor: isDark ? "rgba(202,146,43,0.2)" : "rgba(202,146,43,0.12)",
+          backgroundColor: isDark
+            ? "rgba(202,146,43,0.2)"
+            : "rgba(202,146,43,0.12)",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#CA922B" }}>{initials}</Text>
+        <Text
+          style={{
+            fontSize: 15,
+            fontFamily: "Inter_700Bold",
+            color: "#CA922B",
+          }}
+        >
+          {initials}
+        </Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{name}</Text>
-        <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 1 }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontFamily: "Inter_600SemiBold",
+            color: colors.foreground,
+          }}
+        >
+          {name}
+        </Text>
+        <Text
+          style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 1 }}
+        >
           {isPending ? "Invite pending" : "Active member"}
         </Text>
       </View>
       {isPending && (
-        <View style={{ backgroundColor: "rgba(202,146,43,0.15)", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
-          <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#CA922B" }}>Pending</Text>
+        <View
+          style={{
+            backgroundColor: "rgba(202,146,43,0.15)",
+            borderRadius: 6,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: "Inter_600SemiBold",
+              color: "#CA922B",
+            }}
+          >
+            Pending
+          </Text>
         </View>
       )}
       {isOwner && (
-        <TouchableOpacity onPress={() => onRemove(member.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity
+          onPress={() => onRemove(member.id)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Feather name="x" size={18} color={colors.mutedForeground} />
         </TouchableOpacity>
       )}
@@ -155,7 +227,7 @@ export default function FamilyPlanScreen() {
   const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { plan, isLoading, refetch, addFamilySeat } = useFamilyPlan();
+  const { plan, isLoading, refetch } = useFamilyPlan();
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -163,7 +235,6 @@ export default function FamilyPlanScreen() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
   const [removeLoading, setRemoveLoading] = useState<string | null>(null);
-  const [addSeatLoading, setAddSeatLoading] = useState(false);
 
   const tierColors: Record<string, string> = {
     free: "#A87A40",
@@ -188,7 +259,10 @@ export default function FamilyPlanScreen() {
     try {
       const res = await fetch(`${apiBase}/api/family/invite`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ inviteEmail: inviteEmail.trim() }),
       });
       const data = (await res.json()) as { error?: string };
@@ -225,38 +299,16 @@ export default function FamilyPlanScreen() {
     }
   };
 
-  const handleMembershipUpgrade = async () => {
-    const result = await openWebPaymentHandoff("membership");
-    if (result === "not_enabled") {
-      Alert.alert(
-        "Complete this on the website",
-        "Membership changes are completed securely on Mapping with Melanin’s website. This app build does not currently offer that external website handoff.",
-      );
-    } else if (result === "unavailable") {
-      Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
-    }
-  };
-
-  const handleAddSeat = async () => {
-    setAddSeatLoading(true);
-    try {
-      const result = await addFamilySeat();
-      if (result === "not_enabled") {
-        Alert.alert(
-          "Complete this on the website",
-          "Family-seat payments are completed securely on Mapping with Melanin’s website. This app build does not currently offer that external website handoff.",
-        );
-      } else if (result === "unavailable") {
-        Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
-      }
-    } finally {
-      setAddSeatLoading(false);
-    }
-  };
-
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <ActivityIndicator color={colors.primary} />
       </View>
     );
@@ -277,16 +329,33 @@ export default function FamilyPlanScreen() {
           borderBottomColor: colors.border,
         }}
       >
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 18, fontFamily: "Inter_800ExtraBold", color: colors.foreground, letterSpacing: -0.4 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontFamily: "Inter_800ExtraBold",
+              color: colors.foreground,
+              letterSpacing: -0.4,
+            }}
+          >
             Family Plan
           </Text>
           {plan && (
-            <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 1 }}>
-              {plan.tierDisplay} · {seatsUsed} of {totalCapacity} seat{totalCapacity !== 1 ? "s" : ""} used
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.mutedForeground,
+                marginTop: 1,
+              }}
+            >
+              {plan.tierDisplay} · {seatsUsed} of {totalCapacity} seat
+              {totalCapacity !== 1 ? "s" : ""} used
             </Text>
           )}
         </View>
@@ -299,7 +368,11 @@ export default function FamilyPlanScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 20, paddingBottom: insets.bottom + 32 }}
+        contentContainerStyle={{
+          paddingHorizontal: 18,
+          paddingTop: 20,
+          paddingBottom: insets.bottom + 32,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {!plan || plan.tier === "free" ? (
@@ -315,22 +388,55 @@ export default function FamilyPlanScreen() {
               gap: 12,
             }}
           >
-            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "rgba(202,146,43,0.15)", alignItems: "center", justifyContent: "center" }}>
+            <View
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: "rgba(202,146,43,0.15)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Feather name="users" size={24} color="#CA922B" />
             </View>
-            <Text style={{ fontSize: 18, fontFamily: "Inter_800ExtraBold", color: colors.foreground, textAlign: "center" }}>
-              Family Plans Start at Navigator
-            </Text>
-            <Text style={{ fontSize: 14, color: colors.mutedForeground, textAlign: "center", lineHeight: 20 }}>
-              Upgrade to Navigator ($7.99/mo) to unlock 1 free family seat and KinfolkAI trip planning — with add-on seats available from $2.99/mo.
-            </Text>
-            <TouchableOpacity
-              style={{ backgroundColor: "#CA922B", borderRadius: 10, paddingVertical: 13, paddingHorizontal: 28, marginTop: 4 }}
-              onPress={() => void handleMembershipUpgrade()}
-              activeOpacity={0.85}
+            <Text
+              style={{
+                fontSize: 18,
+                fontFamily: "Inter_800ExtraBold",
+                color: colors.foreground,
+                textAlign: "center",
+              }}
             >
-              <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFF" }}>View Plans</Text>
-            </TouchableOpacity>
+              Membership enrollment unavailable / Inscripción de membresía no
+              disponible
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: colors.mutedForeground,
+                textAlign: "center",
+                lineHeight: 20,
+              }}
+            >
+              Navigator ($7.99/mo) and family add-ons from $2.99/mo are approved
+              catalog references only; no payment, trial, membership access, or
+              listing upgrade starts here. / Navigator ($7.99/mes) y los
+              asientos familiares desde $2.99/mes son solo referencias de
+              catálogo aprobadas; aquí no se inicia ningún pago, prueba, acceso
+              de membresía ni mejora de listado.
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: colors.mutedForeground,
+                textAlign: "center",
+                lineHeight: 19,
+              }}
+            >
+              Existing verified member access remains active. / El acceso
+              verificado existente de los miembros permanece activo.
+            </Text>
           </View>
         ) : (
           <>
@@ -345,27 +451,59 @@ export default function FamilyPlanScreen() {
                 borderColor: colors.border,
               }}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: 16,
+                }}
+              >
                 <View>
-                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: isHighlight ? "rgba(255,255,255,0.65)" : colors.mutedForeground, letterSpacing: 0.4 }}>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontFamily: "Inter_600SemiBold",
+                      color: isHighlight
+                        ? "rgba(255,255,255,0.65)"
+                        : colors.mutedForeground,
+                      letterSpacing: 0.4,
+                    }}
+                  >
                     CURRENT PLAN
                   </Text>
-                  <Text style={{ fontSize: 22, fontFamily: "Inter_800ExtraBold", color: isHighlight ? "#FFF" : colors.foreground, letterSpacing: -0.5, marginTop: 2 }}>
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontFamily: "Inter_800ExtraBold",
+                      color: isHighlight ? "#FFF" : colors.foreground,
+                      letterSpacing: -0.5,
+                      marginTop: 2,
+                    }}
+                  >
                     {plan.tierDisplay}
                   </Text>
                 </View>
-                <TouchableOpacity
+                <View
                   style={{
-                    backgroundColor: isHighlight ? "rgba(255,255,255,0.2)" : "rgba(202,146,43,0.12)",
+                    backgroundColor: isHighlight
+                      ? "rgba(255,255,255,0.2)"
+                      : "rgba(202,146,43,0.12)",
                     borderRadius: 8,
                     paddingVertical: 7,
                     paddingHorizontal: 13,
                   }}
-                  onPress={() => void handleMembershipUpgrade()}
-                  activeOpacity={0.8}
                 >
-                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: isHighlight ? "#FFF" : "#CA922B" }}>Upgrade</Text>
-                </TouchableOpacity>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontFamily: "Inter_600SemiBold",
+                      color: isHighlight ? "#FFF" : "#CA922B",
+                    }}
+                  >
+                    Enrollment unavailable
+                  </Text>
+                </View>
               </View>
 
               <AiPoolBar
@@ -388,11 +526,23 @@ export default function FamilyPlanScreen() {
               }}
             >
               {[
-                { label: "Saved Places", value: plan.limits.savedPlacesDisplay },
-                { label: "Followed Topics", value: plan.limits.savedTopicsDisplay },
-                { label: "Kinfolk Circles", value: plan.limits.circlesCreateDisplay },
+                {
+                  label: "Saved Places",
+                  value: plan.limits.savedPlacesDisplay,
+                },
+                {
+                  label: "Followed Topics",
+                  value: plan.limits.savedTopicsDisplay,
+                },
+                {
+                  label: "Kinfolk Circles",
+                  value: plan.limits.circlesCreateDisplay,
+                },
                 { label: "Show Love / mo", value: plan.limits.showLoveDisplay },
-                { label: "Digest Frequency", value: plan.limits.digestFrequencies.join(" · ") },
+                {
+                  label: "Digest Frequency",
+                  value: plan.limits.digestFrequencies.join(" · "),
+                },
               ].map((item, i, arr) => (
                 <View
                   key={item.label}
@@ -406,8 +556,18 @@ export default function FamilyPlanScreen() {
                     borderBottomColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{item.label}</Text>
-                  <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{item.value}</Text>
+                  <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
+                    {item.label}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontFamily: "Inter_600SemiBold",
+                      color: colors.foreground,
+                    }}
+                  >
+                    {item.value}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -423,20 +583,50 @@ export default function FamilyPlanScreen() {
                 padding: 16,
               }}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                <Text style={{ fontSize: 16, fontFamily: "Inter_800ExtraBold", color: colors.foreground, letterSpacing: -0.3 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontFamily: "Inter_800ExtraBold",
+                    color: colors.foreground,
+                    letterSpacing: -0.3,
+                  }}
+                >
                   Family Members
                 </Text>
                 <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
                   {seatsUsed} / {totalCapacity} seats
                 </Text>
               </View>
-              <Text style={{ fontSize: 12, color: colors.mutedForeground, marginBottom: 14 }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: colors.mutedForeground,
+                  marginBottom: 14,
+                }}
+              >
                 {plan.limits.familyMemberAccess}
               </Text>
 
               {/* Seat capacity bar */}
-              <View style={{ height: 4, borderRadius: 2, backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#EDEDED", overflow: "hidden", marginBottom: 14 }}>
+              <View
+                style={{
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.08)"
+                    : "#EDEDED",
+                  overflow: "hidden",
+                  marginBottom: 14,
+                }}
+              >
                 <View
                   style={{
                     height: "100%",
@@ -448,10 +638,23 @@ export default function FamilyPlanScreen() {
               </View>
 
               {plan.family.members.length === 0 ? (
-                <View style={{ alignItems: "center", paddingVertical: 20, gap: 6 }}>
-                  <Feather name="user-plus" size={28} color={colors.mutedForeground} />
-                  <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: "center" }}>
-                    No family members yet.{"\n"}Invite someone to share your plan.
+                <View
+                  style={{ alignItems: "center", paddingVertical: 20, gap: 6 }}
+                >
+                  <Feather
+                    name="user-plus"
+                    size={28}
+                    color={colors.mutedForeground}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: colors.mutedForeground,
+                      textAlign: "center",
+                    }}
+                  >
+                    No family members yet.{"\n"}Invite someone to share your
+                    plan.
                   </Text>
                 </View>
               ) : (
@@ -484,42 +687,45 @@ export default function FamilyPlanScreen() {
                     activeOpacity={0.85}
                   >
                     <Feather name="user-plus" size={16} color="#FFF" />
-                    <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#FFF" }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontFamily: "Inter_700Bold",
+                        color: "#FFF",
+                      }}
+                    >
                       Invite Family Member
                     </Text>
                   </TouchableOpacity>
                 ) : (
                   <View style={{ gap: 8 }}>
-                    <Text style={{ fontSize: 12, color: colors.mutedForeground, textAlign: "center" }}>
-                      All {totalCapacity} seat{totalCapacity !== 1 ? "s" : ""} are used. Add another for {plan.limits.addOnSeatPriceDisplay}.
-                    </Text>
-                    <TouchableOpacity
+                    <Text
                       style={{
-                        borderWidth: 1.5,
-                        borderColor: planColor,
-                        borderRadius: 10,
-                        paddingVertical: 12,
-                        alignItems: "center",
-                        flexDirection: "row",
-                        justifyContent: "center",
-                        gap: 8,
-                        opacity: addSeatLoading ? 0.6 : 1,
+                        fontSize: 12,
+                        color: colors.mutedForeground,
+                        textAlign: "center",
+                        lineHeight: 18,
                       }}
-                      onPress={() => void handleAddSeat()}
-                      disabled={addSeatLoading}
-                      activeOpacity={0.8}
                     >
-                      {addSeatLoading ? (
-                        <ActivityIndicator size="small" color={planColor} />
-                      ) : (
-                        <>
-                          <Feather name="plus" size={15} color={planColor} />
-                          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: planColor }}>
-                            Add Seat — {plan.limits.addOnSeatPriceDisplay}
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
+                      All {totalCapacity} seat{totalCapacity !== 1 ? "s" : ""}{" "}
+                      are used. {plan.limits.addOnSeatPriceDisplay} is an
+                      approved catalog reference only; no payment, trial,
+                      membership access, or listing upgrade starts here. / Todos
+                      los asientos están ocupados.{" "}
+                      {plan.limits.addOnSeatPriceDisplay} es solo una referencia
+                      de catálogo aprobada; aquí no se inicia ningún pago,
+                      prueba, acceso de membresía ni mejora de listado.
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: colors.mutedForeground,
+                        textAlign: "center",
+                      }}
+                    >
+                      Additional family-seat enrollment is unavailable. Existing
+                      family seats and verified access remain active.
+                    </Text>
                   </View>
                 )}
               </View>
@@ -528,22 +734,52 @@ export default function FamilyPlanScreen() {
             {/* ── What family members can access ──── */}
             <View
               style={{
-                backgroundColor: isDark ? "rgba(26,107,74,0.12)" : "rgba(26,107,74,0.06)",
+                backgroundColor: isDark
+                  ? "rgba(26,107,74,0.12)"
+                  : "rgba(26,107,74,0.06)",
                 borderRadius: 12,
                 padding: 14,
                 borderWidth: 1,
-                borderColor: isDark ? "rgba(26,107,74,0.25)" : "rgba(26,107,74,0.15)",
+                borderColor: isDark
+                  ? "rgba(26,107,74,0.25)"
+                  : "rgba(26,107,74,0.15)",
                 marginBottom: 8,
               }}
             >
-              <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
-                <Feather name="shield" size={15} color="#1A6B4A" style={{ marginTop: 1 }} />
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 8,
+                  alignItems: "flex-start",
+                }}
+              >
+                <Feather
+                  name="shield"
+                  size={15}
+                  color="#1A6B4A"
+                  style={{ marginTop: 1 }}
+                />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#1A6B4A", marginBottom: 4 }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontFamily: "Inter_600SemiBold",
+                      color: "#1A6B4A",
+                      marginBottom: 4,
+                    }}
+                  >
                     Safety features are always included
                   </Text>
-                  <Text style={{ fontSize: 12, color: colors.mutedForeground, lineHeight: 18 }}>
-                    Police / ICE city-awareness reports, Unsafe Space reports, safety surveys, and neighborhood resources are available to everyone — no plan required.
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: colors.mutedForeground,
+                      lineHeight: 18,
+                    }}
+                  >
+                    Police / ICE city-awareness reports, Unsafe Space reports,
+                    safety surveys, and neighborhood resources are available to
+                    everyone — no plan required.
                   </Text>
                 </View>
               </View>
@@ -554,7 +790,13 @@ export default function FamilyPlanScreen() {
 
       {/* ── Invite Modal ──────────────────────────────────────────────────── */}
       <Modal visible={showInviteModal} animationType="slide" transparent>
-        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" }}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0,0,0,0.45)",
+          }}
+        >
           <View
             style={{
               backgroundColor: colors.card,
@@ -565,16 +807,43 @@ export default function FamilyPlanScreen() {
               gap: 16,
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={{ fontSize: 18, fontFamily: "Inter_800ExtraBold", color: colors.foreground }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: "Inter_800ExtraBold",
+                  color: colors.foreground,
+                }}
+              >
                 Invite a Family Member
               </Text>
-              <TouchableOpacity onPress={() => { setShowInviteModal(false); setInviteEmail(""); setInviteError(null); setInviteSuccess(false); }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowInviteModal(false);
+                  setInviteEmail("");
+                  setInviteError(null);
+                  setInviteSuccess(false);
+                }}
+              >
                 <Feather name="x" size={22} color={colors.foreground} />
               </TouchableOpacity>
             </View>
-            <Text style={{ fontSize: 13, color: colors.mutedForeground, lineHeight: 19 }}>
-              They&apos;ll receive an email with a link to join your family circle. Once they accept, they&apos;ll share your plan&apos;s features and AI pool.
+            <Text
+              style={{
+                fontSize: 13,
+                color: colors.mutedForeground,
+                lineHeight: 19,
+              }}
+            >
+              They&apos;ll receive an email with a link to join your family
+              circle. Once they accept, they&apos;ll share your plan&apos;s
+              features and AI pool.
             </Text>
 
             <TextInput
@@ -597,12 +866,18 @@ export default function FamilyPlanScreen() {
             />
 
             {inviteError && (
-              <Text style={{ fontSize: 13, color: "#E57373" }}>{inviteError}</Text>
+              <Text style={{ fontSize: 13, color: "#E57373" }}>
+                {inviteError}
+              </Text>
             )}
             {inviteSuccess && (
-              <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+              <View
+                style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+              >
                 <Feather name="check-circle" size={15} color="#4CAF50" />
-                <Text style={{ fontSize: 13, color: "#4CAF50" }}>Invite sent!</Text>
+                <Text style={{ fontSize: 13, color: "#4CAF50" }}>
+                  Invite sent!
+                </Text>
               </View>
             )}
 
@@ -621,7 +896,15 @@ export default function FamilyPlanScreen() {
               {inviteLoading ? (
                 <ActivityIndicator size="small" color="#FFF" />
               ) : (
-                <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFF" }}>Send Invite</Text>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: "Inter_700Bold",
+                    color: "#FFF",
+                  }}
+                >
+                  Send Invite
+                </Text>
               )}
             </TouchableOpacity>
           </View>

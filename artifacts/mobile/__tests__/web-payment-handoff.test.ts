@@ -14,11 +14,13 @@ describe("mobile web-payment handoff", () => {
     expect(handoff).toContain('familyPlan: "/family-plan"');
     expect(handoff).toContain('businessMembership: "/for-business-owners"');
     expect(handoff).toContain('businessPromotions: "/business-growth-center"');
-    expect(handoff).toContain('EXPO_PUBLIC_IOS_EXTERNAL_WEB_PAYMENT_APPROVED');
-    expect(handoff).toContain('EXPO_PUBLIC_ANDROID_EXTERNAL_WEB_PAYMENT_APPROVED');
-    expect(handoff).not.toContain('priceId');
-    expect(handoff).not.toContain('auth_session_token');
-    expect(handoff).not.toContain('checkoutUrl');
+    expect(handoff).toContain("EXPO_PUBLIC_IOS_EXTERNAL_WEB_PAYMENT_APPROVED");
+    expect(handoff).toContain(
+      "EXPO_PUBLIC_ANDROID_EXTERNAL_WEB_PAYMENT_APPROVED",
+    );
+    expect(handoff).not.toContain("priceId");
+    expect(handoff).not.toContain("auth_session_token");
+    expect(handoff).not.toContain("checkoutUrl");
   });
 
   it("keeps native membership and promotion clients from creating Stripe payment sessions", () => {
@@ -29,16 +31,36 @@ describe("mobile web-payment handoff", () => {
 
     expect(membership).toContain('openWebPaymentHandoff("membership")');
     expect(membership).toContain('openWebPaymentHandoff("billing")');
-    expect(membership).not.toContain('/api/stripe/checkout');
-    expect(membership).not.toContain('/api/stripe/portal');
+    expect(membership).not.toContain("/api/stripe/checkout");
+    expect(membership).not.toContain("/api/stripe/portal");
 
     expect(family).toContain('openWebPaymentHandoff("familyPlan")');
-    expect(family).not.toContain('/api/membership/family/add-seat');
+    expect(family).not.toContain("/api/membership/family/add-seat");
 
     expect(dashboard).toContain('openWebPaymentHandoff("businessPromotions")');
-    expect(dashboard).not.toContain('/api/businesses/mine/growth-tools/checkout');
+    expect(dashboard).not.toContain(
+      "/api/businesses/mine/growth-tools/checkout",
+    );
 
-    expect(listings).toContain("openBusinessListingWebsite(businessId, listing.id)");
-    expect(listings).not.toContain("/api/connect/listings/${listing.id}/checkout");
+    expect(listings).toContain(
+      "openBusinessListingWebsite(businessId, listing.id)",
+    );
+    expect(listings).not.toContain(
+      "/api/connect/listings/${listing.id}/checkout",
+    );
+  });
+
+  it("keeps family invitation and removal management while closing native payment enrollment", () => {
+    const familyPlan = source("../app/family-plan.tsx");
+
+    expect(familyPlan).not.toContain("openWebPaymentHandoff(");
+    expect(familyPlan).not.toContain("addFamilySeat(");
+    expect(familyPlan).not.toContain("Opening secure checkout");
+    expect(familyPlan).toContain("Membership enrollment unavailable");
+    expect(familyPlan).toContain("Inscripción");
+    expect(familyPlan).toContain("approved catalog reference only");
+    expect(familyPlan).toContain("onPress={() => setShowInviteModal(true)}");
+    expect(familyPlan).toContain("/api/family/invite");
+    expect(familyPlan).toContain("/api/family/members/${memberId}");
   });
 });

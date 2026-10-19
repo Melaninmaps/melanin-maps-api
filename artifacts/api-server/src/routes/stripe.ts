@@ -4,6 +4,12 @@ import { stripeService } from "../stripeService";
 
 const router: IRouter = Router();
 
+const MEMBERSHIP_CHECKOUT_UNAVAILABLE_RESPONSE = {
+  error:
+    "Membership checkout is temporarily unavailable while the approved catalog and entitlement lifecycle are being reconciled.",
+  code: "MEMBERSHIP_CHECKOUT_CATALOG_RECONCILIATION_REQUIRED",
+} as const;
+
 router.get("/stripe/subscription", async (req: any, res): Promise<void> => {
   try {
     const user = await storage.getUser(req.user?.id);
@@ -11,7 +17,9 @@ router.get("/stripe/subscription", async (req: any, res): Promise<void> => {
       res.json({ subscription: null });
       return;
     }
-    const subscription = await storage.getSubscription(user.stripeSubscriptionId);
+    const subscription = await storage.getSubscription(
+      user.stripeSubscriptionId,
+    );
     res.json({ subscription });
   } catch (err: any) {
     req.log.error({ err }, "Failed to get subscription");
@@ -19,70 +27,22 @@ router.get("/stripe/subscription", async (req: any, res): Promise<void> => {
   }
 });
 
-const TRIAL_DAYS: Record<string, number> = {
-  individual: 90,
-  navigator: 90,
-  trailblazer: 90,
-  business: 30,
-  founding: 90,
-  beta: 365,
-  business_referral: 365,
-};
-
-router.post("/stripe/checkout", async (req: any, res): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-
-    const { priceId, planType = "individual" } = req.body as { priceId: string; planType?: string };
-    if (!priceId) {
-      res.status(400).json({ error: "priceId is required" });
-      return;
-    }
-
-    const user = await storage.getUser(req.user.id);
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
-
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripeService.createCustomer(user.email ?? "", user.id);
-      await storage.updateUserStripeInfo(user.id, { stripeCustomerId: customer.id });
-      customerId = customer.id;
-    }
-
-    const trialDays = TRIAL_DAYS[planType] ?? 14;
-    const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
-    const memberType = planType as "individual" | "navigator" | "trailblazer" | "business" | "founding" | "beta" | "business_referral";
-
-    await storage.updateUserStripeInfo(user.id, { memberType, trialEndsAt });
-
-    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "localhost";
-    const baseUrl = `https://${domain}`;
-
-    const session = await stripeService.createCheckoutSession(
-      customerId,
-      priceId,
-      `${baseUrl}/api/stripe/checkout/success`,
-      `${baseUrl}/api/stripe/checkout/cancel`,
-      trialDays,
-    );
-
-    res.json({ url: session.url });
-  } catch (err: any) {
-    req.log.error({ err }, "Checkout session creation failed");
-    res.status(500).json({ error: "Failed to create checkout session" });
+router.post("/stripe/checkout", (req: any, res): void => {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
   }
+
+  res.status(409).json(MEMBERSHIP_CHECKOUT_UNAVAILABLE_RESPONSE);
 });
 
 router.get("/membership/stats", async (_req, res) => {
   try {
     const count = await storage.getFoundingMemberCount();
-    res.json({ foundingMemberCount: count, spotsRemaining: Math.max(0, 500 - count) });
+    res.json({
+      foundingMemberCount: count,
+      spotsRemaining: Math.max(0, 500 - count),
+    });
   } catch (err: any) {
     res.json({ foundingMemberCount: 0, spotsRemaining: 500 });
   }
@@ -91,7 +51,7 @@ router.get("/membership/stats", async (_req, res) => {
 router.get("/stripe/checkout/success", (_req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Payment Successful</title>
+<head><meta charset="utf-8"><title>Membership checkout unavailable</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body{font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#FDF6EE}
@@ -105,9 +65,9 @@ router.get("/stripe/checkout/success", (_req, res) => {
 <body>
 <div class="card">
   <div class="icon">🎉</div>
-  <h1>Welcome to the community!</h1>
-  <p>Your membership is now active. Return to the Mapping with Melanin™ app to start exploring.</p>
-  <p style="font-size:13px;color:#9B7B5A">You can close this tab and return to the app.</p>
+  <h1>Membership verification</h1>
+  <p>Membership access is confirmed only after verified payment processing. This return page does not create a payment or grant membership access. / El acceso a la membresía solo se confirma después de un procesamiento de pago verificado. Esta página no crea un pago ni concede acceso de membresía.</p>
+  <p style="font-size:13px;color:#9B7B5A">Membership enrollment is temporarily unavailable. / La inscripción de membresía está temporalmente no disponible.</p>
 </div>
 </body>
 </html>`);
@@ -116,7 +76,7 @@ router.get("/stripe/checkout/success", (_req, res) => {
 router.get("/stripe/checkout/cancel", (_req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Payment Cancelled</title>
+<head><meta charset="utf-8"><title>Membership checkout unavailable</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body{font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#FDF6EE}
@@ -129,8 +89,8 @@ router.get("/stripe/checkout/cancel", (_req, res) => {
 <body>
 <div class="card">
   <div class="icon">↩️</div>
-  <h1>No worries</h1>
-  <p>Your payment was cancelled. Return to the app and try again whenever you're ready.</p>
+  <h1>Membership enrollment unavailable</h1>
+  <p>Membership enrollment is temporarily unavailable. This page does not create a payment or grant membership access. / La inscripción de membresía está temporalmente no disponible. Esta página no crea un pago ni concede acceso de membresía.</p>
   <p style="font-size:13px;color:#9B7B5A">You can close this tab.</p>
 </div>
 </body>
@@ -159,7 +119,6 @@ router.post("/stripe/portal", async (req: any, res): Promise<void> => {
     res.status(500).json({ error: "Failed to create portal session" });
   }
 });
-
 
 router.get("/stripe/products", async (req: any, res) => {
   try {
