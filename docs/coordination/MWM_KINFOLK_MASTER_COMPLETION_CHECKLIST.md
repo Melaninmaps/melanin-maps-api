@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Registered P0 `FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION` at `72bfacf158af14abc40613a404c8831675845fb9` after reproducing a valid source-normalized no-fraction/short-fraction UTC arrival timestamp that sharing/eligibility accept but lifecycle consumption rejects. Calendar and Flight retain the same canonical UTC 31×24-hour maximum; no DST/local-calendar policy change was made. |
 | 2026-10-19 | Cumulative Flight local source matrix PASS: API **5 files / 106 tests** (status gate, sharing, eligibility, simulated meeting lifecycle, Calendar normalizers) and API no-emit. It remains injected-fake source evidence only; provider, Calendar, runtime, and member gates stay open. |
 | 2026-10-19 | Accepted FLIGHT-006 local 31-day availability-window boundary at `e24efe1fa6194892c7f1d36bb898be14dec75c71`: API **4 files / 93**, no-emit, exact two-path scope PASS. This remains injected-fake source-only evidence; real Flight/Calendar/provider/member gates remain open. |
 | 2026-10-19 | Registered P0 FLIGHT-006 31-day boundary and P0 BIZ approved-owner feedback-reader isolation at `c455d97e4299754d59ff28d2cfdcc5c78568e9a2` after concrete source traces; Calendar has no legitimate source-only successor under OAUTH-001. Expanded COMM mobile matrix **4 files / 18** plus no-emit PASS. |

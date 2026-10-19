@@ -3556,6 +3556,53 @@
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged exact claim, baseline, and exclusive source-only paths before work."
       }
+    },
+    {
+      "id": "FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-001",
+      "baseline": "72bfacf158af14abc40613a404c8831675845fb9",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/flight-status/contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/normalizers.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/gate.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-policy.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-policy.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/normalizers.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "FLIGHT-005 simulated flight-and-Calendar coordination journey, explicitly still open.",
+        "preconditionOutcome": "A status timestamp already accepted by status normalization, sharing, and eligibility must reach source-only simulated meeting-time composition without weakening Calendar window grammar.",
+        "participantAndPrivacyBoundary": "No participant-facing route/client behavior or real data is added. The change is an internal composition repair before separately claimed multi-party journey work.",
+        "completionBoundary": "This repair is not three-party coordination, venue recommendation, invitation/notification/reply behavior, provider activation, runtime evidence, or founder acceptance."
+      },
+      "evidence": "Existing Flight normalizer, sharing policy, and eligibility accept valid UTC seconds plus 1-2 fractional digit status timestamps. Lifecycle shared-arrival parsing required .SSSZ exactly and returned generic unavailable only for those otherwise accepted chains; .000Z yielded the same proposal.",
+      "requiredBehavior": [
+        "At shared-flight-arrival consumption only, accept valid UTC `YYYY-MM-DDTHH:mm:ss(?:.S|.SS|.SSS)?Z`, calendar/date-validate, and canonicalize before proposal.",
+        "Keep coordination and Calendar availability windows/busy intervals strict canonical `.SSSZ` with existing 31\u00d724-hour bound.",
+        "Keep malformed/non-UTC/invalid date/stale/mismatched consent/permission/intent/slot inputs fail-closed with the existing generic unavailable result."
+      ],
+      "constraints": [
+        "Only listed lifecycle source/test paths. No FLIGHT-002 normalizer/gate, sharing/eligibility, Calendar, DB/persistence, provider/OAuth/consent storage, routes/UI/venue/delivery/runtime/network/browser/device/staging/deploy/activation."
+      ],
+      "validationPlan": [
+        "pnpm --dir artifacts/api-server exec vitest run src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts --reporter=dot",
+        "pnpm --dir artifacts/api-server exec vitest run src/kinfolk/flight-status/__tests__/flight-status-contract.test.ts src/kinfolk/flight-status/__tests__/sharing-policy.test.ts src/kinfolk/flight-status/__tests__/arrival-coordination-policy.test.ts src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts src/kinfolk/calendar-availability/__tests__/normalizers.test.ts --reporter=dot",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope; git diff --check."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 all provider, Calendar/OAuth, durable consent, participant UI/delivery/venue, runtime and member/release/founder evidence excluded."
     }
   ],
   "globalDirectiveDelivery": [
