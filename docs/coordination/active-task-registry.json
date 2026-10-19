@@ -657,33 +657,48 @@
     {
       "id": "KIN-DISC-1617-DETERMINISTIC-GEOGRAPHY-BARBER-RECOGNITION",
       "priority": "P1",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "CLAIMED_LOCAL_ONLY_REMEDIATION",
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
-      "baseline": "0d4a278db031467759586bea76c8132bb9d2ebf4",
-      "sourceFinding": "The deterministic path recognizes neither Temple University as a state-scoped Philadelphia alias nor the narrow barber-service phrases hot towel shave and kid-friendly cut, and it lets hair cut/shape-up fall into the generic salon subject. The governed canonical 1617 source record documents Temple main campus/North Philadelphia, straight-razor and hot-towel-shave service, a kid-friendly atmosphere, haircut, and shape-up evidence. This receipt is separate from the single production release-only failure and does not treat that run as source validation.",
+      "baseline": "ca4f2420b5caa2928744a3220658b76e7ebdf82f",
+      "sourceFinding": "The reviewed four-path carrier is not applied: the production request classifier does not accept the required Spanish discovery forms, and enabled DIRECTORY_TAXONOMY_V2 can establish barber subject matching from a source-backed tag. The separate read-only synchronization trace also establishes that the static 1617 intake declaration has no serviceTerms or sourceDescription and is not read by Kinfolk runtime; no carrier may claim current 1617 publication, eligibility, freshness, or documented service evidence. Any positive card fixture remains synthetic and governed; real-record proof requires separately authorized DB/runtime evidence.",
       "paths": [
         "artifacts/api-server/src/kinfolk/heritage-city-registry.ts",
         "artifacts/api-server/src/kinfolk/business-subject.ts",
+        "artifacts/api-server/src/kinfolk/request-classifier.ts",
         "artifacts/api-server/src/kinfolk/__tests__/business-discovery-clarification.test.ts",
-        "artifacts/api-server/src/kinfolk/__tests__/local-business-discovery.test.ts"
+        "artifacts/api-server/src/kinfolk/__tests__/local-business-discovery.test.ts",
+        "lib/constants/src/heritage-cities.ts"
       ],
-      "requirement": "Add only deterministic, current-turn recognition needed for governed 1617 discovery: Temple University resolves to the explicit Philadelphia, PA scope; hot towel shave, kid-friendly cut, haircut, and shape-up resolve to the barber subject with each stated capability retained as a documented listing-evidence requirement. The additions must remain exact and additive rather than broadening unrelated geography, salon taxonomy, memory, or profile behavior.",
+      "requirement": "Return one uncommitted, source-only remediation carrier: the specified English/Spanish Temple/barber prompts must reach deterministic governed discovery; Filadelfia must be a canonical Philadelphia alias; the Temple main-campus hyphen form must resolve exactly; and the four service requests must require both structured barber evidence and profile-description-or-specialty service evidence even when DIRECTORY_TAXONOMY_V2 source tags are enabled.",
       "requiredBehavior": [
-        "Recognize only the explicit Temple University phrase as a current-turn Philadelphia, PA alias. Do not turn generic university language, an unregistered location, a saved destination, or private/member memory into a Philadelphia scope.",
-        "Recognize the four specified barber-service forms as current-turn barber discovery. A service-specific result still requires matching structured barber subject evidence plus the corresponding documented service or atmosphere evidence; a generic salon, unrelated description, generic tag, or private/preference text must not substitute for the requested service.",
-        "Preserve all existing subject priorities, medical/safety exclusions, location clarification behavior, governed-card evidence gates, and no-provider deterministic path. The recognizer may not read or persist memory, preferences, account data, raw prompt text, directory records, taxonomy tags, or external research."
+        "Recognize only the explicit Temple University, Universidad Temple, Temple main campus/main-campus, and campus principal de Temple forms as a current-turn Philadelphia, PA alias. Preserve generic-university and bare-Temple denials; never use saved/private/member context to create that scope.",
+        "Treat Filadelfia as the canonical Spanish alias for Philadelphia only through the shared heritage-city resolver; do not add a route-local city map or infer an unregistered city.",
+        "Allow only the required Spanish discovery actions needed for the stated prompts (Necesito and Encuentra) to reach the existing governed business-discovery classifier when an exact resolved city is present. Do not broaden generic conversation, travel, memory, or policy routing.",
+        "For hot towel shave, kid-friendly haircut, haircut/hair cut, and shape-up, require both structured barber classification (category, subcategory, or structured specialty—not a tag) and documented service evidence from published description or structured specialty—not a tag. A Salon with a source-backed barber tag must fail closed.",
+        "Preserve loc-retwist precedence, medical/safety exclusions, existing card/source gates, no-provider deterministic operation, and all current ownership/access isolation."
       ],
       "validationPlan": [
-        "Add focused positive regressions for the four documented prompts and Temple University → Philadelphia, PA, plus adversarial negatives for generic university, non-barber/salon substitution, undocumented service evidence, generic tags/descriptions, and cross-account/private-memory influence.",
-        "Run only the two named focused discovery contracts, current-authority API no-emit, exact four-path scope checks, and git diff --check. Return an uncommitted compact review carrier; do not create a cherry-pickable commit."
+        "Add classifier-boundary coverage for each required Spanish form by resolving current-turn geography and passing the resolved city through classifyKinfolkRequest; assert business_discovery rather than only deriveBusinessSubject.",
+        "Add exact current-turn Temple main-campus-hyphen and Filadelfia positive assertions plus bare Temple and generic-university negatives.",
+        "Add a DIRECTORY_TAXONOMY_V2-equivalent adversarial fixture: category/subcategory Salon plus source-backed tags containing barber and a documented hot-towel phrase must emit no governed card; preserve a properly structured Barbershop positive fixture.",
+        "Central integration will run the two named discovery contracts, API no-emit, exact six-path scope/diff checks, and current-authority-only regressions. The owner returns an uncommitted compact carrier only."
       ],
       "constraints": [
         "No directory/source-record/tag mutation, generic taxonomy rewrite, model/provider/web research, Maps, Business Admin, D3/D8, D4, D9, entitlement, database/schema/migration, browser/device, production prompt, staging/deployment, remote, or feature-activation action.",
         "This is a narrowly additive recognizer claim; it must not remove or replace any current governed discovery safeguard, subject, city, or acceptance record.",
-        "Task Hiib may only return an uncommitted review carrier for these four paths. The unified local integration owner remains the sole acceptor."
+        "Task Hiib may only return an uncommitted review carrier for these exact six paths. The unified local integration owner remains the sole acceptor.",
+        "Do not apply, amend, or relabel the rejected four-path carrier as integrated. Do not alter the 1617 intake record, directory data, tags, database, provider, production renderer, Maps, Business Admin, memory, external systems, or release state.",
+        "The six-path remediation carrier must not claim real 1617 row ingestion, public availability, or service evidence; those are NOT VERIFIED pending separately authorized DB/runtime proof."
       ],
-      "externalAcceptance": "PENDING — source-only local claim. The separately recorded production observation must not be repeated and is not evidence of this claim's implementation."
+      "externalAcceptance": "PENDING — source-only local claim. The separately recorded production observation must not be repeated and is not evidence of this claim's implementation.",
+      "reviewDisposition": {
+        "carrier": "KIN_DISC_1617_REVIEW_CARRIER_CA4F2420.tar.gz",
+        "archiveSha256": "c77b8f057fac8661cf66210b74ccde0b76e1bdaa6893964a04432d3cd816541c",
+        "decision": "NOT_APPLIED",
+        "reason": "Independent review proved that the four-path carrier did not route the required Spanish prompts through the production classifier and could emit a Salon under enabled source-taxonomy tag matching despite the claimed structured-barber requirement.",
+        "authorityUnchangedAtReview": "ca4f2420b5caa2928744a3220658b76e7ebdf82f"
+      }
     },
     {
       "id": "D3-D8-CONTROLLED-FUTURE-RECONCILIATION-INPUT",
