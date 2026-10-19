@@ -344,14 +344,14 @@
       "founder_requirement": "Existing free community participation—reviews/check-ins, feed/profiles, events/RSVPs, messaging and resources—must not be payment-gated.",
       "acceptance_criteria": "Acceptance proves ordinary participation needs authentication where applicable, not payment; basic resources remain free while AI capacity is separately bounded.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Membership audit D2 identifies source-present partial/unverified community surfaces and required preservation.",
+      "source_evidence": "Membership audit D2 identifies source-present partial/unverified community surfaces and required preservation. Exclusive P0 local source-only claim `COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE` issued at authority `4440821a40ba68ab43529bc3cd1cb9170ba9e14d` to task `yINBiovLIPiFnyQCFfSycn` for the direct free event-hosting gate in `events.ts` and its focused public-event contract. Scope is limited to allowing authenticated free users under the existing three-events-per-calendar-month guard, preserving Navigator’s same guard and all other event controls. No commercial allowance, provider, schema, client, deployment, or runtime claim is authorized.",
       "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Community owner; central integration owner",
+      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn (exclusive carrier implementation); QJATRGk7nUgzDlccMCUcG6 (central integration)",
       "dependencies_or_blockers": "MISSING EVIDENCE — entitlement contracts and member-visible acceptance.",
-      "next_action": "Inventory only named payment gates in a bounded proposal.",
+      "next_action": "Assigned owner returns only the hash-verified two-path COMM-001 event-hosting carrier; central owner runs the named API test/no-emit and determines integration. Do not broaden to RSVP, media, business promotion, client work, or commercial catalog terms.",
       "founder_approval_needed": "No free-core reapproval; approval for optional paid capacity.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1606,6 +1606,10 @@
     {
       "date": "2026-10-19",
       "event": "BIZ-009 source-only prerequisite expansion completed: local detached candidate `046eb767326c6d87d9dc41b29572eb26c759b9a4` directly atop `8fd6989bea317f53dfa6f170c2c5054cf0de74a4` with exactly seven paths. API 2/19, Web 2/11, both no-emit, and coupled build passed; post-commit build identity and bundle were recorded. No remote publication/deployment/configuration/database/provider/browser/device/member acceptance occurred. Pending separate publication authorization: `docs/coordination/BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md`."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "COMM-001 exclusive P0 source claim `COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE` issued at `4440821a40ba68ab43529bc3cd1cb9170ba9e14d` to `yINBiovLIPiFnyQCFfSycn`: two paths only, reusing the existing three-event monthly guard so authenticated free event hosting is not a paid denial; no commercial policy expansion or external action."
     }
   ],
   "evidence_gaps": [

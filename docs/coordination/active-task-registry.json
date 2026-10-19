@@ -1200,6 +1200,35 @@
         ]
       },
       "externalAcceptance": "PENDING — local source integration only. No database/provider/browser/device/staging/production/deployment/migration/activation or member-visible acceptance occurred."
+    },
+    {
+      "id": "COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "4440821a40ba68ab43529bc3cd1cb9170ba9e14d",
+      "paths": [
+        "artifacts/api-server/src/routes/events.ts",
+        "artifacts/api-server/src/__tests__/public-event-feed-contract.test.ts"
+      ],
+      "requiredBehavior": [
+        "POST /events remains authenticated and preserves its existing required-field validation, event ownership, notification fan-out, error handling, and all edit/delete authorization.",
+        "A free authenticated member is no longer denied event hosting solely by tier; free and navigator reuse the existing finite three-events-per-calendar-month cap.",
+        "The cap response is neutral and plan-neutral: it must not require a membership upgrade or expose an unapproved commercial allowance."
+      ],
+      "constraints": [
+        "Do not alter event RSVP, public-feed visibility, recurring events, featured placement, pricing fields, analytics, notifications, provider calls, schema/migrations, clients, membership catalog, or other community routes.",
+        "Do not introduce a new numeric allowance: reuse only the existing three-event monthly guard already applied to navigator.",
+        "No runtime database write, provider, browser/device, staging/deployment, remote Git, or feature activation."
+      ],
+      "validationPlan": [
+        "Focused Vitest: src/__tests__/public-event-feed-contract.test.ts.",
+        "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit.",
+        "Exact two-path scope and git diff --check."
+      ],
+      "carrierDisposition": "Return an uncommitted, hash-verified two-path review carrier only; central owner alone may integrate or update status."
     }
   ]
 }
