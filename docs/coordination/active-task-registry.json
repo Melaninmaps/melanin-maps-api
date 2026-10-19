@@ -190,6 +190,38 @@
         "hygiene": ["existing verified_source source field confirmed", "registry JSON valid", "git diff --check passed"]
       },
       "externalAcceptance": "PENDING — no database query, staging deployment, provider call, browser validation, or device validation was performed."
+    },
+    {
+      "id": "MAP-001-DIRECTORY-PUBLIC-HANDLE-HANDOFF",
+      "status": "IMPLEMENTING",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "baseline": "86a70e80efa39ad686480cabc07463dfd20fd497",
+      "requirement": "Add an explicit Directory-to-Map handoff for one member-entered public social-handle scalar. The value must be sanitized and fail closed, traverse native Map and Expo Web fallback only, remain an active criterion until the member clears it, and be included only in the existing shared /api/businesses request identity and URL.",
+      "paths": [
+        "artifacts/mobile/lib/mapDirectoryHandoff.ts",
+        "artifacts/mobile/__tests__/native-directory-map-handoff.test.ts",
+        "artifacts/mobile/app/business-search.tsx",
+        "artifacts/mobile/app/(tabs)/map.tsx",
+        "artifacts/mobile/components/FullMapView.tsx",
+        "artifacts/mobile/hooks/useBusinesses.ts",
+        "artifacts/mobile/hooks/support-lens-request.ts",
+        "artifacts/mobile/app/(tabs)/map.web.tsx"
+      ],
+      "requiredBehavior": [
+        "Accept only one explicitly member-entered, normalized public handle; reject arrays, non-strings, blank, overlong, and malformed inputs without a route or request parameter.",
+        "Keep the existing Directory business-detail card action; add a separate Map handoff only for the sanitized scalar. Do not derive it from returned business social fields, profile, contacts, Saved Places, device location, Kinfolk memory, preferences, conversation, or other result data.",
+        "Carry the already-sanitized scalar through route parameters, FullMapView/useBusinesses request identity, the existing /api/businesses URL builder, native Map active criteria, Expo Web fallback active criteria, and each member-controlled clear action. Do not add pagination where none exists; any later continuation must preserve the same scalar.",
+        "Preserve server public-social filtering, direct-name safety behavior, locality/pin policy, preference-neutral Map browsing, and all other Map collections. New user-visible handle wording must carry practical English/Spanish source text; no runtime translation or device acceptance may be claimed."
+      ],
+      "validationPlan": [
+        "Focused pure/static native-directory-map-handoff regression for allow/deny sanitizer cases, Directory-to-native/Expo-Web propagation, URL scope, active criterion and clear behavior, and private-source absence.",
+        "Run existing business-discovery and map-locality-first contracts without changing their paths unless a concrete regression requires it.",
+        "Native source-aligned no-emit and git diff --check."
+      ],
+      "constraints": [
+        "No API route, schema, migration, provider, cache activation, MapTabView, canonical-pin policy, device-location semantics, Kinfolk memory/preferences, Saved Places, contacts, private result data, Shared Plans, Community, D1, Cultural Explorer, browser, device, database, staging, or deployment work.",
+        "The owner must verify this exact baseline and claim before editing; only the integration owner may accept and push a reviewed carrier."
+      ]
     }
   ]
 }
