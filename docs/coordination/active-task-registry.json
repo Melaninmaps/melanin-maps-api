@@ -100,11 +100,13 @@
     },
     {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
-      "status": "IMPLEMENTING",
+      "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "requirement": "Add a non-activated, pure Community-Frequented Alternatives and Scorecard V1 policy contract. It must fail closed without explicit public Community-experience consent; enforce exact normalized business/city public scope, allowlisted signal kinds, and one accepted contributor signal per business/city; and return only separate bounded ownership, community-experience, confidence, safety-context, and fit components.",
       "inspectionBaseline": "f818056c93840794ad08c9bb90b68f2500635a25",
-      "implementationBaseline": "c6a84faa1dc1e8ad3e9ed148b6e2deadf9be6de2",
+      "candidateBase": "03fe94219fa36a5eb6d55b51fc9d0628995af0cb",
+      "integrationBaseline": "53deb77e3c7296e4e57aa81aca72a2206b04bff5",
+      "sourceCommit": "5476119401ee0509d560ec9a163e879bbed8bc4c",
       "paths": [
         "artifacts/api-server/src/community/community-frequented-scorecard-policy.ts",
         "artifacts/api-server/src/community/__tests__/community-frequented-scorecard-policy.test.ts"
@@ -118,8 +120,15 @@
         "Remain unmerged from the TestFlight delivery path.",
         "No route, database/schema, migration, UI, provider, cache, notification, feature activation, raw contribution text, contributor ID, private location/history, or hidden score may be added.",
         "Do not use raw private conversations or infer account-level preference sharing.",
-        "The owner works in a detached sparse workspace updated to the implementation baseline and does not commit or push; only the integration owner may accept a later reviewed patch."
-      ]
+        "The owner provided an uncommitted review carrier; only the integration owner accepted the reviewed patch."
+      ],
+      "sourceVerification": {
+        "apiTests": "1 file, 8 tests passed",
+        "apiTypecheck": "passed",
+        "hygiene": ["handoff archive and patch checksums verified", "manifest and exact two-file scope verified", "git apply --check --whitespace=error passed", "static no-import boundary passed", "git diff --check passed"],
+        "reviewAdjustment": "Integration review added a fail-closed confidence-evidence requirement and its focused regression."
+      },
+      "externalAcceptance": "PENDING — no route activation, database/schema/migration, UI, provider, cache, notification, client, deployment, staging, browser, device, or member acceptance was performed. The policy creates no visible scorecard."
     },
     {
       "id": "UM-001-INDIVIDUAL-MEMORY-DELETE-SEMANTICS",
