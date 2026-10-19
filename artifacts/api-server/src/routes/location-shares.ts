@@ -2,7 +2,6 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, locationSharesTable, pool } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import crypto from "node:crypto";
-import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
 const ALLOWED_DURATION_MINUTES = new Set([30, 60, 120, 240, 480, 1440]);
@@ -176,7 +175,7 @@ router.get("/safety/location-shares", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/safety/location-shares", requireFamilySafety, async (req: Request, res: Response) => {
+router.post("/safety/location-shares", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   setSensitiveResponseHeaders(res);
   try {

@@ -20,7 +20,22 @@ describe("profile-based Safety Check-In contract", () => {
   const mobile = readSource("../../../mobile/app/checkin.tsx");
 
   it("permits selected accepted profiles without a placeholder email", () => {
-    expect(route).toContain('router.get("/safety/checkins/recipients", requireFamilySafety');
+    const recipientsRoute = route.slice(
+      route.indexOf('router.get("/safety/checkins/recipients"'),
+      route.indexOf('router.get("/safety/checkins"'),
+    );
+    const createRoute = route.slice(
+      route.indexOf('router.post("/safety/checkins"'),
+      route.indexOf('router.patch("/safety/checkins/:id/confirm"'),
+    );
+
+    expect(recipientsRoute).toContain('router.get("/safety/checkins/recipients", async');
+    expect(recipientsRoute).toContain("const userId = requireAuth(req, res);");
+    expect(recipientsRoute).not.toContain("requireFamilySafety");
+    expect(createRoute).toContain('router.post("/safety/checkins", async');
+    expect(createRoute).toContain("const userId = requireAuth(req, res);");
+    expect(createRoute).not.toContain("requireFamilySafety");
+    expect(route).not.toContain("requireFamilySafety");
     expect(route).toContain("recipientShareIds");
     expect(schema).toContain('trustedContactEmail: varchar("trusted_contact_email", { length: 255 }),');
     expect(schema).not.toContain("trustedContactEmail: varchar(\"trusted_contact_email\", { length: 255 }).notNull()");

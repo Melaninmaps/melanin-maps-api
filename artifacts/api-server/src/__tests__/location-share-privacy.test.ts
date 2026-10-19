@@ -9,16 +9,23 @@ function source(relativePath: string): string {
 describe("consented trusted live location sharing", () => {
   it("requires an authenticated, accepted durable trusted contact before a temporary share starts", () => {
     const route = source("../routes/location-shares.ts");
+    const createRoute = route.slice(
+      route.indexOf('router.post("/safety/location-shares"'),
+      route.indexOf('router.patch("/safety/location-shares/:token/update"'),
+    );
 
-    expect(route).toContain('router.post("/safety/location-shares", requireFamilySafety');
-    expect(route).toContain("liveLocationConsent !== true");
-    expect(route).toContain("recipientTrustedShareId");
-    expect(route).toContain("tss.contact_type = 'mwm_user'");
-    expect(route).toContain("tss.status = 'active'");
-    expect(route).toContain("tss.contact_accepted = true");
-    expect(route).not.toContain("tss.activated_at > NOW() - INTERVAL '30 days'");
-    expect(route).toContain("owner_blocks.id IS NULL");
-    expect(route).toContain("recipient_blocks.id IS NULL");
+    expect(createRoute).toContain('router.post("/safety/location-shares", async');
+    expect(createRoute).toContain("const userId = requireAuth(req, res); if (!userId) return;");
+    expect(createRoute).not.toContain("requireFamilySafety");
+    expect(route).not.toContain("requireFamilySafety");
+    expect(createRoute).toContain("liveLocationConsent !== true");
+    expect(createRoute).toContain("recipientTrustedShareId");
+    expect(createRoute).toContain("tss.contact_type = 'mwm_user'");
+    expect(createRoute).toContain("tss.status = 'active'");
+    expect(createRoute).toContain("tss.contact_accepted = true");
+    expect(createRoute).not.toContain("tss.activated_at > NOW() - INTERVAL '30 days'");
+    expect(createRoute).toContain("owner_blocks.id IS NULL");
+    expect(createRoute).toContain("recipient_blocks.id IS NULL");
   });
 
   it("limits sharing to minimized, fresh foreground fixes and removes the fix at lifecycle boundaries", () => {

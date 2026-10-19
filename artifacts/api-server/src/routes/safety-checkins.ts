@@ -1,7 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, safetyCheckinsTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
-import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
 const MAX_PROFILE_RECIPIENTS = 5;
@@ -217,7 +216,7 @@ async function loadCheckinRecipients(checkinIds: number[]): Promise<Map<number, 
   return grouped;
 }
 
-router.get("/safety/checkins/recipients", requireFamilySafety, async (req: Request, res: Response) => {
+router.get("/safety/checkins/recipients", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   try {
@@ -333,7 +332,7 @@ router.get("/safety/checkins/received/:notificationId", async (req: Request, res
   }
 });
 
-router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: Response) => {
+router.post("/safety/checkins", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   try {
