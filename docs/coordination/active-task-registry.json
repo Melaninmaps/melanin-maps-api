@@ -2667,6 +2667,57 @@
         "sha256": "9593235c20e1b46aeed04dc734b6adcddfb56b0fa28d687b8f85f7a11f0dff36",
         "expires_at": "2026-10-20T22:40:08.508Z"
       }
+    },
+    {
+      "id": "COMM-001-DM-PENDING-COMMUNICATION-CONSENT-GUARD",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "a01ffcf6040ac607dc281a8b186a5dcdf0ba152d",
+      "paths": [
+        "artifacts/api-server/src/routes/conversations.ts",
+        "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts",
+        "artifacts/web/src/pages/messages.tsx",
+        "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/mobile/app/chat/[id].tsx",
+        "artifacts/api-server/src/routes/__tests__/conversation-request-pending-authorization.test.ts",
+        "artifacts/api-server/src/routes/__tests__/conversation-request-notification.test.ts",
+        "artifacts/mobile/app/notification-center.tsx",
+        "artifacts/web/src/pages/notifications.tsx"
+      ],
+      "requiredBehavior": [
+        "For a server-authoritative pending direct-message request, reject every participant message POST with the existing neutral 403 REQUEST_PENDING response before family scanning, message insert, lastMessageAt, or lastMessagePreview mutation.",
+        "After a fresh server-authoritative accepted state, retain ordinary participant message-post behavior.",
+        "Web treats both incoming and outgoing pending states as read-only: retain existing waiting copy, early-return in send, and disable the composer/send control. Native\u2019s existing outgoing-pending read-only behavior remains covered, without changing native chat source.",
+        "Do not infer acceptance from notification state or local optimism; notification-inbox routing remains y\u2019s separate claim."
+      ],
+      "constraints": [
+        "Exactly the four paths listed; no additional client/route/notification paths.",
+        "No schema/persistence design, notification producer/helper/routing, relationship/block policy, memberships, provider/OAuth/Flight/BIZ/Maps, config, remote Git, deployment, database/runtime, browser/device, activation, or member-visible action.",
+        "Preserve existing authentication, conversation lookup, participant, direct-message, block, recipient-action, and pending-state compare-and-mutate boundaries."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/routes/__tests__/dm-recipient-request-lifecycle.test.ts src/routes/__tests__/conversation-request-pending-authorization.test.ts --reporter=dot",
+        "cd artifacts/mobile && pnpm exec vitest run __tests__/dm-recipient-request-recovery.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "cd artifacts/web && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact four-path scope; git diff --check; mocked route-harness/source-contract evidence only"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified four-path carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "a01ffcf6040ac607dc281a8b186a5dcdf0ba152d",
+        "sourceHashes": {
+          "artifacts/api-server/src/routes/conversations.ts": "5ca16cca8a164f00d4340942a4c091249e8d5149c270ed606e78d85d45c56a4d",
+          "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts": "057d3c8db247bd93e7f721f871f8e0fd0c6773c0d063f867d9359bbcfd64c111",
+          "artifacts/web/src/pages/messages.tsx": "1096bc401069e9adae669e718ee851d84ebea40b61225071e6fe53c85282146f",
+          "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts": "b470b3e4cb4a8225e9e19c06511dad86d92620d1559638ab8acf8b6bf9095619"
+        }
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only repair; runtime persistence/delivery/staging/browser/device/member evidence remains separate."
     }
   ],
   "globalDirectiveDelivery": [

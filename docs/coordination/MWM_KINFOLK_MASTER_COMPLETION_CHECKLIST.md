@@ -107,12 +107,12 @@ This is the authoritative parent-experience layer of the controlling checklist. 
 - **Lifecycle owner:** IIUhb1wR0gfLjzmdLmEovt (DM lifecycle); QJATRGk7nUgzDlccMCUcG6 (integration)
 - **Linked permanent requirements:** `COMM-001`
 - **Existing implementation:** Free event/post/group/Spotlight repairs plus DM guard/recovery/notification child receipts are linked.
-- **Missing/broken elements:** Generic recipient notification inbox-routing action is actively being implemented. Runtime delivery/persistence, cross-account refresh and cross-surface acceptance remain open.
-- **Current active repair:** `COMM-001-DM-NOTIFICATION-INBOX-NAVIGATION` (y).
+- **Missing/broken elements:** y’s inbox-routing carrier is under central review. A concrete pre-acceptance messaging-consent defect is actively assigned: server/Web must prevent either participant from sending content while pending. Runtime delivery/persistence, cross-account refresh and cross-surface acceptance remain open.
+- **Current active repair:** #1 `COMM-001-DM-PENDING-COMMUNICATION-CONSENT-GUARD` (IIU) plus received `COMM-001-DM-NOTIFICATION-INBOX-NAVIGATION` carrier (y, central review).
 - **Integrated source:** Guard `e3665ecaf8a529e74204200ce8134f1511f6d84d`; recovery `7cc2e1deef831283d5199b81195aa7aecfdc95af`; notification `dfe4b9c3a8d7708c21fdd52b0e3f07139136b793`; lifecycle contract `93af8b11cd545ffc5e4661bb5a0f3a9a94d501c5`; other linked source receipts.
-- **Test evidence:** Notification producer: 3 API files / 10 tests and API no-emit; server-authoritative lifecycle: 4 API files / 14 tests and API no-emit; inbox-navigation carrier active.
+- **Test evidence:** Notification producer: 3 API files / 10 tests and API no-emit; server-authoritative lifecycle: 4 API files / 14 tests and API no-emit; inbox-navigation carrier under review; pre-acceptance guard requires its own focused authority checks.
 - **External gates:** Controlled accounts/data, notifications runtime, Web/iOS/Android and release acceptance.
-- **Next action:** Review the active four-path inbox-navigation carrier, then run the cumulative source-level lifecycle matrix without crediting runtime delivery.
+- **Next action:** Validate the received inbox-routing carrier; integrate and validate the active no-preacceptance messaging guard; then run the cumulative source-level lifecycle matrix without crediting runtime delivery.
 
 ### EXP-KINFOLK-CIRCLES-AND-SHARED-PLANS — IN PROGRESS
 - **Founder outcome:** Members create private Circles and share only explicitly authorized plans/availability.
@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Numbered source queue **#1** dispatched: `COMM-001-DM-PENDING-COMMUNICATION-CONSENT-GUARD` to IIU at `a01ffcf6040ac607dc281a8b186a5dcdf0ba152d`. Concrete trace found the requester could post content/previews before recipient acceptance and Web left outgoing-pending composition active. Exactly four exclusive source/test paths; no overlap with y’s inbox-routing carrier or any external action. |
 | 2026-10-19 | Accepted one-path `COMM-001-DM-SERVER-AUTHORITATIVE-LIFECYCLE-CONTRACT` at `93af8b11cd545ffc5e4661bb5a0f3a9a94d501c5` after carrier/hash review: exact current-authority API aggregate **4 files / 14 tests PASS** and API no-emit PASS. It covers deterministic mocked creation/list/accept/decline/fresh-read/replay/race/authorization only; no runtime delivery/persistence, staging, browser/device, or member-visible evidence. y holds the active four-path inbox-navigation claim. |
 | 2026-10-19 | Issued exclusive P0 `COMM-001-DM-NOTIFICATION-INBOX-NAVIGATION` at `e10ab84cca0ac105fb47dbe7858b162403852692` to y: four client/test paths make the already generic, recipient-owned private-DM notification route only to existing authenticated pending-request views. The dispatcher validates opaque ID metadata and must not accept/decline, change request state, expose private payload detail, or alter server authority. No runtime/external evidence. |
 | 2026-10-19 | Accepted FLIGHT-001 one-document readiness packet locally at d7c25baeab852693f93785128030266e28f1b328 with NO-GO/hard-cap boundary intact; added FLIGHT-003 all-new named-recipient arrival-sharing policy claim at d7c25baeab852693f93785128030266e28f1b328 for M7. Provider, persistence, route/client, real-data, and release gates remain separate. |
