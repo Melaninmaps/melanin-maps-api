@@ -1724,6 +1724,15 @@
           "artifacts/mobile/__tests__/hidden-gems-free-core-contract.test.ts"
         ],
         "disposition": "Compact path-only base transfer pending; carrier-only return required."
+      },
+      "sourceBaseTransfer": {
+        "handoffId": "hnd_NKVbs0rw2T1D73rKQGdWxVf4",
+        "archive": "COMM001_FREE_HIDDEN_GEMS_BASE_2026-10-19.tar.gz",
+        "archiveSha256": "556b77928927d7531ad3a95103d5cea0f5b30e5791ee0d82372d599590b1bb45",
+        "expiresAt": "2026-10-20T21:04:42.706Z",
+        "authority": "0f31528a34eb941ea093f6d7e2474c039678896e",
+        "sourcePathSha256": "587ba1c7a73b8968699cc043eed8be8e23889086f3f1c889b01ee324f75a50d7",
+        "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
       }
     }
   ],
@@ -1740,7 +1749,9 @@
       ],
       "acknowledgements": [
         "S9iVHR3fQY0fcmRMQKLpOO acknowledged no open claim and no self-assignment.",
-        "HiibxBetANU474LaxMWciQ acknowledged the reconciled founder-policy reference and will continue only its recorded claim."
+        "HiibxBetANU474LaxMWciQ acknowledged the reconciled founder-policy reference and will continue only its recorded claim.",
+        "S9iVHR3fQY0fcmRMQKLpOO acknowledged availability for an exact centrally recorded odd-numbered ready-queue claim.",
+        "yINBiovLIPiFnyQCFfSycn requested an exact next claim and will not self-select or reopen COMM-001."
       ],
       "continuationLimitation": "The direct Tasks tools support list/history/send only and do not expose event-driven completion chaining. The active central task remains the finite coordinator using direct messages as work arrives; no ScheduleTask or recurring poller was configured or inferred."
     }
