@@ -2118,7 +2118,14 @@
         "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
         "exact three-path scope; git diff --check; static prohibited-import/non-disclosure scan"
       ],
-      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates."
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates.",
+      "baseTransfer": {
+        "handoffId": "hnd_BSrl3rZKv-MqF3Ss3t9jf0uW",
+        "archive": "OAUTH002_SOURCE_ONLY_NORMALIZERS_BASE_2026-10-19.tar.gz",
+        "sha256": "a0d6cb00197916e0d9c6c6ffc7a3a1a0a290ffca551135f565190f61f0ff6293",
+        "expiresAt": "2026-10-20T21:39:51.299Z",
+        "supersedesUnissuedPlanningBase": "OAUTH002_DEFAULT_DISABLED_FAKE_PROVIDER_PREPARATION_BASE_2026-10-19.tar.gz"
+      }
     }
   ],
   "globalDirectiveDelivery": [
