@@ -1363,7 +1363,20 @@
         "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit.",
         "Exact two-path scope and git diff --check."
       ],
-      "carrierDisposition": "Return an uncommitted hash-verified two-path review carrier only; central owner alone may integrate or update status."
+      "carrierDisposition": "Return an uncommitted hash-verified two-path review carrier only; central owner alone may integrate or update status.",
+      "sourceBaseCarrier": {
+        "authorityBase": "7ebd38a97029c86d5059b8151314ad2cea822ecb",
+        "claimBaseline": "1961ddc44b091116d6d150c094e2fb6aea48dda6",
+        "handoffId": "hnd__AsPlQPXwMQLMpj5N-M0cKhk",
+        "file": "KMEM005_PUBLIC_TRANSIT_RESOURCE_QUERY_BASE_2026-10-19.tar.gz",
+        "sha256": "8c706449cbc527c71b549b497842746720285892463743a1826e403dcc874dfe",
+        "expiresAt": "2026-10-20T20:21:30.419Z",
+        "pathSha256": {
+          "artifacts/api-server/src/routes/resources.ts": "c7996bba04a1ac733ba0edf58e5aca36c7687771a9eba58b91a0936adcdee6f3",
+          "artifacts/api-server/src/__tests__/resource-provider-contract.test.ts": "2d2c6d7eca1a5f4dbe0f51c6acb86ebf0e88b359700d7581f3e58bea79d73345"
+        },
+        "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
+      }
     }
   ]
 }
