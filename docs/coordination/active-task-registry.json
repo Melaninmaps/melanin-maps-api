@@ -479,9 +479,10 @@
     },
     {
       "id": "D4-KNOWLEDGE-CANONICAL-ENTITLEMENT-ENFORCEMENT",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "c7111caf4335fee799270ab198c9c8845d10f874",
+      "sourceCommit": "aa2ec26abddd2e30dbcd5741b8d8e3cf101af2ae",
       "sourceFinding": "GET /knowledge/articles/:id currently reconstructs premium access from stripeSubscriptionId, trialEndsAt, founding, and beta fields. That bypass omits the canonical approved-active-business membership grant and duplicates the resolver policy.",
       "canonicalResolver": "getUserTier(userId) from artifacts/api-server/src/middleware/requireMembership.ts; it is the existing effective tier resolver for paid/trial/founding access, TESTING_MODE, and the approved, active, unrevoked business-owner grant.",
       "requirement": "Replace only the direct premium-article entitlement branch with the existing canonical getUserTier resolver, retaining the anonymous/free preview response and every independent existing grant managed by that resolver.",
@@ -502,35 +503,92 @@
         "No resolver implementation change, schema/migration, billing/checkout/provider, client, analytics mapping, database operation, browser/device, staging/deployment, or external acceptance.",
         "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
       ],
+      "sourceVerification": {
+        "apiTests": "1 file / 3 tests passed: knowledge-effective-entitlement-contract",
+        "apiTypecheck": "passed",
+        "hygiene": [
+          "exact two-path scope verified",
+          "premium route delegates to getUserTier and retains locked preview response",
+          "legacy direct subscription/trial/founding/beta condition absent from the premium handler",
+          "git diff --check passed before commit"
+        ]
+      },
       "externalAcceptance": "PENDING — no database/provider/browser/device/staging/deployment or authenticated-member acceptance is authorized or recorded."
     },
     {
       "id": "D9-BUSINESS-DETAIL-DESTINATION-ONLY-MAPS-COPY",
       "status": "CLAIMED_LOCAL_ONLY",
-      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
-      "baseline": "c7111caf4335fee799270ab198c9c8845d10f874",
-      "sourceFinding": "The existing free-core native Business Detail branch is already guarded by a non-online, truthy public latitude/longitude pin and opens a destination-only platform Maps URL, but presents English-only Open in Maps copy and discards openURL failure silently.",
-      "requirement": "Add only practical English/Spanish label and recovery copy to the existing native destination-only Open in Maps handoff for valid public pins.",
+      "baseline": "aa2ec26abddd2e30dbcd5741b8d8e3cf101af2ae",
+      "sourceFinding": "The c711 source snapshot retains a legacy isNavigator in-app directions branch that adds membership gating, origin/device-location acquisition, directions API work, and a modal beside the public destination-only Maps URL. The founder-approved free-core action must retain only the valid-public-pin external handoff; its English-only label also discards openURL failure silently.",
+      "ownershipTransfer": {
+        "fromTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+        "reason": "S9 reported no compatible clean workspace containing c711; its available workspaces were either unrelated or dirty and lacked that commit. The environment-only blocker is verified, while the two D9 paths remain untouched.",
+        "preservedUntouchedHandoff": {
+          "handoffId": "hnd_aszmYO9eJhYfmA88fvnwj7NF",
+          "archiveSha256": "066d69c568b84c6bac8f8a14584acbced8aae24d513a0cce78b8bcec9eceab76",
+          "sourceSnapshotBase": "c7111caf4335fee799270ab198c9c8845d10f874",
+          "receivedExtractedOrUsedByS9": false
+        },
+        "newOwnerCleanSuccessor": "aa2ec26abddd2e30dbcd5741b8d8e3cf101af2ae"
+      },
+      "requirement": "Retire the legacy Navigator in-app directions branch and retain only the free-core, destination-only external Maps handoff for valid public pins, with practical English/Spanish label and failure-recovery copy.",
       "paths": [
         "artifacts/mobile/app/business/[id].tsx",
         "artifacts/mobile/__tests__/business-discovery-contract.test.ts"
       ],
       "requiredBehavior": [
-        "Retain the existing platform-specific Maps URLs, valid-public-pin condition, online-only exclusion, destination coordinates, entitlement/auth state, and all Map/API/provider/location behavior.",
-        "Make the free-core Maps action label and failure recovery practical English/Spanish source text without claiming an opened application or changing the existing Navigator in-app directions branch.",
-        "The focused source contract must prove the bilingual free Maps label/recovery exists and that the action remains destination-only with the existing latitude/longitude guards."
+        "Retain only the existing platform-specific external destination Maps URLs, valid-public-pin condition, online-only exclusion, and destination coordinates; the action must not infer or acquire a member origin.",
+        "Remove the isNavigator membership gate and every in-app directions modal, directions state, device-location/origin acquisition, Expo Location import, directions API/request/token/fetch path, route metrics, and mode behavior from this screen.",
+        "Make the free-core Maps action label and failure recovery practical English/Spanish source text without claiming an opened application.",
+        "The focused source contract must prove the bilingual external Maps label/recovery, retained public latitude/longitude guard and destination-only URLs, and explicit absence of Navigator/in-app/origin/directions-API behavior."
       ],
       "validationPlan": [
-        "Run the focused business-discovery contract and a source-aligned mobile no-emit check, then provide an uncommitted two-file review carrier for central acceptance.",
-        "Verify exact two-path scope and git diff --check; no browser or device validation is claimed."
+        "On the authorized non-Git overlay, run the supplied deterministic two-path source validator and return a final-source/hash carrier; the integration owner will run the focused business-discovery contract and a source-aligned mobile no-emit check after central application.",
+        "Verify exact two-path scope and candidate whitespace hygiene; no browser or device validation is claimed."
       ],
       "constraints": [
-        "No change to entitlement/auth, map destination validation, API/provider/location/origin/route behavior, membership, completed D9 behavior, web fallback, Maps SDK, or visual redesign.",
-        "The designated owner must verify the supplied c711 path-only base before editing and return only an uncommitted review carrier; the integration owner remains the sole acceptor.",
+        "No change to public destination validation or URLs, API/provider behavior, web fallback, Maps SDK, membership model, or visual redesign. The explicitly retired legacy Navigator gating/origin/in-app directions branch must not remain or be recreated.",
+        "The designated owner must use the corrected c711 path-only overlay and return only an uncommitted two-file review carrier; the integration owner remains the sole acceptor.",
         "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
       ],
       "externalAcceptance": "PENDING — no authenticated member, browser, device, Maps application, staging/production, or deployment acceptance is authorized or recorded."
+    },
+    {
+      "id": "BA-001-CANONICAL-BUSINESS-INVENTORY-PROFILE-LINK",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "aa2ec26abddd2e30dbcd5741b8d8e3cf101af2ae",
+      "sourceFinding": "The one filteredBiz inventory-row action cell in admin.tsx serves live, Kinfolk Current-filtered, archive, and duplicate rows, but lacks the established canonical MWM profile handoff. The existing canonical address is `${BASE}businesses/${biz.id}`; the legacy `/business/:id` route is not the authorized target.",
+      "requirement": "Add one clearly labelled, safe new-tab canonical MWM profile link in the shared Business Admin inventory action cell, without changing inventory, Kinfolk Current, or lifecycle semantics.",
+      "paths": [
+        "artifacts/web/src/pages/admin.tsx",
+        "artifacts/api-server/src/__tests__/admin-business-inventory-controls.test.ts"
+      ],
+      "requiredBehavior": [
+        "Render the link from the shared filteredBiz.map action cell so it is available across the existing displayed inventory cohorts while retaining the established responsive overflow and stacked-action layout.",
+        "Use only the canonical long-form `${BASE}businesses/${biz.id}` address with safe new-tab attributes; do not link to the legacy `/business/:id` path.",
+        "Keep the link navigation-only: no fetch, mutation, catalog membership change, visibility promotion, eligibility inference, archive/restore/delete-queue interaction, selection change, or new authorization behavior.",
+        "Do not promise public visibility for Archive/Duplicate vault rows; existing server behavior may make those records admin-only even when an authorized Admin follows the canonical profile address."
+      ],
+      "traceEvidence": [
+        "The canonical web route is `/businesses/:id`; an existing Admin success toast already builds `${BASE}businesses/${addBizSuccess.id}` with target blank and rel noopener noreferrer.",
+        "Kinfolk Current remains a distinct public-catalog cohort filtered by the existing server predicate; the persistent internal Kinfolk Catalog membership system is separately admin-gated, durable, audit-backed, and explicitly non-publishing.",
+        "Archive/restore and permanent vault deletion have separate existing audited server lifecycles; the row link must not alter their reasons, confirmation, eligibility, records, or audit receipts.",
+        "Routine Admin inventory capability and server routes use the existing administrator policy; founder-only restrictions apply to protected administrator-access changes, not this navigation link."
+      ],
+      "validationPlan": [
+        "Extend only admin-business-inventory-controls to assert the canonical long-form navigation anchor is in the shared row action surface and existing inventory/Kinfolk Current/archive safeguards remain intact.",
+        "Run the focused source-contract Vitest file, web TypeScript no-emit, exact two-path scope check, and git diff --check; return an uncommitted compact two-file review carrier."
+      ],
+      "constraints": [
+        "No server route, schema/migration, public view, businesses table, Kinfolk Catalog endpoint/component, Current Chapter, persistence, lifecycle state, provider, mobile, App route, authentication/authorization policy, responsive redesign, browser/device, staging/deployment, or feature activation change.",
+        "Task 44 is the sole implementation owner for only these two paths. It must use the supplied path-only base, verify the manifest/hashes, and return an uncommitted carrier; the integration owner is the sole acceptor.",
+        "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
+      ],
+      "externalAcceptance": "PENDING — no authenticated Admin browser, public profile visibility, database, provider, staging/production, or deployment acceptance is authorized or recorded."
     }
   ]
 }
