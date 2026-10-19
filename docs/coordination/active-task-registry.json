@@ -151,6 +151,42 @@
       ]
     },
     {
+      "id": "SP-003-CIRCLE-ITINERARY-ACCOUNT-PREFERENCE-CONSENT",
+      "status": "IMPLEMENTING_LOCAL_ONLY",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "f6315536a3ac6fef5c2a026c0ab9f123719d3b90",
+      "publicationBoundary": "Local source-only repair. Do not fetch, push, inspect connectors/staging, deploy, or perform release actions without separate founder authorization.",
+      "dependencyClassification": {
+        "SP-002-SHARED-PLAN-FREE-BUSY-AVAILABILITY-ENGINE": {
+          "classification": "INDEPENDENT",
+          "evidence": [
+            "The itinerary POST handler has no import, call, route, schema, grant type, or output dependency on the SP-002 free-busy engine.",
+            "Its only availabilityWindows handling belongs to the separate Circle plan endpoint already bounded by completed SP-001 logic.",
+            "SP-002 owns two new kinfolk policy/test paths, while SP-003 owns only the existing itinerary route and its existing Circle privacy test. The concern shared by both slices is conceptual consent, not an interface or acceptance dependency."
+          ]
+        }
+      },
+      "requirement": "Until a Circle-scoped, participant-specific, purpose- and time-bounded account-preference consent contract exists, Circle itinerary generation must fail closed against cross-member account preference use. It may use authenticated Circle membership, explicit Circle-shared saves and important dates, destination/date inputs, and member display names for branches, but must not select, prompt with, infer from, or persist account-level categories, dietary notes, lifestyle services, or other individual preference data.",
+      "paths": [
+        "artifacts/api-server/src/routes/circles.ts",
+        "artifacts/api-server/src/routes/__tests__/circles-private-invite-only.test.ts"
+      ],
+      "requiredBehavior": [
+        "Preserve the existing unauthenticated, invalid-circle, destination-required, and Circle-membership boundaries; preserve explicit Circle-shared saves/dates, destination/date inputs, member-name itinerary branches, and existing provider-error behavior.",
+        "Remove the itinerary handler's user_preferences join and account-level favorite_categories, dietary_notes, and lifestyle_services retrieval. Its model prompt must not interpolate those fields or an equivalent inferred member-preference object.",
+        "Do not consume SP-002 availability output, availability grants, calendar consent, event details, invitation state, flight/location/itinerary claims, or any new schema. No provider is called by tests."
+      ],
+      "validationPlan": [
+        "Extend the focused Circle privacy source contract to isolate the itinerary POST handler and prove it retains shared saves/dates while excluding user_preferences, account preference fields, and member-preference prompt interpolation before provider execution or persistence.",
+        "Run the focused Circle privacy test, source-aligned API no-emit, exact two-path scope check, and git diff --check."
+      ],
+      "constraints": [
+        "No database/schema/migration, UI/client, provider request, cache, notification, calendar/OAuth, availability, invitation, deployment, browser/device, staging, or release action.",
+        "Do not modify SP-001, SP-002, Phase A access-policy, D1, Community, UM, LA, CI, MAP, or private-availability source paths.",
+        "Only this local unified owner may edit the two claimed SP-003 paths; no additional worktree, competing carrier, or remote publication is authorized."
+      ]
+    },
+    {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
       "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
