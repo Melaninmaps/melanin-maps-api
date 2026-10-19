@@ -568,10 +568,19 @@
     },
     {
       "id": "BUSINESS-ADMIN-001-CANONICAL-PROFILE-NAVIGATION",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "aa2ec26abddd2e30dbcd5741b8d8e3cf101af2ae",
+      "carrierBase": "699313f52d1a86e2daeba8f260d0ac028c30d854",
+      "sourceCommit": "623daa9e802738ce5d8c9f3b9a1ea8b4d2b54ad1",
+      "localAuthorityAtAcceptance": "f038354c1415b277b276473c6951218ab822dee6",
+      "carrierVerification": {
+        "handoffId": "hnd_0amF4XW08JnHpqTxoIhfk0XL",
+        "archiveSha256": "498559a0fc830a7166da6a5506226efed944ab6045bf09d1c8232b6a5721256c",
+        "patchSha256": "8e56d08ac48960508f9cd301a512f6568984a5b35f8eccad19353be8cd2c1367",
+        "result": "Archive checksum, nested manifest, source-base manifest, exact two-path inventory, current-path base equivalence, temporary-index applicability, and reconstructed result hashes were independently verified before application."
+      },
       "sourceFinding": "The one filteredBiz inventory-row action cell in admin.tsx serves live, Kinfolk Current-filtered, archive, and duplicate rows, but lacks the established canonical MWM profile handoff. The existing canonical address is `${BASE}businesses/${biz.id}`; the legacy `/business/:id` route is not the authorized target.",
       "requirement": "Add one clearly labelled, safe new-tab canonical MWM profile link in the shared Business Admin inventory action cell, without changing inventory, Kinfolk Current, or lifecycle semantics.",
       "paths": [
@@ -599,7 +608,82 @@
         "Task 44 is the sole implementation owner for only these two paths. It must use the supplied path-only base, verify the manifest/hashes, and return an uncommitted carrier; the integration owner is the sole acceptor.",
         "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
       ],
+      "sourceVerification": {
+        "apiTests": "1 file / 36 tests passed: admin-business-inventory-controls",
+        "webTypecheck": "current-authority web TypeScript no-emit passed",
+        "hygiene": [
+          "shared filteredBiz action-cell placement verified",
+          "only the canonical /businesses/:id target with safe new-tab attributes is present",
+          "legacy /business/:id target absent from the action cell",
+          "existing Kinfolk Current and Archive safeguards retained",
+          "exact two-path scope and git diff --check passed"
+        ]
+      },
       "externalAcceptance": "PENDING — no authenticated Admin browser, public profile visibility, database, provider, staging/production, or deployment acceptance is authorized or recorded."
+    },
+    {
+      "id": "BUSINESS-ADMIN-002-KINFOLK-CURRENT-LIFECYCLE",
+      "priority": "P1",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "0d4a278db031467759586bea76c8132bb9d2ebf4",
+      "sourceFinding": "The durable, audit-backed Kinfolk Catalog endpoint permits an administrator to upsert any non-duplicate canonical business and the shared Admin inventory has no row-level catalog action. The existing Kinfolk Current predicate is the canonical public-view plus diaspora-promotion constraint, excluding archived, duplicate, hidden, suspended, and demonstration records. Archive and permanent-delete workflows remain separate lifecycle controls.",
+      "paths": [
+        "artifacts/api-server/src/businesses/registerKinfolkCatalogAdminRoutes.ts",
+        "artifacts/api-server/src/businesses/__tests__/registerKinfolkCatalogAdminRoutes.test.ts",
+        "artifacts/web/src/pages/admin.tsx",
+        "artifacts/api-server/src/__tests__/admin-business-inventory-controls.test.ts"
+      ],
+      "requirement": "Add the smallest row-level Business Admin control for an administrator to add an eligible canonical Current business to the durable Kinfolk Catalog, change its bounded catalog state with an audit reason, or remove an existing membership by recording the existing removed state. Enforce Current eligibility server-side for every non-removed transition; never make a catalog operation a public-listing, archive, restore, delete-queue, or permanent-deletion operation.",
+      "requiredBehavior": [
+        "Preserve the existing isAdmin boundary, transaction, row lock, durable cohort membership, and audit event. An add or non-removed state change must require the existing canonical Current predicate: a qualifying row in public.public_businesses plus the existing diaspora-promotion predicate; a duplicate, archived, hidden, suspended, demonstration, or otherwise non-current record must receive a bounded rejection before any membership upsert.",
+        "A removed action may update only an already existing cohort membership so an administrator can safely remove a stale member without reviving or publishing its underlying listing. It must not create a removed membership for a never-added business, mutate businesses, or hard-delete cohort/audit data.",
+        "Use the established shared filteredBiz row action surface, preserving the BA-001 canonical profile link, current filters, selected rows, responsive stacked layout, and the existing archive/restore/delete-queue confirmation boundaries. The client sends only the current row id, an allowlisted state, and a bounded audit reason to the existing admin-gated endpoint, then reloads the current inventory.",
+        "Preserve current Kinfolk Current filtering, founder/admin authorization, current public listing eligibility, audit trail, and seven-day nonautomatic archive/delete-queue safety."
+      ],
+      "validationPlan": [
+        "Extend the existing server route contract for non-admin denial, canonical Current eligibility acceptance, non-current/duplicate rejection before upsert, existing-membership-only removal, audit receipt, and absence of businesses-table mutation or deletion.",
+        "Extend the existing shared Admin inventory source contract for the row-level control, canonical link retention, responsive action grouping, and archive/duplicate safeguards.",
+        "Run the two focused API contracts, current-authority API and web no-emit, exact four-path scope checks, and git diff --check. Return only an uncommitted compact review carrier."
+      ],
+      "constraints": [
+        "No schema/migration/DDL, provider, directory record mutation, public-profile visibility change, archive/restore/delete-queue implementation, permanent deletion, Kinfolk recommendation/prompt behavior, mobile/client path beyond the named Admin page, browser/device, staging/deployment, remote, or feature-activation action.",
+        "Do not modify BA-001 beyond preserving its accepted canonical link, and do not modify D1–D11, SP, Community, UM, LA, D4, D9, entitlement, Maps, or the separate 1617 deterministic-recognizer claim.",
+        "Task 44 may return only an uncommitted review carrier for these exact four paths; the unified local integration owner remains the sole acceptor."
+      ],
+      "externalAcceptance": "PENDING — source-only local claim. No authenticated Admin action, database execution, browser/device, provider, staging/deployment, or feature activation is authorized or recorded."
+    },
+    {
+      "id": "KIN-DISC-1617-DETERMINISTIC-GEOGRAPHY-BARBER-RECOGNITION",
+      "priority": "P1",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "0d4a278db031467759586bea76c8132bb9d2ebf4",
+      "sourceFinding": "The deterministic path recognizes neither Temple University as a state-scoped Philadelphia alias nor the narrow barber-service phrases hot towel shave and kid-friendly cut, and it lets hair cut/shape-up fall into the generic salon subject. The governed canonical 1617 source record documents Temple main campus/North Philadelphia, straight-razor and hot-towel-shave service, a kid-friendly atmosphere, haircut, and shape-up evidence. This receipt is separate from the single production release-only failure and does not treat that run as source validation.",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/heritage-city-registry.ts",
+        "artifacts/api-server/src/kinfolk/business-subject.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/business-discovery-clarification.test.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/local-business-discovery.test.ts"
+      ],
+      "requirement": "Add only deterministic, current-turn recognition needed for governed 1617 discovery: Temple University resolves to the explicit Philadelphia, PA scope; hot towel shave, kid-friendly cut, haircut, and shape-up resolve to the barber subject with each stated capability retained as a documented listing-evidence requirement. The additions must remain exact and additive rather than broadening unrelated geography, salon taxonomy, memory, or profile behavior.",
+      "requiredBehavior": [
+        "Recognize only the explicit Temple University phrase as a current-turn Philadelphia, PA alias. Do not turn generic university language, an unregistered location, a saved destination, or private/member memory into a Philadelphia scope.",
+        "Recognize the four specified barber-service forms as current-turn barber discovery. A service-specific result still requires matching structured barber subject evidence plus the corresponding documented service or atmosphere evidence; a generic salon, unrelated description, generic tag, or private/preference text must not substitute for the requested service.",
+        "Preserve all existing subject priorities, medical/safety exclusions, location clarification behavior, governed-card evidence gates, and no-provider deterministic path. The recognizer may not read or persist memory, preferences, account data, raw prompt text, directory records, taxonomy tags, or external research."
+      ],
+      "validationPlan": [
+        "Add focused positive regressions for the four documented prompts and Temple University → Philadelphia, PA, plus adversarial negatives for generic university, non-barber/salon substitution, undocumented service evidence, generic tags/descriptions, and cross-account/private-memory influence.",
+        "Run only the two named focused discovery contracts, current-authority API no-emit, exact four-path scope checks, and git diff --check. Return an uncommitted compact review carrier; do not create a cherry-pickable commit."
+      ],
+      "constraints": [
+        "No directory/source-record/tag mutation, generic taxonomy rewrite, model/provider/web research, Maps, Business Admin, D3/D8, D4, D9, entitlement, database/schema/migration, browser/device, production prompt, staging/deployment, remote, or feature-activation action.",
+        "This is a narrowly additive recognizer claim; it must not remove or replace any current governed discovery safeguard, subject, city, or acceptance record.",
+        "Task Hiib may only return an uncommitted review carrier for these four paths. The unified local integration owner remains the sole acceptor."
+      ],
+      "externalAcceptance": "PENDING — source-only local claim. The separately recorded production observation must not be repeated and is not evidence of this claim's implementation."
     },
     {
       "id": "D3-D8-CONTROLLED-FUTURE-RECONCILIATION-INPUT",
