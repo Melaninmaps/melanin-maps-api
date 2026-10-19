@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
+const REQUEST_ACTION_RECOVERY = "Couldn't update this message request. Please try again.";
 
 type Conversation = {
   id: number;
@@ -18,6 +19,26 @@ type Conversation = {
   lastMessagePreview: string | null;
 };
 type Message = { id: number; conversationId: number; senderId: string | null; content: string; createdAt: string | null };
+
+function isAcceptedRequestResponse(payload: unknown, conversationId: number): payload is { conversation: Conversation } {
+  if (!payload || typeof payload !== "object") return false;
+  const conversation = (payload as { conversation?: unknown }).conversation;
+  if (!conversation || typeof conversation !== "object") return false;
+  const candidate = conversation as Partial<Conversation>;
+  return candidate.id === conversationId
+    && candidate.requestStatus === "accepted"
+    && typeof candidate.title === "string"
+    && (candidate.type === "dm" || candidate.type === "business" || candidate.type === "ai")
+    && Array.isArray(candidate.participantIds)
+    && candidate.participantIds.every((id) => typeof id === "string")
+    && (candidate.requestedBy === null || typeof candidate.requestedBy === "string")
+    && (candidate.lastMessageAt === null || typeof candidate.lastMessageAt === "string")
+    && (candidate.lastMessagePreview === null || typeof candidate.lastMessagePreview === "string");
+}
+
+function isDeclinedRequestResponse(payload: unknown): boolean {
+  return !!payload && typeof payload === "object" && (payload as { ok?: unknown }).ok === true;
+}
 
 function conversationIdFromSearch(search: string): number | null {
   const raw = new URLSearchParams(search).get("conversation");
@@ -111,19 +132,25 @@ export default function MessagesPage() {
     setRequestLoading(true);
     try {
       const response = await authenticatedFetch(`${BASE}api/conversations/${selected.id}/${action}`, { method: "POST" });
-      const payload = await response.json() as { conversation?: Conversation; error?: string };
       if (!response.ok) {
-        toast({ title: "Could not update request", description: payload.error ?? "Please try again.", variant: "destructive" });
+        toast({ title: REQUEST_ACTION_RECOVERY, variant: "destructive" });
         return;
       }
+      const payload = (await response.json()) as unknown;
       if (action === "decline") {
+        if (!isDeclinedRequestResponse(payload)) {
+          toast({ title: REQUEST_ACTION_RECOVERY, variant: "destructive" });
+          return;
+        }
         setConversations((current) => current.filter((conversation) => conversation.id !== selected.id));
         navigate("/messages");
-      } else if (payload.conversation) {
-        setConversations((current) => current.map((conversation) => conversation.id === selected.id ? payload.conversation! : conversation));
+      } else if (isAcceptedRequestResponse(payload, selected.id)) {
+        setConversations((current) => current.map((conversation) => conversation.id === selected.id ? payload.conversation : conversation));
+      } else {
+        toast({ title: REQUEST_ACTION_RECOVERY, variant: "destructive" });
       }
     } catch {
-      toast({ title: "Could not update request", description: "Please try again.", variant: "destructive" });
+      toast({ title: REQUEST_ACTION_RECOVERY, variant: "destructive" });
     } finally {
       setRequestLoading(false);
     }

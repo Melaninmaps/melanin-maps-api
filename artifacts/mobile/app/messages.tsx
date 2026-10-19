@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth";
 
 const GOLD = "#CA922B";
 const AVATAR_COLORS = ["#CA922B", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B", "#D4873A"];
+const REQUEST_ACTION_RECOVERY = "Couldn't update this message request. Please try again.";
 
 function getInitials(name: string): string {
   return name.split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
@@ -233,15 +234,34 @@ export default function MessagesScreen() {
 
   const handleAccept = async (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await acceptRequest(id);
-    router.push({ pathname: "/chat/[id]", params: { id: String(id) } });
+    try {
+      const accepted = await acceptRequest(id);
+      if (!accepted) {
+        Alert.alert(REQUEST_ACTION_RECOVERY);
+        return;
+      }
+      router.push({ pathname: "/chat/[id]", params: { id: String(id) } });
+    } catch {
+      Alert.alert(REQUEST_ACTION_RECOVERY);
+    }
   };
 
   const handleDecline = async (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert("Decline Request", "Are you sure you want to decline this message request?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Decline", style: "destructive", onPress: async () => { await declineRequest(id); } },
+      {
+        text: "Decline",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const declined = await declineRequest(id);
+            if (!declined) Alert.alert(REQUEST_ACTION_RECOVERY);
+          } catch {
+            Alert.alert(REQUEST_ACTION_RECOVERY);
+          }
+        },
+      },
     ]);
   };
 

@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
+const REQUEST_ACTION_RECOVERY = "Couldn't update this message request. Please try again.";
 
 interface Message {
   id: string;
@@ -69,6 +70,18 @@ function getInitials(title: string): string {
 
 function isFeedbackConv(title: string): boolean {
   return title.startsWith("🔒 Private Feedback");
+}
+
+function isAcceptedRequestResponse(payload: unknown, conversationId: number): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const conversation = (payload as { conversation?: unknown }).conversation;
+  if (!conversation || typeof conversation !== "object") return false;
+  const candidate = conversation as { id?: unknown; requestStatus?: unknown };
+  return candidate.id === conversationId && candidate.requestStatus === "accepted";
+}
+
+function isDeclinedRequestResponse(payload: unknown): boolean {
+  return !!payload && typeof payload === "object" && (payload as { ok?: unknown }).ok === true;
 }
 
 export default function ChatScreen() {
@@ -142,6 +155,7 @@ export default function ChatScreen() {
   const handleAccept = async () => {
     if (!conv || !id) return;
     setRequestActing(true);
+    setPendingError(null);
     try {
       const apiBase = getApiBase();
       const token = await getToken();
@@ -149,9 +163,18 @@ export default function ChatScreen() {
         method: "POST",
         headers: { Authorization: `Bearer ${token ?? ""}` },
       });
-      if (res.ok) {
-        setConv((prev) => prev ? { ...prev, requestStatus: "accepted" } : prev);
+      if (!res.ok) {
+        setPendingError(REQUEST_ACTION_RECOVERY);
+        return;
       }
+      const payload = (await res.json()) as unknown;
+      if (!isAcceptedRequestResponse(payload, numericId)) {
+        setPendingError(REQUEST_ACTION_RECOVERY);
+        return;
+      }
+      setConv((prev) => prev ? { ...prev, requestStatus: "accepted" } : prev);
+    } catch {
+      setPendingError(REQUEST_ACTION_RECOVERY);
     } finally {
       setRequestActing(false);
     }
@@ -160,6 +183,7 @@ export default function ChatScreen() {
   const handleDecline = async () => {
     if (!conv || !id) return;
     setRequestActing(true);
+    setPendingError(null);
     try {
       const apiBase = getApiBase();
       const token = await getToken();
@@ -167,7 +191,18 @@ export default function ChatScreen() {
         method: "POST",
         headers: { Authorization: `Bearer ${token ?? ""}` },
       });
-      if (res.ok) router.back();
+      if (!res.ok) {
+        setPendingError(REQUEST_ACTION_RECOVERY);
+        return;
+      }
+      const payload = (await res.json()) as unknown;
+      if (!isDeclinedRequestResponse(payload)) {
+        setPendingError(REQUEST_ACTION_RECOVERY);
+        return;
+      }
+      router.back();
+    } catch {
+      setPendingError(REQUEST_ACTION_RECOVERY);
     } finally {
       setRequestActing(false);
     }
