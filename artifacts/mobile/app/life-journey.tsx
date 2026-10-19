@@ -80,7 +80,6 @@ export default function LifeJourneyScreen() {
   const [selectedType, setSelectedType] = useState<string>("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
-  const [description, setDescription] = useState("");
   const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
 
   const JOURNEY_NEEDS: Record<string, { label: string; emoji: string }[]> = {
@@ -235,7 +234,6 @@ export default function LifeJourneyScreen() {
           journeyType: selectedType,
           city: city.trim(),
           state: state.trim(),
-          description: description.trim(),
           selectedNeeds: selectedNeeds.length > 0 ? selectedNeeds.join(", ") : undefined,
         }),
       });
@@ -383,16 +381,9 @@ export default function LifeJourneyScreen() {
                 </>
               )}
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, marginTop: 20 }]}>Anything else KinfolkAI™ should know? (optional)</Text>
-              <TextInput
-                style={[styles.textarea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                placeholder={`e.g. "Single mom, moving with two kids, budget is tight — need to find affordable options and a good school district"`}
-                placeholderTextColor={colors.mutedForeground}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={3}
-              />
+              <Text style={[styles.sectionHint, { color: colors.mutedForeground, marginTop: 20 }]}>
+                Private details are not collected here yet. Choose the help areas above. / Aún no recopilamos detalles privados aquí. Elige las áreas de ayuda de arriba.
+              </Text>
 
               <TouchableOpacity
                 style={[styles.createBtn, { backgroundColor: primaryGold, opacity: creating ? 0.7 : 1 }]}

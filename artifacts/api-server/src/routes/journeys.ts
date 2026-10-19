@@ -115,12 +115,63 @@ const JOURNEY_TEMPLATES: Record<string, { phases: Array<{ id: string; title: str
   },
 };
 
+const JOURNEY_CONTROLLED_NEEDS: Record<string, readonly string[]> = {
+  moving: ["Moving Company", "Home Repair", "Home Organizer", "Cleaning Service", "Storage Unit", "Real Estate Agent", "Healthcare Provider", "Schools / Childcare", "Community & Church", "Financial / Banking", "Hair & Beauty", "Mental Health"],
+  "new-to-city": ["Hair & Beauty", "Healthcare Provider", "Gym & Fitness", "Community Groups", "Place of Worship", "Professional Networking", "Restaurants & Food", "Mental Health", "Financial Services", "Transportation"],
+  "starting-business": ["Business Attorney", "Accountant / CPA", "Business Insurance", "Coworking Space", "Marketing & Design", "Business Mentor", "Mental Health Support", "Bookkeeper", "Web / Tech Support", "Product Suppliers"],
+  "new-baby": ["OB-GYN / Midwife", "Pediatrician", "Childcare / Daycare", "Postpartum Support", "Lactation Consultant", "Parent Groups", "Nutritionist", "Mental Health", "Baby Essentials Shop", "Doula"],
+  "getting-married": ["Wedding Venue", "Caterer", "Photographer", "Hair & Makeup", "Wedding Planner", "Florist", "DJ / Entertainment", "Officiant", "Honeymoon Travel", "Legal / Name Change"],
+  college: ["Financial Aid Help", "Tutoring", "Mental Health", "Career Coaching", "Internship Search", "Housing", "Community / Greek Life", "Healthcare"],
+  "career-change": ["Career Coach", "Resume Writer", "Training / Certification", "Networking Groups", "Mental Health Support", "Financial Planning", "Coworking Space", "Recruiter"],
+  retirement: ["Financial Advisor", "Estate Planning", "Healthcare / Medicare", "Senior Community", "Downsizing Help", "Wellness & Fitness", "Travel Planning", "Hobbies & Classes"],
+  "business-growth": ["Brand & Logo Design", "Social Media Strategy", "Customer Loyalty Program", "Hiring & Staffing", "Bookkeeper / Accountant", "Business Coach / Mentor", "Commercial Real Estate", "Marketing Agency", "Tech & POS Systems", "Community Events", "Press & PR", "Supplier / Wholesale"],
+  "business-repair": ["Business Coach", "Financial Relief Programs", "Contractor / Repairs", "Accountant / Debt Help", "Customer Service Training", "Legal Counsel", "Marketing Reset", "Community Re-engagement", "Mental Health / Burnout", "Staffing Fix"],
+};
+
+function normalizeControlledJourneyNeeds(
+  journeyType: string,
+  selectedNeeds: unknown,
+): string[] | null {
+  if (selectedNeeds === undefined) return [];
+  if (typeof selectedNeeds !== "string" || selectedNeeds.length > 512) return null;
+
+  const requested = selectedNeeds
+    .split(",")
+    .map((need) => need.trim())
+    .filter(Boolean);
+  const allowed = new Set(JOURNEY_CONTROLLED_NEEDS[journeyType] ?? []);
+  if (requested.some((need) => !allowed.has(need))) return null;
+  return [...new Set(requested)];
+}
+
 router.post("/journeys", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
-  const { journeyType, city, state, description, selectedNeeds } = req.body as Record<string, string>;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  if (Object.prototype.hasOwnProperty.call(body, "description")) {
+    res.status(409).json({
+      error: "Journey descriptions require an explicit private-storage consent flow that is not available yet.",
+      errorEs: "Las descripciones de Journey requieren un flujo de consentimiento explícito para almacenamiento privado que aún no está disponible.",
+      code: "JOURNEY_LEGACY_DESCRIPTION_CONSENT_REQUIRED",
+    });
+    return;
+  }
+
+  const journeyType = typeof body.journeyType === "string" ? body.journeyType : "";
+  const city = typeof body.city === "string" ? body.city : undefined;
+  const state = typeof body.state === "string" ? body.state : undefined;
   if (!journeyType || !JOURNEY_TEMPLATES[journeyType]) {
     res.status(400).json({ error: "Valid journeyType required", validTypes: Object.keys(JOURNEY_TEMPLATES) });
+    return;
+  }
+
+  const controlledNeeds = normalizeControlledJourneyNeeds(journeyType, body.selectedNeeds);
+  if (controlledNeeds === null) {
+    res.status(400).json({
+      error: "Choose only the listed help areas for this Journey.",
+      errorEs: "Elige solo las áreas de ayuda indicadas para este Journey.",
+      code: "JOURNEY_SELECTED_NEEDS_INVALID",
+    });
     return;
   }
 
@@ -128,7 +179,7 @@ router.post("/journeys", async (req: Request, res: Response) => {
   const location = [city, state].filter(Boolean).join(", ");
   const title = generateTitle(journeyType, city);
 
-  let aiContext = description ?? "";
+  let aiContext = "";
   let phases: JourneyPhase[];
 
   try {
@@ -149,10 +200,9 @@ router.post("/journeys", async (req: Request, res: Response) => {
           .limit(25)
       : [];
 
-    const needsContext = [
-      description ? `Their context: "${description}"` : "",
-      selectedNeeds ? `Specific needs they flagged: ${selectedNeeds}` : "",
-    ].filter(Boolean).join("\n");
+    const needsContext = controlledNeeds.length
+      ? `Specific needs they flagged: ${controlledNeeds.join(", ")}`
+      : "";
 
     const prompt = `You are KinfolkAI™, helping a community member plan their "${journeyType}" journey${location ? ` in ${location}` : ""}. 
 ${needsContext}

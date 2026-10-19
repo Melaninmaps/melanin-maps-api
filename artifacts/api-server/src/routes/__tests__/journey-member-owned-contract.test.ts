@@ -18,6 +18,21 @@ describe("member-owned Journey contracts", () => {
     expect(journeyRoute).not.toContain('router.patch("/journeys/:id/phase-status"');
   });
 
+  it("retains controlled needs and templates without sending legacy free text to Journey prompts or fallback context", () => {
+    const createRoute = journeyRoute.slice(
+      journeyRoute.indexOf('router.post("/journeys"'),
+      journeyRoute.indexOf('router.get("/journeys"'),
+    );
+    expect(journeyRoute).toContain("const JOURNEY_CONTROLLED_NEEDS");
+    expect(createRoute).toContain("const controlledNeeds = normalizeControlledJourneyNeeds");
+    expect(createRoute).toContain('`Specific needs they flagged: ${controlledNeeds.join(", ")}`');
+    expect(createRoute).not.toContain('`Specific needs they flagged: ${selectedNeeds}`');
+    expect(createRoute).toContain("buildDefaultPhases(template.phases)");
+    expect(createRoute).toContain('let aiContext = ""');
+    expect(createRoute).not.toContain('Their context: "${description}"');
+    expect(createRoute).not.toContain("let aiContext = description");
+  });
+
   it("maps a legacy completion request to a private reflection without changing other phases", () => {
     const stepRoute = journeyRoute.slice(
       journeyRoute.indexOf('router.patch("/journeys/:id/step"'),
@@ -30,10 +45,24 @@ describe("member-owned Journey contracts", () => {
     expect(stepRoute).not.toContain("activePhaseIdx");
   });
 
-  it("instructs Kinfolk to honor pace rather than reporting a score or phase state", () => {
+  it("instructs Kinfolk to honor pace without selecting or injecting legacy Journey aiContext", () => {
     expect(kinfolkRoute).toContain("MEMBER-OWNED LIFE JOURNEY CONTEXT");
     expect(kinfolkRoute).toContain("honor the member's pace");
     expect(kinfolkRoute).not.toContain("Current phases and their status:");
     expect(kinfolkRoute).not.toContain("steps done");
+
+    const promptSection = kinfolkRoute.slice(
+      kinfolkRoute.indexOf("const journeySection = activeJourney"),
+      kinfolkRoute.indexOf("const crossCitySection"),
+    );
+    expect(promptSection).not.toContain("activeJourney.aiContext");
+
+    const activeJourneyLookup = kinfolkRoute.slice(
+      kinfolkRoute.indexOf("// Fetch active life journey for this user"),
+      kinfolkRoute.indexOf("// Cross-city behavioral expansion"),
+    );
+    expect(activeJourneyLookup).toContain("eq(lifeJourneysTable.userId, req.user.id)");
+    expect(activeJourneyLookup).toContain(".select({");
+    expect(activeJourneyLookup).not.toContain("aiContext");
   });
 });

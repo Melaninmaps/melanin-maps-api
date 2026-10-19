@@ -4185,7 +4185,6 @@ function buildSystemPrompt(opts: {
     city?: string | null;
     journeyType: string;
     phases: JourneyPhase[];
-    aiContext?: string | null;
   } | null;
   crossCityBridge?: CrossCityMatch[] | null;
   weatherContext?: string | null;
@@ -4384,7 +4383,6 @@ When recommending businesses or experiences, ALWAYS prioritize matches to these 
   const journeySection = activeJourney
     ? `\nMEMBER-OWNED LIFE JOURNEY CONTEXT:
 The member chose a "${activeJourney.journeyType}" guide titled "${activeJourney.title}"${activeJourney.city ? ` in ${activeJourney.city}` : ""}.
-${activeJourney.aiContext ? `Journey context: ${activeJourney.aiContext}` : ""}
 Available invitations in their guide:
 ${activeJourney.phases
   .map((p) => `- ${p.icon} ${p.title}: ${p.description}`)
@@ -12645,12 +12643,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       city: string | null;
       journeyType: string;
       phases: JourneyPhase[];
-      aiContext: string | null;
     } | null = null;
     if (req.user?.id) {
       try {
         const [latestJourney] = await db
-          .select()
+          .select({
+            title: lifeJourneysTable.title,
+            city: lifeJourneysTable.city,
+            journeyType: lifeJourneysTable.journeyType,
+            phases: lifeJourneysTable.phases,
+          })
           .from(lifeJourneysTable)
           .where(
             and(
@@ -12666,7 +12668,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             city: latestJourney.city,
             journeyType: latestJourney.journeyType,
             phases: latestJourney.phases as JourneyPhase[],
-            aiContext: latestJourney.aiContext ?? null,
           };
         }
       } catch {
