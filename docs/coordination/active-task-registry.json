@@ -3435,7 +3435,7 @@
     {
       "id": "FLIGHT-006-NORMALIZED-AVAILABILITY-WINDOW-BOUNDARY",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3474,7 +3474,7 @@
         "exact two-path scope; git diff --check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only fake input boundary.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 no Calendar/provider/OAuth/consent persistence/DB/route/client/venue/delivery/runtime/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_UFXWXCnd_FwKRH7b3H3uX7Vs",
         "file": "FLIGHT006_NORMALIZED_AVAILABILITY_WINDOW_BOUNDARY_BASE_2026-10-19.tar.gz",
@@ -3485,6 +3485,19 @@
         "at": "2026-10-19T23:30:45Z",
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged exact claim, baseline, and exclusive source-only paths before work."
+      },
+      "sourceCommit": "e24efe1fa6194892c7f1d36bb898be14dec75c71",
+      "carrier": {
+        "handoff_id": "hnd_-oYXlS1DTv0b_Qm8D6m3u7rN",
+        "file": "FLIGHT006_NORMALIZED_AVAILABILITY_WINDOW_BOUNDARY_CARRIER_2026-10-19.tar.gz",
+        "sha256": "e37e0c0b3b8cc4bf1dde47da1a196d99e18a83341c4fdf8c8040a2b71a4acfd3",
+        "patch_sha256": "2d67967adf08d1c624575a736fa6dfef354ae63c11c76ef6fdf088a593833791"
+      },
+      "centralValidation": {
+        "api_vitest": "4 files / 93 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "lifecycle-local 31-day literal governs coordination and permission known windows; exact 31-day is admitted and 32-day returns frozen unavailable before slot selection",
+        "scope": "exact two modified paths; git diff --check PASS"
       }
     },
     {
