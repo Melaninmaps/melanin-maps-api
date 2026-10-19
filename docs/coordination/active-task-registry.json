@@ -1753,7 +1753,7 @@
     {
       "id": "COMM-001-FREE-CIRCLE-CREATE-PRIVATE-MOBILE-JOURNEY",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -1799,7 +1799,7 @@
         "API/mobile no-emit, exact four-path scope, git diff --check."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance.",
+      "externalAcceptance": "NOT PERFORMED \u2014 source-only integration; runtime persistence and member-visible journey require separately authorized execution.",
       "sourceBaseTransfer": {
         "handoffId": "hnd_vdsreULxBOt8LBC5v0-17NQI",
         "archive": "COMM001_FREE_CIRCLE_CREATE_BASE_2026-10-19.tar.gz",
@@ -1807,6 +1807,21 @@
         "expiresAt": "2026-10-20T21:17:40.432Z",
         "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
         "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
+      },
+      "sourceCommit": "adda363eca3effd4920ddfe450bbaea36c76c536",
+      "carrier": {
+        "handoffId": "hnd_JJUjk0G1IMt9keiFUDuuiDw0",
+        "archive": "MWM_COMM001_FREE_CIRCLE_CREATE_CARRIER_2026-10-19.tar.gz",
+        "sha256": "8eec9491a06eb742db85f33c604ac02fa2bc2a2f2c9e313290ad3b9417186e7c",
+        "patchSha256": "c63392cac6f8bcb336ae99d7220924ff83599a813c539816e6bcae5ccbc6009f",
+        "authorityBase": "c6858ba7d8f33ba2e566ddf257f65dd937634303"
+      },
+      "centralValidation": {
+        "integrity": "outer archive and patch SHA-256 verified; current claimed paths had no drift from base; apply/result hashes matched manifest.",
+        "api": "Vitest 2 files / 9 tests passed: circle private-invite/create plus circle-plan-preference regression; API TypeScript no-emit passed.",
+        "mobile": "Vitest 1 file / 2 tests passed; mobile TypeScript no-emit passed.",
+        "boundary": "exact four-path scope and whitespace checks passed; Free maxCircles:1 cap remains before insert; invite-only/max-eight/host-membership-cleanup safeguards remain; failure keeps draft and navigation follows 201 only.",
+        "external": "No database/runtime persistence, provider, browser/device, staging/AWS, deployment, activation, or member-visible acceptance occurred."
       }
     },
     {

@@ -246,6 +246,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Accepted COMM-001 Free Circle create/private mobile journey at `adda363eca3effd4920ddfe450bbaea36c76c536`: 9 API + 2 mobile focused tests and API/mobile no-emit passed; exact four-path local-only receipt. Broader Community and runtime/member acceptance remain open. |
 | 2026-10-19 | Narrowed unissued OAUTH-002 to three new fake-provider normalizer files; deferred state/PKCE/vault to a later claim. OAUTH-001 NO-GO packet remains unchanged. |
 | 2026-10-19 | Added OAUTH-002 exact default-disabled fake-provider/PKCE preparation claim (four new files) without changing the OAUTH-001 NO-GO packet or authorizing any real OAuth/provider surface. |
 | 2026-10-19 | CR-01 two-path member-controlled city crisis-guidance source-integrated locally at `41b4ed9012100b8bec1ff75b007183d1c102d7cd`: API 1/11/no-emit, hash/apply/scope/diff and no-contact/no-location boundaries passed; legal/runtime/release gates remain separate. |
