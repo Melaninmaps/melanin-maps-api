@@ -6104,6 +6104,50 @@ router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
   }
 });
 
+// ─── DELETE /api/kinfolk/sessions ────────────────────────────────────────────
+// Conversation deletion is intentionally available even when continuity is off,
+// so a member can remove previously persisted history without re-enabling it.
+router.delete("/kinfolk/sessions", async (req: Request, res: Response) => {
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
+  const userId = req.user.id;
+  try {
+    const deletedSessions = await db
+      .delete(kinfolkSessionsTable)
+      .where(eq(kinfolkSessionsTable.userId, userId))
+      .returning({ id: kinfolkSessionsTable.id });
+    invalidateSessionsCache(userId);
+    res.json({ deletedCount: deletedSessions.length });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to delete Kinfolk sessions");
+    res.status(500).json({ error: "Failed to delete Kinfolk sessions" });
+  }
+});
+
+// ─── DELETE /api/kinfolk/sessions/:id ─────────────────────────────────────────
+router.delete("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
+  const sessionId = String(req.params.id);
+  try {
+    const [deletedSession] = await db
+      .delete(kinfolkSessionsTable)
+      .where(
+        and(
+          eq(kinfolkSessionsTable.id, sessionId),
+          eq(kinfolkSessionsTable.userId, req.user.id),
+        ),
+      )
+      .returning({ id: kinfolkSessionsTable.id });
+    if (!deletedSession) return void res.status(404).json({ error: "Session not found" });
+    invalidateSessionsCache(req.user.id);
+    res.json({ deletedSessionId: deletedSession.id });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to delete Kinfolk session");
+    res.status(500).json({ error: "Failed to delete Kinfolk session" });
+  }
+});
+
 // Archive, restore, pin, and unpin preserve the underlying session. These are
 // owner-only organizational controls; no account, session, or message is deleted.
 router.patch("/kinfolk/sessions/:id/organization", async (req: Request, res: Response) => {
