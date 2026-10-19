@@ -146,10 +146,11 @@
     },
     {
       "id": "CI-001-CULTURAL-EXPLORER-SOURCE-ATTRIBUTION",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirement": "Pass the public cultural-site verifiedSource label through the Explorer API adapter to the already-rendered mobile source row.",
       "baseline": "03fe94219fa36a5eb6d55b51fc9d0628995af0cb",
+      "sourceCommit": "efb06482af7b7726cd761304a467349055f733a5",
       "paths": [
         "artifacts/api-server/src/routes/cultural-explorer.ts",
         "artifacts/api-server/src/routes/__tests__/cultural-explorer.test.ts",
@@ -158,9 +159,16 @@
       ],
       "constraints": [
         "Pass through only the existing public verifiedSource label; do not infer, alter, or promote an external URL as evidentiary provenance.",
-        "No database/schema, migration, route activation, provider, external call, or mobile visual redesign is authorized.",
-        "Queued behind the higher-priority D1 source rebuild; no adapter source change has been made."
-      ]
+        "No database/schema, migration, route activation, provider, external call, or mobile visual redesign is authorized."
+      ],
+      "sourceVerification": {
+        "apiTests": "1 file, 4 tests passed",
+        "nativeTests": "1 file, 3 tests passed",
+        "apiTypecheck": "passed",
+        "nativeTypecheck": "passed with Node heap limit 8192 MB",
+        "hygiene": ["existing verified_source source field confirmed", "registry JSON valid", "git diff --check passed"]
+      },
+      "externalAcceptance": "PENDING — no database query, staging deployment, provider call, browser validation, or device validation was performed."
     }
   ]
 }
