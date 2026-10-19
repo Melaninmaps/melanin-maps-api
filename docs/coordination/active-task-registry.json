@@ -2874,7 +2874,13 @@
           "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/in-memory-vault.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 fake in-memory source contract only."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 fake in-memory source contract only.",
+      "baseTransfer": {
+        "handoff_id": "hnd_Z4wkKQH3u5u86KdQTvl55rAH",
+        "file": "OAUTH003_IN_MEMORY_VAULT_REDACTION_BASE_2026-10-19.tar.gz",
+        "sha256": "7da92d0d5e939153b5884ba7cc8e0ef47383b1b10615830c415ebbfb37ba34e2",
+        "expires_at": "2026-10-20T22:52:06.455Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
