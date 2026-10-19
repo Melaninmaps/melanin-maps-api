@@ -1799,7 +1799,15 @@
         "API/mobile no-emit, exact four-path scope, git diff --check."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance."
+      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance.",
+      "sourceBaseTransfer": {
+        "handoffId": "hnd_vdsreULxBOt8LBC5v0-17NQI",
+        "archive": "COMM001_FREE_CIRCLE_CREATE_BASE_2026-10-19.tar.gz",
+        "archiveSha256": "6a2aaaab63a9093cc9888ae1e58a48514b374c76fbb8ec8533afee2802b5e945",
+        "expiresAt": "2026-10-20T21:17:40.432Z",
+        "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+        "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
+      }
     },
     {
       "id": "BIZ-003-OWNER-SKIP-INSIGHTS-CANONICAL-READ",
@@ -1850,7 +1858,15 @@
         "API/mobile no-emit, exact three-path scope, git diff --check."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance."
+      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance.",
+      "sourceBaseTransfer": {
+        "handoffId": "hnd_ytD1iekrlYKPUPfMpEe_ruIe",
+        "archive": "BIZ003_OWNER_SKIP_INSIGHTS_BASE_2026-10-19.tar.gz",
+        "archiveSha256": "716cf753c7062997500965e93df30ad0dad87dcfcdd3ad3649950336eda366f5",
+        "expiresAt": "2026-10-20T21:17:40.679Z",
+        "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+        "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
+      }
     },
     {
       "id": "KMEM-005-OFFICIAL-RESOURCE-MOBILE-HANDOFF-FAIL-CLOSED",
@@ -1895,7 +1911,15 @@
         "Mobile no-emit, exact two-path scope, git diff --check, prove no raw silent resource Linking.openURL remains."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance."
+      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance.",
+      "sourceBaseTransfer": {
+        "handoffId": "hnd_c6IpbtAYoXFOlAlMG30-ScOn",
+        "archive": "KMEM005_OFFICIAL_RESOURCE_MOBILE_HANDOFF_BASE_2026-10-19.tar.gz",
+        "archiveSha256": "80db71488d7570b4083d43fd300e0c8c7ab639eb1f9c80b59c0e527d9031b159",
+        "expiresAt": "2026-10-20T21:17:40.902Z",
+        "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+        "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
+      }
     }
   ],
   "globalDirectiveDelivery": [
