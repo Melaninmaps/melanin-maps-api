@@ -44,4 +44,14 @@ The combined candidate is **NO-GO** until each row is PASS against the reviewed 
 | REL-01 | Build identity | EAS artifacts show the exact reviewed commit, iOS 104, Android 79, `com.melaninmaps.app`, and remote credentials. |
 | REL-02 | Submission control | Automatic submission remains off; no public review or production release occurs without owner approval. |
 
+## Release-only acceptance incident — KIN-GOV-2026-10-19
+
+**Status: FAIL / NO-GO for release acceptance.** This is external production evidence only; it is not a local source-validation result and creates no source-repair claim.
+
+- **Single authenticated production observation:** `I need a Black-owned barbershop near Temple University.`
+- **Observed after approximately 12 seconds:** uncited, model-like prose named `1617 Barber Shop & Beauty Salon` and `Diamond Cutz Temple`, with unsupported qualitative statements including “favorite among students” and “positive community feedback.” No governed result cards, detail links, or source receipts rendered.
+- **Expected governed path:** deterministic record-backed discovery output with rendered governed result cards, detail links, and provenance/receipt behavior rather than unsupported qualitative prose.
+- **Containment:** the assessor stopped after this one prompt. Do not repeat production prompts or provider/browser calls from this incident. Treat it as release-only acceptance failure that may reflect a pre-integration production route until separately authorized release investigation establishes the deployed build and route.
+- **Boundary:** the associated canonical-record, deterministic-prompt, and explicit-memory acceptance assessment remains read-only; no product source, database, provider, staging, deployment, browser/device, or new workstream is authorized by this entry.
+
 The evidence packet must include raw logs, migration result, API requests/responses with sensitive values redacted, screenshots or recordings, signed artifact IDs and hashes, device/OS matrix, crash-report event IDs, and a final `GO_NO_GO.md`.
