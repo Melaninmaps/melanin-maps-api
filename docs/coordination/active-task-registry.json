@@ -3188,7 +3188,13 @@
           "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic injected-fake source lifecycle only."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic injected-fake source lifecycle only.",
+      "baseTransfer": {
+        "handoff_id": "hnd_UcZC__C4-VRixukILqXrm8ju",
+        "file": "FLIGHT005_SIMULATED_ARRIVAL_MEETING_TIME_LIFECYCLE_BASE_2026-10-19.tar.gz",
+        "sha256": "8e36656f4c22ab0b8660cce33903c93f0a78ed3dfc2936317d40c4aac3499eeb",
+        "expires_at": "2026-10-20T23:13:21.092Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
