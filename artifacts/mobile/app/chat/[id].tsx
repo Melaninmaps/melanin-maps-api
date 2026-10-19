@@ -19,13 +19,15 @@ import { useColors } from "@/hooks/useColors";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 const REQUEST_ACTION_RECOVERY = "Couldn't update this message request. Please try again.";
+const MESSAGE_SEND_RECOVERY = "Message was not sent. Please try again. / El mensaje no se envió. Inténtalo de nuevo.";
+const PENDING_MESSAGE_SEND_RECOVERY = "This message request hasn't been accepted yet. / Esta solicitud de mensaje aún no ha sido aceptada.";
 
 interface Message {
   id: string;
   text: string;
   fromMe: boolean;
   timeAgo: string;
-  status?: "sent" | "delivered" | "read";
+  status?: "sending" | "sent" | "delivered" | "read";
   role?: string;
 }
 
@@ -210,13 +212,17 @@ export default function ChatScreen() {
 
   const sendMessage = async () => {
     if (!text.trim()) return;
+    if (!isRealConv || !id) {
+      setPendingError(MESSAGE_SEND_RECOVERY);
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const optimistic: Message = {
       id: `m${Date.now()}`,
       text: text.trim(),
       fromMe: true,
       timeAgo: "Just now",
-      status: "sent",
+      status: "sending",
     };
     setMessages((prev) => [...prev, optimistic]);
     const sent = text.trim();
@@ -224,28 +230,39 @@ export default function ChatScreen() {
     setPendingError(null);
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
-    if (isRealConv && id) {
-      try {
-        const apiBase = getApiBase();
-        const token = await getToken();
-        const res = await fetch(`${apiBase}/api/conversations/${id}/messages`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ content: sent }),
-        });
-        if (!res.ok) {
-          const body = await res.json() as { code?: string; error?: string };
-          if (body.code === "REQUEST_PENDING") {
-            setPendingError("This message request hasn't been accepted yet.");
-            setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
-          }
+    const recoverUnsentMessage = (feedback: string) => {
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setText((current) => current.trim() ? current : sent);
+      setPendingError(feedback);
+    };
+
+    try {
+      const apiBase = getApiBase();
+      const token = await getToken();
+      const res = await fetch(`${apiBase}/api/conversations/${id}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ content: sent }),
+      });
+      if (!res.ok) {
+        let feedback = MESSAGE_SEND_RECOVERY;
+        try {
+          const body = await res.json() as { code?: unknown };
+          if (body?.code === "REQUEST_PENDING") feedback = PENDING_MESSAGE_SEND_RECOVERY;
+        } catch {
+          // A failure body is optional and never shown to the member.
         }
-      } catch {
-        // message already shown optimistically
+        recoverUnsentMessage(feedback);
+        return;
       }
+      setMessages((prev) => prev.map((message) => (
+        message.id === optimistic.id ? { ...message, status: "sent" } : message
+      )));
+    } catch {
+      recoverUnsentMessage(MESSAGE_SEND_RECOVERY);
     }
   };
 
@@ -451,11 +468,17 @@ export default function ChatScreen() {
                 <View style={[styles.msgMeta, item.fromMe && styles.msgMetaMe]}>
                   <Text style={[styles.msgTime, { color: colors.mutedForeground }]}>{item.timeAgo}</Text>
                   {item.fromMe && item.status && (
-                    <Feather
-                      name={item.status === "read" ? "check-circle" : item.status === "delivered" ? "check" : "clock"}
-                      size={11}
-                      color={item.status === "read" ? "#2D7A4F" : colors.mutedForeground}
-                    />
+                    <>
+                      {item.status === "sending" && (
+                        <Text style={[styles.msgSendState, { color: colors.mutedForeground }]}>Sending… / Enviando…</Text>
+                      )}
+                      <Feather
+                        name={item.status === "sending" ? "clock" : item.status === "read" ? "check-circle" : "check"}
+                        size={11}
+                        color={item.status === "read" ? "#2D7A4F" : colors.mutedForeground}
+                        accessibilityLabel={item.status === "sending" ? "Sending message / Enviando mensaje" : "Sent message / Mensaje enviado"}
+                      />
+                    </>
                   )}
                 </View>
               </View>
@@ -592,6 +615,7 @@ const styles = StyleSheet.create({
   msgMeta: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 4 },
   msgMetaMe: { justifyContent: "flex-end" },
   msgTime: { fontFamily: "Inter_400Regular", fontSize: 10 },
+  msgSendState: { fontFamily: "Inter_400Regular", fontSize: 10 },
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",
