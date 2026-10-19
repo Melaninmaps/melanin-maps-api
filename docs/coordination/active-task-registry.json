@@ -941,6 +941,41 @@
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration; no external acceptance is implied."
+    },
+    {
+      "id": "BUSINESS-OWNER-002-ORDINARY-PROFILE-SAVE-RECEIPT",
+      "priority": "P0",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "f47a092b9259a38b4d2cfb5c33ea872d68024b33",
+      "requirementIds": [
+        "BIZ-006",
+        "BIZ-009"
+      ],
+      "sourceFinding": "business-dashboard.tsx selects from the approved managed-business list but routes Edit Profile to the unrelated business-submission page. It makes no selected-business GET/PATCH call to the existing owner-scoped profile routes, so the dashboard cannot provide a canonical persistence receipt for ordinary profile fields.",
+      "paths": [
+        "artifacts/web/src/pages/business-dashboard.tsx",
+        "artifacts/web/src/__tests__/business-dashboard-managed-access.test.ts"
+      ],
+      "requirement": "Create a minimal, direct owner-dashboard editor for existing non-moderated ordinary profile fields, using only the selected-business GET/PATCH routes already protected by approvedOwnerPredicate. After success, show a precise Saved state and re-read the selected canonical record. After failure, retain input and show a safe Failed state.",
+      "requiredBehavior": [
+        "Use GET /api/businesses/mine/managed/:businessId and PATCH /api/businesses/mine/managed/:businessId/profile only for the selected dashboard business, with credentials included and no legacy ambiguous owner endpoint.",
+        "Limit fields to the current owner PATCH contract: description, phone, website, and hours. Show Saving, Saved, and Failed states; a Saved state must follow a successful response and selected-record re-read, not optimistic UI alone.",
+        "Retain the existing View Public Listing handoff and all existing dashboard panels/editors. State accurately that public visibility and discovery eligibility remain separately governed.",
+        "Add static focused regression coverage for selected managed paths, credentials, narrow field set, re-read receipt, safe failure, and absence of legacy/admin/publication/eligibility mutation behavior."
+      ],
+      "validationPlan": [
+        "Run pnpm exec vitest run src/__tests__/business-dashboard-managed-access.test.ts --reporter=dot from artifacts/web.",
+        "Run pnpm exec tsc -p tsconfig.json --noEmit from artifacts/web.",
+        "Run git diff --check and verify exactly the two claimed paths before returning an uncommitted carrier with per-file SHA-256 hashes and a relative patch."
+      ],
+      "constraints": [
+        "Do not edit API/server routes, database/schema/migrations, public profile/Directory/Map/Kinfolk queries or predicates, ownership/verification/suspension/archive/publication/Kinfolk Current state, moderation policy, specialty persistence, Admin UI, payment/entitlement, provider code, or mobile clients.",
+        "Do not add owner address/city/state editing, map-coordinate changes, automatic publication, field-level pending-approval semantics, or claims about live propagation. The current authoritative moderation contract/schema is not in this two-path claim.",
+        "No remote Git, connector, database, provider, staging/deployment, browser/device, authenticated-member, production save, fixture, or feature-activation action. Return only an uncommitted review carrier; the central owner alone integrates and updates status."
+      ],
+      "externalAcceptance": "PENDING — source-only assignment. No live save/readback, database, provider, staging/deployment, browser/device, production, or feature activation action is authorized or recorded."
     }
   ]
 }

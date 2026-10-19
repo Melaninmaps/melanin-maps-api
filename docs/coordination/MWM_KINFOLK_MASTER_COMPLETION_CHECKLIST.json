@@ -1264,6 +1264,30 @@
         "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
         "Founder/task acceptance checkpoint report, 2026-10-19"
       ]
+    },
+    {
+      "id": "BIZ-009",
+      "feature_area": "Business-owner dashboard",
+      "platform": "Web/API/Directory/Map/Kinfolk discovery",
+      "founder_requirement": "P0 durable owner/Admin edit chain: authorized validation and canonical save must yield a clear dashboard persistence state and preserve the current approved public profile, Directory/Map eligibility, and governed Kinfolk data boundaries. Moderated fields retain the last approved value and show explicit Pending Approval; verification, ownership, suspension, archive, publication, and Kinfolk Current are never changed by an ordinary profile edit.",
+      "acceptance_criteria": "An approved owner or Founder/Admin performs one authorized low-risk save on a controlled non-real fixture or explicitly approved reversible live field; after refresh/relogin, the dashboard returns the saved value and the current approved public profile/Directory/Map/governed Kinfolk reads are assessed separately. Only a successful founder-approved live save/readback may complete this requirement.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Current local trace at f47a092b9259a38b4d2cfb5c33ea872d68024b33: owner PATCH /businesses/mine/managed/:businessId/profile already checks an approved/unrevoked owner relationship and returns the canonical row, but Web business-dashboard.tsx lists selected businesses then routes Edit Profile to /for-business-owners?claim=; that page is a submission form and does not consume the query or use either owner managed-profile GET/PATCH endpoint. The dashboard therefore has no ordinary profile form, post-save re-read, or Saved/Failed receipt. Admin has a distinct audited profile path. Public direct profile admission, Directory/Map, and Kinfolk all read public.public_businesses with their existing separate visibility/eligibility predicates.",
+      "staging_evidence": "MISSING EVIDENCE — BIZ-008 staging authentication failed before an editor journey; no fixture, save, public readback, propagation timing, or governed retrieval was authorized.",
+      "web_evidence": "READ-ONLY EXTERNAL EVIDENCE only — production dashboard and existing public listing were reachable, but no real listing was edited. This is not a persistence, publication, Directory/Map, or Kinfolk readback result.",
+      "ios_evidence": "Not required for the first Web/API owner-editor slice; no iOS acceptance is implied.",
+      "android_evidence": "Not required for the first Web/API owner-editor slice; no Android acceptance is implied.",
+      "responsible_owner_or_task": "Implementation: yINBiovLIPiFnyQCFfSycn under exclusive two-path local claim; central integration/acceptance: QJATRGk7nUgzDlccMCUcG6.",
+      "dependencies_or_blockers": "The initial source slice deliberately covers only existing non-moderated description, phone, website, and hours fields. Owner address editing would require an explicit coordinate/pin safety decision; a last-approved/Pending Approval model requires a current authoritative moderation contract/schema and is not invented by this UI bridge. A founder-approved controlled fixture or explicitly approved reversible live field is still required for any live save/readback.",
+      "next_action": "Return an uncommitted two-path carrier that makes business-dashboard.tsx read and PATCH only the selected approved owner business through the existing managed-profile endpoints; show Saving/Saved/Failed and re-read confirmation. Preserve all excluded business state. Central owner reviews/tests it, then prepares—not executes—the separately authorized live acceptance run.",
+      "founder_approval_needed": "No for the bounded local source carrier. Yes for any fixture/create/reset, production field edit, authenticated browser save/readback, database action, deployment, provider-backed Kinfolk check, or release assertion.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "Central source-only save-chain trace at f47a092b9259a38b4d2cfb5c33ea872d68024b33",
+        "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
+        "S9 read-only production-domain dashboard verification, 2026-10-19",
+        "BIZ-008 failed staging authentication checkpoint"
+      ]
     }
   ],
   "dependency_register": [
@@ -1500,6 +1524,10 @@
     {
       "date": "2026-10-19",
       "event": "Read-only external dashboard evidence: authenticated production-domain /business-dashboard and View Public Listing reached an existing public business; anonymous same-origin /health returned 200 and /api/health returned 401. This proves only a production-domain frontend/same-origin API, not a database target, save, durability, propagation, approval, or Kinfolk freshness. No real listing was edited; a disposable/non-real test business or separately approved reversible field remains required."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Founder P0 BIZ-009 recorded after a bounded current-authority source trace: the owner dashboard lists approved managed businesses but sends Edit Profile to a submission page and never calls the existing managed-profile save API. A two-path, ordinary non-moderated owner-profile UI bridge is exclusively claimed; it does not change address, moderation/last-approved state, verification, ownership, suspension, archive, publication, Directory/Map eligibility, Kinfolk Current, or governed Kinfolk. No live save/readback is credited; founder approval remains required for any fixture or reversible production edit."
     }
   ],
   "evidence_gaps": [
@@ -1513,11 +1541,11 @@
   ],
   "dashboard_counts": {
     "label": "PROVISIONAL — original 54 baseline IDs are immutable; added IDs are bounded evidence-based additions, not a complete founder-vision count.",
-    "unique_requirement_ids": 57,
+    "unique_requirement_ids": 58,
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 8,
+      "IN DEVELOPMENT": 9,
       "NOT STARTED": 11,
       "SOURCE INTEGRATED": 16
     },
@@ -1529,7 +1557,7 @@
       "Kinfolk memory/voice/images/tools": 5,
       "Community/social": 5,
       "Safety": 3,
-      "Business-owner dashboard": 8,
+      "Business-owner dashboard": 9,
       "Founder/Admin dashboard": 2,
       "Memberships/payments/entitlements": 11,
       "Integrations/dependencies": 10,
