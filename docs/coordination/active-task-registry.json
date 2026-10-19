@@ -2166,7 +2166,7 @@
     {
       "id": "FLIGHT-002-DEFAULT-DISABLED-STATUS-LEAF",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-002",
@@ -2203,7 +2203,29 @@
         "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
         "exact four-path scope; git diff --check; static no-network/no-credential/no-provider-name scan"
       ],
-      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner integrates if clean."
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner integrates if clean.",
+      "sourceCommit": "1ec062aceb93e170ced6ba754881cc78ab2b4bd7",
+      "carrier": {
+        "handoffId": "hnd_tW1nlY5RAmF9IwYW0XjgBru8",
+        "archive": "FLIGHT001_STATUS_SOURCE_CANDIDATE_2026-10-19.tar.gz",
+        "outerSha256": "2c7c5d59d2ee23b6d14297495bb78f2b924f4c5dc1141293557b466ea6268868",
+        "carrierBase": "9eb42a96ce1b47ece84ce03bccc4baac32245918",
+        "copiedResultHashes": {
+          "contracts.ts": "0a793463c9a553bd4763c4100f89a350a4b392a2c984d184f468d5099611f0c5",
+          "normalizers.ts": "b2a62a3036b46a5ce3ccd7ab76f4074d5008c1dca2d0a02f9820bbed91853514",
+          "gate.ts": "dd3664a6784ec274e9b492314dc3caa78a3710de0bd5506087366d16dc26d173",
+          "flight-status-contract.test.ts": "223b697b282188954ecc8ed9e2e1abc6751ad9c43d323d3db430700280835ada"
+        }
+      },
+      "centralReconciliation": "Within existing claimed `gate.ts` and test paths only: made `now: Date` mandatory; removed `input.now ?? new Date()` and returns the same neutral unavailable result for an invalid injected Date before provider use. This is a behavior-strengthening fail-closed correction; API test total increased 12\u219213.",
+      "centralValidation": {
+        "focusedVitest": "1 file / 13 tests passed",
+        "apiNoEmit": "passed",
+        "format": "Prettier passed",
+        "scope": "exact four new claimed paths; git diff --check passed",
+        "boundary": "no network, URLs, provider names, credential values, environment, routes, DB/persistence, configuration, activation or ambient-clock fallback"
+      },
+      "externalAcceptance": "NOT APPLICABLE \u2014 default-disabled source-only leaf; no provider/account/credential/consent/member-data/staging/deployment/member-visible action authorized."
     },
     {
       "id": "OAUTH-003-DEFAULT-DISABLED-STATE-PKCE",
