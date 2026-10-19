@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Cumulative BIZ owner-feedback source matrix PASS: API **1 file / 7**, mobile canonical consumers **2 files / 6**, and API no-emit. Source-only evidence; BIZ-009 release gates are unchanged. |
 | 2026-10-19 | Accepted BIZ approved-owner skip-feedback reader isolation at `78d55d511500d35ba37858cf80437193267f9abd`: API **1 file / 7**, mobile **2 files / 6**, API no-emit, safe projection and exact two-path scope PASS. BIZ-009 release gates remain unchanged. |
 | 2026-10-19 | Accepted FLIGHT-007 at `8205d971ca6f32e750917970fe2cad3826835e36`: focused lifecycle **1 file / 41**, cumulative Flight **5 files / 113**, API no-emit, exact two-path scope, and strict Calendar grammar PASS. This releases only Flight #8 central application ordering; it is not a real provider/venue/participant acceptance result. |
 | 2026-10-19 | Flight parent accountability: `QJATRGk7nUgzDlccMCUcG6` is the sole FLIGHT-001/005 experience coordinator. S9 acknowledged all-new Flight #8 fixture-only source work; Flight #7/#8 are components, not parent completion. |
