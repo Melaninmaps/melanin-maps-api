@@ -2086,6 +2086,39 @@
         "boundary": "explicit NO-GO retained: no OAuth client/configuration, scope/consent action, token exchange/vault implementation, provider call, member data, schema/DB, remote, build/deploy, or activation."
       },
       "externalAcceptance": "NOT APPLICABLE \u2014 decision packet only; no provider/OAuth implementation, pilot, or release is authorized."
+    },
+    {
+      "id": "OAUTH-002-DEFAULT-DISABLED-FAKE-PROVIDER-PREPARATION",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "OAUTH-002",
+      "baseline": "a5e23b3bb61eb7ccb4e587bc555da302c0474fc7",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/calendar-availability/availability-adapter-policy.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/availability-adapter-policy.test.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/authorization-attempt-policy.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/authorization-attempt-policy.test.ts"
+      ],
+      "requiredBehavior": [
+        "All production-facing calendar/OAuth surfaces remain absent and default-disabled.",
+        "Pure fixture-only Google free/busy and Microsoft work/school getSchedule normalization may emit only canonical busy intervals for the existing frozen aggregate evaluator.",
+        "Microsoft personal calendarView is represented only as a conditional fallback descriptor with exact `$select=start,end,showAs`, active-plan max-31-day bound, strict stripping and explicit `requires_separate_consent`; it must not be presented as availability-only permission or enabled.",
+        "Pure authorization-attempt policy validates injected one-time opaque state/PKCE inputs without generating, exchanging, storing, or exposing credentials."
+      ],
+      "constraints": [
+        "Exactly four new allowlisted files; no edits to existing files.",
+        "No route/client/schema/database/token vault/persistence/OAuth client/configuration/consent UI/provider network or call/member data/staging/deployment/activation.",
+        "No imports of HTTP SDKs, fetch, environment variables, or time/random globals.",
+        "No change to SP-002/SP-003/manual availability or any Kinfolk/Map/Directory/Community/Safety path."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/kinfolk/calendar-availability/__tests__/availability-adapter-policy.test.ts src/kinfolk/calendar-availability/__tests__/authorization-attempt-policy.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact four-path scope; git diff --check; static no-network/no-token/no-route/non-disclosure scan"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified four-new-file carrier only; central owner alone integrates."
     }
   ],
   "globalDirectiveDelivery": [
