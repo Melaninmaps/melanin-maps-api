@@ -3,7 +3,9 @@
 **Prepared:** 2026-10-19
 **Decision:** **NOT APPROVED FOR REMOTE PUBLICATION OR DEPLOYMENT.**
 **Scope:** Results of the founder-authorized read-only production release-binding inspection (Authorization A) and the separately authorized one-query schema inspection (Authorization B).
-**Does not authorize:** Git publication, configuration change, deployment, restart, rollback, database proxy creation/use, database mutation/DDL, account or fixture action, browser save, provider call, or production business edit.
+**Does not authorize:** Git publication, configuration change, deployment, restart, rollback, database proxy creation/use, database mutation/DDL, account or fixture action, provider call, or production business edit.
+
+**Subsequent coordinated disposition:** [BIZ-009 Web/API deployment approval packet](BIZ009_WEB_API_DEPLOYMENT_APPROVAL_PACKET_2026-10-19.md) adds the Web-serving surface and rejects direct publication of the 40-commit local ancestry pending a source-only isolated candidate.
 
 This packet supersedes the earlier preparation-only binding status in [BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md](BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md) and [BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md](BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md). It does not change the controlling `BIZ-009` status: **BLOCKED — production acceptance pending**.
 
