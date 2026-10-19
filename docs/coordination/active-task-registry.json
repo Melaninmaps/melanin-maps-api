@@ -3503,7 +3503,7 @@
     {
       "id": "BIZ-003-APPROVED-OWNER-SKIP-FEEDBACK-READ-ISOLATION",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "BIZ-003",
@@ -3544,7 +3544,7 @@
         "exact two-path scope; git diff --check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no real claim approval/owner relationship/DB/runtime/member/release/founder evidence.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 no claim approval/relationship DB case, runtime/browser/device/staging/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_NksWSaogrJnoPmnfJg6JDW1t",
         "file": "BIZ003_APPROVED_OWNER_SKIP_FEEDBACK_READ_ISOLATION_BASE_2026-10-19.tar.gz",
@@ -3555,6 +3555,20 @@
         "at": "2026-10-19T23:30:53Z",
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged exact claim, baseline, and exclusive source-only paths before work."
+      },
+      "sourceCommit": "78d55d511500d35ba37858cf80437193267f9abd",
+      "carrier": {
+        "handoff_id": "hnd_d7zUlstqHFJNpHgjFEt1H4Jx",
+        "file": "BIZ003_APPROVED_OWNER_SKIP_FEEDBACK_READ_ISOLATION_CARRIER_2026-10-19.tar.gz",
+        "sha256": "6f7fe635e166ee181b17f072e139b2a5659fa9da028131ae83d1ce1cae256085",
+        "patch_sha256": "0af351e05d78911daae7b0503dabaeed09e805373e038a924209ff82c9fa96b6"
+      },
+      "centralValidation": {
+        "api_vitest": "1 file / 7 tests PASS",
+        "mobile_vitest": "2 files / 6 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "active approved non-revoked owner-link takes precedence; legacy submittedBy fallback applies only with no active owner link; former submitter receives 404 before feedback select; safe projection and POST unchanged",
+        "scope": "exact two modified paths; git diff --check PASS"
       }
     },
     {
