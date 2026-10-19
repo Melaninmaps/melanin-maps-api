@@ -3435,7 +3435,7 @@
     {
       "id": "FLIGHT-006-NORMALIZED-AVAILABILITY-WINDOW-BOUNDARY",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3480,12 +3480,17 @@
         "file": "FLIGHT006_NORMALIZED_AVAILABILITY_WINDOW_BOUNDARY_BASE_2026-10-19.tar.gz",
         "sha256": "63829ba0a09e377297a3b26fb96570c4110c6350e509989a4fb2487c0bd43ceb",
         "expires_at": "2026-10-20T23:29:57.327Z"
+      },
+      "ownerStartAcknowledgement": {
+        "at": "2026-10-19T23:30:45Z",
+        "channel": "manus-tasks direct reply",
+        "statement": "Owner acknowledged exact claim, baseline, and exclusive source-only paths before work."
       }
     },
     {
       "id": "BIZ-003-APPROVED-OWNER-SKIP-FEEDBACK-READ-ISOLATION",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "BIZ-003",
@@ -3532,6 +3537,11 @@
         "file": "BIZ003_APPROVED_OWNER_SKIP_FEEDBACK_READ_ISOLATION_BASE_2026-10-19.tar.gz",
         "sha256": "7d8401568d73d4aad6a6a600d2656d2f5428a4c462a9cb296ea1ae7699154dcf",
         "expires_at": "2026-10-20T23:29:57.555Z"
+      },
+      "ownerStartAcknowledgement": {
+        "at": "2026-10-19T23:30:53Z",
+        "channel": "manus-tasks direct reply",
+        "statement": "Owner acknowledged exact claim, baseline, and exclusive source-only paths before work."
       }
     }
   ],
