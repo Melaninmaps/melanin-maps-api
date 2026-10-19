@@ -3367,7 +3367,7 @@
     {
       "id": "COMM-001-MOBILE-INBOX-REQUEST-RESPONSE-VALIDATION",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -3411,12 +3411,25 @@
           "artifacts/mobile/__tests__/dm-inbox-request-response-validation.test.ts": null
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic source-only inbox validation.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 no real server response, DB/runtime, notification delivery, timeout/account switch, browser/device/staging/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_edL88Fq82Hoz_6nNdR44W9PX",
         "file": "COMM001_MOBILE_INBOX_RESPONSE_VALIDATION_BASE_2026-10-19.tar.gz",
         "sha256": "b2fa4f3eeba2b8b8490c2e57d1e7402c744f057e59236c9add5e0f25f53a3138",
         "expires_at": "2026-10-20T23:22:27.254Z"
+      },
+      "sourceCommit": "0b96b8cd7be62e5036d20e98fe7184ba46329ade",
+      "carrier": {
+        "handoff_id": "hnd_Zkd1_dSTIkISzTQkc4vdRJ2B",
+        "file": "COMM001_MOBILE_INBOX_REQUEST_RESPONSE_VALIDATION_CARRIER_2026-10-19.tar.gz",
+        "sha256": "d6b019738bce0134f9145058eb9896116cd5574ad308c9d23057531111ab2a37",
+        "patch_sha256": "d6b53671227aba7007f02ebbec0dc280350c9095d7a802a055872db503e6a341"
+      },
+      "centralValidation": {
+        "mobile_vitest": "2 files / 10 tests PASS",
+        "mobile_tsc": "PASS",
+        "semantic": "accept validates parsed matching conversation id and accepted requestStatus before local mutation; decline validates parsed ok:true before removal; malformed/mismatched 2xx retains pending local state and returns false",
+        "scope": "exact hook plus new test; git diff --check PASS"
       }
     }
   ],
