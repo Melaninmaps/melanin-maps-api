@@ -462,7 +462,7 @@ export default function BusinessDashboardScreen() {
       if (!res.ok) { setAnalyticsError("error"); return; }
       const data = await res.json() as AnalyticsData;
       setAnalytics(data);
-      fetch(`${base}/api/kinfolk/skip-feedback`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${base}/api/businesses/mine/skip-feedback`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.ok ? r.json() : null)
         .then((d: { feedback?: { id: string; message: string; createdAt: string }[] } | null) => { if (d?.feedback) setSkipFeedback(d.feedback); })
         .catch(() => {});
