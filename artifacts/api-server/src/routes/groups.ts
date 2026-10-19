@@ -195,16 +195,9 @@ router.post("/groups", async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
 
-    // Tier gate: free users cannot create groups; navigator limited to 2
+    // Navigator has a separate creation-count cap. Free members use the
+    // existing GROUP_MAX_MEMBERS.free member-cap below.
     const tier = await getUserTier(userId);
-    if (tier === "free") {
-      res.status(403).json({
-        error: "Creating groups requires an Explorer+ or higher membership.",
-        code: "TIER_LIMIT_REACHED",
-        upgradeUrl: "/membership",
-      });
-      return;
-    }
     if (tier === "navigator") {
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
@@ -735,7 +728,14 @@ router.post("/groups/:id/join", async (req: Request, res: Response) => {
         .where(eq(groupMembers.userId, userId));
       const limit = joinLimit[joinTier];
       if (count >= limit) {
-        const nextTier = joinTier === "free" ? "Explorer+" : "Navigator";
+        if (joinTier === "free") {
+          res.status(403).json({
+            error: `You can join up to ${limit} Groups at a time. Leave a Group before joining another.`,
+            code: "TIER_LIMIT_REACHED",
+          });
+          return;
+        }
+        const nextTier = "Navigator";
         res.status(403).json({
           error: `You've reached the ${limit}-group limit for your plan. Upgrade to ${nextTier} to join more groups.`,
           code: "TIER_LIMIT_REACHED",

@@ -142,6 +142,50 @@ describe("native Community content-first surface", () => {
     expect(threadSource).toContain("keyboardDismissMode=\"on-drag\"");
   });
 
+  it("supports the free Group create, discover, join, and recovery journey through live Group routes", () => {
+    const discoveryStart = source.indexOf("const loadDiscoverableGroups = useCallback(async () => {");
+    const discoveryEnd = source.indexOf("const [eventsTimeFilter", discoveryStart);
+    const discovery = source.slice(discoveryStart, discoveryEnd);
+    const createStart = source.indexOf("const handleCreateGroup = async () => {");
+    const createEnd = source.indexOf("const onRefresh = () =>", createStart);
+    const create = source.slice(createStart, createEnd);
+    const joinStart = groupDetailSource.indexOf("const handleJoinLeave = async () => {");
+    const joinEnd = groupDetailSource.indexOf("if (isLoading)", joinStart);
+    const join = groupDetailSource.slice(joinStart, joinEnd);
+
+    expect(discoveryStart).toBeGreaterThan(-1);
+    expect(discoveryEnd).toBeGreaterThan(discoveryStart);
+    expect(discovery).toContain("fetch(`${apiBase}/api/groups`");
+    expect(discovery).toContain("(group as Group).isPrivate === false");
+    expect(discovery).toContain("(group as Group).isMember === false");
+    expect(source).toContain('testID="group-discovery"');
+    expect(source).toContain("DISCOVER PUBLIC GROUPS / DESCUBRE GRUPOS PÚBLICOS");
+    expect(source).toContain('key={`discover-${group.id}`}');
+    expect(source).toContain('pathname: "/group/[id]", params: { id: String(group.id) }');
+    expect(source).toContain("const memberGroups = groups.filter((group) => group.isMember === true);");
+
+    expect(createStart).toBeGreaterThan(-1);
+    expect(createEnd).toBeGreaterThan(createStart);
+    expect(create).toContain('if (!res.ok)');
+    expect(create).toContain("const groupId = payload.group?.id;");
+    expect(create).toContain("Couldn’t create Group / No se pudo crear el grupo");
+    expect(create).toContain("Your draft is still here. / Tu borrador sigue aquí.");
+    expect(create.indexOf("if (!res.ok)")).toBeLessThan(create.indexOf("setShowCreateGroup(false)"));
+    expect(create).toContain("Group created / Grupo creado");
+    expect(create).toContain("Open Group / Abrir grupo");
+    expect(create).toContain('pathname: "/group/[id]", params: { id: String(groupId) }');
+    expect(create).toContain("void refetchGroups();");
+
+    expect(groupsHookSource).toContain("type GroupJoinResult");
+    expect(groupsHookSource).toContain("safeGroupJoinError");
+    expect(groupsHookSource).toContain("const payload: unknown = await res.json().catch(() => null);");
+    expect(groupsHookSource).toContain("await fetchGroups();");
+    expect(join).toContain("const result = await join(group.id);");
+    expect(join).toContain("if (result.ok)");
+    expect(join).toContain("Couldn’t join Group / No se pudo unir al grupo");
+    expect(join).toContain("This Group is unchanged. / Este grupo no cambió.");
+  });
+
   it("lets Group administrators manage roles and remove members through protected routes", () => {
     expect(groupDetailSource).toContain("async (memberId: string, role: \"admin\" | \"member\")");
     expect(groupDetailSource).toContain("/api/groups/${group.id}/members/${encodeURIComponent(memberId)}/role");

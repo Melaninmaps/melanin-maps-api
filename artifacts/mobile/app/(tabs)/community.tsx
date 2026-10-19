@@ -303,6 +303,9 @@ export default function CommunityScreen() {
   const [groupCreateAudience, setGroupCreateAudience] = useState<string[]>([]);
   const [groupCreatePrivate, setGroupCreatePrivate] = useState(false);
   const [groupCreateSubmitting, setGroupCreateSubmitting] = useState(false);
+  const [discoverableGroups, setDiscoverableGroups] = useState<Group[]>([]);
+  const [discoverableGroupsLoading, setDiscoverableGroupsLoading] = useState(false);
+  const [discoverableGroupsError, setDiscoverableGroupsError] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
   const feedListRef = useRef<FlatList<CommunityPost> | null>(null);
   const feedRequestInFlightRef = useRef(false);
@@ -361,6 +364,60 @@ export default function CommunityScreen() {
   };
 
   const { groups, isLoading: groupsLoading, error: groupsError, refetch: refetchGroups } = useGroups();
+  const loadDiscoverableGroups = useCallback(async () => {
+    if (!isAuthenticated) {
+      setDiscoverableGroups([]);
+      setDiscoverableGroupsError(null);
+      return;
+    }
+
+    setDiscoverableGroupsLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = getApiBase();
+      if (!token || !apiBase) {
+        setDiscoverableGroups([]);
+        setDiscoverableGroupsError("Public Groups need to reconnect. / Los grupos públicos necesitan reconectarse.");
+        return;
+      }
+      const response = await fetch(`${apiBase}/api/groups`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        setDiscoverableGroups([]);
+        setDiscoverableGroupsError("Public Groups could not refresh right now. / Los grupos públicos no pudieron actualizarse ahora.");
+        return;
+      }
+      const payload = await response.json() as { groups?: unknown };
+      if (!Array.isArray(payload.groups)) {
+        setDiscoverableGroups([]);
+        setDiscoverableGroupsError("Public Groups returned an incomplete response. / Los grupos públicos devolvieron una respuesta incompleta.");
+        return;
+      }
+      // The server applies private and audience eligibility. Keep an explicit
+      // client fence so a malformed or stale response cannot display a private
+      // or already-joined Group in this public discovery list.
+      setDiscoverableGroups(payload.groups.filter((group): group is Group => (
+        Boolean(group)
+        && typeof group === "object"
+        && typeof (group as Group).id === "number"
+        && typeof (group as Group).name === "string"
+        && (group as Group).isPrivate === false
+        && (group as Group).isMember === false
+      )));
+      setDiscoverableGroupsError(null);
+    } catch {
+      setDiscoverableGroups([]);
+      setDiscoverableGroupsError("Public Groups could not refresh right now. / Los grupos públicos no pudieron actualizarse ahora.");
+    } finally {
+      setDiscoverableGroupsLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useFocusEffect(useCallback(() => {
+    void refetchGroups();
+    void loadDiscoverableGroups();
+  }, [loadDiscoverableGroups, refetchGroups]));
   const [eventsTimeFilter, setEventsTimeFilter] = useState("Upcoming");
   const { events, isLoading: eventsLoading, refetch: refetchEvents } = useEvents();
 
@@ -567,7 +624,13 @@ export default function CommunityScreen() {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const apiBase = getApiBase();
-      if (!token || !apiBase) return;
+      if (!token || !apiBase) {
+        Alert.alert(
+          "Couldn’t create Group / No se pudo crear el grupo",
+          "Please reconnect and try again. / Vuelve a conectarte e inténtalo de nuevo.",
+        );
+        return;
+      }
       const res = await fetch(`${apiBase}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -580,25 +643,55 @@ export default function CommunityScreen() {
           audiencePreferences: groupCreateAudience.length > 0 ? groupCreateAudience : undefined,
         }),
       });
-      if (res.ok) {
-        setShowCreateGroup(false);
-        setGroupCreateName("");
-        setGroupCreateDesc("");
-        setGroupCreateCategory("social");
-        setGroupCreateCity("");
-        setGroupCreateAudience([]);
-        setGroupCreatePrivate(false);
-        void refetchGroups();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const payload = await res.json().catch(() => ({})) as { error?: unknown; group?: { id?: unknown } };
+      if (!res.ok) {
+        const safeError = typeof payload.error === "string" && payload.error.trim().length > 0 && payload.error.length <= 240
+          ? payload.error.trim()
+          : "Please review your Group details and try again. / Revisa los detalles del grupo e inténtalo de nuevo.";
+        Alert.alert(
+          "Couldn’t create Group / No se pudo crear el grupo",
+          `${safeError}\n\nYour draft is still here. / Tu borrador sigue aquí.`,
+        );
+        return;
       }
-    } catch {}
-    setGroupCreateSubmitting(false);
+      const groupId = payload.group?.id;
+      if (typeof groupId !== "number" || !Number.isInteger(groupId) || groupId <= 0) {
+        Alert.alert(
+          "Couldn’t open Group / No se pudo abrir el grupo",
+          "Your Group could not be confirmed yet. Your draft is still here. / Tu grupo aún no se pudo confirmar. Tu borrador sigue aquí.",
+        );
+        return;
+      }
+      setShowCreateGroup(false);
+      setGroupCreateName("");
+      setGroupCreateDesc("");
+      setGroupCreateCategory("social");
+      setGroupCreateCity("");
+      setGroupCreateAudience([]);
+      setGroupCreatePrivate(false);
+      void refetchGroups();
+      void loadDiscoverableGroups();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        "Group created / Grupo creado",
+        "Your Group is ready. / Tu grupo está listo.",
+        [{ text: "Open Group / Abrir grupo", onPress: () => router.push({ pathname: "/group/[id]", params: { id: String(groupId) } }) }],
+      );
+    } catch {
+      Alert.alert(
+        "Couldn’t create Group / No se pudo crear el grupo",
+        "Please check your connection and try again. / Revisa tu conexión e inténtalo de nuevo.",
+      );
+    } finally {
+      setGroupCreateSubmitting(false);
+    }
   };
 
   const onRefresh = () => {
     setRefreshing(true);
     void loadPosts({ force: true });
     void refetchGroups();
+    void loadDiscoverableGroups();
     void refetchEvents();
   };
 
@@ -1038,11 +1131,28 @@ export default function CommunityScreen() {
             keyExtractor={(group) => String(group.id)}
             style={{ flex: 1 }}
             contentContainerStyle={[styles.groupsList, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
-            refreshControl={<RefreshControl refreshing={refreshing || groupsLoading} onRefresh={() => void refetchGroups()} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing || groupsLoading || discoverableGroupsLoading} onRefresh={() => { void refetchGroups(); void loadDiscoverableGroups(); }} tintColor={colors.primary} />}
             ListHeaderComponent={
               <View style={styles.myGroupsHeader}>
                 <Text style={[styles.myGroupsTitle, { color: colors.foreground }]}>Your groups</Text>
                 <Text style={[styles.myGroupsDescription, { color: colors.mutedForeground }]}>Only groups you currently belong to appear here.</Text>
+                {isAuthenticated && (
+                  <View testID="group-discovery" style={{ gap: 8, marginTop: 14 }}>
+                    <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>DISCOVER PUBLIC GROUPS / DESCUBRE GRUPOS PÚBLICOS</Text>
+                    <Text style={[styles.myGroupsDescription, { color: colors.mutedForeground }]}>Eligible public Groups are shown here. / Los grupos públicos elegibles se muestran aquí.</Text>
+                    {discoverableGroupsLoading ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : discoverableGroupsError ? (
+                      <Text style={[styles.myGroupsDescription, { color: colors.mutedForeground }]}>{discoverableGroupsError}</Text>
+                    ) : discoverableGroups.map((group) => (
+                      <GroupCard
+                        key={`discover-${group.id}`}
+                        group={group}
+                        onPress={() => router.push({ pathname: "/group/[id]", params: { id: String(group.id) } })}
+                      />
+                    ))}
+                  </View>
+                )}
                 <ScrollView
                   keyboardDismissMode="on-drag"
                   horizontal

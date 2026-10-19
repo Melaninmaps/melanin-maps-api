@@ -431,15 +431,25 @@ export default function GroupDetailScreen() {
       return;
     }
     setJoining(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (group.isMember) {
-      const ok = await leave(group.id);
-      if (ok) setGroup((g) => g ? { ...g, isMember: false, memberCount: Math.max(g.memberCount - 1, 0) } : g);
-    } else {
-      const ok = await join(group.id);
-      if (ok) setGroup((g) => g ? { ...g, isMember: true, memberCount: g.memberCount + 1 } : g);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      if (group.isMember) {
+        const ok = await leave(group.id);
+        if (ok) setGroup((g) => g ? { ...g, isMember: false, memberCount: Math.max(g.memberCount - 1, 0) } : g);
+      } else {
+        const result = await join(group.id);
+        if (result.ok) {
+          setGroup((g) => g ? { ...g, isMember: true, memberCount: g.memberCount + 1 } : g);
+        } else {
+          Alert.alert(
+            "Couldn’t join Group / No se pudo unir al grupo",
+            `${result.error}\n\nThis Group is unchanged. / Este grupo no cambió.`,
+          );
+        }
+      }
+    } finally {
+      setJoining(false);
     }
-    setJoining(false);
   };
 
   if (isLoading) {

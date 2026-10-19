@@ -30,6 +30,18 @@ export interface Group {
   createdBy: string | null;
 }
 
+type GroupJoinResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+function safeGroupJoinError(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== "object") return fallback;
+  const candidate = (payload as { error?: unknown }).error;
+  if (typeof candidate !== "string") return fallback;
+  const message = candidate.trim();
+  return message.length > 0 && message.length <= 240 && !/[\r\n]/.test(message) ? message : fallback;
+}
+
 export function useGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,23 +95,31 @@ export function useGroups() {
 
   useEffect(() => { void Promise.resolve().then(fetchGroups); }, [fetchGroups]);
 
-  const join = useCallback(async (groupId: number) => {
+  const join = useCallback(async (groupId: number): Promise<GroupJoinResult> => {
     const apiBase = getApiBase();
     const token = await getToken();
-    if (!apiBase || !token) return false;
+    if (!apiBase || !token) {
+      return { ok: false, error: "Please sign in again before joining this Group." };
+    }
     try {
       const res = await fetch(`${apiBase}/api/groups/${groupId}/join`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        // My Groups contains only active memberships; reload rather than
-        // inventing a catalog record locally after a direct-detail join.
-        await fetchGroups();
-        return true;
+      if (!res.ok) {
+        const payload: unknown = await res.json().catch(() => null);
+        return {
+          ok: false,
+          error: safeGroupJoinError(payload, "This Group could not be joined right now. Please try again."),
+        };
       }
-    } catch { /* ignore */ }
-    return false;
+      // My Groups contains only active memberships; reload rather than
+      // inventing a catalog record locally after a direct-detail join.
+      await fetchGroups();
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "This Group could not be joined right now. Please check your connection and try again." };
+    }
   }, [fetchGroups]);
 
   const leave = useCallback(async (groupId: number) => {
