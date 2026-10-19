@@ -113,6 +113,48 @@ function timestamp(value: unknown): Timestamp | null {
   return Number.isSafeInteger(epochMs) ? { text: value, epochMs } : null;
 }
 
+/**
+ * Shared arrival projections originate from the Flight normalization chain. At
+ * this consumption boundary only, UTC seconds may carry zero to three fraction
+ * digits and are converted to the canonical millisecond representation.
+ */
+function sharedArrivalTimestamp(value: unknown): Timestamp | null {
+  if (typeof value !== "string" || value.length < 20 || value.length > 24) {
+    return null;
+  }
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/.exec(
+      value,
+    );
+  if (!match) return null;
+
+  const [year, month, day, hour, minute, second] = match
+    .slice(1, 7)
+    .map(Number);
+  const millisecond = Number((match[7] ?? "").padEnd(3, "0"));
+  if (
+    year! < 1 ||
+    year! > 9_999 ||
+    month! < 1 ||
+    month! > 12 ||
+    day! < 1 ||
+    day! > daysInMonth(year!, month!) ||
+    hour! > 23 ||
+    minute! > 59 ||
+    second! > 59 ||
+    millisecond > 999
+  ) {
+    return null;
+  }
+
+  const text = `${pad(year!, 4)}-${pad(month!, 2)}-${pad(day!, 2)}T${pad(
+    hour!,
+    2,
+  )}:${pad(minute!, 2)}:${pad(second!, 2)}.${pad(millisecond, 3)}Z`;
+  const epochMs = Date.parse(text);
+  return Number.isSafeInteger(epochMs) ? { text, epochMs } : null;
+}
+
 function pad(value: number, size: number): string {
   return String(value).padStart(size, "0");
 }
@@ -299,7 +341,7 @@ function sharedArrivalEpoch(value: unknown): number | null {
     arrival.status === "en_route" ? ["estimatedAt"] : ["actualAt"],
   );
   if (!projected) return null;
-  const time = timestamp(
+  const time = sharedArrivalTimestamp(
     arrival.status === "en_route" ? projected.estimatedAt : projected.actualAt,
   );
   return time?.epochMs ?? null;

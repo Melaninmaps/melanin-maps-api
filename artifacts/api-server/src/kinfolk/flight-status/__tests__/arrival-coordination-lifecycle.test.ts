@@ -6,6 +6,7 @@ import type {
   CalendarAvailabilityResult,
   CalendarAvailabilityWindow,
 } from "../../calendar-availability/contracts";
+import { normalizeGoogleFreeBusy } from "../../calendar-availability/normalizers";
 import type { ReciprocalArrivalCoordinationIntent } from "../arrival-coordination-contracts";
 import {
   ARRIVAL_COORDINATION_AVAILABILITY_PERMISSION_PURPOSE,
@@ -15,6 +16,7 @@ import {
 } from "../arrival-coordination-lifecycle-contracts";
 import { resolveSimulatedArrivalMeetingTime } from "../arrival-coordination-lifecycle";
 import type { NormalizedFlightStatus } from "../contracts";
+import { normalizeFlightStatusPayload } from "../normalizers";
 import {
   FLIGHT_ARRIVAL_COORDINATION_PURPOSE,
   FLIGHT_ARRIVAL_COORDINATION_SHARING_VERSION,
@@ -191,6 +193,110 @@ describe("simulated arrival meeting-time lifecycle", () => {
       startAt: "2026-10-19T13:19:00.000Z",
       endAt: "2026-10-19T13:49:00.000Z",
     });
+  });
+
+  it.each([
+    [
+      "no fraction",
+      "2026-10-19T13:15:00Z",
+      "2026-10-19T11:59:30Z",
+      "2026-10-19T13:15:00.000Z",
+      "2026-10-19T13:45:00.000Z",
+    ],
+    [
+      "one fractional digit",
+      "2026-10-19T13:15:00.1Z",
+      "2026-10-19T11:59:30.1Z",
+      "2026-10-19T13:15:00.100Z",
+      "2026-10-19T13:45:00.100Z",
+    ],
+    [
+      "two fractional digits",
+      "2026-10-19T13:15:00.12Z",
+      "2026-10-19T11:59:30.12Z",
+      "2026-10-19T13:15:00.120Z",
+      "2026-10-19T13:45:00.120Z",
+    ],
+  ])(
+    "composes normalized flight timestamps with %s into canonical meeting times",
+    (
+      _label,
+      arrivalTimestamp,
+      observedTimestamp,
+      expectedStartAt,
+      expectedEndAt,
+    ) => {
+      const normalizedStatus = normalizeFlightStatusPayload({
+        state: "en_route",
+        arrival: { estimatedAt: arrivalTimestamp },
+        observedAt: observedTimestamp,
+      });
+
+      expect(normalizedStatus).not.toBeNull();
+      expect(
+        resolveSimulatedArrivalMeetingTime(
+          input({
+            normalizedStatus,
+            ownerAvailabilityPermission: availabilityPermission(
+              ownerId,
+              recipientId,
+              { availability: known() },
+            ),
+            recipientAvailabilityPermission: availabilityPermission(
+              recipientId,
+              ownerId,
+              { availability: known() },
+            ),
+          }),
+        ),
+      ).toEqual({ startAt: expectedStartAt, endAt: expectedEndAt });
+    },
+  );
+
+  it.each([
+    "2026-10-19T13:15:00.1234Z",
+    "2026-10-19T13:15:00+00:00",
+    "2026-02-30T13:15:00Z",
+  ])(
+    "fails closed for malformed shared arrival timestamp %s",
+    (arrivalTimestamp) => {
+      const normalizedStatus = normalizeFlightStatusPayload({
+        state: "en_route",
+        arrival: { estimatedAt: arrivalTimestamp },
+        observedAt: "2026-10-19T11:59:30.000Z",
+      });
+
+      expect(
+        resolveSimulatedArrivalMeetingTime(
+          input({
+            normalizedStatus,
+            ownerAvailabilityPermission: availabilityPermission(
+              ownerId,
+              recipientId,
+              {
+                availability: known(),
+              },
+            ),
+            recipientAvailabilityPermission: availabilityPermission(
+              recipientId,
+              ownerId,
+              { availability: known() },
+            ),
+          }),
+        ),
+      ).toEqual(unavailable);
+    },
+  );
+
+  it("keeps Calendar availability windows on strict millisecond UTC grammar", () => {
+    for (const startAt of ["2026-10-19T13:00:00Z", "2026-10-19T13:00:00.1Z"]) {
+      expect(
+        normalizeGoogleFreeBusy(
+          {},
+          { startAt, endAt: "2026-10-19T15:00:00.000Z" },
+        ),
+      ).toEqual({ kind: "unknown", code: "invalid-window" });
+    }
   });
 
   it("admits the exact 31-day normalized availability boundary", () => {
