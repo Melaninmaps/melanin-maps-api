@@ -3076,7 +3076,13 @@
           "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts": "6ffd17373e426b9a81152ec2665b0762a4f2b14b7dfc9580473c5579c39eaaac"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only pending-DM privacy repair."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only pending-DM privacy repair.",
+      "baseTransfer": {
+        "handoff_id": "hnd_2axWoL1gaKUsePXcZthDQEeY",
+        "file": "COMM001_DM_PENDING_MESSAGE_READ_GUARD_BASE_2026-10-19.tar.gz",
+        "sha256": "466de67a83c82ce662ec3c4bc1b43541b0142f4b3d65dc6ba5feccb9941d64db",
+        "expires_at": "2026-10-20T23:05:42.929Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
