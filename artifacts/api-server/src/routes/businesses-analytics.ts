@@ -1,8 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, savedPlacesTable, reviewsTable, businessProfileViewsTable, businessSkipFeedbackTable, businessClickEventsTable } from "@workspace/db";
 import { and, avg, count, eq, gt, inArray, ne, sql } from "drizzle-orm";
-import { requireMembership } from "../middleware/requireMembership";
-import { storage } from "../storage";
+import { getUserTier, requireMembership, TIER_RANK } from "../middleware/requireMembership";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -212,11 +211,9 @@ router.get(
     try {
       const userId = (req as any).user?.id as string;
 
-      const user = await storage.getUser(userId);
+      const effectiveTier = await getUserTier(userId);
       const tier: "navigator" | "trailblazer" =
-        user?.memberType === "trailblazer" ||
-        user?.memberType === "founding" ||
-        user?.memberType === "beta"
+        TIER_RANK[effectiveTier] >= TIER_RANK.trailblazer
           ? "trailblazer"
           : "navigator";
 
