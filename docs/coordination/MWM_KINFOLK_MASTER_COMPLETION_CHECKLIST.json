@@ -1306,6 +1306,72 @@
         "BIZ-009 candidate isolation completed locally, 2026-10-19: 046eb767326c6d87d9dc41b29572eb26c759b9a4 parented by 8fd6989bea317f53dfa6f170c2c5054cf0de74a4; API 2/19, Web 2/11, both no-emit and combined build passed",
         "docs/coordination/BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md"
       ]
+    },
+    {
+      "id": "CR-01",
+      "feature_area": "Safety",
+      "platform": "API",
+      "founder_requirement": "Member-controlled crisis guidance uses only verified jurisdictional resources when a sufficiently reliable city/state is explicitly present; it never dispatches, contacts anyone, exposes member location, promises human monitoring, or infers a crisis from memory or background data.",
+      "acceptance_criteria": "Focused pure policy tests prove explicit-current-turn gating; exact city+state jurisdiction resolution; official HTTPS reviewed source/freshness/cross-city controls; privacy/no-location output; and safe unavailable fallback. Source success does not authorize runtime fetching, feature enablement, legal advice, monitoring, notification, deployment, or release.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Read-only trace at authority `78a17e1d647daeec7c9814330910c94ab08f142c` found the narrow existing two-file `city-safety-briefing-v1` pure policy/test seam. It already uses explicit turns, exact reviewed city+state \u2192 city ID matching, source-attributed official HTTPS registry entries, bounded freshness and truthful unavailable fallback.",
+      "staging_evidence": "MISSING EVIDENCE \u2014 no authorized deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); yINBiovLIPiFnyQCFfSycn (active CR-01 carrier)",
+      "dependencies_or_blockers": "Legal/compliance review remains a release gate. No client surface consumes the policy and `routes/kinfolk.ts` is shared/frozen; source expansion, sources, route/UI, location/contact/notification/queue/provider/runtime work require separate authorization.",
+      "next_action": "Receive and centrally validate the exact two-path CR-01 carrier; retain default-off route gating and all non-dispatch/non-contact/non-location boundaries.",
+      "founder_approval_needed": "No new founder decision for the bounded source contract; yes for a source registry expansion, flag enablement, runtime fetch, legal/compliance approval, notification/contact/location action, deployment, or member-visible release.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "Founder CR-01 directive, 2026-10-19",
+        "CR-01 read-only source trace, 2026-10-19"
+      ]
+    },
+    {
+      "id": "FLIGHT-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Research/source-readiness",
+      "founder_requirement": "A future flight-provider decision must compare current official provider access constraints and demonstrate a provider-neutral, consented, fail-closed source contract before any partner selection, credential, call, shopping, booking, payment, or member-data transfer.",
+      "acceptance_criteria": "Decision packet names official comparison evidence, existing private-flight/status boundaries, exact missing provider-neutral contract, no-consent/no-enable/no-credential fallback, and all separate approval gates. It does not select, activate, or contact a provider.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Bounded external official research and read-only source trace completed: current source is encrypted owner-scoped private flight context plus optional direct AviationStack status only, not provider-neutral shopping/booking. Focused source-only flight policy/routes 2 files/11 tests and mobile context 1 file/2 tests passed without provider call.",
+      "staging_evidence": "MISSING EVIDENCE \u2014 no authorized deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); M7uJoQ8nKsaPvoHdWtU0E9 (active decision-packet owner)",
+      "dependencies_or_blockers": "Missing approved FlightOfferProvider request/result schema; separately versioned revocable partner-disclosure consent; disabled-by-default provider registry/capability state; sanitized errors/fallback; injected-fake-provider tests. No provider selection/credential/action is authorized.",
+      "next_action": "Return a single local decision packet for central review; it must preserve NO-GO and identify the exact future approval needed before a code claim.",
+      "founder_approval_needed": "Yes \u2014 future contract approval, provider selection/access/credentials, any provider call, member data transfer, paid plan, deployment or release require separate founder approval.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "/home/ubuntu/jobs/job_mLjj4faK/flight-readiness-trace.md",
+        "Duffel, Travelport, and Amadeus official documentation cited therein"
+      ]
+    },
+    {
+      "id": "OAUTH-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Research/source-readiness",
+      "founder_requirement": "A future availability-first Google/Microsoft Calendar connection must use exact least-privilege delegated scopes, member consent, owner isolation, token security/rotation/revocation, normalized busy-only output, and a closed pilot/kill-switch plan before any OAuth client, connection, sync, or member-data transfer.",
+      "acceptance_criteria": "Decision packet preserves NO-GO and names exact consent/callback/PKCE/token-vault/revocation/provider-filter/pilot contracts. It does not configure OAuth, create a client, request scopes, exchange tokens, connect a calendar, or activate a pilot.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Bounded official Google/Microsoft research and read-only source trace completed: existing availability policy is manual, encrypted/owner-scoped and aggregate-only; it explicitly prohibits external calendar connection/sync. No OAuth adapter, connection state, token vault, callback, revocation or provider-filter contract exists.",
+      "staging_evidence": "MISSING EVIDENCE \u2014 no authorized deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); IIUhb1wR0gfLjzmdLmEovt (active decision-packet owner)",
+      "dependencies_or_blockers": "Approved Calendar Availability Connection Contract v1 is missing: sole purpose/output filter, delegated consent state, callback state/PKCE, encrypted vault/rotation, disconnect/revocation deletion, stripping adapter, tests, closed-pilot/kill-switch and authorization. Existing SP-002/SP-003 claims prohibit calendar OAuth/provider work.",
+      "next_action": "Return a single local decision packet for central review; retain NO-GO and identify exact future contract/approval required before any source implementation claim.",
+      "founder_approval_needed": "Yes \u2014 future contract, OAuth client/configuration, scope/consent, token/member data handling, provider call, pilot, deployment or release require separate founder approval.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "/home/ubuntu/jobs/job_JXadEKQO/calendar-oauth-readiness-trace.md",
+        "Google Calendar/OAuth and Microsoft Graph official documentation cited therein"
+      ]
     }
   ],
   "dependency_register": [
@@ -1678,6 +1744,14 @@
     {
       "date": "2026-10-19",
       "event": "KMEM-005 official-resource mobile safe-handoff carrier centrally source-integrated locally at cfa83f24ce19a05d8107b5e8c9bf0207196a44e0: mobile 1/2 and no-emit passed; no runtime/device/member acceptance."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Added permanent CR-01 at 78a17e1d647daeec7c9814330910c94ab08f142c; P0 two-path member-controlled city crisis-guidance carrier assigned to y. Source-only; route/client/runtime/location/contact/notification/legal-release boundaries remain separate."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Added FLIGHT-001 and OAUTH-001 decision-only NO-GO records. Separate owners will prepare official-source readiness packets; no provider/OAuth product implementation, access, activation or member data action is authorized."
     }
   ],
   "evidence_gaps": [
@@ -1691,11 +1765,11 @@
   ],
   "dashboard_counts": {
     "label": "PROVISIONAL \u2014 original 54 baseline IDs are immutable; added IDs are bounded evidence-based additions, not a complete founder-vision count.",
-    "unique_requirement_ids": 58,
+    "unique_requirement_ids": 61,
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 9,
+      "IN DEVELOPMENT": 12,
       "NOT STARTED": 10,
       "SOURCE INTEGRATED": 17
     },
@@ -1706,12 +1780,12 @@
       "Kinfolk conversation/discovery": 2,
       "Kinfolk memory/voice/images/tools": 5,
       "Community/social": 5,
-      "Safety": 3,
+      "Safety": 4,
       "Business-owner dashboard": 9,
       "Founder/Admin dashboard": 2,
       "Memberships/payments/entitlements": 11,
-      "Integrations/dependencies": 10,
-      "Web/iOS/Android/release readiness": 3
+      "Web/iOS/Android/release readiness": 3,
+      "Integrations/dependencies": 12
     },
     "unavailable_evidence_classes": [
       "Complete historical requirement universe and all historical task records/timelines/outputs are not among the permitted evidence files.",

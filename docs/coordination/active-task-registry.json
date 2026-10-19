@@ -1934,6 +1934,109 @@
         "integrity": "outer/internal/base/result hashes plus clean reconstruction verified",
         "boundary": "existing shared safeLinking openExternalUrl provides URL normalization, canOpenURL and visible unavailable recovery; resource fetch/auth/q, telephone, opportunity, metadata/trust, API/transit-alias and AI flows preserved"
       }
+    },
+    {
+      "id": "CR-01-MEMBER-CONTROLLED-CITY-CRISIS-GUIDANCE",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "CR-01",
+      "baseline": "78a17e1d647daeec7c9814330910c94ab08f142c",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/city-safety-briefing-v1.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/city-safety-briefing-v1.test.ts"
+      ],
+      "sourceBase": {
+        "authority": "78a17e1d647daeec7c9814330910c94ab08f142c",
+        "paths": {
+          "artifacts/api-server/src/kinfolk/city-safety-briefing-v1.ts": "d89a9aeeef1ab716ff7e4a48587563947f7462e6c467fd78958be30e3feff011",
+          "artifacts/api-server/src/kinfolk/__tests__/city-safety-briefing-v1.test.ts": "4ff103cbd09f1c83181f5d6e8f9d92a96ad060227bb53a265a02eaa2911efc9a"
+        },
+        "readOnlyDependencies": [
+          "artifacts/api-server/src/routes/kinfolk.ts"
+        ]
+      },
+      "requiredBehavior": [
+        "Explicit current-turn safety/transit/immigration request only.",
+        "Exact reviewed city+state jurisdiction only; no city-only/state-only/coordinate/member-location inference.",
+        "Only official HTTPS source-attributed reviewed resources/evidence inside existing freshness controls.",
+        "Safe unavailable/link-only output on timeout/non-OK/unknown/expired/cross-city/unextractable evidence."
+      ],
+      "constraints": [
+        "No routes/client/source-registry/schema/migration/network/runtime/provider action.",
+        "No dispatch/contact/notification/push/email/SMS/location-share/persistent location/review queue/human monitoring or safety/personal-risk claim.",
+        "Do not edit shared `routes/kinfolk.ts` or enable the feature flag."
+      ],
+      "validationPlan": [
+        "API Vitest: city-safety-briefing-v1.test.ts only with injected time/mocked fetch; no real network.",
+        "API tsc -p tsconfig.json --noEmit, exact two-path scope and git diff --check."
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-path carrier only; central owner alone may integrate and legal/compliance/release remain separate."
+    },
+    {
+      "id": "FLIGHT-001-PROVIDER-NEUTRAL-READINESS-PACKET",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-001",
+      "baseline": "78a17e1d647daeec7c9814330910c94ab08f142c",
+      "paths": [
+        "docs/coordination/FLIGHT_PROVIDER_READINESS_DECISION_PACKET_2026-10-19.md"
+      ],
+      "sourceBase": {
+        "authority": "78a17e1d647daeec7c9814330910c94ab08f142c",
+        "readOnlyEvidence": [
+          "artifacts/api-server/src/routes/travel-flights.ts",
+          "artifacts/api-server/src/kinfolk/trip-flight-policy.ts",
+          "artifacts/api-server/src/routes/kinfolk-trip-flights.ts",
+          "/home/ubuntu/jobs/job_mLjj4faK/flight-readiness-trace.md"
+        ]
+      },
+      "requiredBehavior": [
+        "Produce a decision-ready official provider comparison and current private-flight/status readiness summary.",
+        "Retain a NO-GO: state the exact provider-neutral contract missing before code/partner work."
+      ],
+      "constraints": [
+        "Documentation evidence only; no product source change, provider selection/access/credentials/call, member data, payment, schema/DB, remote, deployment, or activation."
+      ],
+      "validationPlan": [
+        "One-document path scope; all official citations link to the completed report sources; no unsupported provider capability claim."
+      ],
+      "carrierDisposition": "Return one uncommitted, local decision-packet document only for central review; not a provider implementation or authorization."
+    },
+    {
+      "id": "OAUTH-001-AVAILABILITY-FIRST-READINESS-PACKET",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "OAUTH-001",
+      "baseline": "78a17e1d647daeec7c9814330910c94ab08f142c",
+      "paths": [
+        "docs/coordination/CALENDAR_OAUTH_AVAILABILITY_READINESS_DECISION_PACKET_2026-10-19.md"
+      ],
+      "sourceBase": {
+        "authority": "78a17e1d647daeec7c9814330910c94ab08f142c",
+        "readOnlyEvidence": [
+          "artifacts/api-server/src/kinfolk/shared-plans/free-busy-availability.ts",
+          "artifacts/api-server/src/kinfolk/private-availability-blocks-policy.ts",
+          "artifacts/api-server/src/routes/kinfolk-private-availability-blocks.ts",
+          "/home/ubuntu/jobs/job_JXadEKQO/calendar-oauth-readiness-trace.md"
+        ]
+      },
+      "requiredBehavior": [
+        "Produce an exact Google/Microsoft availability-first readiness packet with least-privilege delegated scope alternatives, consent, isolation, token lifecycle/revocation/filtering and closed pilot/kill-switch requirements.",
+        "Retain a NO-GO until the missing Calendar Availability Connection Contract is separately approved."
+      ],
+      "constraints": [
+        "Documentation evidence only; no product source change, OAuth client/configuration, token/scope/consent action, member data, provider call, schema/DB, remote, deployment, or activation."
+      ],
+      "validationPlan": [
+        "One-document path scope; official citations must be grounded in the completed trace; no claim of client/pilot readiness."
+      ],
+      "carrierDisposition": "Return one uncommitted, local decision-packet document only for central review; not an OAuth implementation or authorization."
     }
   ],
   "globalDirectiveDelivery": [
