@@ -21,7 +21,7 @@ const MEDICATION_RE =
   /\b(?:medication|medicine|prescription|dose|dosage|side effect|drug interaction|interact(?:ion|s)?|missed dose|pharmacist)\b/i;
 
 const CARE_NAVIGATION_RE =
-  /\b(?:where\s+can\s+i\s+find|find\s+(?:me\s+)?|help\s+me\s+find|show\s+me|need\s+(?:a\s+)?|looking\s+for|appointment|seen\s+by|see\s+(?:a\s+)?)\b[\s\S]{0,80}\b(?:doctor|clinician|physician|specialist|hospital|clinic|primary\s+care|urgent\s+care|ob[\s/-]?gyn|gynecolog(?:ist|y)|breast\s+specialist|diagnostic\s+(?:imaging|mammogram)|oncolog(?:ist|y)|dermatolog(?:ist|y)|pharmacist|dentist|dental|pediatric\s+dentist)\b/i;
+  /\b(?:where\s+(?:can\s+i\s+find|should\s+i\s+go|is\s+(?:the\s+)?nearest)|can\s+you\s+recommend|find\s+(?:me\s+)?|help\s+me\s+find|show\s+me|need\s+(?:a\s+)?|looking\s+for|appointment|seen\s+by|see\s+(?:a\s+)?)\b[\s\S]{0,80}\b(?:doctor|clinician|physician|specialist|hospital|clinic|primary\s+care|urgent\s+care|ob[\s/-]?gyn|gynecolog(?:ist|y)|breast\s+specialist|diagnostic\s+(?:imaging|mammogram)|oncolog(?:ist|y)|dermatolog(?:ist|y)|pharmacist|dentist|dental|pediatric\s+dentist)\b/i;
 const PHARMACY_NAVIGATION_RE = /\b(?:pharmacy|pharmacist)\b/i;
 
 const PEDIATRIC_DENTAL_NAVIGATION_RE =

@@ -66,6 +66,28 @@ describe("qualified care override", () => {
     expect(override.promptBlock).toContain("generic clinic, medical spa, or ordinary directory listing");
   });
 
+  it.each([
+    "Where should I go for urgent care?",
+    "Can you recommend a hospital near me?",
+    "Where is the nearest hospital?",
+  ])("routes direct qualified-care navigation: %s", (message) => {
+    const override = buildHealthCareOverride({
+      message,
+      intentClass: "medical_health",
+    });
+
+    expect(isHealthCareNavigationRequest(message)).toBe(true);
+    expect(override).toMatchObject({
+      applies: true,
+      suppressesGeneralBusinessCatalog: true,
+    });
+    expect(override.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: "HRSA" }),
+      expect.objectContaining({ source: "CMS Medicare" }),
+    ]));
+    expect(override.promptBlock).toContain("Do not output an ordinary MWM business card");
+  });
+
   it("recognizes qualified-care navigation before an ordinary nearby-business route can use a private origin", () => {
     expect(isHealthCareNavigationRequest("Find a clinic near Mom's house.")).toBe(true);
     expect(isPrivateOriginCareRestrictedRequest("Show me a pharmacy near work.")).toBe(true);
@@ -122,6 +144,16 @@ describe("qualified care override", () => {
       suppressesGeneralBusinessCatalog: false,
       promptBlock: "",
       sources: [],
+    });
+
+    expect(
+      buildHealthCareOverride({
+        message: "Can you recommend a hospital near me?",
+        intentClass: "business_discovery",
+      }),
+    ).toMatchObject({
+      applies: false,
+      suppressesGeneralBusinessCatalog: false,
     });
   });
 });
