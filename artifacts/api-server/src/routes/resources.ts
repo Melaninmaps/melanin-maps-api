@@ -67,13 +67,17 @@ router.get("/resources", async (req: Request, res: Response) => {
     if (city) conditions.push(or(eq(resourcesTable.isNational, true), ilike(resourcesTable.city, `%${city}%`))!);
     if (q) {
       const term = `%${q.toLowerCase()}%`;
+      const literalMatch = or(
+        ilike(resourcesTable.title, term),
+        ilike(resourcesTable.description, term),
+        ilike(resourcesTable.organization, term),
+        sql`${resourcesTable.keywords}::text ILIKE ${term}`,
+      )!;
+      const hasPublicTransitTerm = /\b(?:transit|public transport|bus|train|subway)\b/i.test(q);
       conditions.push(
-        or(
-          ilike(resourcesTable.title, term),
-          ilike(resourcesTable.description, term),
-          ilike(resourcesTable.organization, term),
-          sql`${resourcesTable.keywords}::text ILIKE ${term}`,
-        )!,
+        hasPublicTransitTerm
+          ? or(literalMatch, sql`${resourcesTable.keywords}::text ILIKE ${"%transportation%"}`)!
+          : literalMatch,
       );
     }
 

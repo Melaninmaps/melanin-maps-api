@@ -39,4 +39,31 @@ describe("in-app resource provider contract", () => {
     expect(resourcesScreen).toContain("Opportunities could not be loaded");
     expect(resourcesScreen).toContain("No opportunities yet");
   });
+
+  it("adds only the bounded public-transit alias to literal public resource search", () => {
+    const browseResourcesRoute = api.slice(
+      api.indexOf('// ── GET /resources — browse curated resources'),
+      api.indexOf('// ── POST /resources/:id/report'),
+    );
+    const queryBlock = browseResourcesRoute.slice(
+      browseResourcesRoute.indexOf('if (q) {'),
+      browseResourcesRoute.indexOf('const [resources, countRow]'),
+    );
+    const publicTransitTerms = ["transit", "public transport", "bus", "train", "subway"];
+    const publicTransitMatcher = /\b(?:transit|public transport|bus|train|subway)\b/i;
+
+    expect(queryBlock).toContain('const term = `%${q.toLowerCase()}%`;');
+    expect(queryBlock).toContain('ilike(resourcesTable.title, term)');
+    expect(queryBlock).toContain('ilike(resourcesTable.description, term)');
+    expect(queryBlock).toContain('ilike(resourcesTable.organization, term)');
+    expect(queryBlock).toContain('sql`${resourcesTable.keywords}::text ILIKE ${term}`');
+    expect(queryBlock).toContain('const hasPublicTransitTerm = /\\b(?:transit|public transport|bus|train|subway)\\b/i.test(q);');
+    expect(queryBlock).toContain('sql`${resourcesTable.keywords}::text ILIKE ${"%transportation%"}`');
+    expect(queryBlock).toContain('? or(literalMatch, sql`${resourcesTable.keywords}::text ILIKE ${"%transportation%"}`)!');
+    for (const term of publicTransitTerms) expect(publicTransitMatcher.test(term)).toBe(true);
+    for (const nonTransitTerm of ["rideshare", "ride", "directions", "nearby", "travel", "location", "booking"]) {
+      expect(publicTransitMatcher.test(nonTransitTerm)).toBe(false);
+    }
+    expect(queryBlock).not.toMatch(/rideshare|directions|nearby|booking|fare|eta|status|openai|fetch|provider/i);
+  });
 });
