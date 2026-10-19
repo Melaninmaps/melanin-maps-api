@@ -1402,6 +1402,35 @@
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is a source-only public-transit query-alias repair; it does not prove seeded data, runtime search results, member-visible behavior, or broader KMEM-005 completion."
+    },
+    {
+      "id": "MEM-D6-PROFILE-READ-TRIAL-MUTATION-REMOVAL",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "MEM-D6",
+      "baseline": "1122e6386d377a9ce07509190a71428c339b2c0e",
+      "paths": [
+        "artifacts/api-server/src/routes/users.ts",
+        "artifacts/api-server/src/__tests__/private-membership-profile-contract.test.ts"
+      ],
+      "requiredBehavior": [
+        "Remove only the automatic 90-day `trialEndsAt` write from authenticated `GET /users/me`; profile reads must not allocate, extend, reset, infer, or mutate a trial/grant.",
+        "Retain authentication, existing user lookup/404, existing safe-profile response shape and redaction, and preservation of an already-stored explicit `trialEndsAt` value in the read response.",
+        "Do not change `GET /users/me/membership-status`, canonical effective tier resolution, existing explicit entitlement/grant records, founding/tester/business grants, checkout retirement, providers, catalog, durations, or any member/client policy."
+      ],
+      "constraints": [
+        "No new cohort grant, trial allocation endpoint, member-type mutation, schema/migration, startup writer, database execution, provider/payment action, client/mobile change, runtime fixture/account action, or external acceptance.",
+        "The test must slice only the `GET /users/me` handler and prove no profile-read `db.update`, `Date.now`, 90-day calculation, or automatic trial text remains while existing safe-redaction/lookup behavior remains.",
+        "No remote Git, staging/deployment, database/provider/browser/device action, activation, or release claim."
+      ],
+      "validationPlan": [
+        "Focused Vitest: src/__tests__/private-membership-profile-contract.test.ts.",
+        "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit.",
+        "Exact two-path scope and git diff --check."
+      ],
+      "carrierDisposition": "Return an uncommitted hash-verified two-path review carrier only; central owner alone may integrate or update status."
     }
   ]
 }

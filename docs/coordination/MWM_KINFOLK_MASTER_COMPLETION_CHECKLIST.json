@@ -783,14 +783,14 @@
       "founder_requirement": "D6 implement approved six/three/one-month cohort grants with no auto-conversion and eliminate generic profile-read trials.",
       "acceptance_criteria": "Explicit grant has cohort/eligibility/start/end/notice/exception audit; expiry falls to other valid access/free core and never bills; generic 90-day profile read is replaced.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Audit Executive Summary/H2/I/J6; D6 reconciliation current-authority test absent.",
+      "source_evidence": "Audit Executive Summary/H2/I/J6; D6 reconciliation current-authority test absent. Exclusive P1 local source-only claim `MEM-D6-PROFILE-READ-TRIAL-MUTATION-REMOVAL` issued at authority `1122e6386d377a9ce07509190a71428c339b2c0e` to task `yINBiovLIPiFnyQCFfSycn` for the confirmed `GET /users/me` automatic 90-day `trialEndsAt` database write. Scope is removal of that profile-read mutation only. Existing explicit grants/trial values and effective entitlement resolution remain untouched; no new cohort, duration, allocation, provider/payment, schema, startup, runtime, client or external action is authorized.",
       "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Entitlement owner",
-      "dependencies_or_blockers": "MISSING EVIDENCE — authority implementation, cohort acceptance and operational/member validation.",
-      "next_action": "Review profile-read trial and prepare smallest explicit cohort grant/test slice.",
+      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn (exclusive no-auto-trial carrier implementation); QJATRGk7nUgzDlccMCUcG6 (central integration)",
+      "dependencies_or_blockers": "MISSING EVIDENCE — carrier review/full-authority validation; future explicit cohort grants and runtime/member acceptance remain separately scoped. No profile-read allocation is authorized.",
+      "next_action": "Assigned owner returns only the hash-verified two-path profile-read trial-mutation removal carrier. Central owner validates and may integrate it; do not add an explicit cohort grant or broaden into membership policy.",
       "founder_approval_needed": "No new duration decision; later release authorization.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1630,6 +1630,10 @@
     {
       "date": "2026-10-19",
       "event": "KMEM-005 two-path public-transit resource-query alias integration `1223344b750fdf69dfde7eca18ab95f4ae4ef4bf`: carrier/archive/patch/result hashes and base compatibility verified; resource-provider contract 1 file / 4 tests, API no-emit, exact scope and diff check passed. Requirement remains IN DEVELOPMENT pending separate runtime/member evidence and any future non-overlapping provider-free seam."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "MEM-D6 exclusive P1 two-path no-auto-profile-trial claim `MEM-D6-PROFILE-READ-TRIAL-MUTATION-REMOVAL` issued at `1122e6386d377a9ce07509190a71428c339b2c0e` to `yINBiovLIPiFnyQCFfSycn` after direct source evidence of the GET /users/me 90-day trial write; no carrier, source integration, runtime, or external action credited."
     }
   ],
   "evidence_gaps": [
