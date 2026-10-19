@@ -1119,7 +1119,7 @@
     },
     {
       "id": "SAFE-001-CORE-SAFETY-FREE-CORE-ROUTE-GATE-REMOVAL",
-      "status": "IN_DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "requirementId": "SAFE-001",
       "allocationBaseline": "996c1ef38c7cb4310ccd1e8fd7891eaf96735365",
@@ -1143,7 +1143,29 @@
         "pnpm exec vitest run src/__tests__/checkin-profile-alert-contract.test.ts src/__tests__/location-share-privacy.test.ts --reporter=dot from artifacts/api-server.",
         "pnpm exec tsc -p tsconfig.json --noEmit from artifacts/api-server; exact four-path scope and git diff --check."
       ],
-      "carrierDisposition": "Compact hash-verified source-base handoff to the owner; no source integration or external acceptance claim by the carrier task."
+      "carrierDisposition": "Compact hash-verified source-base handoff to the owner; no source integration or external acceptance claim by the carrier task.",
+      "sourceCommit": "1cf88447a907b70662ca3e71d087b6035cb289a3",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "carrier": {
+          "archiveSha256": "3704bd55395ebce4ef18bf5811383b34b9fd64c4310ca7df61c5eebeb6d6eef6",
+          "patchSha256": "84c961c157e6e4b903b772952b67adbf55cab49fd6b8209f1a26ddc02b96e231",
+          "baseAndAllFourResultHashesVerified": true
+        },
+        "reviewConclusion": "Accepted unchanged after confirming the patch removes only the paid Family Safety middleware from the three named core-safety endpoints, retaining direct route-local authentication and existing privacy/consent/trusted-contact boundaries."
+      },
+      "sourceVerification": {
+        "apiTests": "2 files / 14 tests passed: checkin-profile-alert-contract and location-share-privacy",
+        "apiTypecheck": "repository API no-emit passed",
+        "hygiene": [
+          "outer archive, manifest, patch, base/result hashes, and disposable reconstruction verified",
+          "git apply --check --whitespace=error passed",
+          "exact four-path scope verified",
+          "direct authentication, consent/trusted-contact/privacy invariants reviewed",
+          "git diff --check passed"
+        ]
+      },
+      "externalAcceptance": "PENDING — local source integration only. No database/provider/browser/device/staging/production/deployment/migration/activation or member-visible acceptance occurred."
     }
   ]
 }

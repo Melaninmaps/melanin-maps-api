@@ -451,21 +451,23 @@
       "platform": "API/Web/iOS/Android",
       "founder_requirement": "Core Safety Hub, alerts, safety reports and route safety context remain free; Family Safety/route context cannot disappear after paid period.",
       "acceptance_criteria": "Named core safety routes are outside paid gates; any AI add-on is distinctly non-core; Web/iOS/Android prove free access.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Current-authority seam trace: requireFamilySafety gates only GET /safety/checkins/recipients, POST /safety/checkins, and POST /safety/location-shares within the claimed routes; each retains direct auth and its independent trusted-contact/consent/privacy safeguards. Source carrier pending.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Centrally integrated local-only source commit `1cf88447a907b70662ca3e71d087b6035cb289a3`: removes requireFamilySafety only from GET /safety/checkins/recipients, POST /safety/checkins, and POST /safety/location-shares. Each retains route-local authentication plus its existing trusted-contact, consent, mutual-block, finite-duration, coordinate-minimization, lifecycle, owner/recipient, and sensitive-response protections. Full authority validation: 2 API test files / 14 tests passed; API no-emit passed; exact four-path scope and diff check passed. No schema/migration/client/provider or external action.",
       "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn (exclusive implementation carrier); QJATRGk7nUgzDlccMCUcG6 (central integration)",
-      "dependencies_or_blockers": "Source claim is active. Staging/member-visible Web/iOS/Android evidence remains missing and requires separate release authorization; no provider, database, browser/device, deployment, or activation work is part of this source slice.",
-      "next_action": "Return an uncommitted four-path carrier that removes requireFamilySafety only from the three named free-core endpoints, retaining direct authentication and every existing trusted-contact, consent, block, duration, coordinate-minimization, and owner/recipient boundary; run the named focused API contracts, API no-emit, scope check, and diff check.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central source integration); yINBiovLIPiFnyQCFfSycn (carrier implementation)",
+      "dependencies_or_blockers": "MISSING EXTERNAL EVIDENCE — local source integration does not establish staging, Web/iOS/Android, member-visible, device, or production free-core access. Any release/acceptance remains separately authorized.",
+      "next_action": "Keep the four-path source scope frozen. Require separately authorized deployment and Web/iOS/Android/member-visible free-core acceptance before any broader completion/release claim.",
       "founder_approval_needed": "No new free-core decision; release authorization later.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
         "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
         "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
-        "SAFE-001 current-authority free-core route-gate trace and exclusive four-path claim, 2026-10-19"
+        "SAFE-001 current-authority free-core route-gate trace and exclusive four-path claim, 2026-10-19",
+        "SAFE-001 carrier 3704bd55395ebce4ef18bf5811383b34b9fd64c4310ca7df61c5eebeb6d6eef6; patch 84c961c157e6e4b903b772952b67adbf55cab49fd6b8209f1a26ddc02b96e231; accepted local source commit 1cf88447a907b70662ca3e71d087b6035cb289a3",
+        "SAFE-001 central authority validation, 2026-10-19: 2 API files / 14 tests and API no-emit passed"
       ]
     },
     {
@@ -1594,6 +1596,10 @@
     {
       "date": "2026-10-19",
       "event": "SAFE-001 advanced to IN DEVELOPMENT with an exclusive four-path source-only carrier claim: remove the legacy paid Family Safety middleware only from three named core-safety endpoints while retaining direct auth and existing consent/trusted-contact/privacy safeguards. No external action occurred."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "SAFE-001 central source-only integration: carrier 3704bd55395ebce4ef18bf5811383b34b9fd64c4310ca7df61c5eebeb6d6eef6 / patch 84c961c157e6e4b903b772952b67adbf55cab49fd6b8209f1a26ddc02b96e231 was accepted at local commit 1cf88447a907b70662ca3e71d087b6035cb289a3. Full authority focused API tests passed 2 files / 14 tests and API no-emit passed; source scope remains distinct from all external acceptance."
     }
   ],
   "evidence_gaps": [
@@ -1611,9 +1617,9 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 9,
+      "IN DEVELOPMENT": 8,
       "NOT STARTED": 11,
-      "SOURCE INTEGRATED": 16
+      "SOURCE INTEGRATED": 17
     },
     "by_founder_area": {
       "Core app": 2,
