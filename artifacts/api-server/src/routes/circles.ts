@@ -1080,13 +1080,13 @@ router.post("/circles/:id/itineraries", async (req: Request, res: Response) => {
     const result = await getCircleWithAuth(circleId, uid(req), res);
     if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
 
-    // Gather member profiles, shared saves, and upcoming dates in parallel
+    // Use member names plus data deliberately shared with the Circle. Account
+    // preferences are not Circle itinerary input without Circle-scoped consent.
     const [membersRes, savesRes, datesRes] = await Promise.all([
       pool.query(
-        `SELECT u.id, u.first_name, u.last_name, up.favorite_categories, up.dietary_notes, up.lifestyle_services
+        `SELECT u.first_name, u.last_name
          FROM circle_members cm
          JOIN users u ON u.id = cm.user_id
-         LEFT JOIN user_preferences up ON up.user_id = cm.user_id
          WHERE cm.circle_id = $1`,
         [circleId],
       ),
@@ -1094,16 +1094,14 @@ router.post("/circles/:id/itineraries", async (req: Request, res: Response) => {
       pool.query(`SELECT title, target_date FROM circle_important_dates WHERE circle_id = $1 ORDER BY target_date ASC`, [circleId]),
     ]);
 
-    const memberProfiles = (membersRes.rows as any[]).map((m) => ({
-      name: `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim() || "Member",
-      categories: m.favorite_categories ?? [],
-      dietary: m.dietary_notes ?? null,
-    }));
+    const memberNames = (membersRes.rows as any[]).map((m) =>
+      `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim() || "Member",
+    );
 
     const systemPrompt = `You are KinfolkAI™ — the world's best travel planner for the Black community. You are planning a Circle trip itinerary.
 
 THE CIRCLE — "${result.circle.name}":
-${memberProfiles.map((m, i) => `${i + 1}. ${m.name}${m.categories?.length ? ` — interests: ${(m.categories as string[]).join(", ")}` : ""}${m.dietary ? ` — dietary: ${m.dietary}` : ""}`).join("\n")}
+${memberNames.map((name, i) => `${i + 1}. ${name}`).join("\n")}
 
 SHARED SAVES (what the Circle wants to experience):
 ${savesRes.rows.length ? (savesRes.rows as any[]).map((s) => `- ${s.reference_name}${s.notes ? ` (note: ${s.notes})` : ""}`).join("\n") : "No shared saves yet"}
@@ -1113,7 +1111,7 @@ ${datesRes.rows.length ? (datesRes.rows as any[]).map((d) => `- ${d.title}: ${d.
 
 ITINERARY ENGINE RULES:
 1. SPINE: Shared moments everyone experiences together (arrivals, group meals, key experiences)
-2. BRANCHES: Individual tracks off the spine — each person's solo interests during the hours between shared moments
+2. BRANCHES: Individual tracks off the spine using only Circle-shared saves, dates, and general destination options. Do not infer or use any member's account-level interests, dietary details, lifestyle services, or other personal preferences.
 3. Reconnect every branch at the next spine moment
 4. LEGOLAND RULE: Never return zero results. If something doesn't exist locally, find the closest equivalent and explain why it works.
 5. Prioritize Black-owned and minority-owned businesses for every recommendation.

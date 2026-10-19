@@ -33,4 +33,20 @@ describe("Circle private invite-only server policy", () => {
     expect(preferenceGuard).toBeGreaterThan(-1);
     expect(preferenceLookup).toBeGreaterThan(preferenceGuard);
   });
+
+  it("keeps Circle itineraries grounded in deliberately shared saves and dates, not account preferences", () => {
+    const start = circlesRoute.indexOf('router.post("/circles/:id/itineraries"');
+    const end = circlesRoute.indexOf("\nexport default router;", start);
+    const itineraryHandler = circlesRoute.slice(start, end);
+
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(itineraryHandler).toContain("getCircleWithAuth(circleId, uid(req), res)");
+    expect(itineraryHandler).toContain("circle_saves");
+    expect(itineraryHandler).toContain("circle_important_dates");
+    expect(itineraryHandler).toContain("JSON.stringify(plan.branches ?? {})");
+    expect(itineraryHandler).not.toContain("user_preferences");
+    expect(itineraryHandler).not.toMatch(/favorite_categories|dietary_notes|lifestyle_services|memberProfiles/);
+    expect(itineraryHandler).toContain("Do not infer or use any member's account-level interests");
+  });
 });
