@@ -504,9 +504,13 @@ async function managedSourceRecordsFor(
   }
 }
 
-export function citySafetyCityId(scope: Readonly<{ city: string; stateCode: string }>): CitySafetyCityId | null {
+export function citySafetyCityId(
+  scope: Readonly<{ city?: unknown; stateCode?: unknown }> | null | undefined,
+): CitySafetyCityId | null {
+  if (!scope || typeof scope.city !== "string" || typeof scope.stateCode !== "string") return null;
   const normalizedCity = scope.city.trim().toLowerCase().replace(/\s+/g, " ");
   const normalizedState = scope.stateCode.trim().toUpperCase();
+  if (!normalizedCity || !normalizedState) return null;
   return CITY_SAFETY_CITY_CENTERS.find(
     (city) => city.city.toLowerCase() === normalizedCity && city.stateCode === normalizedState,
   )?.cityId ?? null;
@@ -608,7 +612,7 @@ export function renderCitySafetyBriefing(result: CitySafetyBriefing): string {
     throw new Error("CITATION_GEO_MISMATCH");
   }
   if (result.unavailable) {
-    return "Safety note: I could not verify a current city-specific safety condition from the approved official sources right now. Check the linked official local alerts and transportation sources before you go; for immediate danger, contact local emergency services.";
+    return "Safety note: I could not verify a current city-specific safety condition from the approved official sources right now. Check the linked official local alerts and transportation sources before you go; in immediate danger, seek local emergency assistance.";
   }
   const evidenceCopy = result.evidence
     .slice(0, 2)
@@ -626,13 +630,13 @@ export function renderDirectCitySafetyBriefing(
     return [
       `For ${city}, I do not have a verified location-specific ICE activity report in this check. I will not treat a city resource page as proof of an active operation where you are staying or traveling.`,
       "What is useful right now: the City maintains a federal immigration-enforcement response page and a separate Know Your Rights and Resources page. Open those links for the City's latest update and legal-support resources before changing plans. This is general information, not individual legal advice.",
-      "For immediate danger, contact local emergency services. I will not turn this into a business recommendation or make a personal risk prediction.",
+      "In immediate danger, seek local emergency assistance. I will not turn this into a business recommendation or make a personal risk prediction.",
     ].join("\n\n");
   }
   return [
     `For ${city}, I can provide only the current information supported by approved official sources.`,
     renderCitySafetyBriefing(result),
-    "I will not turn this into a business recommendation, infer a personal risk level, or make a neighborhood safety determination. For immediate danger, contact local emergency services.",
+    "I will not turn this into a business recommendation, infer a personal risk level, or make a neighborhood safety determination. In immediate danger, seek local emergency assistance.",
   ].join("\n\n");
 }
 

@@ -49,6 +49,11 @@ describe("city safety briefing v1", () => {
     expect(citySafetyCityId({ city: "Toronto", stateCode: "ON" })).toBe("toronto-on");
     expect(citySafetyCityId({ city: "Minneapolis", stateCode: "PA" })).toBeNull();
     expect(citySafetyCityId({ city: "Saint Paul", stateCode: "MN" })).toBeNull();
+    expect(citySafetyCityId({ city: "Minneapolis" })).toBeNull();
+    expect(citySafetyCityId({ stateCode: "MN" })).toBeNull();
+    expect(citySafetyCityId({ city: "Minneapolis", stateCode: "" })).toBeNull();
+    expect(citySafetyCityId({ city: "Minneapolis or Saint Paul", stateCode: "MN" })).toBeNull();
+    expect(citySafetyCityId(null)).toBeNull();
   });
 
   it("recognizes explicit current safety and transit questions without treating ordinary business requests as safety", () => {
@@ -159,6 +164,54 @@ describe("city safety briefing v1", () => {
     expect(directReply).toMatch(/official sources/i);
     expect(directReply).not.toMatch(/hotel|restaurant/i);
     expect(directReply).toMatch(/will not turn this into a business recommendation/i);
+  });
+
+  it("returns only official-link fallback for mocked timeout, non-OK, and unsupported-city inputs without member location or automatic-action language", async () => {
+    const now = new Date("2026-09-28T12:00:00.000Z");
+    const timedOutFetch = vi.fn().mockRejectedValue(Object.assign(new Error("Timed out"), { name: "AbortError" }));
+    const timedOut = await currentCitySafetyBriefing({
+      cityId: "philadelphia-pa",
+      now,
+      fetchImpl: timedOutFetch,
+    });
+    expect(timedOut.unavailable).toBe(true);
+    expect(timedOut.evidence).toEqual([]);
+    expect(timedOut.officialLinks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ url: expect.stringMatching(/^https:\/\//) }),
+    ]));
+
+    const nonOkFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({}),
+      text: async () => "",
+    });
+    const nonOk = await currentCitySafetyBriefing({ cityId: "philadelphia-pa", now, fetchImpl: nonOkFetch });
+    expect(nonOk.unavailable).toBe(true);
+    expect(nonOk.evidence).toEqual([]);
+
+    const unsupportedFetch = vi.fn();
+    const unsupported = await currentCitySafetyBriefing({
+      cityId: "unreviewed-city-xx",
+      now,
+      fetchImpl: unsupportedFetch,
+    });
+    expect(unsupported.unavailable).toBe(true);
+    expect(unsupported.officialLinks).toEqual([]);
+    expect(unsupportedFetch).not.toHaveBeenCalled();
+
+    const renderedCopy = [
+      renderCitySafetyBriefing(nonOk),
+      renderDirectCitySafetyBriefing("Philadelphia", nonOk),
+    ].join(" ");
+    expect(renderedCopy).toMatch(/official sources|official local alerts/i);
+    expect(renderedCopy).not.toMatch(/\b(?:contact|monitor(?:ing)?|dispatch)\b/i);
+    expect(renderedCopy).not.toMatch(/[-+]?\d{1,3}\.\d{4,}\s*,\s*[-+]?\d{1,3}\.\d{4,}/);
+    expect(renderedCopy).not.toMatch(/\b20\d\d-\d\d-\d\dT/);
+    expect(renderedCopy).not.toContain("123 Member Lane");
+    expect(citySafetySourcesForResponse(nonOk)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ url: expect.stringMatching(/^https:\/\//) }),
+    ]));
   });
 
   it("rejects a cross-city evidence payload at the rendering boundary", () => {
