@@ -1,10 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, businessesTable, hiddenGemNominationsTable } from "@workspace/db";
 import { eq, sql, and, gt, isNotNull } from "drizzle-orm";
-import { getUserTier } from "../middleware/requireMembership";
 import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
-
-const PAID_TIERS = new Set(["navigator", "trailblazer", "community_builder", "legacy_member"]);
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdmin(req: Request): boolean {
@@ -198,18 +195,12 @@ router.get("/:businessId/status", async (req: Request, res: Response) => {
   }
 });
 
-// ── GET /hidden-gems (list active gems by city/category) — paid members only ──
+// ── GET /hidden-gems (list active gems by city/category) ──────────────────────
 
 router.get("/", async (req: Request, res: Response) => {
-  // Membership gate: any authenticated paid tier can view the list; anyone can nominate
+  // Keep the unauthenticated response shape stable without exposing the list.
   if (!req.user?.id) {
     res.json({ locked: true, lockedReason: "auth_required", gems: [] });
-    return;
-  }
-
-  const tier = await getUserTier(req.user.id);
-  if (!PAID_TIERS.has(tier)) {
-    res.json({ locked: true, lockedReason: "paid_required", gems: [] });
     return;
   }
 
