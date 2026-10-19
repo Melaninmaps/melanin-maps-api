@@ -159,26 +159,39 @@
       "status": "IMPLEMENTING",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "baseline": "6270daea1beb671c7cdee2e9eeb73ebdbd04e0f5",
+      "carrierBase": "1190ed911233a0c155995ca093542fb7003861a4",
+      "centralCompatibilityAddendum": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "reason": "The current native creator always serializes an own description key, including the initial empty string; accepting the server carrier alone would make normal creation fail closed with 409. The visible free-text control must not silently discard member text.",
+        "paths": [
+          "artifacts/mobile/app/life-journey.tsx",
+          "artifacts/mobile/__tests__/life-journey-free-text-boundary.test.ts"
+        ]
+      },
       "requirement": "Fail closed for the legacy Journey free-text description field until an explicit-consent and encrypted contract exists. A request carrying that legacy field must reach neither provider prompt nor plaintext aiContext persistence, and ordinary Kinfolk prompts must omit already-stored legacy Journey aiContext while retaining the member-owned Journey guide structure.",
       "paths": [
         "artifacts/api-server/src/routes/journeys.ts",
         "artifacts/api-server/src/routes/kinfolk.ts",
         "artifacts/api-server/src/routes/__tests__/journey-member-owned-contract.test.ts",
-        "artifacts/api-server/src/routes/__tests__/journey-free-text-boundary.test.ts"
+        "artifacts/api-server/src/routes/__tests__/journey-free-text-boundary.test.ts",
+        "artifacts/mobile/app/life-journey.tsx",
+        "artifacts/mobile/__tests__/life-journey-free-text-boundary.test.ts"
       ],
       "requiredBehavior": [
         "Retain unauthenticated 401 behavior. After authentication, reject any supplied legacy description field with a stable fail-closed 409 before business catalog/database/provider work and before a Journey record is created or updated.",
         "For description-free requests, retain member-owned template generation, selected controlled needs, owner isolation, existing Journey CRUD/API shape, and existing explicit-memory policy. Do not add a consent flow, encryption scheme, schema field, migration, or client field in this slice.",
         "Remove legacy description from Journey prompt construction and from the fallback aiContext persistence path. In ordinary Kinfolk prompt construction, retain the authenticated member's active Journey title/city/type/phases and pace guidance, but omit all Journey aiContext text and avoid selecting it for that prompt path.",
-        "Keep the active-Journey lookup owner-scoped to req.user.id; a different member's Journey must not become a Kinfolk prompt source."
+        "Keep the active-Journey lookup owner-scoped to req.user.id; a different member's Journey must not become a Kinfolk prompt source.",
+        "Native Journey creation must omit the legacy description key entirely on every normal POST and retain selected controlled needs. Remove the unsupported native free-text control and draft state rather than silently dropping member text, replacing it only with concise practical English/Spanish privacy guidance that directs members to the controlled need choices."
       ],
       "validationPlan": [
         "New mocked Express-route regression sends synthetic legacy description and proves the stable authenticated failure occurs before OpenAI and database select/insert mocks; it also proves direct-router 401 remains intact.",
         "Journey member-owned contract verifies selected controlled needs/template behavior remains, legacy description and Journey aiContext are absent from prompt sinks, and Kinfolk active-Journey selection is owner-scoped without aiContext prompt injection.",
-        "Focused API Vitest, source-aligned API no-emit, exact four-path scope check, and git diff --check."
+        "Native source contract verifies the unsupported free-text state/control and serialized description key are absent while selected controlled needs, standard Journey fields, and bilingual privacy guidance remain.",
+        "Focused API and native Vitest, source-aligned API and native no-emit, exact six-path scope check, and git diff --check."
       ],
       "constraints": [
-        "No actual provider call, database action, schema/migration, mobile/web/UI, Maps, Shared Plans, Community, D1, Cultural Explorer, external consent enrollment, browser/device, staging, or deployment work.",
+        "No actual provider call, database action, schema/migration, Maps, Shared Plans, Community, D1, Cultural Explorer, external consent enrollment, browser/device, staging, or deployment work. Native changes are limited to removing the unsupported Journey free-text control/state, its serialized key, and adding the stated concise privacy guidance; no visual redesign is authorized.",
         "This narrow Kinfolk route change must not modify the blocked UM-001 memory deletion/revoke/retention semantics that share the file; it concerns only active-Journey aiContext selection and prompt composition.",
         "The implementation owner may return only an uncommitted review carrier. Only the integration owner may accept, commit, and push a reviewed semantic repair."
       ]
