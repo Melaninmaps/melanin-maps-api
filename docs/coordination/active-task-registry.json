@@ -975,7 +975,20 @@
         "Do not add owner address/city/state editing, map-coordinate changes, automatic publication, field-level pending-approval semantics, or claims about live propagation. The current authoritative moderation contract/schema is not in this two-path claim.",
         "No remote Git, connector, database, provider, staging/deployment, browser/device, authenticated-member, production save, fixture, or feature-activation action. Return only an uncommitted review carrier; the central owner alone integrates and updates status."
       ],
-      "externalAcceptance": "PENDING — source-only assignment. No live save/readback, database, provider, staging/deployment, browser/device, production, or feature activation action is authorized or recorded."
+      "externalAcceptance": "PENDING — source-only assignment. No live save/readback, database, provider, staging/deployment, browser/device, production, or feature activation action is authorized or recorded.",
+      "externalEvidence": {
+        "kind": "read-only production UI observation",
+        "observedAt": "2026-10-19",
+        "observation": "Authenticated production business-dashboard Edit Profile for Mapping With Melanin navigated to /for-business-owners?claim=c678e359-0000-4000-8000-000000000001, a public marketing/claim/submit page rather than an authorized editor. In-dashboard public-label/experience/voice controls are not canonical profile editing.",
+        "nonActions": [
+          "No real business edit or other write",
+          "No fixture",
+          "No source change",
+          "No database/provider/staging/deployment action",
+          "No retry"
+        ],
+        "scope": "Confirms only the visible navigation blocker; does not prove save durability, publication, Directory/Map eligibility, or governed Kinfolk freshness."
+      }
     }
   ]
 }

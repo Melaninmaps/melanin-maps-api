@@ -1274,11 +1274,11 @@
       "status": "IN DEVELOPMENT",
       "source_evidence": "Current local trace at f47a092b9259a38b4d2cfb5c33ea872d68024b33: owner PATCH /businesses/mine/managed/:businessId/profile already checks an approved/unrevoked owner relationship and returns the canonical row, but Web business-dashboard.tsx lists selected businesses then routes Edit Profile to /for-business-owners?claim=; that page is a submission form and does not consume the query or use either owner managed-profile GET/PATCH endpoint. The dashboard therefore has no ordinary profile form, post-save re-read, or Saved/Failed receipt. Admin has a distinct audited profile path. Public direct profile admission, Directory/Map, and Kinfolk all read public.public_businesses with their existing separate visibility/eligibility predicates.",
       "staging_evidence": "MISSING EVIDENCE — BIZ-008 staging authentication failed before an editor journey; no fixture, save, public readback, propagation timing, or governed retrieval was authorized.",
-      "web_evidence": "READ-ONLY EXTERNAL EVIDENCE only — production dashboard and existing public listing were reachable, but no real listing was edited. This is not a persistence, publication, Directory/Map, or Kinfolk readback result.",
+      "web_evidence": "READ-ONLY EXTERNAL EVIDENCE — authenticated production https://www.mappingwithmelanin.com/business-dashboard: clicking the existing Edit Profile action for Mapping With Melanin navigated to https://www.mappingwithmelanin.com/for-business-owners?claim=c678e359-0000-4000-8000-000000000001, a public marketing/claim/submit page rather than an authorized editor. In-dashboard public-label/experience/voice controls do not replace canonical profile editing. No write, fixture, source, provider, database, staging, deployment, or browser retry occurred. This confirms the visible navigation blocker only; it is not a persistence, publication, Directory/Map, or Kinfolk readback result.",
       "ios_evidence": "Not required for the first Web/API owner-editor slice; no iOS acceptance is implied.",
       "android_evidence": "Not required for the first Web/API owner-editor slice; no Android acceptance is implied.",
       "responsible_owner_or_task": "Implementation: yINBiovLIPiFnyQCFfSycn under exclusive two-path local claim; central integration/acceptance: QJATRGk7nUgzDlccMCUcG6.",
-      "dependencies_or_blockers": "The initial source slice deliberately covers only existing non-moderated description, phone, website, and hours fields. Owner address editing would require an explicit coordinate/pin safety decision; a last-approved/Pending Approval model requires a current authoritative moderation contract/schema and is not invented by this UI bridge. A founder-approved controlled fixture or explicitly approved reversible live field is still required for any live save/readback.",
+      "dependencies_or_blockers": "The production read-only click-through confirms the immediate visible blocker: Edit Profile sends an authorized owner to a public marketing/claim/submit page, not an editor. The current two-path source slice remains limited to existing non-moderated description/phone/website/hours. Owner address requires a map/pin safety decision, and last-approved/Pending Approval needs a current authoritative moderation contract/schema—not an invented UI state. A founder-approved controlled fixture or explicitly approved reversible live field remains required for any actual save/readback.",
       "next_action": "Return an uncommitted two-path carrier that makes business-dashboard.tsx read and PATCH only the selected approved owner business through the existing managed-profile endpoints; show Saving/Saved/Failed and re-read confirmation. Preserve all excluded business state. Central owner reviews/tests it, then prepares—not executes—the separately authorized live acceptance run.",
       "founder_approval_needed": "No for the bounded local source carrier. Yes for any fixture/create/reset, production field edit, authenticated browser save/readback, database action, deployment, provider-backed Kinfolk check, or release assertion.",
       "last_verified_date": "2026-10-19",
@@ -1286,7 +1286,8 @@
         "Central source-only save-chain trace at f47a092b9259a38b4d2cfb5c33ea872d68024b33",
         "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
         "S9 read-only production-domain dashboard verification, 2026-10-19",
-        "BIZ-008 failed staging authentication checkpoint"
+        "BIZ-008 failed staging authentication checkpoint",
+        "S9 read-only production Edit Profile navigation verification, 2026-10-19"
       ]
     }
   ],
@@ -1528,6 +1529,10 @@
     {
       "date": "2026-10-19",
       "event": "Founder P0 BIZ-009 recorded after a bounded current-authority source trace: the owner dashboard lists approved managed businesses but sends Edit Profile to a submission page and never calls the existing managed-profile save API. A two-path, ordinary non-moderated owner-profile UI bridge is exclusively claimed; it does not change address, moderation/last-approved state, verification, ownership, suspension, archive, publication, Directory/Map eligibility, Kinfolk Current, or governed Kinfolk. No live save/readback is credited; founder approval remains required for any fixture or reversible production edit."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Read-only production BIZ-009 confirmation: authenticated business-dashboard Edit Profile navigated to /for-business-owners?claim=c678e359-0000-4000-8000-000000000001, a public marketing/claim/submit page rather than an authorized editor. This corroborates the exclusively claimed two-path owner-dashboard repair; no real edit or other external action occurred."
     }
   ],
   "evidence_gaps": [
