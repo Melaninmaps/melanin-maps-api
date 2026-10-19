@@ -1673,7 +1673,7 @@
     {
       "id": "COMM-001-FREE-HIDDEN-GEMS-COMMUNITY-SPOTLIGHTS",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -1713,7 +1713,7 @@
         "Exact three-path scope, git diff --check, API access/list-boundary review, and mobile existing-consumer compatibility review."
       ],
       "carrierDisposition": "Return an uncommitted, hash-verified three-path review carrier only; central owner alone may integrate, validate, commit, or update requirement status.",
-      "externalAcceptance": "PENDING \u2014 no runtime database, staging, device, or member-visible evidence is implied.",
+      "externalAcceptance": "PENDING \u2014 no database/staging/device/member-visible evidence or release claim.",
       "sourceBase": {
         "authority": "4861aab2938b4545a08a46513ab0cd788cdbcd6f",
         "paths": {
@@ -1733,7 +1733,169 @@
         "authority": "0f31528a34eb941ea093f6d7e2474c039678896e",
         "sourcePathSha256": "587ba1c7a73b8968699cc043eed8be8e23889086f3f1c889b01ee324f75a50d7",
         "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
+      },
+      "sourceCommit": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+      "carrier": {
+        "handoffId": "hnd_Tn4f1pUIB1NUucuFwswh96c0",
+        "archive": "COMM001_FREE_HIDDEN_GEMS_REVIEW_CARRIER_0f31528a.tar.gz",
+        "archiveSha256": "0934091c6d84e7f6cc48bfe2beb38ec2bc5b6e8987b103c0dc347ad4326ea133",
+        "patchSha256": "5cad016b084ba9b57e6e82ac4d5903498b6905e419c16491dde5aac35b510880"
+      },
+      "centralValidation": {
+        "apiVitest": "1 file / 3 tests passed",
+        "mobileVitest": "1 file / 1 test passed",
+        "apiNoEmit": "passed",
+        "mobileNoEmit": "passed",
+        "scope": "exact three paths; git diff --check passed",
+        "boundary": "unauthenticated auth_required lock plus active/public/expiry/filter/order/image, nomination/status/admin safeguards and unchanged mobile implementation confirmed"
       }
+    },
+    {
+      "id": "COMM-001-FREE-CIRCLE-CREATE-PRIVATE-MOBILE-JOURNEY",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+      "paths": [
+        "artifacts/api-server/src/routes/circles.ts",
+        "artifacts/api-server/src/routes/__tests__/circles-private-invite-only.test.ts",
+        "artifacts/mobile/app/circles/create.tsx",
+        "artifacts/mobile/__tests__/circle-create-free-access.test.ts"
+      ],
+      "sourceBase": {
+        "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+        "paths": {
+          "artifacts/api-server/src/routes/circles.ts": "12e135c3c08b0572f5c9fb8ecd5ddf86d1e22edb1796dbb2e506d55883becdcc",
+          "artifacts/api-server/src/routes/__tests__/circles-private-invite-only.test.ts": "f9b235a4008c20a27683c1c375665bba8928d84bbb0f560ed4563d53157d2f9d",
+          "artifacts/mobile/app/circles/create.tsx": "40d266856ca88a4a0b49fe921d1179ab47f29b5ade02a3c122de953593fd0162"
+        },
+        "newPaths": [
+          "artifacts/mobile/__tests__/circle-create-free-access.test.ts"
+        ]
+      },
+      "completionContract": {
+        "journey": "Authenticated Free member submits the existing mobile private Circle form, passes the existing one-Circle free cap, receives 201, and reaches the existing Circle detail route.",
+        "successStates": [
+          "401/name validation remain before creation.",
+          "Free first Circle uses the current private/invite-only/max-eight creation path and then Circle detail.",
+          "A rejected cap or other non-success preserves the existing draft/recovery and does not navigate."
+        ],
+        "externalAcceptance": "PENDING \u2014 no runtime database/device/member acceptance claim."
+      },
+      "requiredBehavior": [
+        "Remove only the Free paid early return before the existing CIRCLE_LIMITS.free.maxCircles==1 count guard.",
+        "Correct only stale first-Circle create-screen eligibility/copy; retain authenticated POST and 201 detail navigation.",
+        "Preserve private/invite-only, max eight members, host insert/orphan cleanup, finite caps, self-join denial, role/member authorization, and SP-001/SP-003 privacy."
+      ],
+      "constraints": [
+        "Do not touch frozen Community launcher or other COMM paths; no Maps/Directory/payment/catalog/resolver/schema/provider/DB/runtime action.",
+        "Do not alter Circle planning, itinerary, shared-saves/dates, account-preference protections, invitations, public publication, or feature activation."
+      ],
+      "validationPlan": [
+        "API Vitest: circles-private-invite-only.test.ts, product-parity-p0.test.ts, social-authorization-contract.test.ts.",
+        "Mobile Vitest: circle-create-free-access.test.ts plus circle-plan-preference-boundary.test.ts.",
+        "API/mobile no-emit, exact four-path scope, git diff --check."
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
+      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance."
+    },
+    {
+      "id": "BIZ-003-OWNER-SKIP-INSIGHTS-CANONICAL-READ",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "BIZ-003",
+      "baseline": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+      "paths": [
+        "artifacts/mobile/app/business-dashboard.tsx",
+        "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts",
+        "artifacts/mobile/__tests__/business-dashboard-skip-feedback-canonical.test.ts"
+      ],
+      "sourceBase": {
+        "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+        "paths": {
+          "artifacts/mobile/app/business-dashboard.tsx": "cf7acbe20bce542f1d13994517099640293d81d22778afd4c10a5eb3c04d1a6f",
+          "artifacts/api-server/src/routes/skip-feedback.ts": "37c3882f94c11a2fd853df1c48c900db30c45d4e9e87e73145cb0f17f1d77b21"
+        },
+        "readOnlyDependencies": [
+          "artifacts/api-server/src/routes/skip-feedback.ts"
+        ],
+        "newPaths": [
+          "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts",
+          "artifacts/mobile/__tests__/business-dashboard-skip-feedback-canonical.test.ts"
+        ]
+      },
+      "completionContract": {
+        "journey": "Authenticated owner opens existing mobile Business Dashboard, requests its own skip-feedback through the existing canonical owner-scoped read, and sees current Community Skip Insights success/empty/error states without a paid tier gate.",
+        "successStates": [
+          "Canonical 401/owner predicate/{ feedback } contract is asserted.",
+          "Dashboard retains Authorization, current feedback consumption/render cap, and non-OK recovery."
+        ],
+        "externalAcceptance": "PENDING \u2014 no runtime/device/member acceptance claim."
+      },
+      "requiredBehavior": [
+        "Change only the Dashboard request URL from the gated legacy Kinfolk endpoint to existing /api/businesses/mine/skip-feedback.",
+        "Add focused API/mobile contracts; canonical server route remains read-only dependency, not an edit."
+      ],
+      "constraints": [
+        "Do not edit kinfolk.ts, skip-feedback.ts, membership resolver/catalog/payment/schema/provider, moderation/creation, business analytics, DB/runtime, deployment, or activation.",
+        "Preserve owner isolation; do not collapse non-OK into empty data or add cross-business selection."
+      ],
+      "validationPlan": [
+        "API Vitest: skip-feedback-owner-contract.test.ts.",
+        "Mobile Vitest: business-dashboard-skip-feedback-canonical.test.ts.",
+        "API/mobile no-emit, exact three-path scope, git diff --check."
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
+      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance."
+    },
+    {
+      "id": "KMEM-005-OFFICIAL-RESOURCE-MOBILE-HANDOFF-FAIL-CLOSED",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "KMEM-005",
+      "baseline": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+      "paths": [
+        "artifacts/mobile/app/(tabs)/resources.tsx",
+        "artifacts/mobile/__tests__/founder-directory-resource-routing.test.ts"
+      ],
+      "sourceBase": {
+        "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
+        "paths": {
+          "artifacts/mobile/app/(tabs)/resources.tsx": "b0a2ab9a64d635b59ba9dbef42bb5f9d316bff6d91de0de6306ada0bb41f829c",
+          "artifacts/mobile/__tests__/founder-directory-resource-routing.test.ts": "f0de3c753d7472228f65f7446d50b407c984917eaa698078250acaf2a9ef1ccf"
+        },
+        "readOnlyDependencies": [
+          "artifacts/mobile/lib/safeLinking.ts",
+          "artifacts/mobile/lib/urlSafety.ts"
+        ]
+      },
+      "completionContract": {
+        "journey": "Member searches existing Resources with existing server aliases, receives the existing official source card, and presses Visit Resource; a valid official URL uses the existing safe external web handoff while invalid/unopenable URLs surface existing visible failure instead of silent swallowing.",
+        "successStates": [
+          "Existing fetch/auth/q forwarding, official tier/card, Visit Resource label and metadata remain.",
+          "Only the resource website press delegates to existing safe helper."
+        ],
+        "externalAcceptance": "PENDING \u2014 no runtime seed/device/open-link/member acceptance claim."
+      },
+      "requiredBehavior": [
+        "Replace only ResourceCard raw silent Linking.openURL website handoff with existing openExternalUrl web helper and visible unavailable path.",
+        "Preserve request/auth/category/metadata/trust badge/phone/report/opportunities/AI-search behavior and frozen resources API aliases."
+      ],
+      "constraints": [
+        "Do not edit resources API/tests, safeLinking/urlSafety, opportunity links/telephone, Maps/location/travel/rideshare/booking/provider/payment/schema/DB/runtime/deployment/activation."
+      ],
+      "validationPlan": [
+        "Mobile Vitest: founder-directory-resource-routing.test.ts.",
+        "Mobile no-emit, exact two-path scope, git diff --check, prove no raw silent resource Linking.openURL remains."
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
+      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance."
     }
   ],
   "globalDirectiveDelivery": [
@@ -1751,7 +1913,8 @@
         "S9iVHR3fQY0fcmRMQKLpOO acknowledged no open claim and no self-assignment.",
         "HiibxBetANU474LaxMWciQ acknowledged the reconciled founder-policy reference and will continue only its recorded claim.",
         "S9iVHR3fQY0fcmRMQKLpOO acknowledged availability for an exact centrally recorded odd-numbered ready-queue claim.",
-        "yINBiovLIPiFnyQCFfSycn requested an exact next claim and will not self-select or reopen COMM-001."
+        "yINBiovLIPiFnyQCFfSycn requested an exact next claim and will not self-select or reopen COMM-001.",
+        "S9iVHR3fQY0fcmRMQKLpOO acknowledged the updated crisis-policy constraint and remained awaiting an exact separate claim."
       ],
       "continuationLimitation": "The direct Tasks tools support list/history/send only and do not expose event-driven completion chaining. The active central task remains the finite coordinator using direct messages as work arrives; no ScheduleTask or recurring poller was configured or inferred."
     }
