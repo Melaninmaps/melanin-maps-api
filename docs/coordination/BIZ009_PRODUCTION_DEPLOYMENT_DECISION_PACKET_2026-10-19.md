@@ -14,9 +14,9 @@ This packet supersedes the earlier preparation-only binding status in [BIZ009_OW
 | Authorization | Result | Evidence boundary |
 |---|---|---|
 | A — production release binding | **Completed read-only.** Production target, current known-successful API deployment, source SHA/branch, service configuration, command inventory, no-staged-change state, and rollback mechanism were read from Railway. Targeted deployed-source retrieval was read-only. | No secret values, Git publication, variable/config mutation, build, deployment, database row access, or browser action occurred. |
-| B — one session-read-only `information_schema.columns` query | **Blocked — query not executed.** | Railway MCP exposes no SQL/private-console execution tool. The Sandbox Railway page has no active authenticated Railway session, confirmed by the founder. The existing public Postgres TCP proxy was neither created nor used and is not an approved substitute. No database session was opened. |
+| B — one session-read-only `information_schema.columns` query | **PASS — founder-provided authorized private-Console receipt.** One session-read-only query completed in the private Console of canonical production Postgres (`7bb11d12-0e5d-404b-ae77-17450f56d3a4`), visually linked to `api-server`. | Sanitized result only: one `public.businesses.updated_at` row, `timestamp with time zone` / `timestamptz`, precision `6`, `is_nullable = NO`, `has_default = true`; `BEGIN`/`COMMIT` completed. No public proxy, variable, connection string, business/account row, or other command was accessed. |
 
-No sanitized schema row exists to report. Therefore, compatibility of `public.businesses.updated_at` is **unverified**.
+`public.businesses.updated_at` compatibility is **PASS**: the existing column is present, timezone-aware, non-null, defaulted, and has microsecond precision (therefore at least the required millisecond precision).
 
 ## 2. Exact production release binding
 
@@ -62,37 +62,17 @@ A future deployment approval must name the rollback operator and authorize this 
 | Required remote-publication decision | A future explicit authorization must name the exact remote ref/tag, target repository, full candidate SHA, approved publication operator, expected remote SHA verification, and prohibition on unrelated merge/rebase/source changes. No ref is invented by this packet. |
 | Required deployment-source decision | After authorized publication, a separate approval must state how Railway will select the verified remote candidate (including any source/branch/commit pin change). That configuration change and any resulting deployment are out of scope now. |
 
-## 5. Database compatibility: exact result and blocker
+## 5. Database compatibility: authorized PASS receipt
 
-The required production database is Railway service `Postgres` (`7bb11d12-0e5d-404b-ae77-17450f56d3a4`) with the private service endpoint name `postgres`.
+The canonical production database is Railway service `Postgres` (`7bb11d12-0e5d-404b-ae77-17450f56d3a4`) with private service endpoint name `postgres`.
 
-An existing public TCP proxy is configured on that service. It was **not created, accessed, or used**. It is not an authorized substitute for the private Railway Console.
+The founder completed the exact approved session-read-only catalog query through the logged-in private Railway Console. The Console was visually linked to `api-server`. The only sanitized result was one row:
 
-The authorized query below was **not executed** because no private-console SQL access was available in the active environment:
+| Schema object | Result | Compatibility |
+|---|---|---|
+| `public.businesses.updated_at` | `data_type = timestamp with time zone`; `udt_name = timestamptz`; `datetime_precision = 6`; `is_nullable = NO`; `has_default = true` | **PASS** — present, timezone-aware, and more precise than the required milliseconds. |
 
-```sql
-BEGIN TRANSACTION READ ONLY;
-
-SELECT
-  table_schema,
-  table_name,
-  column_name,
-  data_type,
-  udt_name,
-  datetime_precision,
-  is_nullable,
-  (column_default IS NOT NULL) AS has_default
-FROM information_schema.columns
-WHERE table_schema = 'public'
-  AND table_name = 'businesses'
-  AND column_name = 'updated_at';
-
-COMMIT;
-```
-
-**Exact access blocker:** Railway MCP supports read-only project/service/deployment metadata but offers no SQL execution or private-console tool. The available Sandbox browser is unauthenticated at Railway, and the founder confirmed that it is not an active session. Per authorization, no alternative connection method was improvised.
-
-A later retry needs a currently authenticated founder-controlled Railway Console session and must execute exactly the query above in a session-read-only transaction. It must remain separate from the public TCP proxy, credentials, business rows, account rows, migrations, and deployment.
+`BEGIN TRANSACTION READ ONLY` and `COMMIT` completed. No public proxy was created or used; no variable, DSN, business/account row, or other command was accessed. This clears only the existing-column compatibility sub-blocker. It does not approve a migration, deployment, database write, account action, or startup writer.
 
 ## 6. Actual deployed startup-writer disposition
 
@@ -124,13 +104,13 @@ Do **not** publish or deploy BIZ-009. The source repair remains `SOURCE_INTEGRAT
 ### Required before any deployment request
 
 1. **Remote-publication authorization:** name the exact remote ref/tag and full local candidate SHA `897910cba14d720276b20bc1011232e68b0d16df`; authorize no other Git action; return an immutable remote SHA receipt.
-2. **Schema-console access authorization/retry:** use an active founder-controlled private Railway Console session to execute only the §5 query; record only the sanitized schema row. If no active session is available, do not substitute the public proxy or a credential-based connection.
+2. **Schema compatibility:** **satisfied** by the authorized §5 private-Console receipt; no further database query is authorized or needed for this column.
 3. **Startup-writer disposition approval:** either obtain separately authorized non-secret evidence of the actual relevant release-mode/worker values and an attested startup path, or approve a named, complete pre-traffic/post-listener writer inventory. The current record does not support a zero-writer claim.
-4. **No-placeholder deployment approval:** after items 1–3, name the exact remote candidate, source-selection/configuration operation, production project/environment/service, build/start/no-predeploy facts, explicitly approved writer set, rollback deployment/procedure/operator, technical health checks, and stop conditions.
+4. **No-placeholder deployment approval:** after the remaining publication/isolation and writer conditions, name the exact remote candidate, source-selection/configuration operation, production project/environment/service, build/start/no-predeploy facts, explicitly approved writer set, rollback deployment/procedure/operator, technical health checks, and stop conditions.
 5. **Separate founder-controlled acceptance approval:** only after successful approved deployment, authorize one exact reversible profile-description save/restore and its limited readbacks. No real business edit or provider-backed Kinfolk test is authorized by this packet.
 
 ## 8. External actions completed and expressly not completed
 
-**Completed read-only:** Railway production project/environment/service/deployment/configuration metadata; targeted GitHub read of the existing deployed API startup source.
+**Completed read-only:** Railway production project/environment/service/deployment/configuration metadata; targeted GitHub read of the existing deployed API startup source; founder-controlled private-Console session-read-only compatibility query for `public.businesses.updated_at`.
 
-**Not completed:** remote publication, deployment, rollback, restart, source/variable configuration change, secret-value access, database session/query, proxy creation or use, DDL/data mutation, account/fixture action, browser login, browser business edit, provider call, or release assertion.
+**Not completed:** remote publication, deployment, rollback, restart, source/variable configuration change, secret-value access, any additional database session/query, proxy creation or use, DDL/data mutation, account/fixture action, browser business edit, provider call, or release assertion.
