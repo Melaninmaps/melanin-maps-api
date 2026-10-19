@@ -2365,6 +2365,13 @@
           "artifacts/api-server/src/__tests__/profile-relationship-boundary-contract.test.ts": "37cf84617198776b9a23decef8d74aee809eef49c29014eb8fa5d124d4878a21"
         },
         "newPath": "artifacts/api-server/src/routes/__tests__/conversation-request-pending-authorization.test.ts"
+      },
+      "baseTransfer": {
+        "handoffId": "hnd_SSq6erOMonqYkmVd6NIvOMUn",
+        "archive": "COMM001_DM_PENDING_GUARD_BASE_2026-10-19.tar.gz",
+        "sha256": "4b5f1ff42d864d89b341a1ff4c7a7a4781582b9ece00b966c8ebbb87035692e0",
+        "expiresAt": "2026-10-20T22:07:34.667Z",
+        "authority": "65ae5812d660b20635e102ca68b14deeb030ae04"
       }
     }
   ],
