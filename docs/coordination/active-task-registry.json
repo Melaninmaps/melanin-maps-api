@@ -2252,6 +2252,52 @@
         "expiresAt": "2026-10-20T21:56:13.899Z",
         "authority": "9ba944d7fbe8ba44491b089861dee52612cb9d0b"
       }
+    },
+    {
+      "id": "COMM-001-DM-RECIPIENT-REQUEST-FAIL-CLOSED-RECOVERY",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "84d576625b847ee301b9e96e33d1e2cf1f4ba54a",
+      "paths": [
+        "artifacts/mobile/app/messages.tsx",
+        "artifacts/mobile/app/chat/[id].tsx",
+        "artifacts/web/src/pages/messages.tsx",
+        "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts"
+      ],
+      "requiredBehavior": [
+        "Preserve API as sole recipient-action authority; change no conversations route, schema, storage, relationship/block policy, notification, entitlement or payment behavior.",
+        "On accept/decline false, non-OK, malformed reply, exception, stale state, block, or unauthenticated failure, keep the message request pending locally, do not navigate/mark accepted/remove it, and show only fixed generic retry guidance: `Couldn't update this message request. Please try again.`",
+        "On success only: mobile list accept may navigate; current successful decline behavior remains; Web accepts the returned conversation and declines/removes/navigates as current code does. Web must never interpolate `payload.error` in the recipient-action error branch.",
+        "The new cross-client static contract must retain the existing API recipient/non-requester/DM/pending/block authorization fence and prove no client raw-error disclosure, premature navigation, or premature state mutation."
+      ],
+      "constraints": [
+        "Exactly the four allowlisted paths; one new mobile test only.",
+        "Do not edit conversations API/hook/schema/persistence, relationship/block policy, subscription/payment, notifications, provider, OAuth, flight, Calendar, Map/Directory, BIZ or completed Community paths.",
+        "No browser/device, database/runtime action, provider/network call, deployment, migration, remote Git, activation or member-visible acceptance."
+      ],
+      "validationPlan": [
+        "cd artifacts/mobile && pnpm exec vitest run __tests__/dm-recipient-request-recovery.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec vitest run src/__tests__/social-authorization-contract.test.ts src/__tests__/profile-relationship-boundary-contract.test.ts --reporter=dot",
+        "cd artifacts/mobile && pnpm exec tsc -p tsconfig.json --noEmit",
+        "cd artifacts/web && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact four-path scope; git diff --check; static no raw recipient-action payload.error/non-success navigation-state mutation scan"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified four-path carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "84d576625b847ee301b9e96e33d1e2cf1f4ba54a",
+        "sourceHashes": {
+          "artifacts/mobile/app/messages.tsx": "0b7b4abc1119a1e6a931288edd1e6d230b03f7f1b7d11a584d5bf55dda0fdb45",
+          "artifacts/mobile/app/chat/[id].tsx": "ea745c83147bf0cdfce17dad795dfb2b29fee5f689caa0a81b5b01954de224db",
+          "artifacts/web/src/pages/messages.tsx": "bb2c6b75707772de50e316ff122ac7e219b1c0da73fdf8eba73e347e7aaa7a29",
+          "artifacts/mobile/__tests__/cross-client-social-records.test.ts": "28339d71b433bc1b8452d0b6b37d722d5c78838b5763a2263b5dad25f2b8280d",
+          "artifacts/api-server/src/__tests__/social-authorization-contract.test.ts": "689fd7fb74839093d4a60f498c9365d7e348a3d56a087a10be539f70eb1566c3",
+          "artifacts/api-server/src/__tests__/profile-relationship-boundary-contract.test.ts": "37cf84617198776b9a23decef8d74aee809eef49c29014eb8fa5d124d4878a21"
+        },
+        "newPath": "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts"
+      }
     }
   ],
   "globalDirectiveDelivery": [
