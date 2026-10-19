@@ -1336,14 +1336,14 @@
       "founder_requirement": "A future flight-provider decision must compare current official provider access constraints and demonstrate a provider-neutral, consented, fail-closed source contract before any partner selection, credential, call, shopping, booking, payment, or member-data transfer.",
       "acceptance_criteria": "Decision packet names official comparison evidence, existing private-flight/status boundaries, exact missing provider-neutral contract, no-consent/no-enable/no-credential fallback, and all separate approval gates. It does not select, activate, or contact a provider.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Bounded external official research and read-only source trace completed: current source is encrypted owner-scoped private flight context plus optional direct AviationStack status only, not provider-neutral shopping/booking. Focused source-only flight policy/routes 2 files/11 tests and mobile context 1 file/2 tests passed without provider call.",
+      "source_evidence": "Bounded external official research and read-only source trace completed: current source is encrypted owner-scoped private flight context plus optional direct AviationStack status only, not provider-neutral shopping/booking. Focused source-only flight policy/routes 2 files/11 tests and mobile context 1 file/2 tests passed without provider call. Central local-only documentation integration `d7c25baeab852693f93785128030266e28f1b328` accepted `FLIGHT_PROVIDER_READINESS_DECISION_PACKET_2026-10-19.md` (carrier outer SHA-256 `6bf88163d4fc0d0b06cfe3f78daf01ac407853f480057703c97c4205303594f9`; document SHA-256 `68e9136299191af096acd4c766ae885a979200c51dc4603f211a11702d552e52`). It preserves AviationStack Basic as a future direction only, records $0.019996 automatic overage exposure, and retains NO-GO until written enforceable hard-stop/no-overage evidence plus separate approvals. This is decision documentation only, not provider or member-journey acceptance.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); M7uJoQ8nKsaPvoHdWtU0E9 (active decision-packet owner)",
-      "dependencies_or_blockers": "Missing approved FlightOfferProvider request/result schema; separately versioned revocable partner-disclosure consent; disabled-by-default provider registry/capability state; sanitized errors/fallback; injected-fake-provider tests. No provider selection/credential/action is authorized.",
-      "next_action": "Return a single local decision packet for central review; it must preserve NO-GO and identify the exact future approval needed before a code claim.",
+      "dependencies_or_blockers": "Provider account/call remains blocked by no documented hard no-overage ceiling, no separate purchase approval, and no deployment/pilot authorization. The source lifecycle additionally requires independently claimed owner-to-named-recipient sharing, route/client journey wiring, persistence design, and governed coordination acceptance; none is implied by a documentation packet or status leaf.",
+      "next_action": "Continue source-only: FLIGHT-003 now owns an all-new default-disabled, injected named-recipient sharing policy. Later route/client/persistence work needs separate claims; no provider/account/credential/network or flight-commerce action is authorized.",
       "founder_approval_needed": "Yes \u2014 future contract approval, provider selection/access/credentials, any provider call, member data transfer, paid plan, deployment or release require separate founder approval.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1437,6 +1437,28 @@
       "prior_evidence_refs": [
         "docs/coordination/CALENDAR_OAUTH_AVAILABILITY_READINESS_DECISION_PACKET_2026-10-19.md",
         "OAUTH-002 source commit 2ed52411ca297ecaec11de326db53a84e2e849fc"
+      ]
+    },
+    {
+      "id": "FLIGHT-003",
+      "feature_area": "Integrations/dependencies",
+      "platform": "API source-only preparation",
+      "founder_requirement": "Before any route, provider, or client flight-status sharing path, prepare a pure default-disabled policy that permits a narrow fresh normalized arrival/status projection only from the flight owner to one explicitly named recipient under a separately versioned, revocable, time-bounded sharing grant.",
+      "acceptance_criteria": "Exactly three new source-only files prove owner and recipient isolation; purpose, field selection, grant/expiry/revocation, and freshness checks; hostile/prohibited field stripping; neutral unavailable outcome; injected deterministic inputs; no provider or member interaction.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "MISSING \u2014 source-only claim just issued; FLIGHT-002\u2019s provider-disclosure leaf is status-query-only and intentionally does not model recipient sharing.",
+      "staging_evidence": "MISSING EVIDENCE \u2014 provider/staging action prohibited.",
+      "web_evidence": "MISSING EVIDENCE \u2014 no client wiring authorized.",
+      "ios_evidence": "MISSING EVIDENCE \u2014 no mobile wiring/build authorized.",
+      "android_evidence": "MISSING EVIDENCE \u2014 no mobile wiring/build authorized.",
+      "responsible_owner_or_task": "M7uJoQ8nKsaPvoHdWtU0E9 (exclusive source carrier); QJATRGk7nUgzDlccMCUcG6 (central acceptance)",
+      "dependencies_or_blockers": "No persistence, route/client surface, real provider, credential, account, or status source is authorized. A product-specific maximum freshness duration is not silently introduced; the pure source policy must use injected bounded freshness input and fail closed when absent/invalid/stale.",
+      "next_action": "Return an uncommitted all-new-file carrier only; central full-authority API test/no-emit required before local source acceptance.",
+      "founder_approval_needed": "No for the isolated fake-input source policy only; Yes for consent UI, persistence, provider/client/route wiring, real data, pilot, deployment, activation, and any live provider cost.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "docs/coordination/FLIGHT_PROVIDER_READINESS_DECISION_PACKET_2026-10-19.md",
+        "FLIGHT-002 default-disabled status leaf `1ec062aceb93e170ced6ba754881cc78ab2b4bd7`"
       ]
     }
   ],
@@ -1862,6 +1884,10 @@
     {
       "date": "2026-10-19",
       "event": "OAUTH-003 default-disabled state/PKCE fixture-policy source-integrated locally at 9a177c4511c6541968b29c61c744ea0e317060d3: API 1 file/5 tests, API no-emit, Prettier, exact scope and no-network/no-OAuth-wiring boundaries passed; OAUTH-001 NO-GO and all real OAuth gates remain."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Accepted FLIGHT-001 one-document readiness packet locally at d7c25baeab852693f93785128030266e28f1b328 with NO-GO/hard-cap boundary intact; added FLIGHT-003 all-new named-recipient arrival-sharing policy claim at d7c25baeab852693f93785128030266e28f1b328 for M7. Provider, persistence, route/client, real-data, and release gates remain separate."
     }
   ],
   "evidence_gaps": [
@@ -1879,7 +1905,7 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 10,
+      "IN DEVELOPMENT": 11,
       "NOT STARTED": 10,
       "SOURCE INTEGRATED": 22
     },
@@ -1912,7 +1938,7 @@
     "Core app": 2,
     "Directory/business/verification": 4,
     "Founder/Admin dashboard": 2,
-    "Integrations/dependencies": 15,
+    "Integrations/dependencies": 16,
     "Kinfolk conversation/discovery": 2,
     "Kinfolk memory/voice/images/tools": 5,
     "Maps/location": 2,

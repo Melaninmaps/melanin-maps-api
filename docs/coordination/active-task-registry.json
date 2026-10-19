@@ -2013,7 +2013,7 @@
     {
       "id": "FLIGHT-001-PROVIDER-NEUTRAL-READINESS-PACKET",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -2046,6 +2046,17 @@
         "archive": "FLIGHT001_PROVIDER_NEUTRAL_READINESS_PACKET_BASE_2026-10-19.tar.gz",
         "sha256": "2a1abaeefc41dd66a5622b2b00d30241dfc5b37ea7a02ce77287cddeed6a4c8a",
         "expiresAt": "2026-10-20T21:26:39.424Z"
+      },
+      "sourceCommit": "d7c25baeab852693f93785128030266e28f1b328",
+      "carrier": {
+        "handoffId": "hnd_H9lchvcv5kCq03F_lbGtKjye",
+        "archive": "FLIGHT001_PROVIDER_NEUTRAL_READINESS_DECISION_PACKET_2026-10-19_CARRIER.tar.gz",
+        "outerSha256": "6bf88163d4fc0d0b06cfe3f78daf01ac407853f480057703c97c4205303594f9",
+        "documentSha256": "68e9136299191af096acd4c766ae885a979200c51dc4603f211a11702d552e52"
+      },
+      "centralValidation": {
+        "scope": "exact one new decision document; cached diff and whitespace passed",
+        "semantic": "official comparison and present source boundaries reviewed; explicit NO-GO and $49.99 hard-cap unenforceability retained"
       }
     },
     {
@@ -2393,6 +2404,47 @@
         "expiresAt": "2026-10-20T22:07:34.667Z",
         "authority": "65ae5812d660b20635e102ca68b14deeb030ae04"
       }
+    },
+    {
+      "id": "FLIGHT-003-NAMED-RECIPIENT-ARRIVAL-SHARING-POLICY",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-003",
+      "baseline": "d7c25baeab852693f93785128030266e28f1b328",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-policy.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/sharing-policy.test.ts"
+      ],
+      "sourceBase": {
+        "authority": "d7c25baeab852693f93785128030266e28f1b328",
+        "allPathsNew": true,
+        "readOnlyEvidenceHashes": {
+          "artifacts/api-server/src/kinfolk/flight-status/contracts.ts": "0a793463c9a553bd4763c4100f89a350a4b392a2c984d184f468d5099611f0c5",
+          "artifacts/api-server/src/kinfolk/flight-status/gate.ts": "40ea95dadf6dd68fd547413a62c7db871b0dc1c2635aa54dd9d3bd24d2d80214",
+          "artifacts/api-server/src/kinfolk/flight-status/normalizers.ts": "b2a62a3036b46a5ce3ccd7ab76f4074d5008c1dca2d0a02f9820bbed91853514",
+          "artifacts/api-server/src/kinfolk/flight-status/__tests__/flight-status-contract.test.ts": "3142e02284562715b620a873caff67985a4b27fdf57d3386d6347e3c75b0c3d0"
+        }
+      },
+      "requiredBehavior": [
+        "Pure injected-input default-deny policy only. An explicit versioned, owner-bound, recipient-bound, revocable time-bounded arrival-sharing grant is a distinct decision from FLIGHT-002 provider disclosure and never inferred from a friend/Circle/trip/private flight relation.",
+        "Return only a deliberately minimal selected normalized arrival/status projection to its exact named recipient when grant purpose, exact allowed fields, owner, recipient, time window, and injected freshness bound all pass. Omit or reject prohibited/raw/private fields and never invent an arrival time or share departure, flight number, PNR, booking, location, itinerary, provider payload, account data, or grant internals.",
+        "Missing, malformed, owner/recipient mismatch, revoked, expired/future, field-broadened, unbounded/invalid freshness, stale/malformed status, or unavailable status must return one neutral unavailable result. No provider call, retry, storage, network, route/client/messaging/recommendation side effect.",
+        "Use deterministic injected now and freshness bound; do not invent a production freshness duration. New tests cover grant/revocation/expiry/recipient isolation/field minimization/freshness/no-arrival/no-network-default denial."
+      ],
+      "constraints": [
+        "Exactly three all-new paths; no edits to FLIGHT-002 or any existing route/client/schema/configuration.",
+        "No provider name/SDK/URL/fetch/credential/environment/token, account/consent UI, storage/database/schema/migration, route, analytics/logging, job/poller, notification, message, recommendation, booking/payment/commerce, deployment or activation.",
+        "No remote Git, provider/network, DB/runtime action, browser/device, staging/deploy/migration, or member-visible assertion."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/kinfolk/flight-status/__tests__/sharing-policy.test.ts src/kinfolk/flight-status/__tests__/flight-status-contract.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact three-new-file scope; git diff --check; Prettier; static no-network/no-provider/no-persistence/no-route/no-ambient-clock scan"
+      ],
+      "carrierDisposition": "Return uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates."
     }
   ],
   "globalDirectiveDelivery": [
