@@ -349,9 +349,9 @@
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central); IIUhb1wR0gfLjzmdLmEovt active #3 pending-message read guard.",
-      "dependencies_or_blockers": "No confirmed active source defect after the inbox response repair. Still external: server/DB durability, notification delivery/read/unread, network timeout/idempotency/logout/account switch, browser/device/iOS/Android/staging/member/release/founder acceptance.",
-      "next_action": "Run a bounded cumulative DM source matrix after this receipt; issue another claim only for a demonstrated source defect.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (sole accountable runtime-lifecycle acceptance coordinator; execution blocked pending separate authorization)",
+      "dependencies_or_blockers": "Runtime acceptance is blocked\u2014not inferred from source tests\u2014pending separate authorization for controlled accounts and non-production data handling; isolated runtime/API execution with a safe database and notification channel disposition; Web browser acceptance; iOS/Android builds/physical-device acceptance; any staging deployment; and member/release/founder acceptance. No DB/data/account, staging, build, browser/device, or notification delivery action is currently authorized.",
+      "next_action": "Central owner maintains the source/simulated/runtime/release/founder matrix and issues source repairs only for demonstrated local failures; request discrete runtime gates before conducting them.",
       "founder_approval_needed": "No free-core reapproval; approval for optional paid capacity.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -2000,6 +2000,10 @@
     {
       "date": "2026-10-19",
       "event": "Registered P0 `FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION` at `72bfacf158af14abc40613a404c8831675845fb9` as an internal Flight simulated-journey composition repair. Calendar uses the same canonical UTC 31\u00d724-hour rule as Flight; local calendar/DST semantics are not represented, so no unapproved policy change or founder decision is required."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "COMM-001 runtime-lifecycle accountability recorded: QJATRGk7nUgzDlccMCUcG6 is sole acceptance coordinator. Source matrices remain source-only; controlled accounts, safe isolated runtime/DB+notification disposition, Web/iOS/Android/browser/device, staging, member/release/founder evidence require distinct authorization."
     }
   ],
   "evidence_gaps": [
@@ -2098,7 +2102,7 @@
       {
         "experience_id": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS",
         "founder_outcome": "Eligible members participate in free community and complete private DM requests safely across surfaces.",
-        "lifecycle_owner": "IIUhb1wR0gfLjzmdLmEovt (DM lifecycle); QJATRGk7nUgzDlccMCUcG6 (integration)",
+        "lifecycle_owner": "QJATRGk7nUgzDlccMCUcG6 (sole accountable runtime-lifecycle acceptance coordinator; execution blocked pending separate authorization)",
         "linked_requirement_ids": [
           "COMM-001"
         ],
@@ -2107,9 +2111,9 @@
         "current_active_repair": "No active DM code claim pending bounded cumulative matrix or demonstrated source defect.",
         "integrated_source": "Guard `e3665ecaf8a529e74204200ce8134f1511f6d84d`; recovery `7cc2e1deef831283d5199b81195aa7aecfdc95af`; notification `dfe4b9c3a8d7708c21fdd52b0e3f07139136b793`; lifecycle contract `93af8b11cd545ffc5e4661bb5a0f3a9a94d501c5`; inbox routing `bfe0f50d4a96931c270b5bc6e7cfdabf38b18ced`; other linked source receipts. Pending communication-consent guard `c7d1bb0199806e3db9f0598b44f11e5ba894b373` (API 9/9, mobile 6/6, API/Web/mobile no-emit). Mobile send fail-closed `44d6777a50a3a2b4aa259a0e78042dc5f6ad6ef0` (mobile 4/4, no-emit). Inbox accept/decline action-response validation `0b96b8cd7be62e5036d20e98fe7184ba46329ade`.",
         "test_evidence": "Notification producer: 3 API files / 10 tests and API no-emit; server-authoritative lifecycle: 4 API files / 14 tests and API no-emit; inbox routing: mobile 4/4, Web 4/4, API 8/8, mobile/Web no-emit. #1 requires separate focused authority checks. #1 current-authority receipt: API 9/9; mobile 6/6; API/Web/mobile no-emit PASS. #2 current-authority receipt: mobile 4/4 and no-emit PASS. Cumulative current-authority local source matrix: API 5 files/18 tests, mobile 3 files/14 tests, Web 2 files/7 tests; API/mobile/Web no-emit PASS. Inbox response contract: mobile 2 files/10 tests and no-emit PASS. Expanded mobile DM source matrix: 4 files/18 tests and mobile no-emit PASS.",
-        "external_gates": "Controlled accounts/data, notifications runtime, Web/iOS/Android and release acceptance.",
+        "external_gates": "Separate authorization is required for controlled account/data use, safe isolated runtime/API database and notification-channel execution, Web browser acceptance, iOS/Android build/device acceptance, staging deployment, and member/release/founder acceptance. HTTP or queued-notification source behavior is not delivery/observed evidence.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Run cumulative source matrix; do not invent code for runtime gates."
+        "next_action": "Central owner owns the blocked runtime matrix record. Re-run source matrices only after a demonstrated source repair; request each runtime/build/staging gate separately."
       },
       {
         "experience_id": "EXP-KINFOLK-CIRCLES-AND-SHARED-PLANS",

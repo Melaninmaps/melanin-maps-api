@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | COMM-001 runtime-lifecycle accountability: `QJATRGk7nUgzDlccMCUcG6` is the sole acceptance coordinator. All controlled account/data, safe runtime/DB/notification, browser/device/build, staging, member/release/founder phases remain separately unauthorized and blocked; no source receipt implies delivery or runtime acceptance. |
 | 2026-10-19 | Registered P0 `FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION` at `72bfacf158af14abc40613a404c8831675845fb9` after reproducing a valid source-normalized no-fraction/short-fraction UTC arrival timestamp that sharing/eligibility accept but lifecycle consumption rejects. Calendar and Flight retain the same canonical UTC 31×24-hour maximum; no DST/local-calendar policy change was made. |
 | 2026-10-19 | Cumulative Flight local source matrix PASS: API **5 files / 106 tests** (status gate, sharing, eligibility, simulated meeting lifecycle, Calendar normalizers) and API no-emit. It remains injected-fake source evidence only; provider, Calendar, runtime, and member gates stay open. |
 | 2026-10-19 | Accepted FLIGHT-006 local 31-day availability-window boundary at `e24efe1fa6194892c7f1d36bb898be14dec75c71`: API **4 files / 93**, no-emit, exact two-path scope PASS. This remains injected-fake source-only evidence; real Flight/Calendar/provider/member gates remain open. |
