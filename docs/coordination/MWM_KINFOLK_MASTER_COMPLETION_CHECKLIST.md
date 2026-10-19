@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Accepted BIZ-003 Owner Home canonical skip-insights read at `6e244c6676a1f0725b4aac2348540dff783b91bd`: mobile **3/3**, API **2/2**, mobile no-emit and exact two-path scope PASS. This is a private source-only owner-read milestone; BIZ-003/BIZ-009 remain open at their broader gates. |
 | 2026-10-19 | Accepted OAUTH-003 inert vault/redaction source leaf at `bec8e23aa56efa64fbf19fba49fdb81917531331`: Calendar suite **18/18**, API no-emit, exact three-new-path scope PASS. Registered COMM-001 P0 **#3** pending-message read guard after a bounded trace found stale pending-DM preview/history exposure; parent remains in progress. |
 | 2026-10-19 | Accepted COMM-001 **#2** mobile send fail-closed at `44d6777a50a3a2b4aa259a0e78042dc5f6ad6ef0`: focused mobile **4/4**, no-emit, exact two paths and semantic checks PASS. Rejected messages never remain sent; parent remains in progress pending cumulative source and external lifecycle evidence. |
 | 2026-10-19 | Accepted COMM-001 **#1** pending communication-consent guard at `c7d1bb0199806e3db9f0598b44f11e5ba894b373`: API **9/9**, mobile **6/6**, API/Web/mobile no-emit, exact four-path and semantic checks PASS. Both participants are blocked before scan/write while pending; Web composer is disabled until fresh acceptance. Parent remains in progress. |

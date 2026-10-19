@@ -2927,7 +2927,7 @@
     {
       "id": "BIZ-003-OWNER-HOME-SKIP-INSIGHTS-CANONICAL-READ",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "BIZ-003",
@@ -2969,7 +2969,22 @@
         "file": "BIZ003_OWNER_HOME_SKIP_INSIGHTS_BASE_2026-10-19.tar.gz",
         "sha256": "a7bd45b00ef7067677981a2b0e622bb0291c2a301e1e3ae7da2755ba99790b60",
         "expires_at": "2026-10-20T22:57:49.122Z"
-      }
+      },
+      "sourceCommit": "6e244c6676a1f0725b4aac2348540dff783b91bd",
+      "carrier": {
+        "handoff_id": "hnd_TSVzqY4zg8xjHicAShSlW2DG",
+        "file": "BIZ003_OWNER_HOME_SKIP_INSIGHTS_CANONICAL_READ_CARRIER_2026-10-19.tar.gz",
+        "sha256": "0dbbe7233b228e01fc148df0661204b8e3d94f57275f6f6e60d06df525adfbbc",
+        "patch_sha256": "c8966187f740352c717f1daa27f7f05a439d7ae8c8e5ac559db2a7c614f7bec6"
+      },
+      "centralValidation": {
+        "mobile_vitest": "1 file / 3 tests PASS",
+        "api_vitest": "1 file / 2 tests PASS",
+        "mobile_tsc": "PASS",
+        "semantic": "inside existing exactly-one guard, canonical owner-bound endpoint only; bearer/reset/non-success recovery/message-only mapping/collapsed UI/10 cap preserved",
+        "scope": "exact two paths; git diff --check PASS"
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only owner Home read; no runtime/member/release/founder acceptance."
     },
     {
       "id": "FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION",
