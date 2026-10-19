@@ -16,6 +16,10 @@ async function dmConversationIsBlocked(conversation: { type: string; participant
   return typeof otherUserId === "string" && await usersAreBlocked(userId, otherUserId);
 }
 
+function pendingRequestConflict(res: Response): void {
+  res.status(409).json({ error: "This message request is no longer available", code: "REQUEST_ACTION_CONFLICT" });
+}
+
 // ─── GET /api/users/search — find users for DM compose & @mentions ───────────
 router.get("/users/search", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
@@ -159,11 +163,16 @@ router.post("/conversations/:id/accept", async (req: Request, res: Response) => 
       return void res.status(403).json({ error: "This conversation is unavailable" });
     }
     if (conv.requestedBy === req.user.id) return void res.status(400).json({ error: "Cannot accept your own request" });
+    if (conv.requestStatus !== "pending") return void pendingRequestConflict(res);
     const [updated] = await db
       .update(conversationsTable)
       .set({ requestStatus: "accepted" })
-      .where(eq(conversationsTable.id, convId))
+      .where(and(
+        eq(conversationsTable.id, convId),
+        eq(conversationsTable.requestStatus, "pending"),
+      ))
       .returning();
+    if (!updated) return void pendingRequestConflict(res);
     res.json({ conversation: updated });
   } catch (err) {
     req.log.error({ err }, "Failed to accept message request");
@@ -190,7 +199,15 @@ router.post("/conversations/:id/decline", async (req: Request, res: Response) =>
       return void res.status(403).json({ error: "This conversation is unavailable" });
     }
     if (conv.requestedBy === req.user.id) return void res.status(400).json({ error: "Cannot decline your own request" });
-    await db.delete(conversationsTable).where(eq(conversationsTable.id, convId));
+    if (conv.requestStatus !== "pending") return void pendingRequestConflict(res);
+    const [deleted] = await db
+      .delete(conversationsTable)
+      .where(and(
+        eq(conversationsTable.id, convId),
+        eq(conversationsTable.requestStatus, "pending"),
+      ))
+      .returning({ id: conversationsTable.id });
+    if (!deleted) return void pendingRequestConflict(res);
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "Failed to decline message request");
