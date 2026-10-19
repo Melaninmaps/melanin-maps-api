@@ -3560,7 +3560,7 @@
     {
       "id": "FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3608,6 +3608,11 @@
         "file": "FLIGHT007_STATUS_TIMESTAMP_COMPOSITION_BASE_2026-10-19.tar.gz",
         "sha256": "edb1d8c0984e64afd035683edf454e22b317f2f0971a3c8888ef8b5431a45e3b",
         "expires_at": "2026-10-20T23:40:43.121Z"
+      },
+      "ownerStartAcknowledgement": {
+        "at": "2026-10-19T23:41:14Z",
+        "channel": "manus-tasks direct reply",
+        "statement": "Owner acknowledged exact baseline, exclusive paths, shared-arrival-only flexible status grammar, strict Calendar grammar, and source-only boundary."
       }
     }
   ],
