@@ -451,20 +451,21 @@
       "platform": "API/Web/iOS/Android",
       "founder_requirement": "Core Safety Hub, alerts, safety reports and route safety context remain free; Family Safety/route context cannot disappear after paid period.",
       "acceptance_criteria": "Named core safety routes are outside paid gates; any AI add-on is distinctly non-core; Web/iOS/Android prove free access.",
-      "status": "BLOCKED",
-      "source_evidence": "Membership audit D2/F/J9 identifies requireFamilySafety and directions/safety-context paid-gate conflicts.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Current-authority seam trace: requireFamilySafety gates only GET /safety/checkins/recipients, POST /safety/checkins, and POST /safety/location-shares within the claimed routes; each retains direct auth and its independent trusted-contact/consent/privacy safeguards. Source carrier pending.",
       "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Membership resolver owner",
-      "dependencies_or_blockers": "MISSING EVIDENCE — source correction authority, staging and member proof.",
-      "next_action": "Map named gates to D4/D9 bounded source work.",
+      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn (exclusive implementation carrier); QJATRGk7nUgzDlccMCUcG6 (central integration)",
+      "dependencies_or_blockers": "Source claim is active. Staging/member-visible Web/iOS/Android evidence remains missing and requires separate release authorization; no provider, database, browser/device, deployment, or activation work is part of this source slice.",
+      "next_action": "Return an uncommitted four-path carrier that removes requireFamilySafety only from the three named free-core endpoints, retaining direct authentication and every existing trusted-contact, consent, block, duration, coordinate-minimization, and owner/recipient boundary; run the named focused API contracts, API no-emit, scope check, and diff check.",
       "founder_approval_needed": "No new free-core decision; release authorization later.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
         "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
-        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "SAFE-001 current-authority free-core route-gate trace and exclusive four-path claim, 2026-10-19"
       ]
     },
     {
@@ -1274,7 +1275,7 @@
       "founder_requirement": "P0 durable owner/Admin edit chain: authorized validation and canonical save must yield a clear dashboard persistence state and preserve the current approved public profile, Directory/Map eligibility, and governed Kinfolk data boundaries. Moderated fields retain the last approved value and show explicit Pending Approval; verification, ownership, suspension, archive, publication, and Kinfolk Current are never changed by an ordinary profile edit.",
       "acceptance_criteria": "An approved owner or Founder/Admin performs one authorized low-risk save on a controlled non-real fixture or explicitly approved reversible live field; after refresh/relogin, the dashboard returns the saved value and the current approved public profile/Directory/Map/governed Kinfolk reads are assessed separately. Only a successful founder-approved live save/readback may complete this requirement.",
       "status": "BLOCKED",
-      "source_evidence": "Both bounded source repairs are centrally integrated locally: BUSINESS-OWNER-002 ordinary selected-owner editor `9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e` and BUSINESS-OWNER-003 cross-role stale-write protection `897910cba14d720276b20bc1011232e68b0d16df`. Final authority validation: API focused 2 files / 17 tests passed; API no-emit passed; Web focused 2 files / 11 tests passed; Web no-emit passed; exact seven-path scope and diff check passed. The central reconciliation corrected the carrier’s Admin Saved-before-fresh-read ordering, timestamp precision after SQL timestamp writes, and two focused static-test slice literals without expanding the seven-path claim. The result uses the existing canonical updated_at only; no schema/migration/startup path changed. This proves local source only, not runtime persistence, public propagation, or broader editing completion.",
+      "source_evidence": "Both bounded source repairs are centrally integrated locally: BUSINESS-OWNER-002 ordinary selected-owner editor `9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e` and BUSINESS-OWNER-003 cross-role stale-write protection `897910cba14d720276b20bc1011232e68b0d16df`. Final authority validation: API focused 2 files / 17 tests passed; API no-emit passed; Web focused 2 files / 11 tests passed; Web no-emit passed; exact seven-path scope and diff check passed. The central reconciliation corrected the carrier’s Admin Saved-before-fresh-read ordering, timestamp precision after SQL timestamp writes, and two focused static-test slice literals without expanding the seven-path claim. The result uses the existing canonical updated_at only; no schema/migration/startup path changed. This proves local source only, not runtime persistence, public propagation, or broader editing completion. Founder-authorized source-only prerequisite expansion is now claimed against verified non-failed baseline `8fd6989…`; no expanded candidate, test/build receipt, remote publication, or deployment is claimed yet.",
       "staging_evidence": "MISSING EVIDENCE — BIZ-008 staging authentication failed before an editor journey; no fixture, save, public readback, propagation timing, or governed retrieval was authorized.",
       "web_evidence": "READ-ONLY EXTERNAL EVIDENCE — authenticated production https://www.mappingwithmelanin.com/business-dashboard: clicking the existing Edit Profile action for Mapping With Melanin navigated to https://www.mappingwithmelanin.com/for-business-owners?claim=c678e359-0000-4000-8000-000000000001, a public marketing/claim/submit page rather than an authorized editor. In-dashboard public-label/experience/voice controls do not replace canonical profile editing. No write, fixture, source, provider, database, staging, deployment, or browser retry occurred. This confirms the visible navigation blocker only; it is not a persistence, publication, Directory/Map, or Kinfolk readback result.",
       "ios_evidence": "Not required for the first Web/API owner-editor slice; no iOS acceptance is implied.",
@@ -1581,6 +1582,18 @@
     {
       "date": "2026-10-19",
       "event": "Founder-provided authorized production schema receipt: the exact session-read-only private-Console query against canonical Postgres service 7bb11d12-0e5d-404b-ae77-17450f56d3a4 returned one sanitized row for public.businesses.updated_at: timestamp with time zone/timestamptz, precision 6, non-null, default present. BEGIN/COMMIT completed; no public proxy, variables, connection string, business/account row, or other command was accessed. This clears the BIZ-009 existing-column compatibility sub-blocker only; publication isolation and startup-writer gates remain blocked."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Coordination repair: Markdown CORE-001 and BIZ-009 rows were rebuilt from their authoritative JSON records after a previous broad text replacement mislinked BIZ blocker text to CORE-001. No requirement status, source, or external evidence changed by the repair itself."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Founder-authorized BIZ-009 prerequisite expansion claimed exclusively on seven API/Web source/test paths against verified successful baseline 8fd6989bea317f53dfa6f170c2c5054cf0de74a4. Exact preconditions are listed in the active registry; no candidate source was yet reconstructed, tested, published, or deployed."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "SAFE-001 advanced to IN DEVELOPMENT with an exclusive four-path source-only carrier claim: remove the legacy paid Family Safety middleware only from three named core-safety endpoints while retaining direct auth and existing consent/trusted-contact/privacy safeguards. No external action occurred."
     }
   ],
   "evidence_gaps": [
@@ -1596,9 +1609,9 @@
     "label": "PROVISIONAL — original 54 baseline IDs are immutable; added IDs are bounded evidence-based additions, not a complete founder-vision count.",
     "unique_requirement_ids": 58,
     "by_primary_status": {
-      "BLOCKED": 22,
+      "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 8,
+      "IN DEVELOPMENT": 9,
       "NOT STARTED": 11,
       "SOURCE INTEGRATED": 16
     },

@@ -1075,6 +1075,75 @@
           "Changed only within claimed paths: corrected two static test slice/search literals so the focused contracts reach the actual Admin profile receipt/audit route code."
         ]
       }
+    },
+    {
+      "id": "BIZ-009-PREREQUISITE-EXPANSION",
+      "status": "IN_DEVELOPMENT",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "BIZ-009",
+      "baseline": "8fd6989bea317f53dfa6f170c2c5054cf0de74a4",
+      "completedSourceSeeds": {
+        "managedOwnerListAndContract": "fa302423cad5826d616a4df483818d0c6e8ae560",
+        "legacyOwnershipAmbiguityGuard": "985d203e0eee8d4a8e71bc89f66930567d8b0b42",
+        "selectedOwnerBusinessProfileRoute": "1b98da471e1d0a6e9ab3d56a977804104ad56a07",
+        "managedDashboardTransport": "2ed1ba6dffd6fa88a33698eb9e1c4aceb1698bcb",
+        "dashboardAuthCacheGuard": "d55674a5def78dee29d3e18a0eed5d709b1e2889",
+        "ordinaryEditorReceipt": "9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e",
+        "staleWriteProtection": "897910cba14d720276b20bc1011232e68b0d16df"
+      },
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/api-server/src/routes/__tests__/business-owner-multi-business-contract.test.ts",
+        "artifacts/api-server/src/businesses/__tests__/adminBusinessProfilePolicy.test.ts",
+        "artifacts/web/src/pages/business-dashboard.tsx",
+        "artifacts/web/src/__tests__/business-dashboard-managed-access.test.ts",
+        "artifacts/web/src/components/AdminEditBusiness.tsx",
+        "artifacts/web/src/__tests__/admin-business-edit-preservation.test.ts"
+      ],
+      "requiredBehavior": [
+        "Reconstruct only approved/unrevoked multi-business Owner selection and selected-ID profile read/write prerequisites; retain legacy ambiguous-owner fail-closed behavior.",
+        "Pair the selected-owner Dashboard transport/read-after-save receipt with Owner and Admin optimistic revision protection and draft-preserving stale recovery.",
+        "Retain business ownership, verification, publication, suspension, eligibility, receipts, audit, and all existing Admin authorization boundaries."
+      ],
+      "constraints": [
+        "No whole-commit/cherry-pick or full later-file transplant; do not include specialty management, Kinfolk, Directory, Map, mobile, membership/payment, coordination, or unrelated history.",
+        "No schema/migration/startup/configuration/remote publication/deployment/database/provider/browser/device action.",
+        "Stop and record any dependency outside these seven paths before adding it."
+      ],
+      "validationPlan": [
+        "Focused Owner API contract and Admin policy contract.",
+        "Focused Dashboard managed-access and Admin editor preservation contracts.",
+        "API/Web no-emit, combined production build, exact seven-path diff inventory, and git diff --check."
+      ],
+      "carrierDisposition": "Central local candidate only; no publication/deployment claim until a fresh immutable-source authorization."
+    },
+    {
+      "id": "SAFE-001-CORE-SAFETY-FREE-CORE-ROUTE-GATE-REMOVAL",
+      "status": "IN_DEVELOPMENT",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "requirementId": "SAFE-001",
+      "allocationBaseline": "996c1ef38c7cb4310ccd1e8fd7891eaf96735365",
+      "paths": [
+        "artifacts/api-server/src/routes/safety-checkins.ts",
+        "artifacts/api-server/src/routes/location-shares.ts",
+        "artifacts/api-server/src/__tests__/checkin-profile-alert-contract.test.ts",
+        "artifacts/api-server/src/__tests__/location-share-privacy.test.ts"
+      ],
+      "requiredBehavior": [
+        "Remove requireFamilySafety only from GET /safety/checkins/recipients, POST /safety/checkins, and POST /safety/location-shares.",
+        "Retain direct requireAuth plus every existing accepted trusted-contact, consent, mutual-block, finite-duration, coordinate-minimization, lifecycle, owner/recipient, and sensitive-response boundary.",
+        "Update only the two existing focused source contracts from paid-gate assertions to direct-auth/no-paid-gate assertions while preserving their existing privacy regressions."
+      ],
+      "constraints": [
+        "Do not modify requireFamilySafety itself, schemas/migrations, clients, providers, Map/Directory/Kinfolk paths, membership resolver semantics, or any external environment.",
+        "Return an uncommitted four-path carrier only; central integration alone may accept it locally.",
+        "No database/provider/browser/device/staging/deployment/feature activation action."
+      ],
+      "validationPlan": [
+        "pnpm exec vitest run src/__tests__/checkin-profile-alert-contract.test.ts src/__tests__/location-share-privacy.test.ts --reporter=dot from artifacts/api-server.",
+        "pnpm exec tsc -p tsconfig.json --noEmit from artifacts/api-server; exact four-path scope and git diff --check."
+      ],
+      "carrierDisposition": "Compact hash-verified source-base handoff to the owner; no source integration or external acceptance claim by the carrier task."
     }
   ]
 }
