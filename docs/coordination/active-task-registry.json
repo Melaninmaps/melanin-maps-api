@@ -822,6 +822,36 @@
         "No source path, implementation owner, provider call, ledger creation, migration/DDL, remote operation, deployment, staging, browser/device, or feature activation is authorized by this record.",
         "Do not treat candidate 9b as integrated, current-authority compatible, or a cherry-pick/apply source."
       ]
+    },
+    {
+      "id": "LA-002-QUALIFIED-CARE-NAVIGATION-PHRASE-COVERAGE",
+      "priority": "P0",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "f3d4457abdb3ef7858cea0f68c2238b435129935",
+      "sourceFinding": "The pure current-turn qualified-care guard recognizes only a narrow initial action vocabulary. Direct, unambiguous medical-navigation forms such as ‘Where should I go for urgent care?’, ‘Can you recommend a hospital near me?’, and ‘Where is the nearest hospital?’ therefore do not produce the health-care override and can fall through to ordinary business-catalog handling despite the medical-health intent boundary.",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/health-care-override.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/health-care-override.test.ts"
+      ],
+      "requirement": "Extend only the pure current-turn qualified-care navigation phrase matcher so the three direct urgent-care and hospital forms invoke the existing authoritative-care override and suppress the general business catalog. Preserve the existing care sources, medical intent requirement, and all non-health behavior.",
+      "requiredBehavior": [
+        "Recognize the explicitly enumerated direct qualified-care request forms as care navigation only when the existing intent class is medical_health; they must return applies=true and suppressesGeneralBusinessCatalog=true.",
+        "Retain the current official finder/source list and the existing no-diagnosis, no-referral-guarantee, no-ordinary-business-card boundaries. Do not broaden provider types, source lists, or clinical advice.",
+        "Retain current breast-change, medication, pediatric-dentistry, private-origin, ordinary business-discovery, and general-conversation behavior."
+      ],
+      "validationPlan": [
+        "Add focused table-driven assertions for the three enumerated forms plus the existing non-health negative case in health-care-override.test.ts.",
+        "Run only the focused health-care override and Kinfolk route-wiring Vitest contracts, repository API TypeScript no-emit, and git diff --check on a compatible clean source workspace.",
+        "Return an uncommitted two-path review carrier with per-file hashes and a precise validation receipt."
+      ],
+      "constraints": [
+        "No route, UI/client, database/schema/migration, provider invocation, external source request, private-memory/context use, consent-policy change, feature activation, staging/deployment, browser/device, remote Git, or release action.",
+        "This is additive phrase coverage only; do not remove or weaken existing health-care override, medical-safety, source, or ordinary-discovery safeguards.",
+        "Task yINBiovLIPiFnyQCFfSycn is the sole implementation owner and may return only an uncommitted review carrier. The unified local integration owner is the sole acceptor."
+      ],
+      "externalAcceptance": "PENDING — source-only local claim. No provider, database, browser/device, authenticated member, staging/deployment, or feature activation action is authorized or recorded."
     }
   ]
 }
