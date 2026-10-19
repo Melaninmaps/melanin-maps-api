@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { openExternalUrl } from "@/lib/safeLinking";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -192,10 +193,10 @@ function ResourceCard({ item, colors, onReport }: { item: Resource; colors: any;
               <TouchableOpacity
                 style={[s.visitBtn, { backgroundColor: "#CA922B", borderColor: "#CA922B" }]}
                 onPress={() => {
-                  void (async () => {
-                    const { Linking } = await import("react-native");
-                    Linking.openURL(item.url!).catch(() => {});
-                  })();
+                  void openExternalUrl(item.url, {
+                    unavailableTitle: "Resource link unavailable / Enlace de recurso no disponible",
+                    unavailableMessage: "This resource link is invalid or cannot be opened on this device. / Este enlace de recurso no es válido o no se puede abrir en este dispositivo.",
+                  });
                 }}
                 activeOpacity={0.85}
               >
