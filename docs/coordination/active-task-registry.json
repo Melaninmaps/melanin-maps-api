@@ -669,7 +669,7 @@
     {
       "id": "KIN-DISC-1617-DETERMINISTIC-GEOGRAPHY-BARBER-RECOGNITION",
       "priority": "P1",
-      "status": "CLAIMED_LOCAL_ONLY_CENTRAL_CORRECTION",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "ca4f2420b5caa2928744a3220658b76e7ebdf82f",
@@ -723,7 +723,22 @@
           "The carrier narrows generic barber matching although the structured-barber requirement applies only to the four named service requests."
         ],
         "authorizedAdditionalPath": "artifacts/api-server/src/kinfolk/__tests__/heritage-city-registry.test.ts",
-        "routeScopeDecision": "No routes/kinfolk.ts change is necessary: request-classifier can independently resolve only current-turn message geography with no session fallback for its narrow Spanish-action condition."
+        "routeScopeDecision": "No routes/kinfolk.ts change is necessary: request-classifier can independently resolve only current-turn message geography with no session fallback for its narrow Spanish-action condition.",
+        "localSourceReceipt": {
+          "scopeAmendmentCommit": "7089fdce69f28d8af610b5f0a240e2ec15721ff5",
+          "sourceCommit": "2b4fcb4d24ae72988f68e6e965a64ae6f6ad2aae",
+          "result": "The verified six-path remediation carrier was applied to byte-compatible authority paths, then centrally corrected only within the recorded seven-path scope.",
+          "centralCorrections": [
+            "Temple alias grammar is limited to the five enumerated forms and runs after explicit current-turn destination resolution.",
+            "The narrow Spanish actions derive canonical city provenance from the current message with a null session fallback.",
+            "Structured barber-name exclusion applies only to the four named documented-service requests; ordinary generic barber matching remains available."
+          ],
+          "sourceVerification": {
+            "apiTests": "3 files / 123 tests passed: heritage-city-registry, business-discovery-clarification, and local-business-discovery",
+            "apiTypecheck": "current-authority API TypeScript no-emit passed",
+            "hygiene": "exact seven-path scope, static current-turn/alias/barber boundary checks, and git diff --check passed before commit"
+          }
+        }
       }
     },
     {
