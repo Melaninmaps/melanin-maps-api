@@ -2805,7 +2805,13 @@
           "artifacts/mobile/__tests__/dm-chat-send-fail-closed.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-level client outcome handling only."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-level client outcome handling only.",
+      "baseTransfer": {
+        "handoff_id": "hnd_aMZCzQMTsm-N9ssy4vbpT7gf",
+        "file": "COMM001_MOBILE_DM_SEND_FAIL_CLOSED_BASE_2026-10-19.tar.gz",
+        "sha256": "ded67ed4969f0f285a07d870f1c07062707a7dcec113bf4c7ef0d7fb13b93e88",
+        "expires_at": "2026-10-20T22:50:13.957Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
