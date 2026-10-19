@@ -2297,6 +2297,13 @@
           "artifacts/api-server/src/__tests__/profile-relationship-boundary-contract.test.ts": "37cf84617198776b9a23decef8d74aee809eef49c29014eb8fa5d124d4878a21"
         },
         "newPath": "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts"
+      },
+      "baseTransfer": {
+        "handoffId": "hnd_Lx9fsCq-l1rd5NLWX_AYKVxI",
+        "archive": "COMM001_DM_RECIPIENT_RECOVERY_BASE_2026-10-19.tar.gz",
+        "sha256": "101a5368fc33eb9c017b00bb44b0bf8cf1d0c01ba94e63032d99e2ed2ee7de7c",
+        "expiresAt": "2026-10-20T22:03:44.503Z",
+        "authority": "84d576625b847ee301b9e96e33d1e2cf1f4ba54a"
       }
     }
   ],
