@@ -3250,7 +3250,13 @@
           "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts": "76008a0d9440f54c6dcf05231343d42751d3d95f07d369decb2769351dd8b4ba"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only internal projection repair."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only internal projection repair.",
+      "baseTransfer": {
+        "handoff_id": "hnd_jwDfKeqO8xvd0xpDUeA7QEc1",
+        "file": "BIZ003_SKIP_FEEDBACK_OWNER_PROJECTION_BASE_2026-10-19.tar.gz",
+        "sha256": "0260fffe4fcf7f254bed0e4e9259d0ae152b690374bc35ce4a3900f6e40198ef",
+        "expires_at": "2026-10-20T23:14:37.529Z"
+      }
     },
     {
       "id": "OAUTH-003-INJECTED-LIFECYCLE-ADMISSION-FAKE",
@@ -3308,7 +3314,13 @@
           "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/injected-lifecycle-admission.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 default-disabled injected fixture composition only; OAUTH-001 NO-GO unchanged."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 default-disabled injected fixture composition only; OAUTH-001 NO-GO unchanged.",
+      "baseTransfer": {
+        "handoff_id": "hnd_tnxQdrMDfmERWLZq155t64Ij",
+        "file": "OAUTH004_INJECTED_LIFECYCLE_ADMISSION_BASE_2026-10-19.tar.gz",
+        "sha256": "fd0dd297a39fc8069d309961d0ff432fea53729c4cde4bb5207273e5434781c6",
+        "expires_at": "2026-10-20T23:14:37.749Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
