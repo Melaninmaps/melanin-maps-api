@@ -124,10 +124,21 @@
     },
     {
       "id": "SP-002-SHARED-PLAN-FREE-BUSY-AVAILABILITY-ENGINE",
-      "status": "IMPLEMENTING_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "baseline": "12e0b7268a4148ce3e948400af79cf6280b893cf",
+      "sourceCommit": "95c85351085f5787cce2228342564c50f314a7fe",
       "publicationBoundary": "Local source-only claim under the controlling boundary. Do not fetch, push, inspect connectors/staging, deploy, or perform release actions without separate founder authorization.",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "carrier": {
+          "archiveSha256": "c655a51430c6bd4c82138e98bfe037329820cc03337b6d24099aa0d7ad6fd1f3",
+          "manifestSha256": "b4313a9f954e9882f0b4024362986a994595067b41931a9d0dea414e23e61333",
+          "patchSha256": "bef6cec3b17c9c90ca15983a13b56b602473f402ef32c043e7c573fb0e834123",
+          "nestedSourceSnapshotsAndAddOnlyReconstructionVerified": true
+        },
+        "reviewAdjustment": "Independent local review found that hostile reflective input could throw during validation instead of returning the generic fail-closed result. Central integration added the minimal public evaluator exception boundary and a revoked-Proxy regression within the same two claimed files."
+      },
       "requirement": "Add a deterministic, import-free Shared Plan free/busy availability engine that consumes only already-authorized normalized participant intervals and returns aggregate candidate overlap windows. The founder-selected default is free/busy only: never expose event titles, details, reasons, exact location, flight/itinerary data, calendar information, or participant-level availability.",
       "paths": [
         "artifacts/api-server/src/kinfolk/shared-plans/free-busy-availability.ts",
@@ -148,7 +159,13 @@
         "No route, UI, schema, migration, database/storage/persistence, calendar OAuth/provider, external invitation/link, notification, monitoring, AI, entitlement, cache, Circle lookup, flight, location, itinerary, or feature activation work.",
         "Do not modify SP-001 Circle preference boundaries, Phase A access-policy paths, private availability blocks, UM-001/UM-002, D1, Community, LA, CI, or MAP paths.",
         "The owner may return only an uncommitted local review carrier. The integration owner may perform only local source review/recording until separate founder authorization allows any remote publication."
-      ]
+      ],
+      "sourceVerification": {
+        "apiTests": "4 files / 28 tests passed: shared-plan free/busy policy, private availability-block policy, Circle plan preference policy, and Circle private-invite policy",
+        "apiTypecheck": "repository API no-emit passed",
+        "hygiene": ["archive, nested manifest, patch, source snapshots, and temporary-index reconstruction hashes verified", "exact two add-only paths and git apply --check --whitespace=error passed", "import-free/no-activation and injected-time boundaries passed", "independent local semantic review passed after the proxy-safe correction", "git diff --check passed"]
+      },
+      "externalAcceptance": "PENDING — this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
     },
     {
       "id": "SP-003-CIRCLE-ITINERARY-ACCOUNT-PREFERENCE-CONSENT",
