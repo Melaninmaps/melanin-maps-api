@@ -1379,15 +1379,15 @@
       "platform": "API source-only preparation",
       "founder_requirement": "Default-disabled, fake-provider-only Calendar Availability preparation may establish pure response contracts and normalizers without configuring OAuth or connecting a provider.",
       "acceptance_criteria": "Exactly three new pure API leaf files: provider-neutral contract and strict fake Google FreeBusy / conditional Microsoft personal calendarView normalizers. They emit only canonical UTC half-open availability intervals or generic unknown; default gate remains false. They do not include PKCE/state, vaults, routes, schema, clients, configuration, provider networking, real consent/scopes, or activation.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Founder-directed source-only normalizer lane follows OAUTH-001 NO-GO. Personal Graph calendarView is conditional preparation only: getSchedule lacks delegated personal-account support; Calendars.ReadBasic permits basic event data and `$select` is response minimization, not availability-only authorization. Manual availability remains the current fallback.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Central local-only integration `2ed52411ca297ecaec11de326db53a84e2e849fc` accepted the three-new-file OAUTH-002 carrier (outer SHA-256 `50a795ea8f3bdddcea348d7acb349826d7015281cfa55d20dbf2ebf0a23f6807`; patch SHA-256 `13885eafa8b49103da675f78d5e19aecc3ce6ead86ef7cd2aebe360b1ed5e92f`). Full-authority API Vitest 1 file/8 tests, API no-emit, Prettier, exact scope, whitespace, result-hash and implementation no-network/no-route/no-persistence checks passed. Default gate remains literal false; outputs are only canonical busy intervals or generic unknown. Conditional personal Graph calendarView is source-only preparation; `$select` is response minimization, not availability-only consent. OAUTH-001 NO-GO remains unchanged.",
       "staging_evidence": "MISSING EVIDENCE \u2014 prohibited; no staged OAuth/provider action authorized.",
       "web_evidence": "MISSING EVIDENCE \u2014 no OAuth client/consent UI authorized.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "android_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "responsible_owner_or_task": "IIUhb1wR0gfLjzmdLmEovt (exclusive source-only preparation carrier); QJATRGk7nUgzDlccMCUcG6 (central acceptance)",
       "dependencies_or_blockers": "OAUTH-001 remains NO-GO for real OAuth. PKCE/state/vault contracts are deliberately deferred to a later claim. Personal Graph use requires a future separate consent decision; routes, schema, client config, provider networking, real tokens, staging and activation remain excluded.",
-      "next_action": "Return an uncommitted three-new-file fake DTO normalizer carrier. A later separately claimed state/PKCE and in-memory vault lane may follow only after central review.",
+      "next_action": "Keep real OAuth/client/configuration/scope/consent/token/network/pilot work blocked. Only after a separately approved contract and new non-overlapping claim may a state/PKCE or in-memory vault preparation leaf be considered.",
       "founder_approval_needed": "No for this isolated fake-provider source preparation only; Yes for every real OAuth client/configuration, scope/consent, token, network, member-data, pilot, deployment or activation action.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1816,6 +1816,10 @@
     {
       "date": "2026-10-19",
       "event": "Added permanent FLIGHT-002 and exact all-new-file provider-neutral default-disabled status source claim at authority ffaf4572faf93c7ce74e83695ef1ab2b5dd02e29; no provider selection, account, credential, network, client, route, DB, deployment, or activation authorized."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "OAUTH-002 three-new-file default-disabled fake-provider normalizer leaf source-integrated locally at 2ed52411ca297ecaec11de326db53a84e2e849fc; API 1 file/8 tests, API no-emit, Prettier, scope/hash/whitespace and no-network/no-route/no-persistence checks passed. OAUTH-001 NO-GO and all real OAuth/provider gates remain unchanged."
     }
   ],
   "evidence_gaps": [
@@ -1833,9 +1837,9 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 12,
+      "IN DEVELOPMENT": 11,
       "NOT STARTED": 10,
-      "SOURCE INTEGRATED": 19
+      "SOURCE INTEGRATED": 20
     },
     "by_founder_area": {
       "Core app": 2,

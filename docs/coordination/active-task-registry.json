@@ -2105,7 +2105,7 @@
     {
       "id": "OAUTH-002-SOURCE-ONLY-NORMALIZERS",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "OAUTH-002",
@@ -2140,7 +2140,28 @@
         "sha256": "a0d6cb00197916e0d9c6c6ffc7a3a1a0a290ffca551135f565190f61f0ff6293",
         "expiresAt": "2026-10-20T21:39:51.299Z",
         "supersedesUnissuedPlanningBase": "OAUTH002_DEFAULT_DISABLED_FAKE_PROVIDER_PREPARATION_BASE_2026-10-19.tar.gz"
-      }
+      },
+      "sourceCommit": "2ed52411ca297ecaec11de326db53a84e2e849fc",
+      "carrier": {
+        "handoffId": "hnd_uZsnoJ_jURkJtjH4QVWf0rx7",
+        "archive": "OAUTH002_SOURCE_ONLY_NORMALIZERS_CARRIER_2026-10-19.tar.gz",
+        "outerSha256": "50a795ea8f3bdddcea348d7acb349826d7015281cfa55d20dbf2ebf0a23f6807",
+        "manifestSha256": "15ea0bf500b0cbff6618d64a7e5c1f1ceecee42213f0facd74ce57c83f8179ad",
+        "patchSha256": "13885eafa8b49103da675f78d5e19aecc3ce6ead86ef7cd2aebe360b1ed5e92f",
+        "resultHashes": {
+          "contracts.ts": "8cf8863c35aa3baa8bcf8e2ba9788bcbc28b308c80550baf4f01999d0dc324b5",
+          "normalizers.ts": "1e52ea3684a4c1d34914298b2f90f6adc58c593aaf10526f9cf5ced68bcf7434",
+          "normalizers.test.ts": "a6c744bdb9780b548add2f60ce7438c7607ada68e513b7733c4ce77fc9f3b731"
+        }
+      },
+      "centralValidation": {
+        "focusedVitest": "1 file / 8 tests passed",
+        "apiNoEmit": "passed",
+        "format": "Prettier passed for all three paths",
+        "scope": "exact three new allowlisted paths; git diff --check passed",
+        "boundary": "default feature gate is constant false; implementation files contain no network, OAuth client/configuration, route, persistence, provider endpoint, environment, client/mobile or cross-feature dependency; hostile URL fields appear only in rejection-test fixtures"
+      },
+      "externalAcceptance": "NOT APPLICABLE \u2014 source-only fake-provider leaf; no OAuth client, consent, tokens, provider/network, pilot, deployment or member-visible acceptance is authorized."
     },
     {
       "id": "FLIGHT-002-DEFAULT-DISABLED-STATUS-LEAF",
