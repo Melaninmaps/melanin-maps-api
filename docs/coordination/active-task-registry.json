@@ -1827,7 +1827,7 @@
     {
       "id": "BIZ-003-OWNER-SKIP-INSIGHTS-CANONICAL-READ",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "BIZ-003",
@@ -1873,7 +1873,7 @@
         "API/mobile no-emit, exact three-path scope, git diff --check."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 no runtime/device/member-visible acceptance.",
       "sourceBaseTransfer": {
         "handoffId": "hnd_ytD1iekrlYKPUPfMpEe_ruIe",
         "archive": "BIZ003_OWNER_SKIP_INSIGHTS_BASE_2026-10-19.tar.gz",
@@ -1881,6 +1881,21 @@
         "expiresAt": "2026-10-20T21:17:40.679Z",
         "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
         "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
+      },
+      "sourceCommit": "476d3017ed9fcda9a13d2837aa664ee8281f3d24",
+      "carrier": {
+        "handoff_id": "hnd_Q2i5JGMGleoC9_7oPoCJW7dL",
+        "file": "BIZ003_OWNER_SKIP_INSIGHTS_CANONICAL_READ_CARRIER_2026-10-19.tar.gz",
+        "sha256": "00df82a0335bf58ace710fe48a607454f417e6cce08e81ecd1dee465257b5ea6",
+        "patch_sha256": "2f14c8bcf6ca8808095d6c540497cdba82d76c58a8612956358aa04ec3139193"
+      },
+      "centralValidation": {
+        "api_vitest": "1 file / 2 tests PASS",
+        "mobile_vitest": "1 file / 3 tests PASS",
+        "api_tsc": "PASS",
+        "mobile_tsc": "PASS",
+        "scope": "exact three paths; git diff --check PASS",
+        "semantic": "canonical owner-bound read; bearer header, feedback shape, null recovery and five-item cap retained; no analytics or entitlement/persistence changes"
       }
     },
     {
@@ -2740,6 +2755,57 @@
         "sha256": "73933ac77b1979f697b2fbc82c9cda1098cfec8c37f12746d9d17788347acf34",
         "expires_at": "2026-10-20T22:46:00.769Z"
       }
+    },
+    {
+      "id": "COMM-001-MOBILE-DM-SEND-FAIL-CLOSED",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "476d3017ed9fcda9a13d2837aa664ee8281f3d24",
+      "paths": [
+        "artifacts/mobile/app/chat/[id].tsx",
+        "artifacts/mobile/__tests__/dm-chat-send-fail-closed.test.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS / COMM-001: eligible members complete a private DM request and communicate only after recipient consent.",
+        "founderOutcome": "An initiator and recipient see truthful message-send state: pending requests remain non-communicative, and neither member is told a rejected outgoing message was delivered.",
+        "participantPerspectives": [
+          "Initiating member: composes after the server-authoritative request is accepted; keeps/retries draft after rejected send; never sees a rejected bubble as sent.",
+          "Recipient member: receives no unapproved or server-rejected content and retains existing pending accept/decline protections."
+        ],
+        "interactionChain": "Request creation -> generic recipient notification -> recipient opens pending conversation -> accept or decline -> fresh server-authoritative accepted state -> initiator message post -> displayed sent state only after success -> recipient visibility/reply/follow-up under existing controls -> refresh/recovery. This slice owns only post-accept mobile send outcome handling.",
+        "notificationsAndCommunications": "No notification producer, delivery channel, routing, or follow-up change is permitted. Do not claim in-app/push/email delivery or receipt.",
+        "privacyAndPermissions": "Preserve server authorization, block/relationship policy, participant isolation, generic failure behavior, and pending consent boundary; do not expose raw error payloads or content as delivered when it was rejected.",
+        "integrationOwnership": "Q combines this client outcome repair with IIU\u2019s pending-send guard, existing notification routing, server lifecycle and authorization contracts; no worker marks the parent experience accepted.",
+        "completionBoundary": "Worker milestone is source-only two-path carrier. Runtime persistence, actual delivery/receipt, account switching, Web/iOS/Android/browser/staging and founder acceptance remain open."
+      },
+      "requiredBehavior": [
+        "Provisional mobile bubble is visibly sending, never initially sent; promote only after a successful message POST response.",
+        "For every unsuccessful send outcome (including non-pending non-OK, unreadable/malformed failure JSON, and network exception), remove the exact provisional bubble, retain/restore the unsent draft where feasible, and show concise retry-safe feedback. Preserve the existing pending-request-specific explanation when safely available.",
+        "Add one focused static/source contract proving status promotion only on success and cleanup/recovery through all stated failure paths."
+      ],
+      "constraints": [
+        "Exactly the two paths; do not touch conversations route, Web messages, notification producer/routing, relationship/block policy, schema/persistence, memberships, OAuth/Flight/BIZ/Maps, config, external services, or feature activation.",
+        "No database/runtime, provider/network, remote Git, deployment, browser/device, mobile build, staging, or member-visible action."
+      ],
+      "validationPlan": [
+        "cd artifacts/mobile && pnpm exec vitest run __tests__/dm-chat-send-fail-closed.test.ts --reporter=dot",
+        "cd artifacts/mobile && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope; git diff --check; source-only static contract\u2014no runtime delivery claim"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-path review carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "476d3017ed9fcda9a13d2837aa664ee8281f3d24",
+        "sourceHashes": {
+          "artifacts/mobile/app/chat/[id].tsx": "143cb3d00bc0b45e9244b494c79d3cb4ded054b2c9d04961ed4a1858b3eb3c36"
+        },
+        "newPaths": [
+          "artifacts/mobile/__tests__/dm-chat-send-fail-closed.test.ts"
+        ]
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-level client outcome handling only."
     }
   ],
   "globalDirectiveDelivery": [
