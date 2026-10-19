@@ -10,6 +10,7 @@ import {
 import { KinfolkMemoryManager } from "./KinfolkMemoryManager";
 import { PrivatePlacesSettings } from "./PrivatePlacesSettings";
 import { TemporaryStaysSettings } from "./TemporaryStaysSettings";
+import { ConnectedAppsSettings } from "./ConnectedAppsSettings";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -509,6 +510,7 @@ export function KinfolkExperienceSettings() {
 
           <PrivatePlacesSettings />
           <TemporaryStaysSettings />
+          <ConnectedAppsSettings />
         </div>
       )}
       {showMemoryManager && (

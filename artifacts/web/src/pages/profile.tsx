@@ -1302,6 +1302,12 @@ export default function Profile() {
   }, [activeProfileSection]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("settings") !== "connected-apps") return;
+    setActiveSettingsFolder("kinfolk");
+    setActiveProfileSection("settings");
+  }, []);
+  useEffect(() => {
     if (!auth?.user) return;
     const userId = (auth.user as any).id;
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");

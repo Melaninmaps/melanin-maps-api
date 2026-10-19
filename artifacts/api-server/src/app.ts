@@ -599,7 +599,7 @@ const serveSpa = (_req: Request, res: Response, next: NextFunction): void => {
 const SPA_EXPLICIT = [
   "/login", "/signup", "/admin", "/forgot-password", "/reset-password",
   "/membership", "/map", "/discover", "/community", "/profile",
-  "/settings", "/onboarding", "/business", "/privacy-policy", "/about",
+  "/settings", "/onboarding", "/business", "/journeys", "/privacy-policy", "/about",
   "/cultural-sites", "/hbcus", "/places",
 ];
 for (const p of SPA_EXPLICIT) {
