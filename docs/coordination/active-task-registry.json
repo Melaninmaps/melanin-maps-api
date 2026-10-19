@@ -1972,7 +1972,13 @@
         "API Vitest: city-safety-briefing-v1.test.ts only with injected time/mocked fetch; no real network.",
         "API tsc -p tsconfig.json --noEmit, exact two-path scope and git diff --check."
       ],
-      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-path carrier only; central owner alone may integrate and legal/compliance/release remain separate."
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-path carrier only; central owner alone may integrate and legal/compliance/release remain separate.",
+      "baseTransfer": {
+        "handoffId": "hnd_bqwpXT9cOFgtFa8S8uF0lVtP",
+        "archive": "CR01_MEMBER_CONTROLLED_CITY_CRISIS_GUIDANCE_BASE_2026-10-19.tar.gz",
+        "sha256": "45a44c971027eaac7fe27c70794f29fd216489c9f81eac07120fc83fe3900b3e",
+        "expiresAt": "2026-10-20T21:26:39.169Z"
+      }
     },
     {
       "id": "FLIGHT-001-PROVIDER-NEUTRAL-READINESS-PACKET",
@@ -2004,7 +2010,13 @@
       "validationPlan": [
         "One-document path scope; all official citations link to the completed report sources; no unsupported provider capability claim."
       ],
-      "carrierDisposition": "Return one uncommitted, local decision-packet document only for central review; not a provider implementation or authorization."
+      "carrierDisposition": "Return one uncommitted, local decision-packet document only for central review; not a provider implementation or authorization.",
+      "baseTransfer": {
+        "handoffId": "hnd_aYWfVHZKCJC63zPDfixBHIID",
+        "archive": "FLIGHT001_PROVIDER_NEUTRAL_READINESS_PACKET_BASE_2026-10-19.tar.gz",
+        "sha256": "2a1abaeefc41dd66a5622b2b00d30241dfc5b37ea7a02ce77287cddeed6a4c8a",
+        "expiresAt": "2026-10-20T21:26:39.424Z"
+      }
     },
     {
       "id": "OAUTH-001-AVAILABILITY-FIRST-READINESS-PACKET",
@@ -2036,7 +2048,13 @@
       "validationPlan": [
         "One-document path scope; official citations must be grounded in the completed trace; no claim of client/pilot readiness."
       ],
-      "carrierDisposition": "Return one uncommitted, local decision-packet document only for central review; not an OAuth implementation or authorization."
+      "carrierDisposition": "Return one uncommitted, local decision-packet document only for central review; not an OAuth implementation or authorization.",
+      "baseTransfer": {
+        "handoffId": "hnd_hlRM8c9r9qYd-6V8csRNIpSH",
+        "archive": "OAUTH001_AVAILABILITY_FIRST_READINESS_PACKET_BASE_2026-10-19.tar.gz",
+        "sha256": "efa4d8f2e5a8ca916b27b8d8ed6deedceb06454cace75f16ff55b3486ffc4175",
+        "expiresAt": "2026-10-20T21:26:39.663Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
