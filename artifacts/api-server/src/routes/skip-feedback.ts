@@ -194,7 +194,11 @@ router.get("/businesses/mine/skip-feedback", async (req: Request, res: Response)
     }
 
     const feedback = await db
-      .select()
+      .select({
+        id: businessSkipFeedbackTable.id,
+        message: businessSkipFeedbackTable.message,
+        createdAt: businessSkipFeedbackTable.createdAt,
+      })
       .from(businessSkipFeedbackTable)
       .where(eq(businessSkipFeedbackTable.businessId, business.id))
       .orderBy(businessSkipFeedbackTable.createdAt);
