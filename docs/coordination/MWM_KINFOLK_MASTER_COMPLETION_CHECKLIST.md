@@ -387,6 +387,8 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Numbered queue **#4** recorded `BIZ-003-OWNER-HOME-SKIP-INSIGHTS-CANONICAL-READ` at `6d4e0e55edf95a5b3c831df413337e5cbbf7ede1` (two source-only paths; no BIZ-009 release work). |
+| 2026-10-19 | Numbered queue **#5** recorded `FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION` at `6d4e0e55edf95a5b3c831df413337e5cbbf7ede1` (three all-new source-only files; no provider, persistence, route/client, Calendar, message, notification, venue, or commerce action). |
 | 2026-10-19 | Numbered source queue **#3** dispatched: `OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT` to S9 at `b10234732011f3d57537f61081babae91efb6601`. Exactly three all-new default-disabled in-memory vault/redaction files; no real OAuth, provider, credentials, persistence, route/client/configuration, or activation behavior. |
 | 2026-10-19 | Accepted BIZ-003 canonical owner skip-insights source receipt at `476d3017ed9fcda9a13d2837aa664ee8281f3d24`: API **2/2**, mobile **3/3**, API/mobile no-emit, exact three paths. Parent BIZ-003 remains IN DEVELOPMENT; no BIZ-009 release work reopened. |
 | 2026-10-19 | Numbered source queue **#2** dispatched: `COMM-001-MOBILE-DM-SEND-FAIL-CLOSED` to y at `476d3017ed9fcda9a13d2837aa664ee8281f3d24`. Concrete trace found optimistic rejected mobile DM sends could remain shown as sent. Exact two-path fail-closed repair with initiator/recipient lifecycle context; source-only boundary remains. |

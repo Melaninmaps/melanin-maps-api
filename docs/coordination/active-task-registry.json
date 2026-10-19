@@ -2881,6 +2881,93 @@
         "sha256": "7da92d0d5e939153b5884ba7cc8e0ef47383b1b10615830c415ebbfb37ba34e2",
         "expires_at": "2026-10-20T22:52:06.455Z"
       }
+    },
+    {
+      "id": "BIZ-003-OWNER-HOME-SKIP-INSIGHTS-CANONICAL-READ",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "BIZ-003",
+      "baseline": "6d4e0e55edf95a5b3c831df413337e5cbbf7ede1",
+      "paths": [
+        "artifacts/mobile/app/business-owner/index.tsx",
+        "artifacts/mobile/__tests__/business-owner-skip-feedback-canonical.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/routes/skip-feedback.ts",
+        "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts",
+        "artifacts/mobile/app/business-dashboard.tsx"
+      ],
+      "requiredBehavior": [
+        "Owner Home has exactly-one-business guarded canonical owner skip-insights read; maps only feedback messages and preserves bearer/safe empty/10-cap. Member feedback remains private. No server/dashboard/analytics/entitlement/BIZ-009, notification, DB/runtime/external change."
+      ],
+      "constraints": [
+        "Exact allowlist only; source-only; no remote Git, DB/schema/data/account, provider/OAuth/Flight activation, deploy, browser/device, mobile build, or member-visible acceptance."
+      ],
+      "validationPlan": [
+        "Mobile focused new contract + existing API owner contract + mobile no-emit; exact two paths/diff check."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified carrier only; central owner integrates.",
+      "sourceBase": {
+        "authority": "6d4e0e55edf95a5b3c831df413337e5cbbf7ede1",
+        "dependencyHashes": {
+          "artifacts/mobile/app/business-owner/index.tsx": "9ceb84bf5c396578817d133e5ce5446a02cf733699e24910e26c4d5ee8d22848"
+        },
+        "newPaths": [
+          "artifacts/mobile/__tests__/business-owner-skip-feedback-canonical.test.ts"
+        ]
+      },
+      "founderLifecycleContext": {
+        "parentExperience": "Complete mapped founder experience; worker implements only bounded source seam and Q retains integrated lifecycle acceptance.",
+        "completionBoundary": "No runtime/delivery/persistence/account-switch/device/browser/staging/member/founder evidence is claimed."
+      }
+    },
+    {
+      "id": "FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-001",
+      "baseline": "6d4e0e55edf95a5b3c831df413337e5cbbf7ede1",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-policy.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-policy.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-policy.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/sharing-policy.test.ts"
+      ],
+      "requiredBehavior": [
+        "Pure default-disabled composition of explicit owner named-recipient fresh arrival sharing with distinct injected reciprocal availability intent; neutral eligible/unavailable only. No provider/persistence/route/client/Calendar/DM/notification/venue/commerce."
+      ],
+      "constraints": [
+        "Exact allowlist only; source-only; no remote Git, DB/schema/data/account, provider/OAuth/Flight activation, deploy, browser/device, mobile build, or member-visible acceptance."
+      ],
+      "validationPlan": [
+        "API new policy + sharing-policy tests, API no-emit, Prettier; exact three new paths/diff/static no-external guard."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified carrier only; central owner integrates.",
+      "sourceBase": {
+        "authority": "6d4e0e55edf95a5b3c831df413337e5cbbf7ede1",
+        "dependencyHashes": {
+          "artifacts/api-server/src/kinfolk/flight-status/sharing-contracts.ts": "ad563757ac50a67bf839abaecb3a2429a525bfbed2d718763ff77d31b82c23af",
+          "artifacts/api-server/src/kinfolk/flight-status/sharing-policy.ts": "1b7a8d90e7096720018b4664aa557372e6a470b790d1fd7960329c13e735570e",
+          "artifacts/api-server/src/kinfolk/flight-status/__tests__/sharing-policy.test.ts": "9694d2d84f83c50ac72877f03d1f4095285b61475c0ce772574cbaf01678222b"
+        },
+        "newPaths": [
+          "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-contracts.ts",
+          "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-policy.ts",
+          "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-policy.test.ts"
+        ]
+      },
+      "founderLifecycleContext": {
+        "parentExperience": "Complete mapped founder experience; worker implements only bounded source seam and Q retains integrated lifecycle acceptance.",
+        "completionBoundary": "No runtime/delivery/persistence/account-switch/device/browser/staging/member/founder evidence is claimed."
+      }
     }
   ],
   "globalDirectiveDelivery": [
