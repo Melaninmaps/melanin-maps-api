@@ -21,11 +21,23 @@
   "claims": [
     {
       "id": "D1-CLOSED-CHECKOUT-CUSTOMER-RECONCILIATION",
-      "status": "IMPLEMENTING",
+      "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "requirement": "Semantically rebuild closed-checkout customer remediation against the verified authority. All obsolete checkout initiators must return the same authenticated no-side-effect 409 before body, user, database, key, provider, session, or entitlement reads, while preserving verified provider webhook/portal and existing member/family management paths.",
       "inspectionBaseline": "f818056c93840794ad08c9bb90b68f2500635a25",
-      "implementationBaseline": "d90719d781e5550f900afdd7af0315a65bba10c8",
+      "implementationBaseline": "1d6aba66b467804f1d7b3861d7b940ddb26abc85",
+      "initialClaimBaseline": "d90719d781e5550f900afdd7af0315a65bba10c8",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "d4ce3828536cb2400a3c15fc5373f0a7e4058cdf",
+        "carrier": {
+          "archiveSha256": "13ce3336fdebf36bcbf8b063db809a228c9064ff1919ea3625101aff9e04bf9d",
+          "manifestSha256": "a168a5e037b7cca66ccaf9faa0bf14063611b19f19a7d2972c7d879913a7b95c",
+          "patchSha256": "e8e9328cfefccddca2f543b75044b416a13810502d662a39fca4eb3fb1aebdef",
+          "verifiedBaseAndAllTwelveFileHashes": true
+        },
+        "reviewDisposition": "Accepted after restoring the pre-existing unauthenticated account-entry guard ahead of the retained free Community and free business-listing routes; the carrier otherwise met the checkout-closure and preservation contract."
+      },
       "localEvidence": {
         "branch": "staging/kinfolk-full-candidate-20261014",
         "reportedBase": "7ce24646dfe5b0049ff1236afa0f10a01fda5579",
@@ -48,10 +60,10 @@
         "artifacts/web/src/pages/membership.tsx"
       ],
       "focusedEvidence": {
-        "api": "31 tests passed across checkout-retirement and membership-price-integrity",
-        "web": "3 family-plan checkout tests passed",
-        "native": "4 payment-handoff/family lifecycle tests passed",
-        "staticChecks": ["API, web, and native no-emit passed", "git diff --check passed"]
+        "api": "2 files / 12 tests passed: stripe-checkout-retirement and membership-price-integrity",
+        "web": "1 file / 4 tests passed: family-plan-web-checkout, including unauthenticated account-entry ordering",
+        "native": "1 file / 3 tests passed: web-payment-handoff",
+        "staticChecks": ["API, web, and native no-emit passed", "direct three-handler 401-to-identical-409 order reviewed", "client checkout initiator absence reviewed", "git diff --check passed"]
       },
       "requiredBehavior": [
         "Return identical authenticated 409 closed-enrollment responses at /billing/checkout, /membership/family/add-seat, and /stripe/checkout before any body, user, database, provider, session, entitlement, or secret read.",
