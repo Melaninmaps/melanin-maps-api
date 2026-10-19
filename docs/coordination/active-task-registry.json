@@ -2327,6 +2327,45 @@
         "expiresAt": "2026-10-20T22:03:44.503Z",
         "authority": "84d576625b847ee301b9e96e33d1e2cf1f4ba54a"
       }
+    },
+    {
+      "id": "COMM-001-DM-PENDING-RECIPIENT-ACTION-GUARD",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "65ae5812d660b20635e102ca68b14deeb030ae04",
+      "paths": [
+        "artifacts/api-server/src/routes/conversations.ts",
+        "artifacts/api-server/src/routes/__tests__/conversation-request-pending-authorization.test.ts"
+      ],
+      "requiredBehavior": [
+        "Only a non-requesting participant may accept or decline a direct-message request while its stored `requestStatus` is exactly `pending`; all existing auth, ID parsing, participant, DM-only, block, and self-requester guards remain before any mutation.",
+        "Both accept and decline must fail closed with no update/delete when the stored request is absent or non-pending. The mutation itself must be atomically constrained to `requestStatus = pending`; a race that produces zero affected rows returns the same neutral conflict outcome rather than success.",
+        "Keep API errors generic enough for the clients to show a generic retry state; do not change mobile/Web clients, hooks, schema, DB migrations, relationship/block policy, notifications, payment/entitlement, provider/OAuth/Flight, or any other Community vertical.",
+        "New focused API contract must prove the authorization/ordering and conditional mutation predicate for accept and decline, with no broad endpoint rewrite."
+      ],
+      "constraints": [
+        "Exactly `conversations.ts` plus one new focused API test path.",
+        "Do not modify existing frozen social-authorization test, client/UI/hooks, conversations persistence/model, schema/migrations, or external/runtime feature behavior.",
+        "No remote Git, provider/network, DB/runtime action, browser/device, staging/deploy/migration, activation or member-visible acceptance."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/routes/__tests__/conversation-request-pending-authorization.test.ts src/__tests__/social-authorization-contract.test.ts src/__tests__/profile-relationship-boundary-contract.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope; git diff --check; static proof both accept/decline have pre-mutation pending guard plus conditional pending mutation and zero-row neutral conflict outcome"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "65ae5812d660b20635e102ca68b14deeb030ae04",
+        "sourceHashes": {
+          "artifacts/api-server/src/routes/conversations.ts": "007b6c2bb9000b4d2e592927a0841b613136aacee4704730170971fd97ac7b9f",
+          "artifacts/api-server/src/__tests__/social-authorization-contract.test.ts": "689fd7fb74839093d4a60f498c9365d7e348a3d56a087a10be539f70eb1566c3",
+          "artifacts/api-server/src/__tests__/profile-relationship-boundary-contract.test.ts": "37cf84617198776b9a23decef8d74aee809eef49c29014eb8fa5d124d4878a21"
+        },
+        "newPath": "artifacts/api-server/src/routes/__tests__/conversation-request-pending-authorization.test.ts"
+      }
     }
   ],
   "globalDirectiveDelivery": [
