@@ -713,6 +713,37 @@
       }
     },
     {
+      "id": "BUSINESS-OWNER-001-STRUCTURED-SPECIALTY-SAVE",
+      "priority": "P0",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "c9cd32c4b84282c7db4cdf0d07eaadba8390d2be",
+      "sourceFinding": "The explicit, multi-business owner profile PATCH is correctly limited to ordinary canonical business fields and uses approvedOwnerPredicate, but it has no owner-scoped write seam for the existing structured public business_specialties relation consumed by governed Kinfolk discovery. The table and its existing slug grammar already exist; this slice must reuse them rather than create schema, taxonomy, or publication policy.",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/api-server/src/routes/__tests__/business-owner-multi-business-contract.test.ts"
+      ],
+      "requirement": "Return an uncommitted, source-only two-path carrier that adds one explicit selected-business owner endpoint for complete structured-specialty replacement and extends the existing owner multi-business contract.",
+      "requiredBehavior": [
+        "Require authentication, a nonempty selected business ID, and the existing approvedOwnerPredicate; never let the legacy single-business route choose among multiple owner links.",
+        "Accept only a complete dense list of unique specialty slugs that satisfies the existing business_specialties slug grammar; reject malformed, duplicate, non-string, or sparse input before any write. An explicit empty list may clear only the selected approved owner's existing specialty rows.",
+        "Use one database transaction and a selected-business row lock before replacing specialties, so an owner specialty update cannot race an Admin canonical-profile write. Reuse the existing canonical ownership predicate; do not duplicate a weaker authorization policy.",
+        "Return only the saved structured specialty list and do not change business profile fields, ownership designations, evidence, listing/publication state, eligibility, archive/restore/delete-queue state, Kinfolk Current membership, public-view predicates, or provider behavior.",
+        "The focused contract must cover authentication, explicit selected-business ownership, malformed/duplicate rejection before mutation, transaction/lock plus delete-then-insert replacement, empty-list removal, and explicit absence of protected lifecycle/publication mutations."
+      ],
+      "validationPlan": [
+        "Run the focused business-owner-multi-business contract, API source-aligned no-emit, exact two-path scope validation, and git diff --check on the compatible workspace.",
+        "Return an uncommitted compact two-file review carrier with hashes and no database, browser, provider, deployment, or runtime invocation."
+      ],
+      "constraints": [
+        "No schema/migration/DDL, taxonomy expansion, service inclusions/exclusions/preparation-requirements contract, public profile/Directory/Kinfolk runtime assertion, client UI/status copy, publication workflow, admin route, ownership-link change, entitlement, Map, archive/restore/delete-queue, provider, browser/device, remote, deployment, or feature activation action.",
+        "S9 is the sole implementation owner for exactly these two paths and returns only an uncommitted carrier. The unified local integration owner is the sole acceptor.",
+        "Runtime propagation measurement across public profile, Directory API, and governed Kinfolk retrieval remains a separately authorized acceptance gate; this source-only slice must not claim it."
+      ],
+      "externalAcceptance": "PENDING — no authenticated owner, database write, runtime propagation timing, browser/device, provider, staging/production, or deployment validation is authorized or recorded."
+    },
+    {
       "id": "D3-D8-CONTROLLED-FUTURE-RECONCILIATION-INPUT",
       "status": "FUTURE_RECONCILIATION_INPUT_NO_IMPLEMENTATION_CLAIM",
       "isImplementationClaim": false,
