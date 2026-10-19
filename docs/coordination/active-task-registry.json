@@ -3382,7 +3382,13 @@
           "artifacts/mobile/__tests__/dm-inbox-request-response-validation.test.ts": null
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic source-only inbox validation."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic source-only inbox validation.",
+      "baseTransfer": {
+        "handoff_id": "hnd_edL88Fq82Hoz_6nNdR44W9PX",
+        "file": "COMM001_MOBILE_INBOX_RESPONSE_VALIDATION_BASE_2026-10-19.tar.gz",
+        "sha256": "b2fa4f3eeba2b8b8490c2e57d1e7402c744f057e59236c9add5e0f25f53a3138",
+        "expires_at": "2026-10-20T23:22:27.254Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
