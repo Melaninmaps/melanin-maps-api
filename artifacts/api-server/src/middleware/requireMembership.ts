@@ -1,11 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { pool } from "@workspace/db";
 import { storage } from "../storage";
+import { getTierFromMemberType, hasActivePaidMembershipTrial } from "../constants/membershipTiers";
 
 // Internal tier identifiers — map to display names:
 //   "free"              → Explorer (Free)
 //   "navigator"         → Navigator ($7.99/mo)
-//   "trailblazer"       → Trailblazer ($19.99/mo)
+//   "trailblazer"       → Trailblazer ($14.99/mo)
 //   "community_builder" → Community Builder ($29.99/mo)
 //   "legacy_member"     → Legacy Member ($79.99/mo)
 export type MembershipTier = "free" | "navigator" | "trailblazer" | "community_builder" | "legacy_member";
@@ -26,17 +27,13 @@ export const TIER_RANK: Record<MembershipTier, number> = {
   legacy_member: 4,
 };
 
-const PAID_TIERS: readonly string[] = ["navigator", "trailblazer", "community_builder", "legacy_member"];
+/** True when the server is running in testing mode (all users get Trailblazer). */
+export const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 type ApprovedBusinessMembership = {
   business_status: string | null;
   founding_business: boolean | null;
 };
-
-function resolveFromMemberType(memberType: string | null | undefined): MembershipTier {
-  if (memberType && PAID_TIERS.includes(memberType)) return memberType as MembershipTier;
-  return "navigator"; // default for any active paid subscription
-}
 
 /**
  * Maps only an already-approved owner's existing business tier to its included
@@ -92,39 +89,47 @@ async function getApprovedBusinessMembershipTier(userId: string): Promise<Member
   }
 }
 
-function getPersonalTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipTier {
+export type PersonalMembershipRecord = {
+  memberType?: string | null;
+  stripeSubscriptionId?: string | null;
+  trialEndsAt?: Date | null;
+};
+
+/**
+ * Resolves the personal entitlement before approved business benefits are
+ * considered. It is intentionally pure so paid, trial, founder, and tester
+ * behavior remains regression-testable without database state.
+ */
+export function getPersonalMembershipTier(
+  user: PersonalMembershipRecord | null | undefined,
+  testingMode = TESTING_MODE,
+): MembershipTier {
   if (!user) return "free";
 
   // ── TESTING_MODE: all authenticated users get Trailblazer during test phases ──
   // Set TESTING_MODE=true in Railway environment variables to enable.
   // Remove or set to "false" before production launch.
-  if (process.env.TESTING_MODE === "true") return "trailblazer";
-
-  const now = new Date();
-  const trialActive = user.trialEndsAt && user.trialEndsAt > now;
+  if (testingMode) return "trailblazer";
 
   // Founding members and beta testers get top-tier access
   if (user.memberType === "founding" || user.memberType === "beta") return "legacy_member";
 
   // Active Stripe subscription OR RevenueCat subscription (stored as "rc_<productId>" in stripeSubscriptionId)
-  if (user.stripeSubscriptionId) return resolveFromMemberType(user.memberType);
+  if (user.stripeSubscriptionId) return getTierFromMemberType(user.memberType);
 
-  // Active trial
-  if (trialActive) return resolveFromMemberType(user.memberType);
+  // A dated trial is valid only when it is tied to a recognized paid plan.
+  if (hasActivePaidMembershipTrial(user)) return getTierFromMemberType(user.memberType);
 
   return "free";
 }
 
 async function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): Promise<MembershipTier> {
-  const personalTier = getPersonalTier(user);
+  const personalTier = getPersonalMembershipTier(user);
   if (!user || TESTING_MODE || personalTier === "legacy_member") return personalTier;
 
   const businessTier = await getApprovedBusinessMembershipTier(user.id);
   return higherMembershipTier(personalTier, businessTier);
 }
-
-/** True when the server is running in testing mode (all users get Trailblazer). */
-export const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 /** Resolves the membership tier for any user ID. Use in route handlers for soft limit checks. */
 export async function getUserTier(userId: string): Promise<MembershipTier> {

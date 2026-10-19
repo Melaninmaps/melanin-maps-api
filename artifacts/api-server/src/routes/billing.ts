@@ -3,6 +3,8 @@ import { getUncachableStripeClient } from "../stripeClient";
 import { storage } from "../storage";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { hasActivePaidMembershipTrial } from "../constants/membershipTiers";
+import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
@@ -14,6 +16,7 @@ const PLAN_PRICES_CENTS: Record<string, Record<string, number>> = {
   navigator:    { monthly: 799,  annual: 7999  },
   trailblazer:  { monthly: 1499, annual: 14999 },
 };
+const MEMBERSHIP_TRIAL_DAYS = 30;
 const PLAN_LABELS: Record<string, string> = {
   navigator:   "Navigator — Community Membership",
   trailblazer: "Trailblazer — Premium Membership",
@@ -64,14 +67,17 @@ router.get("/billing/subscription", async (req: any, res): Promise<void> => {
     const user = await storage.getUser(req.user.id);
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
+    // The display reads the same effective entitlement used by protected APIs;
+    // a historical memberType cannot outlive a cancelled provider subscription.
+    const membershipTier = await getUserTier(req.user.id);
     const now = new Date();
-    const trialActive = user.trialEndsAt ? user.trialEndsAt > now : false;
+    const trialActive = hasActivePaidMembershipTrial(user, now);
     const trialDaysLeft = trialActive && user.trialEndsAt
       ? Math.ceil((user.trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       : 0;
 
     res.json({
-      memberType: user.memberType ?? "individual",
+      memberType: membershipTier,
       trialEndsAt: user.trialEndsAt ?? null,
       trialActive,
       trialDaysLeft,
@@ -159,11 +165,21 @@ router.post("/billing/checkout", async (req: any, res): Promise<void> => {
           userId: user.id,
           planType: plan,
         },
+        trial_period_days: MEMBERSHIP_TRIAL_DAYS,
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: "cancel",
+          },
+        },
       },
       success_url: successUrl,
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
+      // The member-facing offer does not require card details to start its
+      // founder-approved 30-day trial. Stripe cancels the subscription at the
+      // trial end if the member has not supplied a payment method.
+      payment_method_collection: "if_required",
     });
 
     req.log.info({ userId: user.id, plan, interval: billingInterval }, "Stripe checkout session created");

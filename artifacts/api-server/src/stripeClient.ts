@@ -58,6 +58,18 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
   return new Stripe(secretKey);
 }
 
+/** Verifies the Stripe signature before any webhook payload is interpreted. */
+export async function verifyStripeWebhookSignature(
+  payload: Buffer,
+  signature: string,
+): Promise<Stripe.Event> {
+  const { secretKey, webhookSecret } = await getStripeCredentials();
+  if (!webhookSecret) {
+    throw new Error("Missing STRIPE_WEBHOOK_SECRET for Stripe webhook verification");
+  }
+  return new Stripe(secretKey).webhooks.constructEvent(payload, signature, webhookSecret);
+}
+
 // ── StripeSync singleton ──────────────────────────────────────────────────────
 //
 // ROOT CAUSE FIX (Build 97 — July 27 2026)

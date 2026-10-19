@@ -16,6 +16,7 @@ import {
 } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { isMemberDiscoverableBusiness } from "../businesses/memberDiscoveryVisibility";
+import { hasActivePaidMembershipTrial } from "../constants/membershipTiers";
 
 const router = Router();
 // The feed badge is safe to request before a session has been restored. Its
@@ -223,9 +224,8 @@ router.get("/knowledge/articles/:id", async (req: Request, res: Response) => {
       }
       const { storage } = await import("../storage");
       const user = await storage.getUser(userId);
-      const now = new Date();
       const hasSub = user?.stripeSubscriptionId ||
-        (user?.trialEndsAt && user.trialEndsAt > now) ||
+        hasActivePaidMembershipTrial(user) ||
         user?.memberType === "founding" || user?.memberType === "beta";
       if (!hasSub) {
         res.json({ article: { ...article, content: article.content.slice(0, 400) + "…", locked: true } });
