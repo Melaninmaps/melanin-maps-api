@@ -1194,6 +1194,73 @@
         "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md",
         "MWM_UNIVERSAL_MEMORY_CONNECTED_INTELLIGENCE_FOUNDATION_2026-10-19.md"
       ]
+    },
+    {
+      "id": "BIZ-006",
+      "feature_area": "Business-owner dashboard",
+      "platform": "Web/API",
+      "founder_requirement": "Minimum usable owner/Admin editor is an immediate P0 and is independent of Kinfolk discovery, payment, and mobile: an authenticated authorized owner or Founder/Admin locates a controlled business, edits description, website, phone, address and hours, receives explicit saved/pending/failed state, refreshes or relogs, and reopens the staged profile.",
+      "acceptance_criteria": "A controlled non-production test owner or separately authorized production read-only Admin route proves the stated editor journey without changing production data. Staging-only test edits must remain isolated; durable production-ready edits require their own explicit authorization and preservation/rollback handling.",
+      "status": "BLOCKED",
+      "source_evidence": "Canonical owner and Admin profile-update seams and BUSINESS-OWNER-001 structured-specialty backend are locally integrated, but BIZ-005 is one backend capability only and does not establish complete dashboard acceptance.",
+      "staging_evidence": "MISSING EVIDENCE — current staging authentication checkpoint failed before an authenticated editor journey could begin; no business record or fixture changed.",
+      "web_evidence": "MISSING EVIDENCE — no authenticated owner/Admin browser acceptance is credited.",
+      "ios_evidence": "Not required for this minimum Web/API editor acceptance layer.",
+      "android_evidence": "Not required for this minimum Web/API editor acceptance layer.",
+      "responsible_owner_or_task": "Founder for external authorization; central release/integration owner for a bounded acceptance packet.",
+      "dependencies_or_blockers": "FAILED STAGING AUTHENTICATION CHECKPOINT (BIZ-008); no authorized named test owner, provisioning/reset procedure, fixture plan, or verified current staging candidate.",
+      "next_action": "Founder selects exactly one later authorization: a controlled non-production test-owner provisioning/reset workflow, or a separately authorized read-only production Admin route check. Do not request real business corrections or execute either path yet.",
+      "founder_approval_needed": "Yes — external account/browser access and, if selected, narrow staging test-owner provisioning/reset or a read-only production route check.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
+        "BUSINESS-OWNER-001 local receipt ddf73c4374a4231151a29eb4236585adca11202e"
+      ]
+    },
+    {
+      "id": "BIZ-007",
+      "feature_area": "Business-owner dashboard",
+      "platform": "API/Web/Kinfolk discovery",
+      "founder_requirement": "Kinfolk synchronization/discovery acceptance is a later, separate layer: an authorized owner/Admin save must propagate from the canonical record to the fresh public profile/Directory and then to fresh governed Kinfolk retrieval, without stale recommendation or private-context substitution.",
+      "acceptance_criteria": "After an integrated candidate is deliberately deployed, controlled isolated fixtures demonstrate canonical save, public read, Directory refresh, and governed Kinfolk retrieval; failed/pending/nonpublication, archive/unpublish/restore, concurrent overwrite, specialty updates, and stale-result handling are evidenced separately.",
+      "status": "BLOCKED",
+      "source_evidence": "The completed synchronization trace establishes source seams and expressly states that it is not runtime propagation evidence. KIN-DISC-1617 and Business Owner changes are local-source receipts, not deployed candidate evidence.",
+      "staging_evidence": "MISSING EVIDENCE — current isolated staging deployment predates the locally integrated candidate; no fixture, deployment, provider call, or runtime propagation timing was performed.",
+      "web_evidence": "MISSING EVIDENCE — no authenticated dashboard or public Directory acceptance is credited.",
+      "ios_evidence": "Not required for the first Web/API/Kinfolk synchronization acceptance layer.",
+      "android_evidence": "Not required for the first Web/API/Kinfolk synchronization acceptance layer.",
+      "responsible_owner_or_task": "Central release/integration owner; later bounded acceptance owner after deployment authorization.",
+      "dependencies_or_blockers": "MISSING EVIDENCE — named integrated deploy candidate, schema/pre-traffic writer authorization, isolated fixture plan, public refresh/invalidation timing, and separately authorized provider-backed Kinfolk check.",
+      "next_action": "Complete BIZ-006 independently when authorized; only then prepare a separate integrated-candidate deployment and controlled fixture authorization. Do not combine the two acceptance layers.",
+      "founder_approval_needed": "Yes — deployment, any staging fixture write, and provider-backed Kinfolk acceptance each require separate bounded authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
+        "S9 business synchronization trace, 2026-10-19",
+        "KIN-DISC-1617 local receipt 2b4fcb4d24ae72988f68e6e965a64ae6f6ad2aae"
+      ]
+    },
+    {
+      "id": "BIZ-008",
+      "feature_area": "Business-owner dashboard",
+      "platform": "Staging authentication",
+      "founder_requirement": "A controlled staging authentication checkpoint must support later Business Owner/Admin acceptance without treating unauthenticated access control as a defect or inferring anything about production credentials.",
+      "acceptance_criteria": "An unauthenticated dashboard redirect to the normal access-control route is accepted; the staging login route loads; a specifically authorized test owner or admin completes sign-in through the approved procedure before any editor, fixture, or profile assertion is attempted.",
+      "status": "FAILED",
+      "source_evidence": "Read-only Take Control checkpoint only; no source defect is asserted and no console, network, database, or log inference is made.",
+      "staging_evidence": "FAILED STAGING AUTHENTICATION CHECKPOINT: direct unauthenticated /business-dashboard redirected to /waitlist (expected access control); /login loaded; founder-operated sign-in returned generic “Invalid email or password.” Credentials were not seen, retained, or retried; no record or fixture changed.",
+      "web_evidence": "FAILED only at the staging sign-in checkpoint; no authenticated editor journey was attempted.",
+      "ios_evidence": "Not applicable.",
+      "android_evidence": "Not applicable.",
+      "responsible_owner_or_task": "Founder and named staging administrator; central release owner records only approved evidence.",
+      "dependencies_or_blockers": "No authorized non-production test-owner provisioning/reset workflow and no separately authorized read-only production Admin route check; actual staging URL/sign-in procedure for a test owner remains unverified.",
+      "next_action": "Choose one smallest safe proposal: (A) named staging administrator verifies an existing consented test owner or, under a separate authorization, provisions/resets one isolated staging-only test owner with a documented reversal; or (B) authorize one read-only production Admin route check using founder Take Control. Do not run either action until chosen and authorized.",
+      "founder_approval_needed": "Yes — both proposals require explicit scope, named operator/account, stop conditions, and evidence handling; production option must remain read-only.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
+        "Founder/task acceptance checkpoint report, 2026-10-19"
+      ]
     }
   ],
   "dependency_register": [
@@ -1286,6 +1353,12 @@
       "classification": "NOT REQUIRED FOR CURRENT TESTING",
       "evidence": "No OAuth, credentials, live quote/status, booking, monitoring or provider integration authorized.",
       "founder_action": "Keep provider-free; separate approval for later handoff/source access."
+    },
+    {
+      "category": "dashboard acceptance authentication",
+      "classification": "FAILED CHECKPOINT",
+      "evidence": "Staging /business-dashboard redirected unauthenticated users to /waitlist as expected, while a founder-operated attempt at /login returned generic Invalid email or password. No credential was retained/retried and no record, fixture, console, network, or log state was read or changed.",
+      "founder_action": "Choose one separately authorized bounded route: staging-only named test-owner verification/provisioning-reset with reversal, or one read-only production Admin route check using Founder Take Control. Do not combine them."
     }
   ],
   "release_readiness": {
@@ -1294,7 +1367,8 @@
       "Last directly verified remote authority: origin/staging/kinfolk-full-candidate-20261014 at 12e0b7268a4148ce3e948400af79cf6280b893cf; D1 d4ce382 and receipt 86a70e80 are ancestors.",
       "Separate staging candidate: 3720f1d23b2e3e3d64d3e3cafc15221fb57425fe; source-validated, not deployed.",
       "Documented isolated staging API live source: 70f100258 on a different branch.",
-      "Later local-only f3d4457/c7111caf receipts are not remote/staging evidence. The authorized Option-B two-index attempt emitted no observable catalog output, so both corrected-index existence/compatibility states are indeterminate; this neither reverses the earlier categorical preflight incompatibility nor proves it persists for those exact objects."
+      "Later local-only f3d4457/c7111caf receipts are not remote/staging evidence. The authorized Option-B two-index attempt emitted no observable catalog output, so both corrected-index existence/compatibility states are indeterminate; this neither reverses the earlier categorical preflight incompatibility nor proves it persists for those exact objects.",
+      "Business Owner/Admin staging checkpoint: unauthenticated /business-dashboard redirected to /waitlist as normal access control; /login loaded; founder-operated sign-in failed generically. No dashboard editor, fixture, production, or persistence conclusion follows."
     ],
     "currently_testable_functionality": "Only source-level focused contracts/fixtures are evidenced: D1 fail-closed checkout; P0/Map/Directory contracts; Shared Plans pure policy; Universal Memory selector Slices 1–3; local-only privacy/session protections. None is AWS, provider, real database, browser/device or member-visible certification.",
     "shortest_safe_next_milestone": "Obtain a fresh, separately authorized, independently observable private-console read-only catalog query for the two corrected indexes. It must attest a sanitized result before any remediation/deploy decision; in parallel, centralize the named integrated local candidate without remote or environment action.",
@@ -1314,18 +1388,21 @@
   },
   "active_task_recommendations": [
     {
-      "task": "QJATRGk7nUgzDlccMCUcG6 — central release/preflight coordination and LA-002 selection",
+      "task": "QJATRGk7nUgzDlccMCUcG6 — central release/preflight, checklist, and dashboard acceptance coordination",
       "mapped_requirement_ids": [
         "INT-DB-001",
         "CORE-002",
         "REL-001",
         "REL-002",
-        "SAFE-003"
+        "SAFE-003",
+        "BIZ-006",
+        "BIZ-007",
+        "BIZ-008"
       ],
-      "deliverable": "Preserve the indeterminate Option-B record; select one exclusive LA-002 safety-repair claim and centrally review the master checklist baseline.",
-      "acceptance_criterion": "Any LA-002 repair has an exact clean authority, two-path scope, focused test, and no external action; checklist is centrally committed only after hash/path review.",
-      "stopping_condition": "Stop/hold at any database, provider, browser, deployment, remote or source-ownership conflict.",
-      "recommendation": "CONTINUE only within the recorded source-only/preflight boundaries."
+      "deliverable": "Preserve the indeterminate Option-B record; centrally reconcile checklist evidence; do not execute a dashboard account, staging, production, or deployment action without separate founder authorization.",
+      "acceptance_criterion": "Checklist additions preserve the immutable original 54 IDs, label new evidence layers honestly, and map all source work to requirement IDs; later BIZ-006/BIZ-008 action has an exact authorization packet.",
+      "stopping_condition": "Stop/hold at any database, provider, browser, deployment, remote or source-ownership conflict; staging authentication failure does not justify a credential retry or data change.",
+      "recommendation": "CONTINUE only within the recorded local-source/preflight boundaries."
     },
     {
       "task": "S9iVHR3fQY0fcmRMQKLpOO — BUSINESS-OWNER-001 record",
@@ -1338,16 +1415,14 @@
       "recommendation": "STOP scoped work; hand off only."
     },
     {
-      "task": "yINBiovLIPiFnyQCFfSycn — Community-Frequented Alternatives / Scorecard candidate coordination",
+      "task": "yINBiovLIPiFnyQCFfSycn — LA-002 qualified-care safety override carrier",
       "mapped_requirement_ids": [
-        "COMM-001",
-        "COMM-002",
-        "COMM-004"
+        "SAFE-003"
       ],
-      "deliverable": "Central-owner role/claim boundary decision because evidence identifies overlap with unified local integration coordination.",
-      "acceptance_criterion": "One non-overlapping owner/scope is recorded before additional related work.",
-      "stopping_condition": "Stop/hold if central owner does not resolve role overlap.",
-      "recommendation": "PAUSE FOR CENTRAL OWNER DECISION; no inference from credits."
+      "deliverable": "Return only the claimed two-path LA-002 source carrier and focused evidence to the central integration owner.",
+      "acceptance_criterion": "Carrier is bounded to the recorded LA-002 paths, source-only, and maps its test evidence to SAFE-003.",
+      "stopping_condition": "Stop at any scope overlap or external/provider/database/browser/deployment action.",
+      "recommendation": "CONTINUE ONLY the exclusive SAFE-003 source claim."
     },
     {
       "task": "44XXTVLrtPEqRlFbDRQx9y — Library/provider/usage owner",
@@ -1367,7 +1442,8 @@
     "Task claims only listed requirement IDs and returns immutable, scoped evidence: authority/SHA where applicable, tests, environment, platform, provider/data actions, pass/fail, blockers and stop conditions.",
     "Central integration owner verifies evidence, applies a reviewable checklist update, preserves audit history and recalculates unique-ID counts.",
     "No task self-marks FOUNDER ACCEPTED; only an explicit founder decision recorded by the central owner may do so.",
-    "SOURCE INTEGRATED, staging/AWS, Web/iOS/Android and MEMBER-VISIBLE VERIFIED evidence remain separate; a local test/carrier never establishes member-visible verification."
+    "SOURCE INTEGRATED, staging/AWS, Web/iOS/Android and MEMBER-VISIBLE VERIFIED evidence remain separate; a local test/carrier never establishes member-visible verification.",
+    "Every task maps its work and immutable evidence to permanent checklist requirement IDs, avoids duplicate ownership, and returns only scoped pass/fail/blocker evidence; the central integration owner alone updates reviewed status."
   ],
   "audit_history": [
     {
@@ -1401,6 +1477,18 @@
     {
       "date": "2026-10-19",
       "event": "Central owner recorded LA-002, direct qualified-care safety override, as an unclaimed P0 local source-repair candidate. It is tracked as IN DEVELOPMENT pending exclusive scope, test, and commit evidence."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Central local authority committed the master checklist at d230cab3d7915cd4ac96e26ca75babd0429878b2, preserving the 54 original IDs and evidence-layer boundaries."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Founder dashboard addendum: BIZ-006 through BIZ-008 were appended as new permanent IDs. BIZ-005 remains only the structured-specialty backend receipt, not full dashboard completion."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Read-only Take Control staging checkpoint: unauthenticated dashboard redirected to /waitlist as expected; /login loaded; founder-operated sign-in returned generic Invalid email or password. This is a failed staging authentication checkpoint only; no credentials retained/retried and no data, fixture, console, network, or log inference."
     }
   ],
   "evidence_gaps": [
@@ -1409,13 +1497,15 @@
     "Staging catalog evidence intentionally retains a categorical incompatibility, not object-level rows.",
     "No authorized deployed staging, authenticated browser/member-visible, physical-device, mobile-build, provider-sandbox or real-database acceptance receipt is available.",
     "No complete Stripe/Apple/Google/RevenueCat catalog, configuration, receipt, lifecycle or store-sandbox evidence is available.",
-    "The founder-authorized Option-B two-index private-console attempt emitted no attestable output; exact corrected-index existence/definition compatibility remains indeterminate pending a separately authorized observable read-only query."
+    "The founder-authorized Option-B two-index private-console attempt emitted no attestable output; exact corrected-index existence/definition compatibility remains indeterminate pending a separately authorized observable read-only query.",
+    "Staging Business Owner/Admin authentication is not available for acceptance: the founder-operated staging sign-in returned a generic failure, and no named test-owner procedure, account state, or production conclusion may be inferred."
   ],
   "dashboard_counts": {
-    "label": "PROVISIONAL — calculated from unique requirement IDs in this baseline only",
-    "unique_requirement_ids": 54,
+    "label": "PROVISIONAL — original 54 baseline IDs are immutable; added IDs are bounded evidence-based additions, not a complete founder-vision count.",
+    "unique_requirement_ids": 57,
     "by_primary_status": {
-      "BLOCKED": 19,
+      "BLOCKED": 21,
+      "FAILED": 1,
       "IN DEVELOPMENT": 9,
       "NOT STARTED": 11,
       "SOURCE INTEGRATED": 15
@@ -1428,7 +1518,7 @@
       "Kinfolk memory/voice/images/tools": 5,
       "Community/social": 5,
       "Safety": 3,
-      "Business-owner dashboard": 5,
+      "Business-owner dashboard": 8,
       "Founder/Admin dashboard": 2,
       "Memberships/payments/entitlements": 11,
       "Integrations/dependencies": 10,
