@@ -34,4 +34,24 @@ describe("private membership profile contract", () => {
     expect(nativeProfile).toContain("/api/users/me/membership-status");
     expect(nativeProfile).toContain("Your membership · {membershipLabel}");
   });
+
+  it("keeps an authenticated profile read read-only without stripping stored profile fields", () => {
+    const ownProfileRoute = usersRoute.slice(
+      usersRoute.indexOf('router.get("/users/me", async'),
+      usersRoute.indexOf('router.get("/users/check-username/:username"'),
+    );
+
+    expect(ownProfileRoute).toContain('if (!req.user?.id)');
+    expect(ownProfileRoute).toContain('res.status(401).json({ error: "Authentication required" });');
+    expect(ownProfileRoute).toContain('.from(usersTable)');
+    expect(ownProfileRoute).toContain('.where(eq(usersTable.id, req.user.id));');
+    expect(ownProfileRoute).toContain('res.status(404).json({ error: "User not found" });');
+    expect(ownProfileRoute).toContain('const { stripeCustomerId, stripeSubscriptionId, pushToken, ...safeUser } = user;');
+    expect(ownProfileRoute).toContain('res.json(safeUser);');
+    expect(ownProfileRoute).not.toContain("db.update");
+    expect(ownProfileRoute).not.toContain("Date.now");
+    expect(ownProfileRoute).not.toContain("90 * 24 * 60 * 60 * 1000");
+    expect(ownProfileRoute).not.toContain("Auto-start 90-day community premium trial");
+    expect(ownProfileRoute).not.toContain("if (!user.trialEndsAt)");
+  });
 });
