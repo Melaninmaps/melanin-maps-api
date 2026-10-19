@@ -1341,7 +1341,7 @@
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); M7uJoQ8nKsaPvoHdWtU0E9 (active decision-packet owner)",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (sole accountable FLIGHT-001/005 parent-experience coordinator; source-slice execution delegated under exclusive claims)",
       "dependencies_or_blockers": "No confirmed source defect from this cumulative matrix. Actual provider/Calendar/OAuth connection, durable consent/account/revocation, route/client/venue/delivery, runtime/browser/device/staging/member/release/founder evidence remain separate.",
       "next_action": "Validate Flight #7 timestamp compatibility; receive Flight #8 carrier but apply it only after Flight #7. Retain central parent ownership and do not infer real venue/provider/member behavior.",
       "founder_approval_needed": "Yes \u2014 future contract approval, provider selection/access/credentials, any provider call, member data transfer, paid plan, deployment or release require separate founder approval.",
@@ -2008,6 +2008,10 @@
     {
       "date": "2026-10-19",
       "event": "Registered P0 `FLIGHT-008-THREE-PARTICIPANT-INJECTED-ARRIVAL-VENUE-COMPOSITION` at `0e1bfd31859674ecc910de158eb6f4a14ebdc2b0` for S9: a pure injected, three-participant authorization/time/venue-fixture composition. Carrier integration is ordered after Flight #7; fixture verification is explicitly non-factual."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Flight parent accountability corrected: QJATRGk7nUgzDlccMCUcG6 is the sole FLIGHT-001/005 parent-experience coordinator. S9 acknowledged Flight #8 exact all-new fixture-only source claim; central application remains ordered after Flight #7."
     }
   ],
   "evidence_gaps": [
@@ -2232,7 +2236,7 @@
       {
         "experience_id": "EXP-KINFOLK-FLIGHT-COORDINATION",
         "founder_outcome": "Explicitly consenting owner and named recipient safely coordinate a fresh arrival, separate availability and an appropriate verified venue, with honest unavailable fallback.",
-        "lifecycle_owner": "M7uJoQ8nKsaPvoHdWtU0E9 (flight lifecycle); QJATRGk7nUgzDlccMCUcG6 (integration)",
+        "lifecycle_owner": "QJATRGk7nUgzDlccMCUcG6 (sole accountable FLIGHT-001/005 parent-experience coordinator; source-slice execution delegated under exclusive claims)",
         "linked_requirement_ids": [
           "FLIGHT-001",
           "FLIGHT-002",
@@ -2243,7 +2247,7 @@
         "current_active_repair": "`FLIGHT-007` M7 (timestamp compatibility) and `FLIGHT-008` S9 (all-new fake three-participant composition; central application ordered after #7).",
         "integrated_source": "FLIGHT-002 `1ec062aceb93e170ced6ba754881cc78ab2b4bd7`; FLIGHT-003 `0f9a474210f4a3d824b9870eb5a9eec9b879157f`; local/default-disabled only. FLIGHT-004 eligibility `d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0` (API 2/51, no-emit). FLIGHT-005 simulated meeting-time lifecycle `5e79ab3e97253aa5be41e75870fdd7564ba164e1` (API 4/91, no-emit). FLIGHT-006 local 31-day window boundary `e24efe1fa6194892c7f1d36bb898be14dec75c71`.",
         "test_evidence": "FLIGHT-003: 2 files / 34 API tests and API no-emit; no member journey. Current-authority FLIGHT-004 + sharing: API 2 files/51 tests, API no-emit PASS. Current-authority FLIGHT-005 matrix: API 4 files/91 tests and no-emit PASS. Boundary regression: API 4 files/93 tests and no-emit PASS. Cumulative Flight current-authority source matrix: API 5 files/106 tests and API no-emit PASS.",
-        "external_gates": "Provider hard-cap/account/call approval, consent design, runtime/deployment and platform acceptance.",
+        "external_gates": "Source-only parent evidence is ongoing under Flight #7/#8. Separate authorizations are required for provider hard-cap/account/call, real Calendar/OAuth/consent and durable grants, real venue catalog/verification/current details, routes/UI/invitations/replies/notifications/delivery, runtime/network/browser/device/staging, and member/release/founder acceptance.",
         "completion_status": "IN PROGRESS",
         "next_action": "Integrate #7 first, then validate #8; only direct demonstrated source defects merit further claims. Every real provider/venue/runtime/participant stage remains separately gated."
       },

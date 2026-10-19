@@ -3618,7 +3618,7 @@
     {
       "id": "FLIGHT-008-THREE-PARTICIPANT-INJECTED-ARRIVAL-VENUE-COMPOSITION",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3670,6 +3670,11 @@
         "file": "FLIGHT008_THREE_PARTICIPANT_INJECTED_ARRIVAL_VENUE_COMPOSITION_BASE_2026-10-19.tar.gz",
         "sha256": "1c1ebbe4753c2c91164e17392e0eb20173e8bd603929df3a48d16d170bafda31",
         "expires_at": "2026-10-20T23:44:50.688Z"
+      },
+      "ownerStartAcknowledgement": {
+        "at": "2026-10-19T23:45:24Z",
+        "channel": "manus-tasks direct reply",
+        "statement": "Owner acknowledged the exact all-new three-path source-only claim, pair-resolver read-only boundary, and fixture-only venue truthfulness."
       }
     }
   ],
@@ -3694,5 +3699,5 @@
       "continuationLimitation": "The direct Tasks tools support list/history/send only and do not expose event-driven completion chaining. The active central task remains the finite coordinator using direct messages as work arrives; no ScheduleTask or recurring poller was configured or inferred."
     }
   ],
-  "coordinationNote": "COMM-001 runtime lifecycle: QJATRGk7nUgzDlccMCUcG6 is sole accountable acceptance coordinator. Every runtime/browser/device/build/staging/account/data/delivery step remains separately unauthorized and blocked."
+  "coordinationNote": "Flight parent lifecycle: QJATRGk7nUgzDlccMCUcG6 is sole accountable experience coordinator. M7 and S9 own only their exact source slices; no child receipt completes the parent journey."
 }
