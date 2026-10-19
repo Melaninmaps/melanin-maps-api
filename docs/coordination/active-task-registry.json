@@ -45,6 +45,18 @@
         "state": "Local-only commit plus ten uncommitted customer-facing paths; neither reference is currently verified on GitHub authority.",
         "semanticReview": "The local closure is not an authority ancestor and is not byte-equivalent. The verified baseline still exposes three inline checkout initiators and must be rebuilt semantically rather than cherry-picked."
       },
+      "completionStatus": "SOURCE_COMPLETE",
+      "reportedRemoteSourceVerification": {
+        "reportedByTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+        "reportedAuthorityHead": "12e0b7268a4148ce3e948400af79cf6280b893cf",
+        "reportedAncestors": [
+          "f818056c93840794ad08c9bb90b68f2500635a25",
+          "d4ce3828536cb2400a3c15fc5373f0a7e4058cdf",
+          "86a70e80efa39ad686480cabc07463dfd20fd497"
+        ],
+        "reportedResult": "The remote D1 delta after f818056 contains exactly the existing twelve centralized D1 paths. This registry receipt records the implementation task's direct GitHub verification; the integration owner did not repeat a remote check under the source-only boundary."
+      },
+      "externalAcceptance": "PENDING — no provider/payment, database, staging, browser/device, or production acceptance is recorded for the D1 source completion.",
       "paths": [
         "artifacts/api-server/src/routes/billing.ts",
         "artifacts/api-server/src/routes/membership-family.ts",
