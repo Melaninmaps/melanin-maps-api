@@ -600,6 +600,40 @@
         "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
       ],
       "externalAcceptance": "PENDING — no authenticated Admin browser, public profile visibility, database, provider, staging/production, or deployment acceptance is authorized or recorded."
+    },
+    {
+      "id": "D3-D8-CONTROLLED-FUTURE-RECONCILIATION-INPUT",
+      "status": "FUTURE_RECONCILIATION_INPUT_NO_IMPLEMENTATION_CLAIM",
+      "isImplementationClaim": false,
+      "evidenceOnly": true,
+      "sourceEvidence": {
+        "lastDirectlyVerifiedRemoteObject": "12e0b7268a4148ce3e948400af79cf6280b893cf",
+        "separateNoncurrentCandidate": "9b1e72d0d0a5234cdb9e28206a52f68a4648d6ef",
+        "candidateParent": "385bec74 (abbreviated in the read-only receipt)",
+        "candidateScope": "15 API paths, including a Stripe-specific entitlement ledger/validator, webhook handling, startup schema bootstrap, and an integrity test; it is not known equivalent to the current local authority.",
+        "verifiedRemoteGap": "The verified 12e object lacks paymentEntitlementStore.ts, verifiedStripeEntitlement.ts, and membership-entitlement-integrity.test.ts, and still mutates raw users.memberType and stripeSubscriptionId in webhook handling."
+      },
+      "fixedSourceConstraints": [
+        "Use additive account-level entitlement resolution: provider records must never overwrite independent founder, tester, beta, promo, legacy, or business-owner grants.",
+        "Duplicate or stale provider events fail safely; ambiguous historic fields never silently become paid access.",
+        "Closed checkout, free core, approved target prices, and approved introductory durations remain unchanged unless separately authorized."
+      ],
+      "exactPrerequisitesBeforeAnyClaim": {
+        "currentBase": "Establish a clean current-authority base and reconcile it against the separate 9b candidate; no current-local equivalence was available to the evidence task, and no candidate path may be applied or inferred until that comparison is explicit.",
+        "D3FounderPolicy": "Approve an evidence/classification and exception-authority process for ambiguous Stripe, RevenueCat, manual, founder, beta, tester, legacy, and business-owner records. It must be a reconciliation queue, not automatic upgrade, downgrade, deletion, backfill, or entitlement inference.",
+        "D8FounderLegalOperationsPolicy": "Define payment-failure/grace, refund, dispute/chargeback, cancellation-at-period-end, and rail-specific timing. Source must not guess provider-row actions; provider/sandbox and member-visible validation remain separately authorized.",
+        "schemaAndOperations": "Any ledger/bootstrap CREATE TABLE path requires strict-startup and staging-remediation review. No migration or DDL is authorized by this evidence record."
+      },
+      "knownCandidateLimitations": [
+        "No general cross-provider or independent-grant ledger, and no historic reconciliation queue integration.",
+        "No asserted coverage for invoice payment failure, refunds, disputes, explicit cancellation-at-period-end semantics, delayed completion, price-change acceptance, provider outage behavior, or Apple/Google/RevenueCat lifecycle preservation.",
+        "Historical candidate receipts were not rerun on current authority."
+      ],
+      "disposition": "Not labelled blocked: this is a controlled future reconciliation input with identified decision ownership and a missing current-base comparison. No safe assertion-only source slice exists because durable entitlement/lifecycle behavior needs both the policy contract and current-authority reconciliation.",
+      "constraints": [
+        "No source path, implementation owner, provider call, ledger creation, migration/DDL, remote operation, deployment, staging, browser/device, or feature activation is authorized by this record.",
+        "Do not treat candidate 9b as integrated, current-authority compatible, or a cherry-pick/apply source."
+      ]
     }
   ]
 }
