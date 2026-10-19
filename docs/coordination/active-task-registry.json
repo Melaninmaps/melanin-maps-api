@@ -1518,7 +1518,24 @@
         "Exact six-path scope, git diff --check, source boundaries, hash-verified carrier/apply reconstruction."
       ],
       "carrierDisposition": "Return an uncommitted, hash-verified six-path review carrier only; central owner alone may apply, validate, commit, and update source status.",
-      "externalAcceptance": "PENDING \u2014 no runtime database action, provider, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance is authorized or implied."
+      "externalAcceptance": "PENDING \u2014 no runtime database action, provider, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance is authorized or implied.",
+      "sourceBaseCarrier": {
+        "authorityBase": "bf645aba13a022cbbcfce00b660b25969cae7693",
+        "claimBaseline": "1a56f0397eeb9e9efdabbd77d9a4d9fe29348fd3",
+        "handoffId": "hnd_K__ZySFb_dXWXsAFsWsqBYHR",
+        "file": "COMM001_FREE_GROUP_JOURNEY_BASE_2026-10-19.tar.gz",
+        "sha256": "9e03def6a772c6b1bec2feafafe29e637dfffd4005b284e62ebeb6453fc84856",
+        "expiresAt": "2026-10-20T20:40:17.008Z",
+        "pathSha256": {
+          "artifacts/api-server/src/routes/groups.ts": "cc27b6a320ca4e699445784d1ebfe2f5cde353304d1d12bf22f4f0ed7420ca3c",
+          "artifacts/api-server/src/__tests__/community-groups-membership-contract.test.ts": "f94b29514b7c05f288f0866c034887a911c44e702b98350436f9072ab3f41061",
+          "artifacts/mobile/app/(tabs)/community.tsx": "028d67631009f3311bb2313d91d0185c18f124fcc63c7b16a29b0dd7334d8ae9",
+          "artifacts/mobile/app/group/[id].tsx": "c1ec406f8e84eea0e5dde345f3ff102fbc9df894e7400720b375197609d69fb3",
+          "artifacts/mobile/hooks/useGroups.ts": "5a71e08ad5b3a4a74207456064eda0f7d4718c9a05135e3bcd932fb56fc9b3f6",
+          "artifacts/mobile/__tests__/community-content-first.test.ts": "e678eaeacd39a274321a54682c597efad36d3d962405651dd4762d62802e69be"
+        },
+        "disposition": "Private compact six-path source base transferred to the exclusive owner; recipient must hash-verify, work only in the declared paths, and return an uncommitted carrier."
+      }
     }
   ]
 }
