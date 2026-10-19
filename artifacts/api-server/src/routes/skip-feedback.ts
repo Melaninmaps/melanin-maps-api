@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessSkipFeedbackTable, conversations as convTable, messages as msgsTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { db, businessesTable, businessSkipFeedbackTable, businessOwnerLinksTable, conversations as convTable, messages as msgsTable } from "@workspace/db";
+import { and, eq, isNull } from "drizzle-orm";
 import { checkContent } from "../lib/contentFilter";
 import { logger } from "../lib/logger";
 
@@ -182,15 +182,49 @@ router.get("/businesses/mine/skip-feedback", async (req: Request, res: Response)
       return;
     }
 
-    const [business] = await db
-      .select({ id: businessesTable.id })
-      .from(businessesTable)
-      .where(eq(businessesTable.submittedById, req.user.id))
+    const [approvedOwnerLink] = await db
+      .select({ businessId: businessOwnerLinksTable.businessId })
+      .from(businessOwnerLinksTable)
+      .where(and(
+        eq(businessOwnerLinksTable.userId, req.user.id),
+        eq(businessOwnerLinksTable.role, "owner"),
+        eq(businessOwnerLinksTable.status, "approved"),
+        isNull(businessOwnerLinksTable.revokedAt),
+      ))
       .limit(1);
 
-    if (!business) {
-      res.status(404).json({ error: "No business found." });
-      return;
+    let businessId: string;
+    if (approvedOwnerLink) {
+      businessId = approvedOwnerLink.businessId;
+    } else {
+      const [legacyBusiness] = await db
+        .select({ id: businessesTable.id })
+        .from(businessesTable)
+        .where(eq(businessesTable.submittedById, req.user.id))
+        .limit(1);
+
+      if (!legacyBusiness) {
+        res.status(404).json({ error: "No business found." });
+        return;
+      }
+
+      const [activeOwnerLink] = await db
+        .select({ id: businessOwnerLinksTable.id })
+        .from(businessOwnerLinksTable)
+        .where(and(
+          eq(businessOwnerLinksTable.businessId, legacyBusiness.id),
+          eq(businessOwnerLinksTable.role, "owner"),
+          eq(businessOwnerLinksTable.status, "approved"),
+          isNull(businessOwnerLinksTable.revokedAt),
+        ))
+        .limit(1);
+
+      if (activeOwnerLink) {
+        res.status(404).json({ error: "No business found." });
+        return;
+      }
+
+      businessId = legacyBusiness.id;
     }
 
     const feedback = await db
@@ -200,7 +234,7 @@ router.get("/businesses/mine/skip-feedback", async (req: Request, res: Response)
         createdAt: businessSkipFeedbackTable.createdAt,
       })
       .from(businessSkipFeedbackTable)
-      .where(eq(businessSkipFeedbackTable.businessId, business.id))
+      .where(eq(businessSkipFeedbackTable.businessId, businessId))
       .orderBy(businessSkipFeedbackTable.createdAt);
 
     res.json({ feedback });
