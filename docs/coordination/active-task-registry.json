@@ -3343,5 +3343,6 @@
       ],
       "continuationLimitation": "The direct Tasks tools support list/history/send only and do not expose event-driven completion chaining. The active central task remains the finite coordinator using direct messages as work arrives; no ScheduleTask or recurring poller was configured or inferred."
     }
-  ]
+  ],
+  "coordinationNote": "Current authority cumulative COMM-001 source matrix recorded 2026-10-19: source-level pass only; do not infer runtime/member acceptance."
 }
