@@ -1357,15 +1357,15 @@
       "platform": "Research/source-readiness",
       "founder_requirement": "A future availability-first Google/Microsoft Calendar connection must use exact least-privilege delegated scopes, member consent, owner isolation, token security/rotation/revocation, normalized busy-only output, and a closed pilot/kill-switch plan before any OAuth client, connection, sync, or member-data transfer.",
       "acceptance_criteria": "Decision packet preserves NO-GO and names exact consent/callback/PKCE/token-vault/revocation/provider-filter/pilot contracts. It does not configure OAuth, create a client, request scopes, exchange tokens, connect a calendar, or activate a pilot.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Bounded official Google/Microsoft research and read-only source trace completed: existing availability policy is manual, encrypted/owner-scoped and aggregate-only; it explicitly prohibits external calendar connection/sync. No OAuth adapter, connection state, token vault, callback, revocation or provider-filter contract exists.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Bounded official Google/Microsoft research and read-only source trace completed: existing availability policy is manual, encrypted/owner-scoped and aggregate-only; it explicitly prohibits external calendar connection/sync. No OAuth adapter, connection state, token vault, callback, revocation or provider-filter contract exists. Central local-only decision-packet integration `cb1609c56371fee40e957aae7d96ad6e7d0ded5a` accepted `docs/coordination/CALENDAR_OAUTH_AVAILABILITY_READINESS_DECISION_PACKET_2026-10-19.md`. Submitted carrier SHA-256 `7ca2a9634886b4591e7354e250e2c43f5d97787a3ce560543cc2bd8b9cb9b0c0`; central reconciliation removed Markdown trailing whitespace only, yielding committed SHA-256 `719bcebf80e0c0618a243184134a3316f748c766d60bb638340daa4f5176edd7`. The packet retains explicit NO-GO and future-only delegated scope/consent/PKCE/vault/revocation/filter/pilot requirements; it authorizes no OAuth implementation or external action.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); IIUhb1wR0gfLjzmdLmEovt (active decision-packet owner)",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central documentation integration); IIUhb1wR0gfLjzmdLmEovt (decision-packet claim closed)",
       "dependencies_or_blockers": "Approved Calendar Availability Connection Contract v1 is missing: sole purpose/output filter, delegated consent state, callback state/PKCE, encrypted vault/rotation, disconnect/revocation deletion, stripping adapter, tests, closed-pilot/kill-switch and authorization. Existing SP-002/SP-003 claims prohibit calendar OAuth/provider work.",
-      "next_action": "Return a single local decision packet for central review; retain NO-GO and identify exact future contract/approval required before any source implementation claim.",
+      "next_action": "Retain the NO-GO packet. Do not open an OAuth product source claim until the founder separately approves Calendar Availability Connection Contract v1 and a non-overlapping implementation path; all client/configuration/consent/pilot approvals remain separate.",
       "founder_approval_needed": "Yes \u2014 future contract, OAuth client/configuration, scope/consent, token/member data handling, provider call, pilot, deployment or release require separate founder approval.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1752,6 +1752,10 @@
     {
       "date": "2026-10-19",
       "event": "Added FLIGHT-001 and OAUTH-001 decision-only NO-GO records. Separate owners will prepare official-source readiness packets; no provider/OAuth product implementation, access, activation or member data action is authorized."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "OAUTH-001 documentation-only NO-GO packet source-integrated locally at cb1609c56371fee40e957aae7d96ad6e7d0ded5a; submitted carrier verified and normalized for trailing whitespace only. No OAuth implementation, client, consent, token, provider, pilot or release action authorized."
     }
   ],
   "evidence_gaps": [
@@ -1769,9 +1773,9 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 12,
+      "IN DEVELOPMENT": 11,
       "NOT STARTED": 10,
-      "SOURCE INTEGRATED": 17
+      "SOURCE INTEGRATED": 18
     },
     "by_founder_area": {
       "Core app": 2,
