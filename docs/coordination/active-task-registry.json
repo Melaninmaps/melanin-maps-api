@@ -1262,6 +1262,34 @@
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is one direct free event-hosting gate only; it does not complete COMM-001 or establish external acceptance."
+    },
+    {
+      "id": "COMM-001-FREE-COMMUNITY-POST-CAP-NEUTRALITY",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "41feba0ec52f56e89956cbab2ad27f3cf42504bd",
+      "paths": [
+        "artifacts/api-server/src/routes/community.ts",
+        "artifacts/api-server/src/__tests__/community-feed.test.ts"
+      ],
+      "requiredBehavior": [
+        "For ordinary free community posts only, retain the existing finite five-post calendar-month count guard but make its cap response neutral: no upgrade URL or membership-plan claim.",
+        "Retain the existing ordinary post authentication, validation, content/family filters, business-mention stance validation, moderation/trust logic, privacy/visibility, authorship, and error handling.",
+        "Retain the business-post promotion gate and all media image/video quota/gate behavior unchanged; they are outside this slice."
+      ],
+      "constraints": [
+        "Do not change the existing five-post allowance, membership tier model/catalog, business-promotion copy/gate, media routes/limits, clients, notifications, schema/migrations, provider behavior, or unrelated community paths.",
+        "No runtime database write, provider, remote Git, staging/deployment, browser/device, activation, or external acceptance."
+      ],
+      "validationPlan": [
+        "Focused Vitest: src/__tests__/community-feed.test.ts.",
+        "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit.",
+        "Exact two-path scope and git diff --check."
+      ],
+      "carrierDisposition": "Return an uncommitted hash-verified two-path review carrier only; central owner alone may integrate or update status."
     }
   ]
 }
