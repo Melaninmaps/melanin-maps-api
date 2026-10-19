@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearch } from "wouter";
 import { Link } from "wouter";
 import {
@@ -19,6 +19,13 @@ type BusinessSummary = {
   id: string; name: string; category: string; city: string; state: string;
   verified: boolean; status: string;
   subcategory?: string | null; vibes?: string[] | null; priceRange?: string | null;
+};
+type ManagedBusinessProfile = {
+  id: string;
+  description: string;
+  phone: string;
+  website: string;
+  hours: string;
 };
 type Review = { id: string; rating: number; text: string | null; wouldReturnAlone: boolean | null; createdAt: string };
 type PromotionType = "priority_search" | "category_featured" | "city_featured" | "cultural_spotlight" | "event_featured";
@@ -52,6 +59,29 @@ const TYPE_LABELS: Record<string, string> = {
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   search: Search, star: Star, "map-pin": MapPin, zap: Zap, calendar: Calendar,
 };
+function managedProfileFromResponse(payload: unknown, expectedBusinessId: string): ManagedBusinessProfile | null {
+  if (!payload || typeof payload !== "object") return null;
+  const business = (payload as { business?: unknown }).business;
+  if (!business || typeof business !== "object") return null;
+  const record = business as Record<string, unknown>;
+  if (record.id !== expectedBusinessId) return null;
+  const text = (value: unknown) => typeof value === "string" ? value : "";
+  return {
+    id: expectedBusinessId,
+    description: text(record.description),
+    phone: text(record.phone),
+    website: text(record.website),
+    hours: text(record.hours),
+  };
+}
+
+async function fetchManagedBusinessProfile(businessId: string): Promise<ManagedBusinessProfile> {
+  const response = await fetch(`${BASE}api/businesses/mine/managed/${businessId}`, { credentials: "include", cache: "no-store" });
+  if (!response.ok) throw new Error("Managed profile request failed");
+  const profile = managedProfileFromResponse(await response.json(), businessId);
+  if (!profile) throw new Error("Managed profile response was invalid");
+  return profile;
+}
 
 function ToolIcon({ icon, className }: { icon: string; className?: string }) {
   const Comp = ICON_MAP[icon] ?? TrendingUp;
@@ -112,6 +142,11 @@ export default function BusinessDashboard() {
   const [gConnection, setGConnection] = useState("");
   const [gSubmitting, setGSubmitting] = useState(false);
   const [gSuccess, setGSuccess] = useState(false);
+  const [managedProfile, setManagedProfile] = useState<ManagedBusinessProfile | null>(null);
+  const [managedProfileLoading, setManagedProfileLoading] = useState(false);
+  const [managedProfileLoadState, setManagedProfileLoadState] = useState<"idle" | "ready" | "failed">("idle");
+  const [managedProfileSaveState, setManagedProfileSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const managedProfileRequestVersion = useRef(0);
 
   useEffect(() => {
     // `/auth/user` must not be served from a 304 cache response: fetch() has
@@ -140,6 +175,39 @@ export default function BusinessDashboard() {
       .then((r) => r.ok ? r.json() : { insights: [] })
       .then((d: { insights?: CommunityNeedInsight[] }) => setCommunityNeeds(d.insights ?? []))
       .catch(() => setCommunityNeeds([]));
+  }, [selectedId]);
+
+  useEffect(() => {
+    const requestVersion = ++managedProfileRequestVersion.current;
+    if (!selectedId) {
+      setManagedProfile(null);
+      setManagedProfileLoading(false);
+      setManagedProfileLoadState("idle");
+      setManagedProfileSaveState("idle");
+      return;
+    }
+
+    let active = true;
+    const businessId = selectedId;
+    setManagedProfile(null);
+    setManagedProfileLoading(true);
+    setManagedProfileLoadState("idle");
+    setManagedProfileSaveState("idle");
+    void fetchManagedBusinessProfile(businessId)
+      .then((profile) => {
+        if (!active || requestVersion !== managedProfileRequestVersion.current) return;
+        setManagedProfile(profile);
+        setManagedProfileLoadState("ready");
+      })
+      .catch(() => {
+        if (!active || requestVersion !== managedProfileRequestVersion.current) return;
+        setManagedProfileLoadState("failed");
+      })
+      .finally(() => {
+        if (active && requestVersion === managedProfileRequestVersion.current) setManagedProfileLoading(false);
+      });
+
+    return () => { active = false; };
   }, [selectedId]);
 
   useEffect(() => {
@@ -182,6 +250,37 @@ export default function BusinessDashboard() {
       }
     } catch { alert("Something went wrong."); }
     finally { setGSubmitting(false); }
+  }
+
+  async function handleManagedProfileSave() {
+    const businessId = selectedId;
+    const profile = managedProfile;
+    if (!businessId || !profile || profile.id !== businessId) return;
+
+    const requestVersion = managedProfileRequestVersion.current;
+    const profilePayload = {
+      description: profile.description,
+      phone: profile.phone,
+      website: profile.website,
+      hours: profile.hours,
+    };
+    setManagedProfileSaveState("saving");
+    try {
+      const response = await fetch(`${BASE}api/businesses/mine/managed/${businessId}/profile`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profilePayload),
+      });
+      if (!response.ok) throw new Error("Managed profile update failed");
+
+      const refreshedProfile = await fetchManagedBusinessProfile(businessId);
+      if (requestVersion !== managedProfileRequestVersion.current) return;
+      setManagedProfile(refreshedProfile);
+      setManagedProfileSaveState("saved");
+    } catch {
+      if (requestVersion === managedProfileRequestVersion.current) setManagedProfileSaveState("failed");
+    }
   }
 
   async function handleCheckout(type: PromotionType) {
@@ -347,11 +446,10 @@ export default function BusinessDashboard() {
                             <Eye className="w-3 h-3 mr-1" /> View Public Listing
                           </Button>
                         </Link>
-                        <Link href={`/for-business-owners?claim=${selected.id}`}>
-                          <Button size="sm" variant="outline" className="rounded-full border-[#CA922B]/40 text-[#CA922B] text-xs font-bold">
-                            <Edit3 className="w-3 h-3 mr-1" /> Edit Profile
-                          </Button>
-                        </Link>
+                        <button type="button" onClick={() => document.getElementById("managed-profile-editor")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#CA922B]/40 text-[#CA922B] text-xs font-bold hover:bg-[#CA922B]/5 transition-colors">
+                          <Edit3 className="w-3 h-3" /> Edit Profile / Editar perfil
+                        </button>
                         <button onClick={() => setActiveTab("promote")}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2D7A4F]/40 text-[#2D7A4F] text-xs font-bold hover:bg-[#2D7A4F]/5 transition-colors">
                           <TrendingUp className="w-3 h-3" /> Promote My Business
@@ -365,6 +463,56 @@ export default function BusinessDashboard() {
                         )}
                       </div>
                     </div>
+
+                    {/* The selected managed profile is the only ordinary-profile mutation surface here. */}
+                    <section id="managed-profile-editor" data-testid="managed-profile-editor" className="bg-white rounded-2xl p-5 border border-[#3A1F0E]/10">
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div>
+                          <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Profile Details / Detalles del perfil</p>
+                          <p className="mt-1 text-sm text-[#3A1F0E]/60">Update contact details for {selected.name}. / Actualiza los datos de contacto de {selected.name}.</p>
+                        </div>
+                      </div>
+                      <p className="mb-4 text-xs leading-5 text-[#3A1F0E]/50">Public visibility and discovery eligibility are governed separately. / La visibilidad pública y la elegibilidad para descubrimiento se gestionan por separado.</p>
+
+                      {managedProfileLoading && (
+                        <div className="flex items-center gap-2 text-sm text-[#3A1F0E]/60" role="status" aria-live="polite">
+                          <Loader2 className="w-4 h-4 animate-spin" /> Loading profile details… / Cargando detalles del perfil…
+                        </div>
+                      )}
+                      {!managedProfileLoading && managedProfileLoadState === "failed" && (
+                        <p className="text-sm text-red-700" role="alert">Could not load profile details. Please try selecting this business again. / No se pudieron cargar los detalles del perfil. Vuelve a seleccionar este negocio.</p>
+                      )}
+                      {!managedProfileLoading && managedProfile && (
+                        <form onSubmit={(event) => { event.preventDefault(); void handleManagedProfileSave(); }} className="space-y-4">
+                          <div>
+                            <label htmlFor="managed-profile-description" className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Description / Descripción</label>
+                            <textarea id="managed-profile-description" value={managedProfile.description} disabled={managedProfileSaveState === "saving"} onChange={(event) => { setManagedProfile({ ...managedProfile, description: event.target.value }); setManagedProfileSaveState("idle"); }} rows={3} className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B] resize-none disabled:opacity-60" />
+                          </div>
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                              <label htmlFor="managed-profile-phone" className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Phone / Teléfono</label>
+                              <input id="managed-profile-phone" value={managedProfile.phone} disabled={managedProfileSaveState === "saving"} onChange={(event) => { setManagedProfile({ ...managedProfile, phone: event.target.value }); setManagedProfileSaveState("idle"); }} className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B] disabled:opacity-60" />
+                            </div>
+                            <div>
+                              <label htmlFor="managed-profile-website" className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Website / Sitio web</label>
+                              <input id="managed-profile-website" type="url" value={managedProfile.website} disabled={managedProfileSaveState === "saving"} onChange={(event) => { setManagedProfile({ ...managedProfile, website: event.target.value }); setManagedProfileSaveState("idle"); }} className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B] disabled:opacity-60" />
+                            </div>
+                          </div>
+                          <div>
+                            <label htmlFor="managed-profile-hours" className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Hours / Horario</label>
+                            <input id="managed-profile-hours" value={managedProfile.hours} disabled={managedProfileSaveState === "saving"} onChange={(event) => { setManagedProfile({ ...managedProfile, hours: event.target.value }); setManagedProfileSaveState("idle"); }} className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B] disabled:opacity-60" />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Button type="submit" disabled={managedProfileSaveState === "saving"} className="rounded-full bg-[#2D7A4F] hover:bg-[#245E3D] text-white text-xs font-bold">
+                              {managedProfileSaveState === "saving" ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Edit3 className="w-3 h-3 mr-1" />}
+                              {managedProfileSaveState === "saving" ? "Saving… / Guardando…" : "Save Profile / Guardar perfil"}
+                            </Button>
+                            {managedProfileSaveState === "saved" && <p className="text-sm text-[#2D7A4F] font-medium" role="status" aria-live="polite">Saved after a refreshed profile read. / Guardado después de volver a leer el perfil.</p>}
+                            {managedProfileSaveState === "failed" && <p className="text-sm text-red-700" role="alert">Failed to save. Your changes are still here; please try again. / No se pudo guardar. Tus cambios siguen aquí; inténtalo de nuevo.</p>}
+                          </div>
+                        </form>
+                      )}
+                    </section>
 
                     <BusinessOwnershipEditor businessId={selected.id} />
                     <BusinessExperienceEditor business={selected} />
