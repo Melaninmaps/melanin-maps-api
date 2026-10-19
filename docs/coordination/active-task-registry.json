@@ -217,9 +217,10 @@
     {
       "id": "KINFOLK-SESSION-DELETION-OWNER-BOUNDARY",
       "priority": "P0",
-      "status": "IMPLEMENTING_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "316b122c2b75271e43ea25909226627ce030ea0f",
+      "sourceCommit": "85cdd2f7504313a1c9b482ade7b8a64a12ee32e2",
       "publicationBoundary": "Local source-only repair. Do not fetch, push, inspect connectors/staging, deploy, or perform release actions without separate founder authorization.",
       "sourceEvidence": "Current Kinfolk session routes permit owner-scoped read and archive/restore/pin/unpin but expose no member deletion route. Persistent conversation messages live in kinfolk_sessions and its per-owner list cache; the current roadmap explicitly pulls individual and full session deletion into the server-only safety deploy.",
       "requirement": "Add authenticated, owner-scoped deletion for one persistent Kinfolk session and for all of the authenticated member's persistent Kinfolk sessions. A missing or another member's session must be indistinguishable as a 404. Successful deletion must invalidate only the authenticated member's session cache. Deletion must remain available even when Kinfolk continuity is currently disabled, so a member can remove previously persisted conversations.",
@@ -240,7 +241,15 @@
       "validationPlan": [
         "Focused provider-free route source contract verifies two DELETE routes, 401-before-delete ordering, id-plus-owner matching for individual deletion, owner-only matching for bulk deletion, generic 404, and cache invalidation after success.",
         "Run focused contract tests, repository API no-emit, exact two-path scope check, and git diff --check."
-      ]
+      ],
+      "sourceVerification": {
+        "apiTests": "3 files / 14 tests passed: the new session-deletion contract plus directly relevant Kinfolk reset/relevance and private-memory encryption route contracts.",
+        "apiTypecheck": "repository API no-emit passed",
+        "hygiene": ["exact two-path local source commit verified", "static route-boundary verification confirmed 401-before-delete, individual id-plus-owner matching, bulk owner matching, generic 404, authenticated-owner cache invalidation, and no continuity gate for deletion", "private-memory, feedback, preferences, provider, account-reset, schema, client, and external-service coupling excluded", "git diff --check passed"],
+        "independentReview": "Passed with no material correctness or privacy regression identified."
+      },
+      "separateTestObservation": "A broader exploratory command also included the unchanged kinfolk-route-wiring contract, which reported its own current-research chat assertion failure outside the new session handlers. It was not used as validation for this two-path repair; the direct relevant contract set passed.",
+      "externalAcceptance": "PENDING — no remote operation, provider call, database execution/schema/migration, browser/device, authenticated-member, staging/deployment, or feature activation was performed."
     },
     {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
