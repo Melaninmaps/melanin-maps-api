@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Search, UserPlus, UserCheck, UserX, Clock, Loader2, X } from "lucide-react";
+import { Users, Search, UserPlus, UserCheck, Clock, Loader2, X, Shield, CalendarCheck, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -24,6 +25,46 @@ interface SearchUser {
   username: string | null;
   profileImageUrl: string | null;
   bio: string | null;
+}
+
+interface MeetupVerification {
+  id: number;
+  initiatorId: string;
+  partnerId: string;
+  connectionId: number | null;
+  city: string | null;
+  venueName: string | null;
+  scheduledFor: string | null;
+  note: string | null;
+  status: string;
+  initiatedAt: string;
+  rescheduleNote: string | null;
+  initiatorIdentity: MeetupIdentityTransparency;
+  partnerIdentity: MeetupIdentityTransparency;
+  counterpartIdentity: MeetupIdentityTransparency;
+  counterpartIdentityStatusChanged: boolean;
+  counterpartIdentityStatusChangeNotice: string | null;
+}
+
+interface MeetupIdentityTransparency {
+  status: "verified" | "not_verified" | "unavailable";
+  memberSince: string | null;
+  verifiedAt: string | null;
+  message: string;
+}
+
+interface TrustedSafetyContact {
+  id: string;
+  contactName: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+}
+
+interface MeetupEligibility {
+  allowed: boolean;
+  code: string;
+  message: string;
 }
 
 function Avatar({ name, url, size = 10 }: { name: string; url?: string | null; size?: number }) {
@@ -53,13 +94,35 @@ export default function Connections() {
   const [searching, setSearching] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | string | null>(null);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
+  const [meetups, setMeetups] = useState<MeetupVerification[]>([]);
+  const [meetupEligibility, setMeetupEligibility] = useState<MeetupEligibility | null>(null);
+  const [trustedContacts, setTrustedContacts] = useState<TrustedSafetyContact[]>([]);
+  const [meetingConnection, setMeetingConnection] = useState<Connection | null>(null);
+  const [meetingCity, setMeetingCity] = useState("");
+  const [meetingVenue, setMeetingVenue] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
+  const [meetingNote, setMeetingNote] = useState("");
+  const [trustedContactId, setTrustedContactId] = useState("");
+  const [safetyAcknowledged, setSafetyAcknowledged] = useState(false);
+  const [meetingPartnerIdentity, setMeetingPartnerIdentity] = useState<MeetupIdentityTransparency | null>(null);
+  const [identityAcknowledged, setIdentityAcknowledged] = useState(false);
+  const [confirmedIdentityAcknowledgments, setConfirmedIdentityAcknowledgments] = useState<Set<number>>(new Set());
+  const [meetingSaving, setMeetingSaving] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadConnections = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}api/connections`, { credentials: "include" });
-      if (res.ok) { const d = await res.json(); setConnections(d.connections ?? []); }
+      const [connectionResponse, meetupResponse, eligibilityResponse, contactResponse] = await Promise.all([
+        authenticatedFetch(`${BASE}api/connections`),
+        authenticatedFetch(`${BASE}api/meetups`),
+        authenticatedFetch(`${BASE}api/meetups/eligibility`),
+        authenticatedFetch(`${BASE}api/meetups/trusted-contacts`),
+      ]);
+      if (connectionResponse.ok) { const d = await connectionResponse.json(); setConnections(d.connections ?? []); }
+      if (meetupResponse.ok) { const d = await meetupResponse.json(); setMeetups(d.verifications ?? []); }
+      if (eligibilityResponse.ok) setMeetupEligibility(await eligibilityResponse.json() as MeetupEligibility);
+      if (contactResponse.ok) { const d = await contactResponse.json(); setTrustedContacts(d.contacts ?? []); }
     } catch { /* ignore */ } finally { setLoading(false); }
   }, []);
 
@@ -119,10 +182,111 @@ export default function Connections() {
     finally { setActionLoading(null); }
   };
 
+  const openMeetupPlanner = async (connection: Connection) => {
+    setMeetingConnection(connection);
+    setMeetingCity("");
+    setMeetingVenue("");
+    setMeetingTime("");
+    setMeetingNote("");
+    setTrustedContactId("");
+    setSafetyAcknowledged(false);
+    setIdentityAcknowledged(false);
+    setMeetingPartnerIdentity(null);
+    if (!connection.otherId) return;
+    try {
+      const response = await authenticatedFetch(
+        `${BASE}api/meetups/partner-check?partnerId=${encodeURIComponent(connection.otherId)}&connectionId=${encodeURIComponent(String(connection.id))}`,
+      );
+      if (response.ok) {
+        const data = await response.json() as { identity?: MeetupIdentityTransparency };
+        setMeetingPartnerIdentity(data.identity ?? null);
+      }
+    } catch {
+      setMeetingPartnerIdentity({
+        status: "unavailable",
+        memberSince: null,
+        verifiedAt: null,
+        message: "Identity verification status is currently unavailable to confirm. This is not a safety judgment.",
+      });
+    }
+  };
+
+  const submitMeetup = async () => {
+    if (!meetingConnection?.otherId || !meetupEligibility?.allowed || !safetyAcknowledged || !identityAcknowledged || !meetingPartnerIdentity) return;
+    setMeetingSaving(true);
+    try {
+      const res = await authenticatedFetch(`${BASE}api/meetups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partnerId: meetingConnection.otherId,
+          connectionId: meetingConnection.id,
+          city: meetingCity.trim() || undefined,
+          venueName: meetingVenue.trim() || undefined,
+          scheduledFor: meetingTime ? new Date(meetingTime).toISOString() : undefined,
+          note: meetingNote.trim() || undefined,
+          trustedSafetyContactId: trustedContactId || undefined,
+          acknowledgedSafetyNotice: true,
+          acknowledgedPartnerIdentityStatus: meetingPartnerIdentity.status,
+        }),
+      });
+      const data = await res.json() as { verification?: MeetupVerification; error?: string };
+      if (!res.ok || !data.verification) throw new Error(data.error ?? "Failed to send request");
+      setMeetups((current) => [data.verification!, ...current]);
+      setMeetingConnection(null);
+      toast({ title: "Meetup Verification request sent" });
+    } catch (error) {
+      toast({ title: error instanceof Error ? error.message : "Could not send meetup request", variant: "destructive" });
+    } finally { setMeetingSaving(false); }
+  };
+
+  const respondToMeetup = async (id: number, action: "confirm" | "decline" | "request_reschedule") => {
+    const meetup = meetups.find((item) => item.id === id);
+    if (action === "confirm" && (!meetup || !confirmedIdentityAcknowledgments.has(id))) {
+      toast({ title: "Review the requester's identity-verification status before confirming", variant: "destructive" });
+      return;
+    }
+    setActionLoading(`meetup-${id}`);
+    try {
+      const res = await authenticatedFetch(`${BASE}api/meetups/${id}/respond`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          acknowledgedPartnerIdentityStatus: action === "confirm" ? meetup?.initiatorIdentity.status : undefined,
+        }),
+      });
+      const data = await res.json() as { verification?: MeetupVerification; error?: string };
+      if (!res.ok || !data.verification) throw new Error(data.error ?? "Could not update request");
+      setMeetups((current) => current.map((meeting) => meeting.id === id ? { ...meeting, ...data.verification! } : meeting));
+      toast({ title: action === "confirm" ? "Meetup confirmed" : action === "decline" ? "Meetup declined" : "Reschedule requested" });
+    } catch (error) {
+      toast({ title: error instanceof Error ? error.message : "Could not update meetup request", variant: "destructive" });
+    } finally { setActionLoading(null); }
+  };
+
+  const cancelMeetup = async (id: number) => {
+    if (!confirm("Cancel this meetup request? This removes consent to the plan for both participants.")) return;
+    setActionLoading(`meetup-${id}`);
+    try {
+      const res = await authenticatedFetch(`${BASE}api/meetups/${id}/cancel`, { method: "PATCH" });
+      const data = await res.json() as { verification?: MeetupVerification; error?: string };
+      if (!res.ok || !data.verification) throw new Error(data.error ?? "Could not cancel meetup request");
+      setMeetups((current) => current.map((meeting) => meeting.id === id ? { ...meeting, ...data.verification! } : meeting));
+      toast({ title: "Meetup request cancelled" });
+    } catch (error) {
+      toast({ title: error instanceof Error ? error.message : "Could not cancel meetup request", variant: "destructive" });
+    } finally { setActionLoading(null); }
+  };
+
   const accepted = connections.filter(c => c.status === "accepted");
   const pending = connections.filter(c => c.status === "pending");
   const pendingReceived = pending.filter(c => c.recipientId === currentUserId);
   const pendingSent = pending.filter(c => c.requesterId === currentUserId);
+  const pendingMeetups = meetups.filter((meetup) => meetup.partnerId === currentUserId && meetup.status === "pending");
+  const identityStatusLabel = (identity: MeetupIdentityTransparency) => (
+    identity.status === "verified" ? "Identity Verified" : identity.status === "not_verified" ? "Identity verification not complete" : "Identity verification currently unavailable"
+  );
 
   if (!isAuthenticated) return (
     <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center">
@@ -204,6 +368,97 @@ export default function Connections() {
           </div>
         )}
 
+        <section className="mb-6 rounded-2xl border border-[#D9C9AE] bg-[#FFF9F0] p-5">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-[#CA922B]/15 p-2"><Shield className="h-5 w-5 text-[#8A5E0A]" /></div>
+            <div>
+              <h2 className="font-serif text-lg font-bold text-[#2B1507]">Meetup Verification</h2>
+              <p className="mt-1 text-sm leading-5 text-[#5B4030]">Use this voluntary, consent-first feature with an accepted connection. Choose a public city or venue name only—never share an exact address. Verification is not a guarantee of safety.</p>
+              {meetupEligibility && !meetupEligibility.allowed && <p className="mt-2 text-sm font-semibold text-[#9B1C1C]">{meetupEligibility.message}</p>}
+            </div>
+          </div>
+
+          {pendingMeetups.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#6B4A2C]">Meetup requests for you</p>
+              {pendingMeetups.map((meetup) => (
+                <div key={meetup.id} className="rounded-xl border border-[#E8DDD0] bg-white p-4">
+                  <p className="text-sm font-semibold text-[#2B1507]">A connected member requested a meetup verification.</p>
+                  {(meetup.venueName || meetup.city) && <p className="mt-1 text-xs text-[#5B4030]">Public plan: {[meetup.venueName, meetup.city].filter(Boolean).join(" · ")}</p>}
+                  <div className="mt-3 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] p-3 text-xs text-[#1E3A8A]">
+                    <p className="font-bold">{identityStatusLabel(meetup.initiatorIdentity)}</p>
+                    {meetup.initiatorIdentity.memberSince && <p className="mt-1">Member since {new Date(meetup.initiatorIdentity.memberSince).toLocaleDateString()}</p>}
+                    {meetup.initiatorIdentity.verifiedAt && <p className="mt-1">Identity verified {new Date(meetup.initiatorIdentity.verifiedAt).toLocaleDateString()}</p>}
+                    <p className="mt-1">{meetup.initiatorIdentity.message}</p>
+                  </div>
+                  <label className="mt-3 flex items-start gap-2 rounded-lg bg-[#FFF4E1] p-3 text-xs text-[#50351F]">
+                    <input type="checkbox" checked={confirmedIdentityAcknowledgments.has(meetup.id)} onChange={() => setConfirmedIdentityAcknowledgments((current) => {
+                      const next = new Set(current);
+                      if (next.has(meetup.id)) next.delete(meetup.id); else next.add(meetup.id);
+                      return next;
+                    })} className="mt-0.5" />
+                    <span>I reviewed this member&apos;s current identity-verification status. It is informational and not a safety guarantee.</span>
+                  </label>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button onClick={() => void respondToMeetup(meetup.id, "confirm")} disabled={actionLoading === `meetup-${meetup.id}` || !confirmedIdentityAcknowledgments.has(meetup.id)} className="rounded-full bg-[#2B6507] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Confirm</button>
+                    <button onClick={() => void respondToMeetup(meetup.id, "request_reschedule")} disabled={actionLoading === `meetup-${meetup.id}`} className="rounded-full border border-[#CA922B] px-3 py-2 text-xs font-bold text-[#77500A]">Reschedule</button>
+                    <button onClick={() => void respondToMeetup(meetup.id, "decline")} disabled={actionLoading === `meetup-${meetup.id}`} className="rounded-full border border-[#C43B2F] px-3 py-2 text-xs font-bold text-[#A52820]">Decline</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {meetups.filter((meetup) => !["declined", "cancelled"].includes(meetup.status)).length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#6B4A2C]">Your meetup records</p>
+              {meetups.filter((meetup) => !["declined", "cancelled"].includes(meetup.status)).map((meetup) => (
+                <div key={meetup.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-[#E8DDD0] bg-white p-3">
+                  <div className="min-w-40 flex-1"><p className="text-sm font-semibold capitalize text-[#2B1507]">{meetup.status.replace(/_/g, " ")}</p>{(meetup.venueName || meetup.city) && <p className="mt-0.5 text-xs text-[#5B4030]">{[meetup.venueName, meetup.city].filter(Boolean).join(" · ")}</p>}
+                    {meetup.status === "confirmed" && meetup.counterpartIdentity && <div className={`mt-2 rounded-lg border p-3 text-xs ${meetup.counterpartIdentityStatusChanged ? "border-[#FB923C50] bg-[#FFF7ED] text-[#9A3412]" : "border-[#BFDBFE] bg-[#EFF6FF] text-[#1E3A8A]"}`}>
+                      <p className="font-bold">{identityStatusLabel(meetup.counterpartIdentity)}</p>
+                      {meetup.counterpartIdentity.memberSince && <p className="mt-1">Member since {new Date(meetup.counterpartIdentity.memberSince).toLocaleDateString()}</p>}
+                      {meetup.counterpartIdentity.verifiedAt && <p className="mt-1">Identity verified {new Date(meetup.counterpartIdentity.verifiedAt).toLocaleDateString()}</p>}
+                      {meetup.counterpartIdentityStatusChangeNotice && <p className="mt-1 font-semibold">{meetup.counterpartIdentityStatusChangeNotice}</p>}
+                      <p className="mt-1">{meetup.counterpartIdentity.message}</p>
+                    </div>}
+                  </div>
+                  <button onClick={() => void cancelMeetup(meetup.id)} disabled={actionLoading === `meetup-${meetup.id}`} className="rounded-full border border-[#C43B2F] px-3 py-2 text-xs font-bold text-[#A52820] disabled:opacity-50">Cancel</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {meetingConnection && (
+            <div className="mt-5 rounded-xl border border-[#CA922B]/40 bg-white p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-[#8A5E0A]" /><h3 className="font-bold text-[#2B1507]">Plan a public meetup</h3></div>
+                <button onClick={() => setMeetingConnection(null)} className="text-sm font-semibold text-[#5B4030]">Close</button>
+              </div>
+              {meetingPartnerIdentity ? (
+                <div className="mt-4 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] p-3 text-sm text-[#1E3A8A]">
+                  <p className="font-bold">{identityStatusLabel(meetingPartnerIdentity)}</p>
+                  {meetingPartnerIdentity.memberSince && <p className="mt-1 text-xs">Member since {new Date(meetingPartnerIdentity.memberSince).toLocaleDateString()}</p>}
+                  {meetingPartnerIdentity.verifiedAt && <p className="mt-1 text-xs">Identity verified {new Date(meetingPartnerIdentity.verifiedAt).toLocaleDateString()}</p>}
+                  <p className="mt-1 text-xs">{meetingPartnerIdentity.message}</p>
+                </div>
+              ) : (
+                <p className="mt-4 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] p-3 text-sm text-[#7C2D12]">Loading the connection&apos;s current identity-verification status…</p>
+              )}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="text-sm font-semibold text-[#3A1F0E]">City or area<input value={meetingCity} onChange={(event) => setMeetingCity(event.target.value)} placeholder="Downtown Atlanta" className="mt-1 w-full rounded-lg border border-[#DCCDBA] px-3 py-2 font-normal" /></label>
+                <label className="text-sm font-semibold text-[#3A1F0E]">Public venue name<input value={meetingVenue} onChange={(event) => setMeetingVenue(event.target.value)} placeholder="Coffee shop or public landmark" className="mt-1 w-full rounded-lg border border-[#DCCDBA] px-3 py-2 font-normal" /></label>
+                <label className="text-sm font-semibold text-[#3A1F0E]">Meeting time<input type="datetime-local" value={meetingTime} onChange={(event) => setMeetingTime(event.target.value)} className="mt-1 w-full rounded-lg border border-[#DCCDBA] px-3 py-2 font-normal" /></label>
+                <label className="text-sm font-semibold text-[#3A1F0E]">Trusted contact (optional)<select value={trustedContactId} onChange={(event) => setTrustedContactId(event.target.value)} className="mt-1 w-full rounded-lg border border-[#DCCDBA] bg-white px-3 py-2 font-normal"><option value="">No check-in contact</option>{trustedContacts.map((contact) => <option key={contact.id} value={contact.id}>{[contact.firstName, contact.lastName].filter(Boolean).join(" ") || contact.contactName || contact.username}</option>)}</select></label>
+              </div>
+              <label className="mt-3 block text-sm font-semibold text-[#3A1F0E]">Optional note<textarea value={meetingNote} onChange={(event) => setMeetingNote(event.target.value)} maxLength={300} placeholder="Keep it brief; do not add an exact address or sensitive personal details." className="mt-1 min-h-20 w-full rounded-lg border border-[#DCCDBA] px-3 py-2 font-normal" /></label>
+              <label className="mt-4 flex items-start gap-2 rounded-lg bg-[#FFF4E1] p-3 text-sm text-[#50351F]"><input type="checkbox" checked={safetyAcknowledged} onChange={(event) => setSafetyAcknowledged(event.target.checked)} className="mt-1" /><span>I understand that this is voluntary, I should meet in a public setting, and Meetup Verification is not a guarantee of safety.</span></label>
+              <label className="mt-3 flex items-start gap-2 rounded-lg bg-[#EFF6FF] p-3 text-sm text-[#1E3A8A]"><input type="checkbox" disabled={!meetingPartnerIdentity} checked={identityAcknowledged} onChange={(event) => setIdentityAcknowledged(event.target.checked)} className="mt-1" /><span>I reviewed this member&apos;s current identity-verification status. It is informational and not a safety guarantee.</span></label>
+              <button onClick={() => void submitMeetup()} disabled={meetingSaving || !safetyAcknowledged || !identityAcknowledged || !meetingPartnerIdentity || !meetupEligibility?.allowed} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#2B1507] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"><ShieldCheck className="h-4 w-4" />{meetingSaving ? "Sending…" : "Send meetup request"}</button>
+            </div>
+          )}
+        </section>
+
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-[#CA922B]" /></div>
         ) : activeTab === "all" ? (
@@ -224,6 +479,10 @@ export default function Connections() {
                       <p className="font-bold text-[#2B1507]">{name}</p>
                       <p className="text-xs text-[#CA922B] flex items-center gap-1"><UserCheck className="w-3 h-3" /> Connected</p>
                     </div>
+                    <button onClick={() => openMeetupPlanner(conn)} disabled={!meetupEligibility?.allowed || !conn.otherId}
+                      className="inline-flex items-center gap-1 rounded-full border border-[#CA922B] px-3 py-2 text-xs font-bold text-[#7A5209] disabled:cursor-not-allowed disabled:opacity-50">
+                      <Shield className="h-3 w-3" /> Verify Meetup
+                    </button>
                     <button onClick={() => removeConnection(conn.id)} disabled={actionLoading === conn.id}
                       className="p-2 text-[#3A1F0E]/30 hover:text-red-500 transition-colors">
                       {actionLoading === conn.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
