@@ -3602,7 +3602,13 @@
         "exact two-path scope; git diff --check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 all provider, Calendar/OAuth, durable consent, participant UI/delivery/venue, runtime and member/release/founder evidence excluded."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 all provider, Calendar/OAuth, durable consent, participant UI/delivery/venue, runtime and member/release/founder evidence excluded.",
+      "baseTransfer": {
+        "handoff_id": "hnd_DrNE0JsqsEUPyJFBQGVFbQLj",
+        "file": "FLIGHT007_STATUS_TIMESTAMP_COMPOSITION_BASE_2026-10-19.tar.gz",
+        "sha256": "edb1d8c0984e64afd035683edf454e22b317f2f0971a3c8888ef8b5431a45e3b",
+        "expires_at": "2026-10-20T23:40:43.121Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
