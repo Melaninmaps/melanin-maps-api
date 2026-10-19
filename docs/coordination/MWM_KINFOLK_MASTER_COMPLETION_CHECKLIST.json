@@ -1211,14 +1211,15 @@
       "android_evidence": "Not required for this minimum Web/API editor acceptance layer.",
       "responsible_owner_or_task": "Founder for external authorization; central release/integration owner for a bounded acceptance packet.",
       "dependencies_or_blockers": "FAILED STAGING AUTHENTICATION CHECKPOINT (BIZ-008); the production read-only browser observation predates this undeployed local source repair. MISSING EVIDENCE — named integrated deploy candidate/writer inventory approval, test-owner procedure, disposable non-real public test business (or approved reversible field), and scoped save/readback authorization.",
-      "next_action": "Do not retry browser save. First obtain separate authorization for a named candidate deployment plus its writer/rollback inventory and a staging account/fixture plan; then, after a further bounded browser authorization, exercise one controlled ordinary owner save and public-profile/Directory/Map readback. Keep Kinfolk freshness separate.",
+      "next_action": "Use the preparation-only BIZ-009 deployment packet as the release gate. First obtain explicit authorization for one read-only release-binding inspection that names target, deployable remote SHA, rollback SHA, and startup-writer inventory. Only then may the founder consider a separate exact deployment approval and, after success, a separately approved controlled browser save/readback. Do not retry browser save or infer release metadata.",
       "founder_approval_needed": "Yes — external account/browser access and, if selected, narrow staging test-owner provisioning/reset or a read-only production route check.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
         "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
         "BUSINESS-OWNER-001 local receipt ddf73c4374a4231151a29eb4236585adca11202e",
         "S9 read-only production-domain dashboard verification, 2026-10-19",
-        "BUSINESS-OWNER-002 local source commit 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e"
+        "BUSINESS-OWNER-002 local source commit 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e",
+        "docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md"
       ]
     },
     {
@@ -1280,7 +1281,7 @@
       "android_evidence": "Not required for the first Web/API owner-editor slice; no Android acceptance is implied.",
       "responsible_owner_or_task": "Central integration/acceptance owner QJATRGk7nUgzDlccMCUcG6; BUSINESS-OWNER-002 implementation subclaim by yINBiovLIPiFnyQCFfSycn is closed local-only.",
       "dependencies_or_blockers": "The local ordinary editor is undeployed; BIZ-008 staging authentication still prevents acceptance. The separate demonstrated stale-write defect is now under a seven-path source-only claim. Owner address needs a map/pin safety decision. Founder-required last-approved/Pending Approval needs a current authoritative moderation contract/schema; current Admin field receipts are source/audit evidence only and their migration helper writes schema. A founder-approved non-real fixture or explicit reversible production field is required for any live save/readback.",
-      "next_action": "Return the uncommitted BUSINESS-OWNER-003 revision-guard carrier with owner/Admin 409 conflict protection and focused API/Web contracts. Do not begin moderated-field work without a current contract/schema. Separately authorize candidate deployment/writer inventory/rollback and then account/fixture browser acceptance; local source tests never establish public/Directory/Map/Kinfolk proof.",
+      "next_action": "Preserve the local-only two-path ordinary editor and the separately claimed stale-write repair. The preparation-only packet at docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md requires an explicit read-only release-binding inspection before any no-placeholder deployment/rollback approval can be requested. Do not begin moderated-field work without a current contract/schema, and do not treat local source tests as public/Directory/Map/Kinfolk proof.",
       "founder_approval_needed": "No for the bounded local source carrier. Yes for any fixture/create/reset, production field edit, authenticated browser save/readback, database action, deployment, provider-backed Kinfolk check, or release assertion.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1290,7 +1291,8 @@
         "BIZ-008 failed staging authentication checkpoint",
         "S9 read-only production Edit Profile navigation verification, 2026-10-19",
         "BUSINESS-OWNER-002 carrier 61bf3b51c485bc7ea81ef70d8fa519591f7ade99b59ccf68bbb80db45ecf2239; source commit 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e",
-        "BUSINESS-OWNER-003 source-only stale-write trace/claim, 2026-10-19"
+        "BUSINESS-OWNER-003 source-only stale-write trace/claim, 2026-10-19",
+        "docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md"
       ]
     }
   ],
@@ -1544,6 +1546,10 @@
     {
       "date": "2026-10-19",
       "event": "BIZ-009 demonstrated source defect recorded: selected-owner and Admin generic profile writers accept full-form updates without an expected updated-at revision, so a later allowed writer can overwrite a stale profile field. Existing Admin field receipts are audit/source metadata, not last-approved/Pending Approval state. BUSINESS-OWNER-003 is exclusively claimed for a schema-free cross-role revision guard; no runtime concurrency, database, or external action occurred."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "BIZ-009 deployment/rollback authorization packet prepared locally for source commit 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e. It intentionally names no deploy target, deployable remote SHA, rollback SHA, or startup-writer approval: an explicit read-only release-binding inspection is required before a no-placeholder deployment request. No external action occurred."
     }
   ],
   "evidence_gaps": [
