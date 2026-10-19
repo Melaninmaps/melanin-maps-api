@@ -2024,6 +2024,10 @@
     {
       "date": "2026-10-19",
       "event": "Cumulative BIZ owner-feedback source matrix passed: API approved-owner reader 1 file/7, two mobile canonical consumers 2 files/6, API no-emit. This is source-only and does not change BIZ-009 release gates."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "FLIGHT-008 carrier `hnd_71H7Ll5u6N32TI01bEAL9V1k` reviewed but rejected before source integration: no per-use authorization matrix, bare unbound coordinator availability, and no outer/pair injected-clock binding. S9 retains the same exclusive all-new three-path claim for exact repair."
     }
   ],
   "evidence_gaps": [
@@ -2255,13 +2259,13 @@
           "FLIGHT-003"
         ],
         "existing_implementation": "NO-GO readiness, default-disabled status leaf and named-recipient sharing policy are integrated source children.",
-        "missing_broken_elements": "FLIGHT-007 source timestamp incompatibility repaired. FLIGHT-008 remains active source-only triad fixture composition; all real participant/venue/provider/Calendar/UI/runtime gates remain.",
-        "current_active_repair": "`FLIGHT-008` S9: all-new injected three-participant authorization/time/venue-fixture composition; its central apply ordering dependency is now satisfied.",
+        "missing_broken_elements": "FLIGHT-007 is integrated. FLIGHT-008 carrier requires repair before integration: it lacked role-specific allowed-use authorization, a triad-bound coordinator availability envelope, and exact outer/pair clock binding. Real participant/venue/provider/Calendar/UI/runtime gates remain external.",
+        "current_active_repair": "`FLIGHT-008` S9 retains its exclusive all-new three-path claim; repair per-use triad authorization, coordinator availability binding, and pair/outer clock equality before re-review.",
         "integrated_source": "FLIGHT-002 `1ec062aceb93e170ced6ba754881cc78ab2b4bd7`; FLIGHT-003 `0f9a474210f4a3d824b9870eb5a9eec9b879157f`; local/default-disabled only. FLIGHT-004 eligibility `d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0` (API 2/51, no-emit). FLIGHT-005 simulated meeting-time lifecycle `5e79ab3e97253aa5be41e75870fdd7564ba164e1` (API 4/91, no-emit). FLIGHT-006 local 31-day window boundary `e24efe1fa6194892c7f1d36bb898be14dec75c71`. FLIGHT-007 shared-arrival timestamp composition `8205d971ca6f32e750917970fe2cad3826835e36`.",
         "test_evidence": "FLIGHT-003: 2 files / 34 API tests and API no-emit; no member journey. Current-authority FLIGHT-004 + sharing: API 2 files/51 tests, API no-emit PASS. Current-authority FLIGHT-005 matrix: API 4 files/91 tests and no-emit PASS. Boundary regression: API 4 files/93 tests and no-emit PASS. Cumulative Flight current-authority source matrix: API 5 files/106 tests and API no-emit PASS. FLIGHT-007: lifecycle 1 file/41; cumulative Flight 5 files/113; API no-emit PASS.",
         "external_gates": "Source-only parent evidence is ongoing under Flight #7/#8. Separate authorizations are required for provider hard-cap/account/call, real Calendar/OAuth/consent and durable grants, real venue catalog/verification/current details, routes/UI/invitations/replies/notifications/delivery, runtime/network/browser/device/staging, and member/release/founder acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Validate Flight #8 carrier if/when received; preserve fixture-only disclosure and external gates."
+        "next_action": "Transfer current compact dependency base to S9 for Flight #8 repair; do not alter any external or real-data boundary."
       },
       {
         "experience_id": "EXP-KINFOLK-CALENDAR-AVAILABILITY-AND-MEETING-PLANNING",

@@ -3708,6 +3708,22 @@
         "at": "2026-10-19T23:45:24Z",
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged the exact all-new three-path source-only claim, pair-resolver read-only boundary, and fixture-only venue truthfulness."
+      },
+      "centralReviewFailure": {
+        "carrier": "hnd_71H7Ll5u6N32TI01bEAL9V1k",
+        "reviewedAt": "2026-10-19T23:53:36Z",
+        "result": "REPAIR_REQUIRED_NO_SOURCE_INTEGRATION",
+        "exactFailures": [
+          "`ThreeParticipantAuthorization` has no explicit allowed-use field or role-specific use matrix, so required arrival/availability/travel/location/accessibility/preference/venue authorization cannot be proven.",
+          "`coordinatorAvailability` is a bare `known {window,busy}` record, not a coordinator/triad-bound, versioned, revocable, time-bounded availability permission envelope.",
+          "`canonicalPairSlot` does not require `pairInput.nowEpochMs === input.nowEpochMs`; the pair resolver can run on a different injected clock than the outer authorizations."
+        ],
+        "requiredRepair": [
+          "Extend only Flight #8 contracts/composition/test with exact role-bound allowed uses: owner must include all required uses; recipient/coordinator all except arrival_time; reject missing/extra/broad/wrong-role uses.",
+          "Replace bare coordinator availability with an exact active, triad-bound, coordinator-owned permission envelope that binds version/purpose/coordination ID/counterparties/grant/expiry/revocation and safe normalized `known` busy data.",
+          "Require exact outer/pair `nowEpochMs` equality before invoking pair resolver and test clock mismatch fails closed before output.",
+          "Return another uncommitted/unstaged carrier; preserve all prior no-I/O, fixture-only, no-real-venue boundaries."
+        ]
       }
     }
   ],
