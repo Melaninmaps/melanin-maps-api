@@ -137,7 +137,7 @@ const videoUpload = multer({
 });
 
 const router: IRouter = Router();
-
+const SPECIALTY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // Explicit online, service-area, private, and home-based declarations remain
 // searchable but never render as public storefront pins.
 const MAP_PHYSICAL_LOCATION_SQL = `
@@ -1703,6 +1703,117 @@ router.patch("/businesses/mine/managed/:businessId/profile", async (req: any, re
   } catch (err) {
     req.log.error({ err }, "Failed to update selected managed business profile");
     res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+// A selected managed business can replace only its own structured specialty
+// relation. This stays separate from legacy single-business profile flows and
+// never changes profile, publication, ownership, evidence, or discovery state.
+router.put("/businesses/mine/managed/:businessId/specialties", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!businessId) {
+    res.status(400).json({ error: "A business selection is required." });
+    return;
+  }
+
+  const rawSpecialties = (req.body as { specialties?: unknown } | undefined)?.specialties;
+  if (!Array.isArray(rawSpecialties)) {
+    res.status(400).json({ error: "Specialties must be a dense array of valid specialty slugs." });
+    return;
+  }
+  const specialtiesAreDense = Array.from(
+    { length: rawSpecialties.length },
+    (_specialty, index) => Object.prototype.hasOwnProperty.call(rawSpecialties, index),
+  ).every(Boolean);
+  if (
+    !specialtiesAreDense ||
+    !rawSpecialties.every(
+      (slug) => typeof slug === "string" && SPECIALTY_SLUG_PATTERN.test(slug),
+    )
+  ) {
+    res.status(400).json({ error: "Specialties must be a dense array of valid specialty slugs." });
+    return;
+  }
+  const specialties = rawSpecialties as string[];
+  if (new Set(specialties).size !== specialties.length) {
+    res.status(400).json({ error: "Specialties must not contain duplicates." });
+    return;
+  }
+
+  try {
+    const [authorizedBusiness] = await db
+      .select({ id: businessesTable.id })
+      .from(businessesTable)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .limit(1);
+    if (!authorizedBusiness) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const lockedResult = await client.query<{ id: string }>(
+        `SELECT b.id::text AS id
+         FROM businesses AS b
+         INNER JOIN business_owner_links AS bol
+           ON bol.business_id::text = b.id::text
+         WHERE b.id::text = $1
+           AND bol.user_id::text = $2
+           AND bol.role = 'owner'
+           AND bol.status = 'approved'
+           AND bol.revoked_at IS NULL
+         FOR UPDATE OF b, bol`,
+        [businessId, String(userId)],
+      );
+      if (!lockedResult.rows[0]) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      await client.query(
+        "DELETE FROM business_specialties WHERE business_id = $1::uuid",
+        [businessId],
+      );
+      if (specialties.length > 0) {
+        await client.query(
+          `INSERT INTO business_specialties (business_id, specialty_slug)
+           SELECT $1::uuid, UNNEST($2::text[])
+           ON CONFLICT DO NOTHING`,
+          [businessId, specialties],
+        );
+      }
+      const savedSpecialtiesResult = await client.query<{ specialty_slug: string }>(
+        `SELECT specialty_slug
+         FROM business_specialties
+         WHERE business_id = $1::uuid
+         ORDER BY specialty_slug ASC`,
+        [businessId],
+      );
+      await client.query("COMMIT");
+      res.json({
+        specialties: savedSpecialtiesResult.rows.map(({ specialty_slug }) => specialty_slug),
+      });
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      req.log.error({ err }, "Failed to replace selected managed business specialties");
+      res.status(500).json({ error: "Failed to save specialties" });
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    req.log.error({ err }, "Failed to authorize selected managed business specialties");
+    res.status(500).json({ error: "Failed to save specialties" });
   }
 });
 

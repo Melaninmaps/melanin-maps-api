@@ -12,6 +12,12 @@ function managedBusinessRoute(): string {
   return businessRoutes.slice(start, selectedBusinessRead);
 }
 
+function managedSpecialtiesRoute(): string {
+  const start = businessRoutes.indexOf('router.put("/businesses/mine/managed/:businessId/specialties"');
+  const legacyRead = businessRoutes.indexOf('router.get("/businesses/mine",', start);
+  return businessRoutes.slice(start, legacyRead);
+}
+
 describe("owner-scoped managed business read contract", () => {
   it("lists every approved, unrevoked owner relationship without mutations", () => {
     const route = managedBusinessRoute();
@@ -70,5 +76,51 @@ describe("owner-scoped managed business read contract", () => {
     expect(selectedPatch).not.toContain("listingStatus");
     expect(selectedPatch).not.toContain("ownershipDesignations");
     expect(selectedPatch).not.toContain("latitude");
+  });
+
+  it("replaces only the selected approved owner's structured specialties in one locked transaction", () => {
+    const route = managedSpecialtiesRoute();
+
+    expect(route).toContain('router.put("/businesses/mine/managed/:businessId/specialties"');
+    expect(route).toContain('res.status(401).json({ error: "Unauthorized" })');
+    expect(route).toContain('res.status(400).json({ error: "A business selection is required." })');
+    expect(route).toContain("eq(businessesTable.id, businessId)");
+    expect(route).toContain("approvedOwnerPredicate(String(userId))");
+    expect(route).toContain("bol.role = 'owner'");
+    expect(route).toContain("bol.status = 'approved'");
+    expect(route).toContain("bol.revoked_at IS NULL");
+    expect(route).toContain('res.status(404).json({ error: "Managed business not found." })');
+
+    expect(route).toContain("Array.from(");
+    expect(route).toContain("Object.prototype.hasOwnProperty.call(rawSpecialties, index)");
+    expect(route).toContain("SPECIALTY_SLUG_PATTERN.test(slug)");
+    expect(route).toContain("new Set(specialties).size !== specialties.length");
+    expect(route.indexOf("const rawSpecialties")).toBeLessThan(
+      route.indexOf("const client = await pool.connect()"),
+    );
+
+    expect(route).toContain('await client.query("BEGIN")');
+    expect(route).toContain("INNER JOIN business_owner_links AS bol");
+    expect(route).toContain("FOR UPDATE OF b, bol");
+    expect(route).toContain("DELETE FROM business_specialties WHERE business_id = $1::uuid");
+    expect(route).toContain("if (specialties.length > 0)");
+    expect(route).toContain("SELECT $1::uuid, UNNEST($2::text[])");
+    expect(route).toContain("ON CONFLICT DO NOTHING");
+    expect(route).toContain("ORDER BY specialty_slug ASC");
+    expect(route.indexOf("DELETE FROM business_specialties")).toBeLessThan(
+      route.indexOf("INSERT INTO business_specialties"),
+    );
+    expect(route).toContain('await client.query("COMMIT")');
+    expect(route).toContain('await client.query("ROLLBACK").catch(() => undefined)');
+    expect(route).toContain("client.release()");
+    expect(route).toContain(
+      "specialties: savedSpecialtiesResult.rows.map(({ specialty_slug }) => specialty_slug)",
+    );
+
+    expect(route).not.toContain("listingStatus");
+    expect(route).not.toContain("ownershipDesignations");
+    expect(route).not.toContain("latitude");
+    expect(route).not.toContain("publication");
+    expect(route).not.toContain(".update(");
   });
 });
