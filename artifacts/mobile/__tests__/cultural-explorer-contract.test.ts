@@ -30,4 +30,10 @@ describe("Cultural Explorer client contract", () => {
     expect(map).toContain("focusSiteId || focusCulturalSiteId || !mapReady");
     expect(mapTab).toContain("focusCulturalSiteId={params.focusCulturalSiteId}");
   });
+
+  it("carries an adapter-provided public source label to the cultural-site detail row", () => {
+    const explorer = source("../app/cultural-heritage.tsx");
+    expect(explorer).toContain("verifiedSource: site.verifiedSource ?? null");
+    expect(explorer).toContain("{site.verifiedSource}");
+  });
 });

@@ -36,6 +36,7 @@ type ExplorerItem = {
   latitude: number | null;
   longitude: number | null;
   externalUrl: string | null;
+  verifiedSource: string | null;
   sourceLabel: string;
   actions: ExplorerAction[];
 };
@@ -107,6 +108,7 @@ export function culturalSiteExplorerItem(row: Record<string, unknown>): Explorer
     latitude,
     longitude,
     externalUrl,
+    verifiedSource: typeof row.verifiedSource === "string" && row.verifiedSource.trim() ? row.verifiedSource.trim() : null,
     sourceLabel: "Cultural site",
     actions,
   };
@@ -132,6 +134,7 @@ function recurringEventExplorerItem(row: Record<string, unknown>): ExplorerItem 
     latitude,
     longitude,
     externalUrl: null,
+    verifiedSource: null,
     sourceLabel: tab === "markets" ? "Recurring market" : "Recurring event",
     actions,
   };
@@ -154,6 +157,7 @@ function resourceExplorerItem(row: Record<string, unknown>): ExplorerItem {
     latitude: null,
     longitude: null,
     externalUrl,
+    verifiedSource: null,
     sourceLabel: "Curated resource",
     actions,
   };
@@ -174,7 +178,8 @@ router.get("/cultural-explorer", async (req: Request, res: Response, next) => {
     const [siteResult, eventResult, resourceResult] = await Promise.all([
       pool.query(
         `SELECT id, name, description, category, heritage_category AS "heritageCategory",
-                city, state, address, latitude, longitude, external_url AS "externalUrl"
+                city, state, address, latitude, longitude, external_url AS "externalUrl",
+                verified_source AS "verifiedSource"
          FROM cultural_sites
          WHERE COALESCE(is_published, TRUE) = TRUE
          ORDER BY name ASC

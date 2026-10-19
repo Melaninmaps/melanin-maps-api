@@ -15,12 +15,30 @@ describe("Cultural Explorer adapter item contracts", () => {
       latitude: "38.9227",
       longitude: "-77.0194",
       externalUrl: "https://www.howard.edu/",
+      verifiedSource: "Howard University Archives",
     });
 
-    expect(item).toMatchObject({ kind: "cultural_site", tab: "hbcus", name: "Howard University" });
+    expect(item).toMatchObject({
+      kind: "cultural_site",
+      tab: "hbcus",
+      name: "Howard University",
+      verifiedSource: "Howard University Archives",
+    });
     expect(item.actions).toContainEqual(expect.objectContaining({ type: "cultural_detail", culturalSiteId: "hbcu-1" }));
     expect(item.actions).toContainEqual(expect.objectContaining({ type: "map", culturalSiteId: "hbcu-1" }));
     expect(item.actions).toContainEqual(expect.objectContaining({ type: "library" }));
+  });
+
+  it("does not substitute a site URL when no verified source label exists", () => {
+    const item = culturalSiteExplorerItem({
+      id: "site-1",
+      name: "Community Archive",
+      externalUrl: "https://archive.example.org/",
+      verifiedSource: "   ",
+    });
+
+    expect(item.externalUrl).toBe("https://archive.example.org/");
+    expect(item.verifiedSource).toBeNull();
   });
 
   it("keeps markets and recurring events out of the cultural-site detail contract", () => {
