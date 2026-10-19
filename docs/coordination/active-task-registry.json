@@ -2141,6 +2141,48 @@
         "expiresAt": "2026-10-20T21:39:51.299Z",
         "supersedesUnissuedPlanningBase": "OAUTH002_DEFAULT_DISABLED_FAKE_PROVIDER_PREPARATION_BASE_2026-10-19.tar.gz"
       }
+    },
+    {
+      "id": "FLIGHT-002-DEFAULT-DISABLED-STATUS-LEAF",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-002",
+      "baseline": "ffaf4572faf93c7ce74e83695ef1ab2b5dd02e29",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/flight-status/contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/normalizers.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/gate.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/flight-status-contract.test.ts"
+      ],
+      "sourceBase": {
+        "authority": "ffaf4572faf93c7ce74e83695ef1ab2b5dd02e29",
+        "allPathsNew": true,
+        "pathStates": {
+          "artifacts/api-server/src/kinfolk/flight-status/contracts.ts": "ABSENT",
+          "artifacts/api-server/src/kinfolk/flight-status/normalizers.ts": "ABSENT",
+          "artifacts/api-server/src/kinfolk/flight-status/gate.ts": "ABSENT",
+          "artifacts/api-server/src/kinfolk/flight-status/__tests__/flight-status-contract.test.ts": "ABSENT"
+        }
+      },
+      "requiredBehavior": [
+        "Provider-neutral status-only DTOs with an explicit versioned/revocable disclosure-grant model restricted to flight number and departure date.",
+        "Default-disabled capability gate; consent/disabled/no-credential/date failures produce a neutral unavailable state without provider detail.",
+        "Hostile payload stripping and deterministic injected-fake-provider tests; at most one fake call and no inferred arrival times."
+      ],
+      "constraints": [
+        "Exactly four new allowlisted files; no edits to existing files.",
+        "No provider name, account, agreement, credential, environment read, URL, fetch, SDK, callback/webhook, poller, queue, retry, logging of status inputs, or real network call.",
+        "No route/client/mobile/UI, DB/schema/migration/persistence, commerce/booking/payment, member data, deployment, remote, staging, or activation.",
+        "No Calendar/Kinfolk/Map/Directory/Community/Safety cross-feature integration."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/kinfolk/flight-status/__tests__/flight-status-contract.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact four-path scope; git diff --check; static no-network/no-credential/no-provider-name scan"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner integrates if clean."
     }
   ],
   "globalDirectiveDelivery": [
