@@ -3731,6 +3731,11 @@
         "sha256": "bc8d833fa85b98f370e47bd6cb6ce3d30c5fb50fc4be9e9876a67cfe4a987e66",
         "expires_at": "2026-10-20T23:54:34.436Z",
         "authority_base": "82e80ac1fee8cb404181a5a957293fc0557e06ee"
+      },
+      "repairStartAcknowledgement": {
+        "at": "2026-10-19T23:55:00Z",
+        "channel": "manus-tasks direct reply",
+        "statement": "Owner acknowledged same-path repair from updated base, limited to role-bound allowed uses, triad availability envelope, and pair-clock equality."
       }
     }
   ],
