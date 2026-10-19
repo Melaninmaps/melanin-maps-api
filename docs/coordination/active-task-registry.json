@@ -1266,7 +1266,7 @@
     {
       "id": "COMM-001-FREE-COMMUNITY-POST-CAP-NEUTRALITY",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -1302,7 +1302,39 @@
           "artifacts/api-server/src/__tests__/community-feed.test.ts": "c0a38f9b192b6bddb2d2ca590245a7317d39018eb9c29f7b25de916c7884f777"
         },
         "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
-      }
+      },
+      "externalAcceptance": "PENDING — local source-only integration. No runtime database write, provider call, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance occurred.",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "1138ea621c3e81d273f076c7e1c616bf3d0a3456",
+        "carrier": {
+          "archiveSha256": "2c29156b5fb72e917faaa3d5aa032e02ba49d803603095b7d124f222d2b023c8",
+          "patchSha256": "a74db738b27e31d54c510d55299e375ceb8f9dbb39a1925ca1a209c77a3af9f8",
+          "declaredCarrierBase": "092d83eb7265ef237f60224fec988f9bd3c820c7",
+          "exactTwoPathScopeVerified": true,
+          "pathBaseCompatibilityVerified": true,
+          "applyCheckWithWhitespaceErrorPassed": true,
+          "resultHashesVerified": {
+            "artifacts/api-server/src/routes/community.ts": "a6af5a22ead0dff2b5a07a343dd90697afe33e18f9a3807505f0735a07866470",
+            "artifacts/api-server/src/__tests__/community-feed.test.ts": "d50f3b78c32789cdcf3acb0c43dce985b31f86c30e789e743e6813b13672c085"
+          }
+        },
+        "centralReconciliation": {
+          "reason": "Restored only the existing indentation of the chained community-post count query after carrier application; no expression, query, behavior, or test logic changed.",
+          "centralResultHashes": {
+            "artifacts/api-server/src/routes/community.ts": "c9390c9af047a6c1f11994b424673e925369a0f2adb900594f051981749d4d91",
+            "artifacts/api-server/src/__tests__/community-feed.test.ts": "d50f3b78c32789cdcf3acb0c43dce985b31f86c30e789e743e6813b13672c085"
+          }
+        },
+        "reviewConclusion": "The patch changes only the ordinary free community-post cap response after the existing finite five-post calendar-month guard. It retains status 403 and TIER_LIMIT_REACHED but removes the upgrade URL and commercial prompt. The business-promotion gate, including its existing upgrade behavior, is separately sliced and retained; image/video media gates, authentication, validation, anti-spam, content/family filters, business-mention stance, moderation/trust, privacy/visibility, authorship, notifications, edit/delete and unrelated routes are untouched.",
+        "validation": {
+          "communityFeedContract": "PASS — 1 file / 27 tests",
+          "apiTypeScriptNoEmit": "PASS",
+          "diffCheck": "PASS",
+          "sourceBoundaryReview": "PASS — exact two paths; five-post ordinary free cap retained and neutral; business-promotion/media gates unchanged."
+        }
+      },
+      "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is one ordinary community-post cap response repair only; it does not complete COMM-001 or establish external acceptance."
     }
   ]
 }
