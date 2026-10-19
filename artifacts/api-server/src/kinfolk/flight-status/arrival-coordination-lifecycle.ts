@@ -12,6 +12,7 @@ const UNAVAILABLE: ArrivalCoordinationLifecycleResult = Object.freeze({
   kind: "unavailable",
   code: "ARRIVAL_COORDINATION_LIFECYCLE_UNAVAILABLE",
 });
+const MAX_NORMALIZED_AVAILABILITY_WINDOW_MS = 31 * 24 * 60 * 60 * 1_000;
 
 type Timestamp = Readonly<{ text: string; epochMs: number }>;
 type Window = Readonly<{
@@ -157,7 +158,10 @@ function window(value: unknown): Window | null {
   if (!candidate) return null;
   const startAt = timestamp(candidate.startAt);
   const endAt = timestamp(candidate.endAt);
-  return startAt && endAt && endAt.epochMs > startAt.epochMs
+  return startAt &&
+    endAt &&
+    endAt.epochMs > startAt.epochMs &&
+    endAt.epochMs - startAt.epochMs <= MAX_NORMALIZED_AVAILABILITY_WINDOW_MS
     ? {
         startAt: startAt.text,
         endAt: endAt.text,

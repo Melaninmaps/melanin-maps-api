@@ -74,8 +74,9 @@ function busy(startAt: string, endAt: string): BusyInterval {
 
 function known(
   busyIntervals: readonly BusyInterval[] = [],
+  availabilityWindow: CalendarAvailabilityWindow = window,
 ): CalendarAvailabilityResult {
-  return { kind: "known", window, busy: busyIntervals };
+  return { kind: "known", window: availabilityWindow, busy: busyIntervals };
 }
 
 function availabilityPermission(
@@ -190,6 +191,71 @@ describe("simulated arrival meeting-time lifecycle", () => {
       startAt: "2026-10-19T13:19:00.000Z",
       endAt: "2026-10-19T13:49:00.000Z",
     });
+  });
+
+  it("admits the exact 31-day normalized availability boundary", () => {
+    const exactBoundaryWindow: CalendarAvailabilityWindow = {
+      startAt: "2026-10-19T13:00:00.000Z",
+      endAt: "2026-11-19T13:00:00.000Z",
+    };
+
+    expect(
+      resolveSimulatedArrivalMeetingTime(
+        input({
+          coordinationWindow: exactBoundaryWindow,
+          reciprocalIntent: reciprocalIntent({
+            arrivalWindowStartAt: exactBoundaryWindow.startAt,
+            arrivalWindowEndAt: exactBoundaryWindow.endAt,
+          }),
+          ownerAvailabilityPermission: availabilityPermission(
+            ownerId,
+            recipientId,
+            {
+              availability: known([], exactBoundaryWindow),
+            },
+          ),
+          recipientAvailabilityPermission: availabilityPermission(
+            recipientId,
+            ownerId,
+            { availability: known([], exactBoundaryWindow) },
+          ),
+        }),
+      ),
+    ).toEqual({
+      startAt: "2026-10-19T13:15:00.000Z",
+      endAt: "2026-10-19T13:45:00.000Z",
+    });
+  });
+
+  it("rejects a 32-day known availability window before slot selection", () => {
+    const oversizedWindow: CalendarAvailabilityWindow = {
+      startAt: "2026-10-19T13:00:00.000Z",
+      endAt: "2026-11-20T13:00:00.000Z",
+    };
+
+    expect(
+      resolveSimulatedArrivalMeetingTime(
+        input({
+          coordinationWindow: oversizedWindow,
+          reciprocalIntent: reciprocalIntent({
+            arrivalWindowStartAt: oversizedWindow.startAt,
+            arrivalWindowEndAt: oversizedWindow.endAt,
+          }),
+          ownerAvailabilityPermission: availabilityPermission(
+            ownerId,
+            recipientId,
+            {
+              availability: known([], oversizedWindow),
+            },
+          ),
+          recipientAvailabilityPermission: availabilityPermission(
+            recipientId,
+            ownerId,
+            { availability: known([], oversizedWindow) },
+          ),
+        }),
+      ),
+    ).toEqual(unavailable);
   });
 
   it("does not retain a prior slot after a permission becomes unavailable", () => {
