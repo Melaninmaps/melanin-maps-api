@@ -2717,7 +2717,13 @@
           "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts": "b470b3e4cb4a8225e9e19c06511dad86d92620d1559638ab8acf8b6bf9095619"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only repair; runtime persistence/delivery/staging/browser/device/member evidence remains separate."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only repair; runtime persistence/delivery/staging/browser/device/member evidence remains separate.",
+      "baseTransfer": {
+        "handoff_id": "hnd_KyqRqbRIU7Sk0r1l940HYwv6",
+        "file": "COMM001_DM_PENDING_COMMUNICATION_CONSENT_GUARD_BASE_2026-10-19.tar.gz",
+        "sha256": "73933ac77b1979f697b2fbc82c9cda1098cfec8c37f12746d9d17788347acf34",
+        "expires_at": "2026-10-20T22:46:00.769Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
