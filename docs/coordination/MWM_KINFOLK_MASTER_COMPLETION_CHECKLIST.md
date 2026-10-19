@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Registered BIZ-003 P0 explicit owner feedback projection privacy repair and OAUTH-003 P1 default-disabled injected admission facade at `f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3`. Both are exact source-only claims; neither parent experience is complete. |
 | 2026-10-19 | Accepted COMM-001 **#3** pending history/read guard at `c3e293e88e8f0a046567bbbd662300f5ccc42438`: API **8/8**, no-emit, exact two-path scope PASS. Registered FLIGHT-001 P0 **#6** dual-consent simulated meeting-time lifecycle (fixture-only); neither parent is complete. |
 | 2026-10-19 | Accepted FLIGHT-004 arrival-coordination eligibility source leaf at `d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0`: API **51/51**, no-emit, exact three-new-path scope PASS. It is an injected consent/freshness privacy policy only; the Flight Coordination journey remains in progress. |
 | 2026-10-19 | Accepted BIZ-003 Owner Home canonical skip-insights read at `6e244c6676a1f0725b4aac2348540dff783b91bd`: mobile **3/3**, API **2/2**, mobile no-emit and exact two-path scope PASS. This is a private source-only owner-read milestone; BIZ-003/BIZ-009 remain open at their broader gates. |

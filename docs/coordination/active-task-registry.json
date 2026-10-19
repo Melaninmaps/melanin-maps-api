@@ -3195,6 +3195,120 @@
         "sha256": "8e36656f4c22ab0b8660cce33903c93f0a78ed3dfc2936317d40c4aac3499eeb",
         "expires_at": "2026-10-20T23:13:21.092Z"
       }
+    },
+    {
+      "id": "BIZ-003-SKIP-FEEDBACK-OWNER-PROJECTION-PRIVACY",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "BIZ-003",
+      "baseline": "f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3",
+      "paths": [
+        "artifacts/api-server/src/routes/skip-feedback.ts",
+        "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "lib/db/src/schema/skip-feedback.ts",
+        "artifacts/mobile/app/business-dashboard.tsx",
+        "artifacts/mobile/app/business-owner/index.tsx",
+        "artifacts/mobile/__tests__/business-dashboard-skip-feedback-canonical.test.ts",
+        "artifacts/mobile/__tests__/business-owner-skip-feedback-canonical.test.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-BUSINESS-OWNER-EDITOR-ANALYTICS-AND-PUBLICATION / BIZ-003 member-to-owner insight journey.",
+        "founderOutcome": "A member may submit private feedback associated to the right business; its owner receives a useful canonical insight without being exposed to the submitting member or backend-only feedback metadata.",
+        "participantPerspectives": [
+          "Member submitter: identity remains stored for internal/audit use but never appears in owner response.",
+          "Business owner: receives only id, message, createdAt for their exact canonical owned business.",
+          "Other owner/outsider: cannot choose or access another business feedback."
+        ],
+        "interactionChain": "owner-bound canonical GET -> session 401 before lookup -> single owned business -> explicit private projection -> message-only clients retain safe empty/non-OK recovery and display caps.",
+        "privacyAndPermissions": "Never expose businessId, submittedById, wasFiltered, filteredReason or unknown stored fields in owner response. Preserve existing POST/internal filtering and owner isolation.",
+        "completionBoundary": "Source-only privacy repair; no DB/runtime/staging/device/member/founder acceptance and no BIZ-009 release work."
+      },
+      "requiredBehavior": [
+        "Keep internal POST persistence of submittedById intact.",
+        "Canonical GET must select/serialize exactly id, message, createdAt; bare stored row response is prohibited.",
+        "Retain unauthenticated 401-before-query, no-business 404, catch-to-500, existing owner predicate, and client safe recovery/caps.",
+        "Test returned stored rows containing internal keys and assert exact public projection/no leaked keys."
+      ],
+      "constraints": [
+        "Exactly two existing API paths; no client, analytics/entitlement/payment, feedback submission/filtering policy, BIZ-009, DB/runtime, external action.",
+        "No member-visible or release/founder acceptance claim."
+      ],
+      "validationPlan": [
+        "pnpm --dir artifacts/api-server exec vitest run src/routes/__tests__/skip-feedback-owner-contract.test.ts --reporter=dot",
+        "pnpm --dir artifacts/mobile exec vitest run __tests__/business-dashboard-skip-feedback-canonical.test.ts __tests__/business-owner-skip-feedback-canonical.test.ts --reporter=dot",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit; exact two-path scope; git diff --check."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3",
+        "baseHashes": {
+          "artifacts/api-server/src/routes/skip-feedback.ts": "37c3882f94c11a2fd853df1c48c900db30c45d4e9e87e73145cb0f17f1d77b21",
+          "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts": "76008a0d9440f54c6dcf05231343d42751d3d95f07d369decb2769351dd8b4ba"
+        }
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only internal projection repair."
+    },
+    {
+      "id": "OAUTH-003-INJECTED-LIFECYCLE-ADMISSION-FAKE",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "OAUTH-003",
+      "baseline": "f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/calendar-availability/injected-lifecycle-admission.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/injected-lifecycle-admission.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/normalizers.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/state-pkce.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/vault-contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/in-memory-vault.ts",
+        "artifacts/api-server/src/kinfolk/shared-plans/free-busy-availability.ts",
+        "docs/coordination/CALENDAR_OAUTH_AVAILABILITY_READINESS_DECISION_PACKET_2026-10-19.md"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-KINFOLK-CALENDAR-AVAILABILITY-AND-MEETING-PLANNING / OAUTH-003 source-preparation lane.",
+        "founderOutcome": "A future explicitly consenting member could be admitted only through one bound, default-disabled fake lifecycle to normalized busy-only aggregate input; this slice creates no connection or consent.",
+        "participantPerspectives": [
+          "Calendar-owning member: owner/provider/purpose/handle and attempt remain bound and opaque.",
+          "Co-planner: can receive only separately authorized aggregate busy planning; never raw provider/account/calendar/event/token data."
+        ],
+        "interactionChain": "default false gate -> supplied test-only gate/attempt -> exact opaque vault read -> injected fixture reader -> existing hostile normalizer -> existing aggregate projection -> opaque/generic result or null.",
+        "privacyAndPermissions": "No precomputed vault result, raw payload, provider account/calendar identity, token or unbound second attempt. Mismatches/revocation fail null before reader/aggregate.",
+        "completionBoundary": "Fixture composition only. OAUTH-001 remains controlling; no client, consent, scope, connection, provider call, durable vault, runtime, browser/device, or founder/member acceptance."
+      },
+      "requiredBehavior": [
+        "Create only two new paths; default omission of gate returns null before vault/reader/normalizer/aggregate.",
+        "When an injected true test gate is used, bind exact usable supplied state/PKCE attempt to owner/provider/purpose/opaque-handle vault read before fake reader.",
+        "Only matching opaque handle admits existing normalizer and aggregate port. Every mismatch/revocation/reader failure/unknown normalizer/aggregate refusal fails null with no leak.",
+        "Pass aggregate only the existing purpose/window/busy projection; raw hostile Graph/Google fixture values never reach output or aggregate.",
+        "Never represent Microsoft personal Calendars.ReadBasic as availability-only/provider enforcement."
+      ],
+      "constraints": [
+        "Exactly two new paths; no existing leaf/evaluator edits.",
+        "No OAuth client/authorization/redirect/callback/scope/consent/token/account/crypto/network/env/wall clock/DB/config/log/route/client/mobile/queue/activation.",
+        "No provider/staging/device/browser/deployment/member/founder acceptance."
+      ],
+      "validationPlan": [
+        "pnpm --dir artifacts/api-server exec vitest run src/kinfolk/calendar-availability/__tests__/injected-lifecycle-admission.test.ts src/kinfolk/calendar-availability/__tests__/in-memory-vault.test.ts src/kinfolk/calendar-availability/__tests__/normalizers.test.ts src/kinfolk/calendar-availability/__tests__/state-pkce.test.ts --reporter=dot",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit; exact two-new-path scope; git diff --check; static no-capability/no-leak scan."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified two-new-file carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3",
+        "newPaths": [
+          "artifacts/api-server/src/kinfolk/calendar-availability/injected-lifecycle-admission.ts",
+          "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/injected-lifecycle-admission.test.ts"
+        ]
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 default-disabled injected fixture composition only; OAUTH-001 NO-GO unchanged."
     }
   ],
   "globalDirectiveDelivery": [
