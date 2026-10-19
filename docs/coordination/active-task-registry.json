@@ -669,7 +669,7 @@
     {
       "id": "KIN-DISC-1617-DETERMINISTIC-GEOGRAPHY-BARBER-RECOGNITION",
       "priority": "P1",
-      "status": "CLAIMED_LOCAL_ONLY_REMEDIATION",
+      "status": "CLAIMED_LOCAL_ONLY_CENTRAL_CORRECTION",
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "ca4f2420b5caa2928744a3220658b76e7ebdf82f",
@@ -680,7 +680,8 @@
         "artifacts/api-server/src/kinfolk/request-classifier.ts",
         "artifacts/api-server/src/kinfolk/__tests__/business-discovery-clarification.test.ts",
         "artifacts/api-server/src/kinfolk/__tests__/local-business-discovery.test.ts",
-        "lib/constants/src/heritage-cities.ts"
+        "lib/constants/src/heritage-cities.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/heritage-city-registry.test.ts"
       ],
       "requirement": "Return one uncommitted, source-only remediation carrier: the specified English/Spanish Temple/barber prompts must reach deterministic governed discovery; Filadelfia must be a canonical Philadelphia alias; the Temple main-campus hyphen form must resolve exactly; and the four service requests must require both structured barber evidence and profile-description-or-specialty service evidence even when DIRECTORY_TAXONOMY_V2 source tags are enabled.",
       "requiredBehavior": [
@@ -694,7 +695,8 @@
         "Add classifier-boundary coverage for each required Spanish form by resolving current-turn geography and passing the resolved city through classifyKinfolkRequest; assert business_discovery rather than only deriveBusinessSubject.",
         "Add exact current-turn Temple main-campus-hyphen and Filadelfia positive assertions plus bare Temple and generic-university negatives.",
         "Add a DIRECTORY_TAXONOMY_V2-equivalent adversarial fixture: category/subcategory Salon plus source-backed tags containing barber and a documented hot-towel phrase must emit no governed card; preserve a properly structured Barbershop positive fixture.",
-        "Central integration will run the two named discovery contracts, API no-emit, exact six-path scope/diff checks, and current-authority-only regressions. The owner returns an uncommitted compact carrier only."
+        "Central integration will run the two named discovery contracts, API no-emit, exact six-path scope/diff checks, and current-authority-only regressions. The owner returns an uncommitted compact carrier only.",
+        "Central correction must restrict the Temple landmark to the five enumerated forms, preserve an explicit current-turn destination over the landmark, and require the narrow Spanish actions to derive canonical geography from the current message with no session fallback. Add direct resolver assertions for both shared Filadelfia functions and all alias-positive, alias-negative, and precedence cases."
       ],
       "constraints": [
         "No directory/source-record/tag mutation, generic taxonomy rewrite, model/provider/web research, Maps, Business Admin, D3/D8, D4, D9, entitlement, database/schema/migration, browser/device, production prompt, staging/deployment, remote, or feature-activation action.",
@@ -710,6 +712,18 @@
         "decision": "NOT_APPLIED",
         "reason": "Independent review proved that the four-path carrier did not route the required Spanish prompts through the production classifier and could emit a Salon under enabled source-taxonomy tag matching despite the claimed structured-barber requirement.",
         "authorityUnchangedAtReview": "ca4f2420b5caa2928744a3220658b76e7ebdf82f"
+      },
+      "centralCorrectionDisposition": {
+        "amendedCarrier": "KIN_DISC_1617_REMEDIATION_REVIEW_CARRIER_154D0E74.tar.gz",
+        "archiveSha256": "e95e91bef2b2b88d8eec1de26d07ff39c5723410d0b148f03a60b98c10a56092",
+        "decision": "APPLY_WITH_MINIMAL_CURRENT_AUTHORITY_CORRECTIONS",
+        "reasons": [
+          "The carrier landmark regex admits non-enumerated or extended forms and executes before an explicit destination.",
+          "The carrier admits narrow Spanish discovery from a session-derived canonical city because classifier input lacks provenance.",
+          "The carrier narrows generic barber matching although the structured-barber requirement applies only to the four named service requests."
+        ],
+        "authorizedAdditionalPath": "artifacts/api-server/src/kinfolk/__tests__/heritage-city-registry.test.ts",
+        "routeScopeDecision": "No routes/kinfolk.ts change is necessary: request-classifier can independently resolve only current-turn message geography with no session fallback for its narrow Spanish-action condition."
       }
     },
     {
