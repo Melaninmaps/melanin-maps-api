@@ -82,14 +82,25 @@
     },
     {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
-      "status": "CLAIMED",
+      "status": "IMPLEMENTING",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
-      "requirement": "Prepare a future, unmerged Community-Frequented Alternatives and Scorecard V1 candidate with explicit consent, separate signals, city-scoped reputation, and manipulation protections.",
-      "baseline": "No implementation path or focused test is yet claimed; source work may start only after a fresh verified-authority check and a concrete path claim.",
-      "paths": [],
+      "requirement": "Add a non-activated, pure Community-Frequented Alternatives and Scorecard V1 policy contract. It must fail closed without explicit public Community-experience consent; enforce exact normalized business/city public scope, allowlisted signal kinds, and one accepted contributor signal per business/city; and return only separate bounded ownership, community-experience, confidence, safety-context, and fit components.",
+      "inspectionBaseline": "f818056c93840794ad08c9bb90b68f2500635a25",
+      "implementationBaseline": "c6a84faa1dc1e8ad3e9ed148b6e2deadf9be6de2",
+      "paths": [
+        "artifacts/api-server/src/community/community-frequented-scorecard-policy.ts",
+        "artifacts/api-server/src/community/__tests__/community-frequented-scorecard-policy.test.ts"
+      ],
+      "validationPlan": [
+        "Focused synthetic consent allow/deny, duplicate/self-promotion, cross-business/cross-city substitution, malformed signal, safety withholding, raw-text/identifier omission, and injected-time expiry tests.",
+        "Static no-import boundary: no DB, route, provider, private-memory, location, or client module imports.",
+        "API source-aligned no-emit and git diff --check."
+      ],
       "constraints": [
         "Remain unmerged from the TestFlight delivery path.",
-        "Do not use raw private conversations or infer account-level preference sharing."
+        "No route, database/schema, migration, UI, provider, cache, notification, feature activation, raw contribution text, contributor ID, private location/history, or hidden score may be added.",
+        "Do not use raw private conversations or infer account-level preference sharing.",
+        "The owner works in a detached sparse workspace updated to the implementation baseline and does not commit or push; only the integration owner may accept a later reviewed patch."
       ]
     },
     {
