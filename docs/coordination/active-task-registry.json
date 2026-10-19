@@ -2088,7 +2088,7 @@
       "externalAcceptance": "NOT APPLICABLE \u2014 decision packet only; no provider/OAuth implementation, pilot, or release is authorized."
     },
     {
-      "id": "OAUTH-002-DEFAULT-DISABLED-FAKE-PROVIDER-PREPARATION",
+      "id": "OAUTH-002-SOURCE-ONLY-NORMALIZERS",
       "priority": "P1",
       "status": "CLAIMED",
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
@@ -2096,29 +2096,29 @@
       "requirementId": "OAUTH-002",
       "baseline": "a5e23b3bb61eb7ccb4e587bc555da302c0474fc7",
       "paths": [
-        "artifacts/api-server/src/kinfolk/calendar-availability/availability-adapter-policy.ts",
-        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/availability-adapter-policy.test.ts",
-        "artifacts/api-server/src/kinfolk/calendar-availability/authorization-attempt-policy.ts",
-        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/authorization-attempt-policy.test.ts"
+        "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/normalizers.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/normalizers.test.ts"
       ],
       "requiredBehavior": [
-        "All production-facing calendar/OAuth surfaces remain absent and default-disabled.",
-        "Pure fixture-only Google free/busy and Microsoft work/school getSchedule normalization may emit only canonical busy intervals for the existing frozen aggregate evaluator.",
-        "Microsoft personal calendarView is represented only as a conditional fallback descriptor with exact `$select=start,end,showAs`, active-plan max-31-day bound, strict stripping and explicit `requires_separate_consent`; it must not be presented as availability-only permission or enabled.",
-        "Pure authorization-attempt policy validates injected one-time opaque state/PKCE inputs without generating, exchanging, storing, or exposing credentials."
+        "Pure default-false/provider-neutral source contract with only literal `google-freebusy`, `microsoft-graph-calendarview`, and purpose `shared_plan_free_busy`.",
+        "Strict own-key fake DTO normalizers emit only canonical UTC half-open availability intervals or generic `unknown`; no provider/account/calendar/event/token/raw payload field can cross the boundary.",
+        "Google accepts only one-calendar fake FreeBusy-shaped busy intervals. Microsoft accepts synthetic default-calendar calendarView fixtures; `free`/`workingElsewhere` are available and tentative/busy/oof/unknown are busy.",
+        "Personal Microsoft calendarView is a conditional source-only fallback requiring future separate consent: Calendars.ReadBasic is not availability-only and `$select` minimizes response, not delegated scope."
       ],
       "constraints": [
-        "Exactly four new allowlisted files; no edits to existing files.",
-        "No route/client/schema/database/token vault/persistence/OAuth client/configuration/consent UI/provider network or call/member data/staging/deployment/activation.",
-        "No imports of HTTP SDKs, fetch, environment variables, or time/random globals.",
-        "No change to SP-002/SP-003/manual availability or any Kinfolk/Map/Directory/Community/Safety path."
+        "Exactly three new allowlisted files; no edits to existing files.",
+        "No PKCE/state/vault claim in this slice; those require a later separate claim.",
+        "No route/client/schema/database/OAuth client/configuration/scope/consent action/token/network/provider call/member data/staging/deployment/activation.",
+        "No HTTP/fetch/provider URL/environment/random/time global/logger/cache/queue/scheduler; injected in-memory fixtures only.",
+        "No change to SP-002/SP-003/manual availability/Journal OAuth or Kinfolk/Map/Directory/Community/Safety/reminders/notifications."
       ],
       "validationPlan": [
-        "cd artifacts/api-server && pnpm exec vitest run src/kinfolk/calendar-availability/__tests__/availability-adapter-policy.test.ts src/kinfolk/calendar-availability/__tests__/authorization-attempt-policy.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec vitest run src/kinfolk/calendar-availability/__tests__/normalizers.test.ts --reporter=dot",
         "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
-        "exact four-path scope; git diff --check; static no-network/no-token/no-route/non-disclosure scan"
+        "exact three-path scope; git diff --check; static prohibited-import/non-disclosure scan"
       ],
-      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified four-new-file carrier only; central owner alone integrates."
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates."
     }
   ],
   "globalDirectiveDelivery": [
