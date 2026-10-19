@@ -52,7 +52,7 @@ The combined candidate is **NO-GO** until each row is PASS against the reviewed 
 
 ### Library no-surprise cost-control acceptance — source complete, integration and authenticated acceptance pending
 
-This bounded source candidate preserves public/ordinary Library browse, search, open, citations, and approved-content reuse without provider work or KinfolkAI usage consumption. Fresh research is deliberately fail-closed until a separately designed atomic Library allowance ledger exists; this candidate does **not** add a database migration, billing entitlement, provider configuration, trial, account, subscription, or external request.
+The bounded implementation is source commit `1005b80331f26d811f0e2ecbbc64978a7988d0d1` on isolated branch `fix/library-cost-control-usage-20261018`. It preserves public/ordinary Library browse, search, open, citations, and approved-content reuse without provider work or KinfolkAI usage consumption. Fresh research is deliberately fail-closed until a separately designed atomic Library allowance ledger exists; this candidate does **not** add a database migration, billing entitlement, provider configuration, trial, account, subscription, or external request.
 
 When the active Kinfolk owner publishes a stable authority and separately authorizes authenticated staging, run these journeys against the integrated candidate. Fixtures, mocked providers, direct database changes, or source tests do not substitute for these journeys.
 
