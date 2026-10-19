@@ -32,7 +32,7 @@ const CIRCLE_TIERS = [
     circles: "1 circle",
     privateMembers: "Up to 8 people in each Circle",
     communityMembers: "Groups are for larger communities",
-    canCreate: false,
+    canCreate: true,
   },
   {
     name: "Explorer+",
@@ -88,11 +88,11 @@ export default function CreateCircleScreen() {
       if (!res.ok) {
         if (data.upgradeRequired || data.code === "TIER_LIMIT_REACHED") {
           Alert.alert(
-            "Membership Required",
-            data.error ?? "Upgrade to Explorer+ to create Kinfolk Circles.",
+            "Circle limit reached",
+            data.error ?? "Your current access includes one private Circle.",
             [
-              { text: "Maybe Later", style: "cancel" },
-              { text: "View Plans", onPress: () => router.push("/membership" as any) },
+              { text: "Keep Editing", style: "cancel" },
+              { text: "View membership options", onPress: () => router.push("/membership" as any) },
             ],
           );
           return;
@@ -171,7 +171,7 @@ export default function CreateCircleScreen() {
               <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/membership" as any)}
                 style={[s.tierUpgradeBtn, { borderColor: colors.primary + "50", backgroundColor: colors.primary + "10" }]}>
                 <Feather name="zap" size={13} color={colors.primary} />
-                <Text style={[s.tierUpgradeBtnText, { color: colors.primary }]}>Upgrade to unlock more circles</Text>
+                <Text style={[s.tierUpgradeBtnText, { color: colors.primary }]}>See Circle limits and membership options</Text>
               </TouchableOpacity>
             </View>
 

@@ -159,24 +159,13 @@ router.post("/circles", async (req: Request, res: Response) => {
     // and cap it at eight members regardless of client input.
     const circleType = "private";
 
-    // Free users cannot create any type of circle
-    if (tierKey === "free") {
-      res.status(403).json({
-        error: "Creating Kinfolk Circles requires an Explorer+ or higher membership.",
-        code: "TIER_LIMIT_REACHED",
-        upgradeRequired: true,
-        tier: tierKey,
-      });
-      return;
-    }
-
     if (isFinite(limits.maxCircles)) {
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)`.mapWith(Number) })
         .from(kinfolkCircles).where(eq(kinfolkCircles.hostUserId, uid(req)));
       if (count >= limits.maxCircles) {
         res.status(403).json({
-          error: `Explorer+ members can host up to ${limits.maxCircles} circle${limits.maxCircles === 1 ? "" : "s"}. Upgrade to Navigator for unlimited circles.`,
+          error: `Your current access includes up to ${limits.maxCircles} private Circle${limits.maxCircles === 1 ? "" : "s"}.`,
           code: "TIER_LIMIT_REACHED",
           upgradeRequired: true,
           tier: tierKey,

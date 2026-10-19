@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
+import { fileURLToPath, URL } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const circlesRoute = readFileSync(new URL("../circles.ts", import.meta.url), "utf8");
+const circlesRoute = readFileSync(
+  fileURLToPath(new URL("../circles.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("Circle private invite-only server policy", () => {
   it("does not publish legacy Circles through the community endpoint", () => {
@@ -17,6 +21,33 @@ describe("Circle private invite-only server policy", () => {
     expect(circlesRoute).toContain('updates.type = "private";');
     expect(circlesRoute).toContain("maxMembers: 8,");
     expect(circlesRoute).toContain("updates.maxMembers = 8;");
+  });
+
+  it("allows a Free member to create one private Circle before applying the existing cap", () => {
+    const start = circlesRoute.indexOf('router.post("/circles"');
+    const end = circlesRoute.indexOf("// Return the requesting user's saved businesses", start);
+    const createHandler = circlesRoute.slice(start, end);
+    const capGuard = createHandler.indexOf("if (isFinite(limits.maxCircles))");
+    const createInsert = createHandler.indexOf("db.insert(kinfolkCircles)");
+
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(circlesRoute).toMatch(/free:\s*\{\s*maxCircles:\s*1,/);
+    expect(createHandler).toContain("if (!authed(req, res)) return;");
+    expect(createHandler).toContain("Circle name is required (min 2 chars)");
+    expect(createHandler).not.toContain('if (tierKey === "free")');
+    expect(createHandler).toContain("if (isFinite(limits.maxCircles))");
+    expect(createHandler).toContain("if (count >= limits.maxCircles)");
+    expect(createHandler).toContain(
+      "Your current access includes up to ${limits.maxCircles} private Circle",
+    );
+    expect(createHandler).toContain('code: "TIER_LIMIT_REACHED"');
+    expect(createHandler).toContain("maxMembers: 8,");
+    expect(createHandler).toContain('privacy: "invite_only",');
+    expect(createHandler).toContain('addCircleMemberWithinCap(circleId, uid(req), "host")');
+    expect(createHandler).toContain("Circle host membership could not be created");
+    expect(capGuard).toBeGreaterThan(-1);
+    expect(createInsert).toBeGreaterThan(capGuard);
   });
 
   it("rejects self-service joins instead of allowing discovery to bypass a host invitation", () => {
