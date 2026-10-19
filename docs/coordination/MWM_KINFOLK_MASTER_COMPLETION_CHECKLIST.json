@@ -565,14 +565,14 @@
       "founder_requirement": "Business analytics and owner KinfolkAI access/depth use effective entitlement resolver, preserving owner/business grants.",
       "acceptance_criteria": "Access and depth both resolve effective business entitlement; expiry/cancellation cannot misclassify eligible owner or overwrite independent grant.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Membership audit D1/D3/F and D4 reconciliation identify raw-memberType gaps.",
+      "source_evidence": "Membership audit D1/D3/F and D4 reconciliation identify raw-memberType gaps. Exclusive P1 local source-only claim `BIZ-003-ANALYTICS-EFFECTIVE-ENTITLEMENT-DEPTH` issued at authority `a4c055167e02ea56ccc01ff704ec0e8322f55418` to task `44XXTVLrtPEqRlFbDRQx9y`: exact three paths cover the existing analytics access/depth journey only. It replaces the raw `user.memberType` analytics-depth branch with the existing effective-tier/rank resolver and retains the existing navigator/trailblazer response union, `requireMembership(\"navigator\")`, single-business/404 boundary, metric calculations, and current mobile success/recovery surfaces. No owner selection, Kinfolk, catalog/payment, commercial policy, schema or external action is authorized.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Membership resolver owner",
-      "dependencies_or_blockers": "MISSING EVIDENCE \u2014 authority conversion and independent-grant regression.",
-      "next_action": "Inventory raw checks and propose smallest D4 conversion.",
+      "responsible_owner_or_task": "44XXTVLrtPEqRlFbDRQx9y (active analytics effective-entitlement carrier implementation); QJATRGk7nUgzDlccMCUcG6 (central source integration)",
+      "dependencies_or_blockers": "MISSING EVIDENCE \u2014 active three-path effective-entitlement analytics-depth carrier and central source validation; owner multi-business selected-context, broader Kinfolk access/depth, catalog policy, account/payment lifecycle, and runtime/member acceptance remain separate.",
+      "next_action": "Receive and centrally validate the three-path analytics effective-entitlement depth journey. Keep BIZ-009 and current profile-selection work untouched; do not infer BIZ-003 or commercial-catalog completion beyond this bounded vertical.",
       "founder_approval_needed": "No for inventory; approval for policy/runtime change.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1646,6 +1646,10 @@
     {
       "date": "2026-10-19",
       "event": "COMM-001 founder-directed acceptance addendum applied to existing `COMM-001-FREE-GROUP-CREATE-JOIN-NEUTRAL-CAPS` without owner/path expansion: carrier must prove source-level create \u2192 confirmation/open \u2192 existing authenticated public-catalog discovery \u2192 join \u2192 membership-refresh, plus neutral cap recovery and preserved privacy/age/moderation/role controls."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "BIZ-003 exclusive P1 three-path analytics effective-entitlement depth claim `BIZ-003-ANALYTICS-EFFECTIVE-ENTITLEMENT-DEPTH` issued at `a4c055167e02ea56ccc01ff704ec0e8322f55418` to `44XXTVLrtPEqRlFbDRQx9y`: use existing resolver/rank only; preserve existing endpoint/client contract and exclude owner selection, Kinfolk, catalog/payment and all external action."
     }
   ],
   "evidence_gaps": [

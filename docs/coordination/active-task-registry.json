@@ -1552,6 +1552,52 @@
         },
         "disposition": "Private compact six-path source base transferred to the exclusive owner; recipient must hash-verify, work only in the declared paths, and return an uncommitted carrier."
       }
+    },
+    {
+      "id": "BIZ-003-ANALYTICS-EFFECTIVE-ENTITLEMENT-DEPTH",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "BIZ-003",
+      "baseline": "a4c055167e02ea56ccc01ff704ec0e8322f55418",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses-analytics.ts",
+        "artifacts/api-server/src/routes/__tests__/business-analytics-effective-entitlement.test.ts",
+        "artifacts/mobile/__tests__/business-analytics-effective-entitlement.test.ts"
+      ],
+      "completionContract": {
+        "journey": "An authenticated owner who already passes the existing effective-entitlement access middleware opens the existing analytics endpoint from each current mobile Business Dashboard/Business Intelligence/Business Owner surface. The analytics depth returned for that existing journey derives from the same effective entitlement, so an eligible business-derived or independent higher grant is not downgraded by raw user.memberType.",
+        "successStates": [
+          "The existing requireMembership(\"navigator\") access boundary is retained; no new grant is created and no free access is introduced.",
+          "The response retains the existing navigator/trailblazer client contract. Existing effective tiers at or above Trailblazer map only to the existing trailblazer analytics depth; Navigator remains Navigator.",
+          "Current authenticated mobile consumers retain their existing success and failure/retry/paywall recovery states; only a successful API response changes which already-supported depth they render."
+        ],
+        "nonGoals": [
+          "No owner/business selection rewrite, multi-business context, Kinfolk action-plan/AI endpoint, growth tool, marketplace, catalog, payment, checkout, provider, schema, migration, or runtime action.",
+          "Do not define new product entitlements, prices, allowances, plan copy, or commercial conversion. BIZ-003 remains IN DEVELOPMENT after this vertical."
+        ],
+        "externalAcceptance": "PENDING \u2014 source-only validation does not establish deployed entitlement behavior, account state, payment lifecycle, mobile-device experience, or member-visible acceptance."
+      },
+      "requiredBehavior": [
+        "Replace only the analytics handler\u2019s raw user.memberType depth selection with the existing getUserTier/TIER_RANK effective-entitlement policy already used by requireMembership.",
+        "Preserve requireMembership(\"navigator\"), the current single-business query/404 boundary, existing response fields and navigator/trailblazer union, existing metric/benchmark/trend calculations, logging, error handling, and every existing mobile endpoint consumer.",
+        "Map only already-effective tiers at or above existing Trailblazer rank to the existing trailblazer depth; do not create a new tier, add a grant, or change access for an otherwise-ineligible member.",
+        "Add focused server and mobile source contracts proving the raw memberType branch is absent from the analytics handler; effective-tier/rank mapping is present; current mobile consumers retain authenticated endpoint calls and their existing success/recovery boundaries."
+      ],
+      "constraints": [
+        "Do not touch BIZ-009 paths, businesses.ts, Admin/owner profile save, Kinfolk endpoints/action plans, business membership resolver semantics, memberType persistence, payment/catalog, mobile application implementation paths, or any source outside the three declared paths.",
+        "No remote Git, database/session/runtime action, provider call, deployment, migration, browser/device action, feature activation, or external acceptance.",
+        "Stop rather than adding a selected-business/multi-business contract, changing the analytics response union, or redefining commercial plan behavior."
+      ],
+      "validationPlan": [
+        "Focused API Vitest: src/routes/__tests__/business-analytics-effective-entitlement.test.ts.",
+        "Focused mobile Vitest: __tests__/business-analytics-effective-entitlement.test.ts.",
+        "API and mobile TypeScript no-emit on compatible full authority.",
+        "Exact three-path scope, git diff --check, static response/access/depth boundary review, and hash-verified carrier/apply reconstruction."
+      ],
+      "carrierDisposition": "Return an uncommitted, hash-verified three-path review carrier only; central owner alone may integrate, validate, commit, or update requirement status.",
+      "externalAcceptance": "PENDING \u2014 local source-only carrier/integration does not prove account, grant, payment, device, staging, production, or member-visible behavior."
     }
   ]
 }
