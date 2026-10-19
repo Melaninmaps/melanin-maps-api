@@ -1423,15 +1423,15 @@
       "platform": "API source-only preparation",
       "founder_requirement": "Prepare a pure, default-disabled Calendar Availability authorization-attempt state/PKCE contract using deterministic injected test values only, without creating an OAuth client, callback, token, consent flow, provider request, route, or connection.",
       "acceptance_criteria": "Exactly two new pure API leaf files validate a purpose-bound, provider-family-bound, time-bounded fake attempt/state/PKCE policy and fail closed. They create no authorization URL, callback endpoint, scope request, real code/token handling, persistence, route, client, configuration, network, or activation.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "OAUTH-002 has source-integrated a constant-false fake DTO normalizer leaf. This staged OAUTH-003 preparation is the separately approved pure state/PKCE attempt layer only; it does not amend OAUTH-001 NO-GO or authorize any external OAuth surface.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Central local-only integration `9a177c4511c6541968b29c61c744ea0e317060d3` accepted OAUTH-003 from carrier SHA-256 `adc738e4b74afe9dea6e8dac68bceb7cedf6647e72f40a69af27868de5d62984`, patch `55c17a2c5b2b94291ab1603db4c802bec686ef3f3bd57d7fe9ac6b9848184929`, supplied base `9ba944d7fbe8ba44491b089861dee52612cb9d0b`. The two new files passed full-authority API Vitest 1 file/5 tests, API no-emit, Prettier, result-hash, exact scope and static no-network/no-client/no-route/no-persistence/no-ambient-clock review. It is a constant-false default gate, fixture-only pure policy; no client, OAuth flow, consent, provider request, token/state persistence, route/configuration, database, or activation exists.",
       "staging_evidence": "MISSING EVIDENCE \u2014 prohibited; no OAuth/provider action authorized.",
       "web_evidence": "MISSING EVIDENCE \u2014 no client/consent/callback UI authorized.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "android_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "responsible_owner_or_task": "S9iVHR3fQY0fcmRMQKLpOO (exclusive source carrier); QJATRGk7nUgzDlccMCUcG6 (central acceptance)",
       "dependencies_or_blockers": "OAUTH-001 NO-GO remains controlling. Real authorization needs separate approved client/configuration, exact consent decision, token vault/revocation/persistence, routes, provider networking, member-data, pilot, deployment, and activation claims.",
-      "next_action": "Return an uncommitted two-new-file carrier with deterministic state/PKCE test vectors and fail-closed validations; do not add a vault in this lane.",
+      "next_action": "Retain OAUTH-001 NO-GO. A later separately governed source-only in-memory vault/redaction contract may be reserved only if it stays all-new/default-disabled and adds no client/configuration/token/consent/provider/DB/runtime path. Real OAuth remains blocked on a separate consent, client, token-security, pilot/rollout and release authorization.",
       "founder_approval_needed": "No for the isolated fake state/PKCE source leaf only; Yes for any OAuth client/configuration, scope/consent, callback, code/token, provider/network, member-data, pilot, deployment, or activation action.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1858,6 +1858,10 @@
     {
       "date": "2026-10-19",
       "event": "Added separate exact two-path COMM-001 pending recipient-action guard claim at authority 65ae5812d660b20635e102ca68b14deeb030ae04 to y; it is isolated from IIU client recovery and requires pre-mutation and atomic pending-status enforcement."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "OAUTH-003 default-disabled state/PKCE fixture-policy source-integrated locally at 9a177c4511c6541968b29c61c744ea0e317060d3: API 1 file/5 tests, API no-emit, Prettier, exact scope and no-network/no-OAuth-wiring boundaries passed; OAUTH-001 NO-GO and all real OAuth gates remain."
     }
   ],
   "evidence_gaps": [
@@ -1875,9 +1879,9 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 11,
+      "IN DEVELOPMENT": 10,
       "NOT STARTED": 10,
-      "SOURCE INTEGRATED": 21
+      "SOURCE INTEGRATED": 22
     },
     "by_founder_area": {
       "Core app": 2,

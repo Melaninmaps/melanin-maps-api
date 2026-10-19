@@ -2230,7 +2230,7 @@
     {
       "id": "OAUTH-003-DEFAULT-DISABLED-STATE-PKCE",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "OAUTH-003",
@@ -2273,7 +2273,27 @@
         "sha256": "f50a675ba7bd21c509dfc43e0ed01956c7bd61fd6c0f26ff1f7357d403a137b7",
         "expiresAt": "2026-10-20T21:56:13.899Z",
         "authority": "9ba944d7fbe8ba44491b089861dee52612cb9d0b"
-      }
+      },
+      "sourceCommit": "9a177c4511c6541968b29c61c744ea0e317060d3",
+      "carrier": {
+        "handoffId": "hnd_2riKsJX1k-ScDr6MHx8lImvY",
+        "archive": "MWM_OAUTH003_DEFAULT_DISABLED_STATE_PKCE_CARRIER_2026-10-19.tar.gz",
+        "outerSha256": "adc738e4b74afe9dea6e8dac68bceb7cedf6647e72f40a69af27868de5d62984",
+        "patchSha256": "55c17a2c5b2b94291ab1603db4c802bec686ef3f3bd57d7fe9ac6b9848184929",
+        "carrierAuthority": "9ba944d7fbe8ba44491b089861dee52612cb9d0b",
+        "resultHashes": {
+          "state-pkce.ts": "7865ccffa9b2893fed1c3a7797e09a0401454a93782cac8b6cab72d892745a7f",
+          "state-pkce.test.ts": "54d156357c1178a899f7d2162b6c645cd9bc6556c69d519befe99b361655a317"
+        }
+      },
+      "centralValidation": {
+        "focusedVitest": "1 file / 5 tests passed",
+        "apiNoEmit": "passed",
+        "format": "Prettier passed",
+        "scope": "exact two new claimed paths; git diff --check passed",
+        "boundary": "constant false gate supplied by immutable OAUTH-002 contract; no URL/network/provider/client/route/token/authorization/redirect/callback/scope/account/calendar/persistence/configuration/queue/logging/random/ambient-clock use"
+      },
+      "externalAcceptance": "NOT APPLICABLE \u2014 OAUTH-001 remains a documentation-only NO-GO; no real OAuth/client/consent/scope/provider/token/member-data/staging/deployment/member-visible action authorized."
     },
     {
       "id": "COMM-001-DM-RECIPIENT-REQUEST-FAIL-CLOSED-RECOVERY",
