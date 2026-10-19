@@ -1,0 +1,1446 @@
+{
+  "document_title": "Mapping with Melanin / KinfolkAI Master Completion Checklist Baseline",
+  "status_banner": "CONTROLLING LOCAL COMPLETION RECORD — SOURCE AND RELEASE EVIDENCE ARE EXPLICITLY LAYERED",
+  "baseline_date": "2026-10-19",
+  "proposed_permanent_paths": {
+    "markdown": "docs/coordination/MWM_KINFOLK_MASTER_COMPLETION_CHECKLIST.md",
+    "json": "docs/coordination/MWM_KINFOLK_MASTER_COMPLETION_CHECKLIST.json"
+  },
+  "count_status": "PROVISIONAL",
+  "requirements": [
+    {
+      "id": "CORE-001",
+      "feature_area": "Core app",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Permanent free core: map, directory/search, ordinary listings, core safety and existing free community participation are not conditional on payment.",
+      "acceptance_criteria": "Free member uses each named core function without a paid barrier; paid scope is an enhancement, not a toll gate.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Membership audit Executive Summary/C/H1; staging manifest §2.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Central integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — no authorized staging/member-visible evidence.",
+      "next_action": "Retain free-core cases in first authorized acceptance.",
+      "founder_approval_needed": "No — already approved.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "CORE-002",
+      "feature_area": "Core app",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Kinfolk continuity requires explicit acceptance; decline/reset preserve consent boundary.",
+      "acceptance_criteria": "Undecided/declined toggle is refused; accepted/on enables continuity; reset disables it without erasing decision; private-memory saving requires consent.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "P0 behavior/contract evidence: staging manifest §§2–3; acceptance matrix A.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6; release owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — compatible staging user_settings, deployment, authenticated/device proof.",
+      "next_action": "Deliver remediation packet, then run acceptance A first.",
+      "founder_approval_needed": "Release-owner authorization for staging.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md",
+        "MWM_COORDINATED_P0_MAP_DIRECTORY_STAGING_VERIFICATION_PROTOCOL_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "DIR-001",
+      "feature_area": "Directory/business/verification",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Literal public Directory match for non-Kinfolk Current business is profile/listing-only, not promoted discovery.",
+      "acceptance_criteria": "Record B exact match makes no pin, recommendation, ownership/verified-minority, featured/promotion/cultural-match signal, fuzzy/category expansion or directions action.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "PR #314 controlling behavior and 299 API/64 Web/33 native focused source contracts.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Central integration/acceptance owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — deployed candidate, identified Record B and acceptance.",
+      "next_action": "Run immutable Record B case after preflight/deployment.",
+      "founder_approval_needed": "Release-owner staging authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md",
+        "MWM_COORDINATED_P0_MAP_DIRECTORY_STAGING_VERIFICATION_PROTOCOL_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "DIR-002",
+      "feature_area": "Directory/business/verification",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Kinfolk Current eligibility governs ordinary pins, promoted Discovery and Kinfolk recommendations; direct lookup remains ownership-neutral.",
+      "acceptance_criteria": "Eligible Record A appears in ordinary Map/Directory and bounded supported Kinfolk recommendation; Record B is excluded from recommendation by its direct-name exception.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "PR #314 behavior/source contracts; matrix C/E and protocol B/D.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Central integration/acceptance owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — deployment, Record A/B and authorized LLM prompt.",
+      "next_action": "Use immutable Record A/B only in authorized run.",
+      "founder_approval_needed": "LLM budget plus release authorization for recommendation.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "DIR-003",
+      "feature_area": "Directory/business/verification",
+      "platform": "Business profile/Directory",
+      "founder_requirement": "Verification and ownership indicators are evidence/policy based, not a purchasable trust badge; protected benefits are separate from registration/direct lookup.",
+      "acceptance_criteria": "Future business matrix separates eligibility/workflow support from merit-based verification; no plan purchases trust.",
+      "status": "BLOCKED",
+      "source_evidence": "Membership audit D2/D3/F/J10; staging manifest §2.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; business-owner product owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approved verification/workflow definition and acceptance.",
+      "next_action": "Record business benefit matrix without paid trust claim.",
+      "founder_approval_needed": "Yes — business benefit/fulfillment definition.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "DIR-004",
+      "feature_area": "Directory/business/verification",
+      "platform": "Production directory data",
+      "founder_requirement": "The 217 protected validated-presence holds require separate reviewed decisions; no forced/inferred changes.",
+      "acceptance_criteria": "Every held record has reviewed disposition; no conflicting data overwrite or unauthorized Kinfolk Current promotion.",
+      "status": "BLOCKED",
+      "source_evidence": "Validated-presence record: 3,274 applied, 217 safely held; Kinfolk Current remained 7,177.",
+      "staging_evidence": "Not a staging test.",
+      "web_evidence": "Not applicable.",
+      "ios_evidence": "Not applicable.",
+      "android_evidence": "Not applicable.",
+      "responsible_owner_or_task": "Separate reviewed data-decision owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — reviewed disposition for 217 holds.",
+      "next_action": "Keep holds outside release until separately authorized.",
+      "founder_approval_needed": "Yes — separate reviewed decision.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "validated-presence-remaining-completion-2026-10-17.md"
+      ]
+    },
+    {
+      "id": "MAP-001",
+      "feature_area": "Maps/location",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Free Map and ordinary Discovery remain available without paid KinfolkAI barrier and preserve honest city/device scope/no-result behavior.",
+      "acceptance_criteria": "Free member browses Record A category/location result and normal card/pin handoff; no payment gate or stale pin reuse.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Staging manifest §2/§3 and prepared matrix C/protocol B.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Central integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — deployment/member-visible proof; Maps key/quota unverified.",
+      "next_action": "Run structured Directory-to-Map test first; Maps canvas only if authorized.",
+      "founder_approval_needed": "Release authorization; Maps budget only if interactive canvas.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "MAP-002",
+      "feature_area": "Maps/location",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "D9 free-core repair covers Directions, route/safety context and platform boundaries; basic route/safety information cannot be paid-gated.",
+      "acceptance_criteria": "Authority-equivalent destination-only/no-store Directions/public-pin handoff/retired Safety context is reconciled, then Web/iOS/Android/AWS prove free-core and limiter behavior.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "D9 local receipts: API 1 file/4, native 1 file/3, Web handoff 2 files/4; GitHub authority presence unestablished.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Registry/central integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — authority reconciliation, staging, browser/device proof.",
+      "next_action": "Reconcile ownership then compare D9 read-only against current authority.",
+      "founder_approval_needed": "No new free-core decision; later release authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "KCONV-001",
+      "feature_area": "Kinfolk conversation/discovery",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "KinfolkAI is a paid enhancement; exact feature/usage/allowance boundary cannot remove free search, map, safety or ordinary community.",
+      "acceptance_criteria": "Approved table names included capabilities, allowance/reset, voice/image/research treatment/exclusions; copy and enforcement agree.",
+      "status": "BLOCKED",
+      "source_evidence": "Membership audit C/D1/E/G/H/I/K; D2 reconciliation says benefits/allowances unapproved.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; membership product owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — signed matrix and aligned enforcement.",
+      "next_action": "Founder records one D2 table while checkout remains closed.",
+      "founder_approval_needed": "Yes — exact benefits/allowances/vocabulary.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "KCONV-002",
+      "feature_area": "Kinfolk conversation/discovery",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Kinfolk Discovery/safety answers are governed and evidence-bound: no invented business, safety, wait-time, hours, VIBES, service, ownership, radius or unlabelled substitute.",
+      "acceptance_criteria": "Negative journey labels limitation/no-result; broadened result is visibly not documented/not matched; Record A is supported and Record B excluded.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "PR #314 governed contracts; matrix F/protocol E.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Coordinated acceptance owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — deployed negative acceptance; bounded LLM authorization.",
+      "next_action": "Execute one non-sensitive negative journey after authorization.",
+      "founder_approval_needed": "LLM budget for recommendation portion.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md",
+        "MWM_COORDINATED_P0_MAP_DIRECTORY_STAGING_VERIFICATION_PROTOCOL_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "KMEM-001",
+      "feature_area": "Kinfolk memory/voice/images/tools",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "One authoritative member-controlled memory architecture; Remember, Use/personalize, Monitor, Notify, Share and Act are independent revocable purposes.",
+      "acceptance_criteria": "No interest, inference, connection, Circle, Journey, location/calendar/chat/device permission is implied consent; verticals enforce independent purpose controls.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Universal Memory governing invariant and Slices 1–3 at 07897405.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Unified integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — real DB, browser/device, provider, worker and member-visible validation.",
+      "next_action": "Continue only small reviewed vertical slices with adversarial privacy coverage.",
+      "founder_approval_needed": "Yes for migration, provider, monitoring, notification, OAuth, deployment or external validation.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_UNIVERSAL_MEMORY_CONNECTED_INTELLIGENCE_FOUNDATION_2026-10-19.md",
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "KMEM-002",
+      "feature_area": "Kinfolk memory/voice/images/tools",
+      "platform": "API",
+      "founder_requirement": "Private-memory selection fails closed on owner, lifecycle, known-purpose and sensitive-consent conditions before relevance/content fallback.",
+      "acceptance_criteria": "Member A valid authorized preferences yield only existing coarse terms; revoked/paused/expired/sensitive-unconfirmed/missing/unknown-purpose and Member B rows yield no selection, term, decision or personalization.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Slice 3 at 07897405: 4 API files/33; Slice 2: 5 files/48; no-emit/diff passed.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Unified integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — real DB, account switching/pending work/cache and client acceptance.",
+      "next_action": "Rerun selector/lifecycle/two-member suite after affected controlled integration.",
+      "founder_approval_needed": "No for source regression; yes for external/runtime test.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_UNIVERSAL_MEMORY_CONNECTED_INTELLIGENCE_FOUNDATION_2026-10-19.md",
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "KMEM-003",
+      "feature_area": "Kinfolk memory/voice/images/tools",
+      "platform": "API",
+      "founder_requirement": "Provide owner-scoped authenticated single/all Kinfolk session deletion without cross-owner disclosure or private-memory/provider coupling.",
+      "acceptance_criteria": "Owner predicates apply; same 404 for missing/cross-owner IDs; per-owner cache invalidates; no continuity-disabled/private-memory/provider coupling.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Local-only c7111caf receipt: 3 API files/14 tests, no-emit/privacy review.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Unified owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — remote verification, staging and member/device proof.",
+      "next_action": "Central owner maps local receipt before activation claim.",
+      "founder_approval_needed": "Release authorization for runtime test.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "KMEM-004",
+      "feature_area": "Kinfolk memory/voice/images/tools",
+      "platform": "Web/iOS/Android/voice",
+      "founder_requirement": "Universal Memory/Connected Intelligence completion requires member-facing verticals, not a helper/test.",
+      "acceptance_criteria": "Evidence proves later relevant use, purpose separation, correction/deletion propagation, A/B isolation and equivalent server semantics on Web/iOS/Android/voice.",
+      "status": "NOT STARTED",
+      "source_evidence": "Universal Memory §§69–120: Slices 1–3 are not completion; feature matrix remains not verified.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Unified integration/platform owners",
+      "dependencies_or_blockers": "MISSING EVIDENCE — vertical design, integration and platform/member acceptance.",
+      "next_action": "Select one smallest approved vertical, not a new silo.",
+      "founder_approval_needed": "Yes for external activation packets/new runtime scope.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_UNIVERSAL_MEMORY_CONNECTED_INTELLIGENCE_FOUNDATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "KMEM-005",
+      "feature_area": "Kinfolk memory/voice/images/tools",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Transportation discovery is inclusive/free; rideshare preference is consented memory, never provider access/live quote/booking/location/sharing permission.",
+      "acceptance_criteria": "Official-source rail/bus/basic-route discovery is free/no fabrication; later monitor/notify/share is separately consented, source-fresh and fail-closed.",
+      "status": "NOT STARTED",
+      "source_evidence": "Cumulative matrix §55–85 planned only; Universal Memory §67 queues a provider-free candidate.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Unified owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — selected source slice and runtime/provider/device proof.",
+      "next_action": "Choose one smallest provider-free official-source/no-fabrication existing-path slice.",
+      "founder_approval_needed": "Yes for provider, monitoring, notification, OAuth, booking or location.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md",
+        "MWM_UNIVERSAL_MEMORY_CONNECTED_INTELLIGENCE_FOUNDATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "COMM-001",
+      "feature_area": "Community/social",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Existing free community participation—reviews/check-ins, feed/profiles, events/RSVPs, messaging and resources—must not be payment-gated.",
+      "acceptance_criteria": "Acceptance proves ordinary participation needs authentication where applicable, not payment; basic resources remain free while AI capacity is separately bounded.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Membership audit D2 identifies source-present partial/unverified community surfaces and required preservation.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Community owner; central integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — entitlement contracts and member-visible acceptance.",
+      "next_action": "Inventory only named payment gates in a bounded proposal.",
+      "founder_approval_needed": "No free-core reapproval; approval for optional paid capacity.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "COMM-002",
+      "feature_area": "Community/social",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Resolve Circles free baseline and any approved capacity limits with the effective resolver; do not retain raw-memberType/copy conflict.",
+      "acceptance_criteria": "One approved baseline/limit model uses central resolver and Web/native copy agrees; free community claim is not contradicted by paid creation gate.",
+      "status": "BLOCKED",
+      "source_evidence": "Membership audit D2/F/G/J2/J4 identifies legacy raw-tier map and free creation conflict.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; membership/community owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approved baseline, centralized enforcement and acceptance.",
+      "next_action": "Include Circles in D2/D4 decision/source inventory.",
+      "founder_approval_needed": "Yes — free baseline/capacity unresolved.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "COMM-003",
+      "feature_area": "Community/social",
+      "platform": "API",
+      "founder_requirement": "Shared Plans Phase A denies by default and permits only owner or exact accepted/unrevoked/unexpired recipient to view snapshot.",
+      "acceptance_criteria": "Injected-time pure policy permits only view_snapshot in exact owner/recipient/grant scope; malformed/pending/cross-account/cross-plan/expired/revoked input denies; no content/route/storage.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "5d149cca: 1 API file/23 tests, no-emit/diff; intentionally unreachable.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Unified integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — consumer route/schema/member flow/runtime verification.",
+      "next_action": "Use policy only as baseline for separately reviewed next slice.",
+      "founder_approval_needed": "Yes before persistence/member access/static fields.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_KINFOLK_SHARED_PLANS_PHASE_A_FOUNDATION_2026-10-19.md",
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "COMM-004",
+      "feature_area": "Community/social",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Future Shared Plans uses named authenticated recipients, explicit acceptance, seven-day pending expiry and revocation/block/deletion end-of-access; first content is authorized public business/event references only.",
+      "acceptance_criteria": "Reviewed design covers recipient eligibility, field snapshot, audit/retention, cache invalidation, deletion/deactivation; routes/schema/UI/mobile then prove it.",
+      "status": "NOT STARTED",
+      "source_evidence": "Shared Plans §§13–31 and 69–77 say reachable member sharing not started.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Future Shared Plans owner; central integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — design, source slice, route/schema/UI and platform/member proof.",
+      "next_action": "Submit one bounded recipient/content slice; do not create general sharing app.",
+      "founder_approval_needed": "Yes — fields/content/audit/retention/external scope decisions.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_KINFOLK_SHARED_PLANS_PHASE_A_FOUNDATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "COMM-005",
+      "feature_area": "Community/social",
+      "platform": "API",
+      "founder_requirement": "Circle itinerary generation excludes cross-member account preferences absent Circle-scoped consent.",
+      "acceptance_criteria": "Only names/deliberately shared saves/dates remain; excluded account categories/preferences never reach selection/prompt/branch without consent.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "SP-003 local-only f346a79/316b122: 4 API files/29 tests, no-emit/diff/review.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Unified owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — remote authority, route/client/real-data validation.",
+      "next_action": "Rerun if remote authority accepts slice or route introduces Circle consent.",
+      "founder_approval_needed": "Yes for Circle-scoped consent/reachable sharing.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_KINFOLK_SHARED_PLANS_PHASE_A_FOUNDATION_2026-10-19.md",
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "SAFE-001",
+      "feature_area": "Safety",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Core Safety Hub, alerts, safety reports and route safety context remain free; Family Safety/route context cannot disappear after paid period.",
+      "acceptance_criteria": "Named core safety routes are outside paid gates; any AI add-on is distinctly non-core; Web/iOS/Android prove free access.",
+      "status": "BLOCKED",
+      "source_evidence": "Membership audit D2/F/J9 identifies requireFamilySafety and directions/safety-context paid-gate conflicts.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Membership resolver owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — source correction authority, staging and member proof.",
+      "next_action": "Map named gates to D4/D9 bounded source work.",
+      "founder_approval_needed": "No new free-core decision; release authorization later.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "SAFE-002",
+      "feature_area": "Safety",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "Safety/Discovery negative answers state evidence limits and never fabricate current safety claims/substitutes.",
+      "acceptance_criteria": "Unmatched/no-current-evidence request visibly states limitation; broadened result labels not documented/not matched; evidence excludes personal content.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Matrix F and protocol E retain governed negative contract.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Coordinated acceptance owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — deployed acceptance on all platforms.",
+      "next_action": "Execute one non-sensitive negative server-policy journey after authorization.",
+      "founder_approval_needed": "Release authorization; no provider intrinsically.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md",
+        "MWM_COORDINATED_P0_MAP_DIRECTORY_STAGING_VERIFICATION_PROTOCOL_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "SAFE-003",
+      "feature_area": "Safety",
+      "platform": "API",
+      "founder_requirement": "Direct qualified-care requests must not bypass the existing pure safety override.",
+      "acceptance_criteria": "The designated two-path source repair and focused regression prove the override runs before qualified-care selection/recommendation; no provider, data, browser, or runtime claim is implied.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "LA-002 is exclusively claimed local-only at 7d4880d9ae4e59e63379dcac2d9905febf01bbdc for the existing pure matcher and focused regression; no carrier, repair commit, or test receipt exists yet.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized deployment/member journey receipt.",
+      "web_evidence": "Not a completed Web acceptance item.",
+      "ios_evidence": "Not a completed iOS acceptance item.",
+      "android_evidence": "Not a completed Android acceptance item.",
+      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn; central integration owner QJATRGk7nUgzDlccMCUcG6",
+      "dependencies_or_blockers": "MISSING EVIDENCE — carrier and focused source validation are pending; runtime authorization remains separate.",
+      "next_action": "Return only the bounded LA-002 carrier, then centrally reconcile its evidence.",
+      "founder_approval_needed": "No new product decision for the narrow source repair; separate runtime authorization remains required.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "Q task coordination receipt, 2026-10-19"
+      ]
+    },
+    {
+      "id": "BIZ-001",
+      "feature_area": "Business-owner dashboard",
+      "platform": "Web/API",
+      "founder_requirement": "Free business listing/claim/core profile remain available; paid business enhancement is genuinely optional.",
+      "acceptance_criteria": "Eligible business retains free profile/contact/category/map/reviews/claim baseline; ordinary listing/discoverability is not paid.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Membership audit A/D3/H1 documents free listing/claim source posture.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Business-owner product owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — end-to-end owner acceptance/platform parity.",
+      "next_action": "Include free listing/claim in later authorized acceptance.",
+      "founder_approval_needed": "No — free baseline approved.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "BIZ-002",
+      "feature_area": "Business-owner dashboard",
+      "platform": "Web/API",
+      "founder_requirement": "Do not sell Growth/Premium until exact working profile/analytics/promotion/events/leads/support deliverables, price mapping, ranking disclosure and service boundaries are validated.",
+      "acceptance_criteria": "One-to-one vocabulary/fulfillment table; authorized prices match targets; included vs add-on promotion, events/leads/support and transparent placement are proven before charge.",
+      "status": "BLOCKED",
+      "source_evidence": "Membership audit A/B/D3/E/F/H/I/J10/K2; D10 partial.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; business commerce/operations owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — final matrix, price mapping, operations/legal/member proof.",
+      "next_action": "Create source-only D10 acceptance checklist; no deployment/charge.",
+      "founder_approval_needed": "Yes — business benefits/fulfillment/commercial terms.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "BIZ-003",
+      "feature_area": "Business-owner dashboard",
+      "platform": "API/Web",
+      "founder_requirement": "Business analytics and owner KinfolkAI access/depth use effective entitlement resolver, preserving owner/business grants.",
+      "acceptance_criteria": "Access and depth both resolve effective business entitlement; expiry/cancellation cannot misclassify eligible owner or overwrite independent grant.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Membership audit D1/D3/F and D4 reconciliation identify raw-memberType gaps.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Membership resolver owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — authority conversion and independent-grant regression.",
+      "next_action": "Inventory raw checks and propose smallest D4 conversion.",
+      "founder_approval_needed": "No for inventory; approval for policy/runtime change.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "BIZ-004",
+      "feature_area": "Business-owner dashboard",
+      "platform": "Web/API",
+      "founder_requirement": "Promotions/featured listings and marketplace fees stay separate from memberships; disclosure, ranking integrity, cancellation/refund and current fee policy precede marketing/charge.",
+      "acceptance_criteria": "Promotion visibly disclosed/not silently included; ranking/refund terms defined; 10/8/6 versus 6/5/3 fee conflict reconciled.",
+      "status": "BLOCKED",
+      "source_evidence": "Membership audit A/D3/F/J10 identifies one-time promotion checkout and fee conflict.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Business commerce/legal owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approved terms/disclosures/fulfillment/acceptance.",
+      "next_action": "Separate promotion/marketplace decision from membership catalog.",
+      "founder_approval_needed": "Yes — commercial/legal terms.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "BIZ-005",
+      "feature_area": "Business-owner dashboard",
+      "platform": "Web/API",
+      "founder_requirement": "Preserve completed two-path BUSINESS-OWNER-001 claim; central owner maps it before any completion assertion and no task reopens it.",
+      "acceptance_criteria": "Central owner records exact scope, authority relationship and needed regression/evidence linkage; no rework absent demonstrated defect.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Snapshot: local commit ddf73c4374a4231151a29eb4236585adca11202e; task must not reopen two-path claim.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "S9iVHR3fQY0fcmRMQKLpOO; central owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — detailed two-path acceptance/scope absent from permitted snapshot.",
+      "next_action": "Stop scoped implementation; hand off evidence mapping.",
+      "founder_approval_needed": "No founder acceptance may be inferred.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "release-readiness-coordination-snapshot-2026-10-19.md",
+        "compacted-history-S9iVHR3fQY0fcmRMQKLpOO-1.jsonl"
+      ]
+    },
+    {
+      "id": "ADMIN-001",
+      "feature_area": "Founder/Admin dashboard",
+      "platform": "Admin API/Web",
+      "founder_requirement": "Use narrow QA activation/reversal: named admin, one existing consented account, dry-run, apply, ledger reread, narrow revoke; no bulk/reset/mutation.",
+      "acceptance_criteria": "For one normalized existing email, dry-run reviewed; authority/consent precedes apply; effective access reread; reversal preserves account/ordinary data.",
+      "status": "NOT STARTED",
+      "source_evidence": "Staging manifest §6 documents preferred tester path/constraints.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Named staging administrator; release owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — deployed auth/session and existing QA account.",
+      "next_action": "Name account/consent/reversal plan only in authorization packet.",
+      "founder_approval_needed": "Yes — explicit staging authority and QA consent.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "ADMIN-002",
+      "feature_area": "Founder/Admin dashboard",
+      "platform": "API/Admin",
+      "founder_requirement": "Admin/founder roles remain separate from commercial subscription data and independent grants remain auditable.",
+      "acceptance_criteria": "No admin/founder role is paid plan; manual/tester/beta/founder/business grants record source/scope/start/end/authority/audit.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Membership audit A/H2 and D3–D5 reconciliation.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Entitlement/admin owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — general grant ledger/audit/current-authority enforcement.",
+      "next_action": "Include roles/grants in D3/D4 source comparison without mutation.",
+      "founder_approval_needed": "Founder approval for historic treatment; not source inventory.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "MEM-D1",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "D1 freeze customer-facing membership contradictions and keep three checkout initiators fail closed pending catalog reconciliation.",
+      "acceptance_criteria": "Unauthenticated 401; authenticated three routes identical 409 before provider/DB/entitlement side effects; tester/login/free routes ordered correctly.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Remote 12e0b726 contains unchanged 12-path D1 from d4ce382; API 2/12, Web 1/4, native 1/3 source tests/no-emit/hygiene.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Central integration/membership owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — staging/provider/browser/device and D2/D7 decisions.",
+      "next_action": "Only authorized external validation after staging gate; do not reopen absent defect.",
+      "founder_approval_needed": "No new D1 source decision; release authorization for external validation.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "MEM-D2",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "Catalog/Web/iOS/Android",
+      "founder_requirement": "D2 approve one final benefit, allowance, vocabulary and copy matrix while preserving free core/historical objects.",
+      "acceptance_criteria": "Matrix names free core; exact Navigator/Trailblazer benefits/allowances/exclusions and maps Growth/Premium and partner/legacy/creator/Enterprise labels.",
+      "status": "BLOCKED",
+      "source_evidence": "Founder-approved prices/cohorts exist; exact benefits/business mapping not approved.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; membership/business product owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — signed benefit/vocabulary matrix.",
+      "next_action": "Record founder-approved D2 table with checkout closed.",
+      "founder_approval_needed": "Yes — expressly required.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "MEM-D3",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "API/database/providers",
+      "founder_requirement": "D3 build additive durable entitlement/grant model; payment evidence cannot overwrite memberType/independent access.",
+      "acceptance_criteria": "General ledger has source/scope/tier/start/end/provider/status/audit; effective tier recomputes across provider/independent grants; no silent historic backfill.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "9b1e72 Stripe-only candidate reports 19 tests/4 files but is not authority evidence; audit H2 target.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Entitlement owner; central integration owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — authority/cross-provider design/migration/operational/member proof.",
+      "next_action": "Compare candidate to authority; propose additive-ledger slice without merge/migration/provider.",
+      "founder_approval_needed": "Yes for historic treatment/release; no for read-only comparison.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "MEM-D4",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "API",
+      "founder_requirement": "D4 centralize paid/tier enforcement with effective resolver while preserving independent grants.",
+      "acceptance_criteria": "Named direct memberType/raw Stripe/rc checks are converted/exempted; regression proves independent grants survive provider expiration/cancellation.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "D4 reconciliation/audit identifies unresolved raw checks; Stripe candidate only partial.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Entitlement owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — comprehensive inventory, authority conversion and operational/member proof.",
+      "next_action": "Inventory clean-authority consumers; propose smallest source-only conversion.",
+      "founder_approval_needed": "No for inventory; approval for policy/staging/DB/provider/member work.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "MEM-D5",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "Database/operations",
+      "founder_requirement": "D5 reconcile historic Stripe/RevenueCat/manual/founder/beta/tester/business-owner/legacy access deliberately; no automatic upgrade/deletion.",
+      "acceptance_criteria": "Auditable export/queue classifies each historic case under approved rules and demonstrates no auto-upgrade/deletion.",
+      "status": "BLOCKED",
+      "source_evidence": "D5 reconciliation and audit H2/J5 document ambiguity/no-silent-backfill.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; data/entitlement owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approved plan, export and outcomes.",
+      "next_action": "Record source-only ambiguity list then seek data authorization.",
+      "founder_approval_needed": "Yes for remediation/operational authorization/historic treatment.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "MEM-D6",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "API/database/Web/iOS/Android",
+      "founder_requirement": "D6 implement approved six/three/one-month cohort grants with no auto-conversion and eliminate generic profile-read trials.",
+      "acceptance_criteria": "Explicit grant has cohort/eligibility/start/end/notice/exception audit; expiry falls to other valid access/free core and never bills; generic 90-day profile read is replaced.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Audit Executive Summary/H2/I/J6; D6 reconciliation current-authority test absent.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Entitlement owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — authority implementation, cohort acceptance and operational/member validation.",
+      "next_action": "Review profile-read trial and prepare smallest explicit cohort grant/test slice.",
+      "founder_approval_needed": "No new duration decision; later release authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "MEM-D7",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "API/Stripe/Apple/Google/Web/iOS/Android",
+      "founder_requirement": "D7 creates server-owned canonical plan catalog only after mapping approval, binding plan/interval/authorized IDs/benefit-copy versions/eligibility; mismatch cannot reopen checkout.",
+      "acceptance_criteria": "Every selected plan/interval/price/store ID matches founder amount/benefit-copy; legacy products preserved/excluded; tests cover checkout-closed/matching-price/cross-provider.",
+      "status": "BLOCKED",
+      "source_evidence": "Audit B/H2/J7/K and D7 reconciliation: candidate allowlist is not canonical catalog.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; membership/catalog owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — D2 approvals, catalog/source/provider/store mapping and acceptance.",
+      "next_action": "Obtain decisions then prepare reviewable source-only closed-checkout catalog slice.",
+      "founder_approval_needed": "Yes — benefits, business vocabulary and historic treatment.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "MEM-D8",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "Stripe/Apple/Google/RevenueCat/API",
+      "founder_requirement": "D8 completes lifecycle/operational tests only when each payment rail is separately enabled.",
+      "acceptance_criteria": "Tests completed/delayed/duplicate/price-change/cancel/failure/refund/dispute/retry/stale/outage/cross-provider preservation with provider/account audit.",
+      "status": "BLOCKED",
+      "source_evidence": "Audit J8 and D8 reconciliation list required cases; Stripe candidate not authority/operational evidence.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Payment/entitlement owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — enabled rail, canonical catalog, provider/staging/device lifecycle receipts.",
+      "next_action": "Read-only compare candidate lifecycle tests; do not invoke rail.",
+      "founder_approval_needed": "Yes — provider/database/deployment/member-visible authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "MEM-D9",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "API/Web/iOS/Android",
+      "founder_requirement": "D9 validates free-core boundaries for safety, map, directory/search, normal listings and existing free community actions.",
+      "acceptance_criteria": "Paid gates removed from named core paths; authenticated Web/iOS/Android prove free core/runtime limiter while optional paid enhancements remain precise.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "D9 reconciliation: local Directions receipts; authority/staging proof unresolved.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Central integration/platform owners",
+      "dependencies_or_blockers": "MISSING EVIDENCE — current authority equivalence, staging/device/member proof.",
+      "next_action": "Complete registry reconciliation and reuse only absent compatible D9 paths.",
+      "founder_approval_needed": "No new free-core decision; release authorization for validation.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "MEM-D10",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "Business owner/Web/API",
+      "founder_requirement": "D10 completes business-plan fulfillment before charging.",
+      "acceptance_criteria": "Analytics, promotion disclosure/ranking/refunds, events capacity, leads, support, marketplace fees and owner-AI limits are defined, working, measured and member-visible.",
+      "status": "BLOCKED",
+      "source_evidence": "D10 reconciliation and audit D3/J10 find fulfillment incomplete/prices conflicting.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; business commerce/operations owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — business benefits/mapping, operations/legal and member proof.",
+      "next_action": "Build source-only D10 acceptance checklist; no deployment/charge.",
+      "founder_approval_needed": "Yes before charging.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "MEM-D11",
+      "feature_area": "Memberships/payments/entitlements",
+      "platform": "Legal/Stripe/support",
+      "founder_requirement": "D11 completes merchant/MoR, tax, policy, cancellation/refund/dispute, support and policy-version readiness before paid launch.",
+      "acceptance_criteria": "Approved note names merchant/MoR, tax owner, support/refund/dispute operator/contact, current Terms/Privacy versions/corrections and trial/cancellation disclosures.",
+      "status": "BLOCKED",
+      "source_evidence": "Terms/Privacy URLs 200; legal verification identifies privacy/version/processor/cancellation-refund gaps; D11 blocked.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder/legal/operations owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approvals, policy corrections/version control and paid lifecycle acceptance.",
+      "next_action": "Record one founder/legal decision note; do not activate checkout.",
+      "founder_approval_needed": "Yes — expressly required.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "STRIPE_LEGAL_POLICY_VERIFICATION_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "REL-001",
+      "feature_area": "Web/iOS/Android/release readiness",
+      "platform": "Railway/AWS staging/API",
+      "founder_requirement": "Deploy exactly separately approved coordinated candidate only after minimal remediation/fresh passing catalog preflight; preserve data/use documented rollback.",
+      "acceptance_criteria": "Approved scope/preflight succeeds; candidate SHA verified; no generic migration/backfill/schema writer; stop/rollback evidence captured.",
+      "status": "BLOCKED",
+      "source_evidence": "3720f1 source-validated/not deployed; staging lives at 70f100258; catalog compatibility categorically failed.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Release owner; QJATRGk7nUgzDlccMCUcG6",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approved remediation, passing preflight, deployment and rollback control. Option-B corrected-index attempt was indeterminate (no observable Console output); exact index state remains unverified.",
+      "next_action": "Seek only minimal source-defined remediation packet decision first.",
+      "founder_approval_needed": "Yes — exact DDL/config/deploy inputs required.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "release-readiness-coordination-snapshot-2026-10-19.md",
+        "Central owner Option-B result, 2026-10-19 (indeterminate)"
+      ]
+    },
+    {
+      "id": "REL-002",
+      "feature_area": "Web/iOS/Android/release readiness",
+      "platform": "Web",
+      "founder_requirement": "Run Web first for P0, free Map/Directory, Record B profile-only, Record A governed discovery and evidence-bound privacy/safety negative; prompts only within budget.",
+      "acceptance_criteria": "Coordinated report records SHA/release evidence/environment/QA/Record A-B/A–F pass-fail-errors-labels/evidence/provider calls/stop-rollback.",
+      "status": "NOT STARTED",
+      "source_evidence": "Acceptance matrix/protocol prepared; manifest §7 says Web first.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Coordinated acceptance owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — deployed candidate/schema/QA/records/provider budget.",
+      "next_action": "Execute only after REL-001 and all preconditions.",
+      "founder_approval_needed": "Yes — staging/QA and selected provider budget.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md",
+        "MWM_COORDINATED_P0_MAP_DIRECTORY_STAGING_VERIFICATION_PROTOCOL_2026-10-17.md",
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "REL-003",
+      "feature_area": "Web/iOS/Android/release readiness",
+      "platform": "iOS/Android",
+      "founder_requirement": "Validate native parity/native-specific behavior only in one coordinated release build after Web server policy; no intermediate build.",
+      "acceptance_criteria": "Both platforms repeat A–F state/handoff/keyboard/back/navigation with one build; payment/store paths excluded; evidence separated per platform.",
+      "status": "NOT STARTED",
+      "source_evidence": "Acceptance matrix A–F and manifest §7/§10 defer native to one coordinated build.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Mobile release owner; coordinated acceptance owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — build, device acceptance and Web-first baseline.",
+      "next_action": "Defer build until Web staging passes and packet authorizes it.",
+      "founder_approval_needed": "Yes — explicit authorization confirmation.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md",
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "INT-DB-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Database/schema/Railway staging",
+      "founder_requirement": "Strict feature-release startup performs catalog-only preflight/fails closed before schema helpers; remediation has exact authorized scope.",
+      "acceptance_criteria": "Fresh post-remediation preflight passes mandatory strict gates; no unapproved writer/migration/backfill; compatible user_settings before P0 member test.",
+      "status": "BLOCKED",
+      "source_evidence": "PR #315/316 merged into 3720f1; 229 focused API/typecheck/release checks passed; catalog result categorically failed/exact objects withheld.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approved remediation/fresh preflight/deployment; object-level result intentionally unavailable. Option-B corrected-index attempt was indeterminate (no observable Console output); exact index state remains unverified.",
+      "next_action": "Complete one source-defined gap/disabled-feature/configuration/restart packet; request new authority before DB change.",
+      "founder_approval_needed": "Yes — exact DDL, strict-mode/restart, preflight/deploy.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "release-readiness-coordination-snapshot-2026-10-19.md",
+        "Central owner Option-B result, 2026-10-19 (indeterminate)"
+      ]
+    },
+    {
+      "id": "INT-AUTH-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Authentication/staging",
+      "founder_requirement": "Authenticated staging tests require verified database/auth/session and named existing QA account; no manufactured records/production data.",
+      "acceptance_criteria": "Named admin confirms existing consented QA account/session; only immutable Record A/B; evidence excludes sensitive content.",
+      "status": "NOT STARTED",
+      "source_evidence": "Manifest §5–7 and matrix prerequisites specify auth/account/record boundary.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Release owner; named staging administrator",
+      "dependencies_or_blockers": "MISSING EVIDENCE — auth/session, existing QA member and deployed candidate.",
+      "next_action": "Place account/record evidence in authorization packet only.",
+      "founder_approval_needed": "Yes — QA consent/staging authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "INT-OPENAI-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "OpenAI/AI",
+      "founder_requirement": "No real Kinfolk model/research/image call without bounded authorization; source tests mocked/fail-closed.",
+      "acceptance_criteria": "Only specifically authorized short prompt after non-provider gates; research/fallback off; cost call recorded without sensitive text.",
+      "status": "BLOCKED",
+      "source_evidence": "Variable name present but credential/quota/model/wiring/price unverified; matrix/protocol cap one prompt.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Release owner; Kinfolk owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — readiness/budget/deployment/authorized result.",
+      "next_action": "Keep initial P0/Map pass provider-free; separately authorize one prompt only if selected.",
+      "founder_approval_needed": "Yes — provider budget/scope.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md",
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "INT-MAPS-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Google Maps/Google Places",
+      "founder_requirement": "Use Maps only in bounded authorized interactive session if required; do not use Places initially.",
+      "acceptance_criteria": "Structured non-provider check first; any canvas is one authorized session; Places not invoked.",
+      "status": "BLOCKED",
+      "source_evidence": "Maps JS/Places keys not evidenced; initial pass excludes Places; quota may apply.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Release owner; Maps owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — key/config/quota/interactive receipt.",
+      "next_action": "Request one Maps session only if canvas proof needed.",
+      "founder_approval_needed": "Yes — Maps budget/scope.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_COORDINATED_WEB_IOS_ANDROID_ACCEPTANCE_MATRIX_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "INT-STRIPE-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Stripe/Web payments",
+      "founder_requirement": "Keep membership checkout/portal/subscription/payment testing out until D2–D11 and rail authorization complete.",
+      "acceptance_criteria": "D1 maintains no checkout side effect; future activation has canonical catalog, verified provider ledger/lifecycle and legal/tax/support approval.",
+      "status": "BLOCKED",
+      "source_evidence": "D1 remote source fails closed; manifest excludes Stripe; legal verification changed nothing.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder/legal; payment/entitlement owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — D2–D11 closure, Stripe config, sandbox lifecycle/legal approval.",
+      "next_action": "Maintain closed rails; exclude Stripe from first staging pass.",
+      "founder_approval_needed": "Yes — coordinated payment/release/legal approval.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md",
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "STRIPE_LEGAL_POLICY_VERIFICATION_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "INT-APPLE-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Apple/iOS",
+      "founder_requirement": "No native purchase build/test now; future iOS digital purchases need approved IAP-parity/storefront posture and receipt/restore.",
+      "acceptance_criteria": "Separate plan covers offerings, verified receipt/restore, storefront/country and external-CTA controls before build.",
+      "status": "NOT STARTED",
+      "source_evidence": "Audit G3/J13/K7: mobile commerce off; manifest excludes mobile builds.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "Not applicable.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "Not applicable.",
+      "responsible_owner_or_task": "Founder; mobile commerce owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — posture/mapping/build/store-sandbox acceptance.",
+      "next_action": "Defer beyond free-core release.",
+      "founder_approval_needed": "Yes — explicit future commerce posture.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "INT-GOOGLE-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Google Play/Android",
+      "founder_requirement": "No Android purchase build/test now; future commerce needs approved GPB/External Content Links/Alternative Billing posture and receipt/restore/disclosures.",
+      "acceptance_criteria": "Separate plan covers selected program, offerings, verification/restore/reporting/disclosures/refund implications/new build.",
+      "status": "NOT STARTED",
+      "source_evidence": "Audit G3/J13/K7: Android commerce off; GPB safe initial route.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "Not applicable.",
+      "ios_evidence": "Not applicable.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; mobile commerce owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — posture/mapping/build/store-sandbox acceptance.",
+      "next_action": "Defer beyond free-core release.",
+      "founder_approval_needed": "Yes — explicit future commerce posture.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md"
+      ]
+    },
+    {
+      "id": "INT-REVENUECAT-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "RevenueCat/Apple/Google",
+      "founder_requirement": "Keep RevenueCat disabled; future cross-provider work cannot mutate shared member_type/subscription fields or overwrite independent grants.",
+      "acceptance_criteria": "Provider receipt/entitlement rows integrate with additive ledger; cancellation only affects provider row; native rail stays disabled until enabled.",
+      "status": "BLOCKED",
+      "source_evidence": "Audit A/F/H2 and D3/D8 reconciliation identify disabled client and mutable-field conflict.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Entitlement/mobile commerce owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — ledger, verification, lifecycle/device receipts.",
+      "next_action": "Do not enable/restore/purchase; compare source only after D3 design.",
+      "founder_approval_needed": "Yes — future provider/release authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
+        "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "INT-OTHER-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Tavily/research,email/SMS,analytics,storage,Sentry",
+      "founder_requirement": "Tavily/web research, email/SMS, analytics, storage and Sentry are unestablished for staging and excluded from initial pass.",
+      "acceptance_criteria": "Initial acceptance invokes none; later use has provider-specific cost/data/verification approval.",
+      "status": "NOT STARTED",
+      "source_evidence": "Manifest §5 says configuration unestablished; Sentry variable/source not active configuration.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Release owner; provider owners",
+      "dependencies_or_blockers": "MISSING EVIDENCE — configuration/readiness/authorization.",
+      "next_action": "Keep excluded; create separate packet per provider.",
+      "founder_approval_needed": "Yes — provider-specific authorization.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_COORDINATED_STAGING_RELEASE_MANIFEST_2026-10-17.md",
+        "MWM_UNIVERSAL_MEMORY_CONNECTED_INTELLIGENCE_FOUNDATION_2026-10-19.md"
+      ]
+    },
+    {
+      "id": "INT-TRANSPORT-001",
+      "feature_area": "Integrations/dependencies",
+      "platform": "Transportation/rideshare providers",
+      "founder_requirement": "No transportation OAuth/credentials/account scraping/fare-ETA-status/monitoring/paid service/booking/location/sharing integration is active or authorized.",
+      "acceptance_criteria": "Without independently authorized fresh source, Kinfolk never calls fare/ETA/availability live or books; later action needs explicit just-in-time authorization.",
+      "status": "NOT STARTED",
+      "source_evidence": "Cumulative matrix §§63–70 defines boundary/freshness/monitor-notify separation.",
+      "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
+      "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
+      "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
+      "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
+      "responsible_owner_or_task": "Founder; connected-apps/provider owner",
+      "dependencies_or_blockers": "MISSING EVIDENCE — approved provider/handoff/source/consent/worker-notification design.",
+      "next_action": "Keep provider-independent consented preferences only.",
+      "founder_approval_needed": "Yes — external/provider activation.",
+      "last_verified_date": "2026-10-19",
+      "prior_evidence_refs": [
+        "MWM_CUMULATIVE_TEST_MATRIX_2026-10-19.md",
+        "MWM_UNIVERSAL_MEMORY_CONNECTED_INTELLIGENCE_FOUNDATION_2026-10-19.md"
+      ]
+    }
+  ],
+  "dependency_register": [
+    {
+      "category": "database/schema",
+      "classification": "UNSATISFIED",
+      "evidence": "Earlier catalog preflight categorically failed; later authorized two-index check was indeterminate because the private Console emitted no result. Exact corrected-index state is unverified; no deploy occurred.",
+      "founder_action": "First authorize one observable, session-read-only two-index query; remediation/DDL/config/restart needs a separate later approval."
+    },
+    {
+      "category": "Railway/AWS",
+      "classification": "UNSATISFIED",
+      "evidence": "Staging API remains old 70f100258; integrated local source is not deployed; Option B created no proxy/deployment and returned no catalog result.",
+      "founder_action": "After observable preflight, provide a separately authorized named-candidate deployment scope, rollback control and stop conditions."
+    },
+    {
+      "category": "authentication",
+      "classification": "UNVERIFIED",
+      "evidence": "Database/auth/session and a named existing QA member are not verified for staging.",
+      "founder_action": "Name authorized administrator and consented existing QA account; create no data."
+    },
+    {
+      "category": "OpenAI/AI",
+      "classification": "UNVERIFIED",
+      "evidence": "Variable name present; credential/quota/model/wiring/price unverified; no call made.",
+      "founder_action": "Authorize at most one bounded prompt only after non-provider gates."
+    },
+    {
+      "category": "maps",
+      "classification": "UNVERIFIED",
+      "evidence": "Google Maps JS/Places key not evidenced; Places excluded; interactive canvas may consume quota.",
+      "founder_action": "Authorize one Maps session only if canvas proof is required."
+    },
+    {
+      "category": "Apple",
+      "classification": "NOT REQUIRED FOR CURRENT TESTING",
+      "evidence": "Native commerce disabled and outside coordinated free-core release scope.",
+      "founder_action": "Defer to separate iOS IAP/storefront authorization."
+    },
+    {
+      "category": "Google",
+      "classification": "NOT REQUIRED FOR CURRENT TESTING",
+      "evidence": "Android commerce disabled; GPB/alternative-program decision is future work.",
+      "founder_action": "Defer to separate Android commerce authorization."
+    },
+    {
+      "category": "Stripe",
+      "classification": "UNSATISFIED",
+      "evidence": "D1 checkout closed; D2–D11 catalog/benefit/legal/lifecycle work remains; no provider action.",
+      "founder_action": "Keep closed; approve D2–D11 and controlled future rail activation."
+    },
+    {
+      "category": "identity verification",
+      "classification": "UNVERIFIED",
+      "evidence": "Verification must not be purchasable, but no end-to-end verification/display acceptance exists.",
+      "founder_action": "Approve business workflow/benefit boundary then test it."
+    },
+    {
+      "category": "legal",
+      "classification": "UNSATISFIED",
+      "evidence": "Terms/Privacy URLs reachable; privacy version/processor and cancellation/refund process require founder/legal review.",
+      "founder_action": "Record merchant/MoR, tax, support/refund/dispute owner and approved policy versions."
+    },
+    {
+      "category": "RevenueCat",
+      "classification": "NOT REQUIRED FOR CURRENT TESTING",
+      "evidence": "Intentionally disabled; legacy mutable-field design conflicts with additive ledger.",
+      "founder_action": "Do not enable; reconcile in separate cross-provider plan."
+    },
+    {
+      "category": "Tavily/web research",
+      "classification": "NOT REQUIRED FOR CURRENT TESTING",
+      "evidence": "Configuration not evidenced; initial pass prohibits research/fallback.",
+      "founder_action": "Keep disabled; use provider-specific approval later."
+    },
+    {
+      "category": "email/SMS/analytics/storage",
+      "classification": "NOT REQUIRED FOR CURRENT TESTING",
+      "evidence": "Configuration not established; initial pass excludes send/upload/analytics.",
+      "founder_action": "Keep excluded until separately approved."
+    },
+    {
+      "category": "Sentry",
+      "classification": "UNVERIFIED",
+      "evidence": "DSN variable name does not establish active mobile configuration.",
+      "founder_action": "Do not rely on it as release evidence; validate separately if needed."
+    },
+    {
+      "category": "transportation/rideshare providers",
+      "classification": "NOT REQUIRED FOR CURRENT TESTING",
+      "evidence": "No OAuth, credentials, live quote/status, booking, monitoring or provider integration authorized.",
+      "founder_action": "Keep provider-free; separate approval for later handoff/source access."
+    }
+  ],
+  "release_readiness": {
+    "can_app_be_tested_today": "No authorized end-to-end/member-visible app test can run today. The deployed staging API is older than the integrated local source, its candidate/schema compatibility is not attested, and deployment would carry unapproved pre-traffic database-writer risk.",
+    "exact_documented_source_and_deployed_version_state": [
+      "Last directly verified remote authority: origin/staging/kinfolk-full-candidate-20261014 at 12e0b7268a4148ce3e948400af79cf6280b893cf; D1 d4ce382 and receipt 86a70e80 are ancestors.",
+      "Separate staging candidate: 3720f1d23b2e3e3d64d3e3cafc15221fb57425fe; source-validated, not deployed.",
+      "Documented isolated staging API live source: 70f100258 on a different branch.",
+      "Later local-only f3d4457/c7111caf receipts are not remote/staging evidence. The authorized Option-B two-index attempt emitted no observable catalog output, so both corrected-index existence/compatibility states are indeterminate; this neither reverses the earlier categorical preflight incompatibility nor proves it persists for those exact objects."
+    ],
+    "currently_testable_functionality": "Only source-level focused contracts/fixtures are evidenced: D1 fail-closed checkout; P0/Map/Directory contracts; Shared Plans pure policy; Universal Memory selector Slices 1–3; local-only privacy/session protections. None is AWS, provider, real database, browser/device or member-visible certification.",
+    "shortest_safe_next_milestone": "Obtain a fresh, separately authorized, independently observable private-console read-only catalog query for the two corrected indexes. It must attest a sanitized result before any remediation/deploy decision; in parallel, centralize the named integrated local candidate without remote or environment action.",
+    "smallest_next_authorization_request": {
+      "request": "First, authorize exactly one fresh, independently observable private-console catalog query using the in-service database URL with default_transaction_read_only=on; return only sanitized existence/definition compatibility for the two indexes. It does not authorize deploy, DDL, proxy, provider, or data change. Any remediation/deployment remains a separate later decision.",
+      "database_risk": "The new query itself must be session-read-only. Separately, existing startup evidence still shows pre-listener schema helpers/writers; no deployment can be represented as no-database-action, and no generic migration/backfill/broad repair may substitute.",
+      "rollback": "For the read-only query, no schema/data rollback applies; stop on no observable result. For any later deployment/remediation, candidate and traffic rollback controls remain unverified and must be supplied in that separate authorization.",
+      "stop_conditions": "Stop if output is not independently observable, a credential would be exposed, a second query would be needed, any writer/migration/proxy/deployment is proposed, or any provider/data mutation/intermediate build is needed. Later release gates remain separate."
+    },
+    "items_that_can_wait_beyond_initial_free_core_testing": [
+      "Membership checkout/catalog activation and all Stripe lifecycle work.",
+      "Apple/Google/RevenueCat purchase rails and new mobile commerce builds.",
+      "Provider readiness sweeps, Google Places, Tavily/research, email/SMS/analytics/storage.",
+      "Shared Plans persistence/invitations/routes/UI, calendar/OAuth, monitoring/notification/transport providers.",
+      "Paid business-plan charging and unapproved partner/concierge/creator/Enterprise offers."
+    ]
+  },
+  "active_task_recommendations": [
+    {
+      "task": "QJATRGk7nUgzDlccMCUcG6 — central release/preflight coordination and LA-002 selection",
+      "mapped_requirement_ids": [
+        "INT-DB-001",
+        "CORE-002",
+        "REL-001",
+        "REL-002",
+        "SAFE-003"
+      ],
+      "deliverable": "Preserve the indeterminate Option-B record; select one exclusive LA-002 safety-repair claim and centrally review the master checklist baseline.",
+      "acceptance_criterion": "Any LA-002 repair has an exact clean authority, two-path scope, focused test, and no external action; checklist is centrally committed only after hash/path review.",
+      "stopping_condition": "Stop/hold at any database, provider, browser, deployment, remote or source-ownership conflict.",
+      "recommendation": "CONTINUE only within the recorded source-only/preflight boundaries."
+    },
+    {
+      "task": "S9iVHR3fQY0fcmRMQKLpOO — BUSINESS-OWNER-001 record",
+      "mapped_requirement_ids": [
+        "BIZ-005"
+      ],
+      "deliverable": "Central-owner handoff mapping the completed local two-path claim to authority/release evidence.",
+      "acceptance_criterion": "Exact scope/authority relationship is recorded without reopening the claim.",
+      "stopping_condition": "Stop implementation unless a demonstrated defect is supplied.",
+      "recommendation": "STOP scoped work; hand off only."
+    },
+    {
+      "task": "yINBiovLIPiFnyQCFfSycn — Community-Frequented Alternatives / Scorecard candidate coordination",
+      "mapped_requirement_ids": [
+        "COMM-001",
+        "COMM-002",
+        "COMM-004"
+      ],
+      "deliverable": "Central-owner role/claim boundary decision because evidence identifies overlap with unified local integration coordination.",
+      "acceptance_criterion": "One non-overlapping owner/scope is recorded before additional related work.",
+      "stopping_condition": "Stop/hold if central owner does not resolve role overlap.",
+      "recommendation": "PAUSE FOR CENTRAL OWNER DECISION; no inference from credits."
+    },
+    {
+      "task": "44XXTVLrtPEqRlFbDRQx9y — Library/provider/usage owner",
+      "mapped_requirement_ids": [
+        "KMEM-001",
+        "KMEM-004",
+        "INT-OTHER-001"
+      ],
+      "deliverable": "Maintain reserved Library/provider/usage boundary; any new slice supplies its own approval/evidence packet.",
+      "acceptance_criterion": "No memory initiative edits reserved paths or activates a provider.",
+      "stopping_condition": "Stop at boundary; no provider/deployment action without separate authorization.",
+      "recommendation": "CONTINUE ONLY EXISTING RESERVED OWNERSHIP; do not merge scopes."
+    }
+  ],
+  "controlled_update_protocol": [
+    "Every task reads the latest centrally integrated checklist before work.",
+    "Task claims only listed requirement IDs and returns immutable, scoped evidence: authority/SHA where applicable, tests, environment, platform, provider/data actions, pass/fail, blockers and stop conditions.",
+    "Central integration owner verifies evidence, applies a reviewable checklist update, preserves audit history and recalculates unique-ID counts.",
+    "No task self-marks FOUNDER ACCEPTED; only an explicit founder decision recorded by the central owner may do so.",
+    "SOURCE INTEGRATED, staging/AWS, Web/iOS/Android and MEMBER-VISIBLE VERIFIED evidence remain separate; a local test/carrier never establishes member-visible verification."
+  ],
+  "audit_history": [
+    {
+      "date": "2026-10-17",
+      "event": "Membership audit recorded checkout not ready, free-core policy, approved prices/cohorts and D1–D11 plan."
+    },
+    {
+      "date": "2026-10-17",
+      "event": "Coordinated staging manifest/acceptance protocol prepared; later manifest update records categorical staging catalog-preflight failure and no deployment."
+    },
+    {
+      "date": "2026-10-17",
+      "event": "Validated-presence production operation completed 3,274 records and held 217; not a broad member-product acceptance."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "D1 reconciliation records remote source authority 12e0b726 and source-only—not external—acceptance."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Shared Plans Phase A and Universal Memory foundation receipts record source-only/local-only boundaries."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "This founder baseline is synthesized for later controlled central integration; it makes no deployment, provider, source or record change."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Founder-authorized Option-B two-index private-console attempt returned no observable catalog output. Both index states are indeterminate; no proxy, DDL, mutation, provider call, deployment, or activation occurred."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Central owner recorded LA-002, direct qualified-care safety override, as an unclaimed P0 local source-repair candidate. It is tracked as IN DEVELOPMENT pending exclusive scope, test, and commit evidence."
+    }
+  ],
+  "evidence_gaps": [
+    "Complete historical requirement universe and all historical task records/timelines/outputs are not among the permitted evidence files.",
+    "Current authoritative source-tree-to-requirement mapping/full commit history is unavailable; only cited summaries/receipts are used.",
+    "Staging catalog evidence intentionally retains a categorical incompatibility, not object-level rows.",
+    "No authorized deployed staging, authenticated browser/member-visible, physical-device, mobile-build, provider-sandbox or real-database acceptance receipt is available.",
+    "No complete Stripe/Apple/Google/RevenueCat catalog, configuration, receipt, lifecycle or store-sandbox evidence is available.",
+    "The founder-authorized Option-B two-index private-console attempt emitted no attestable output; exact corrected-index existence/definition compatibility remains indeterminate pending a separately authorized observable read-only query."
+  ],
+  "dashboard_counts": {
+    "label": "PROVISIONAL — calculated from unique requirement IDs in this baseline only",
+    "unique_requirement_ids": 54,
+    "by_primary_status": {
+      "BLOCKED": 19,
+      "IN DEVELOPMENT": 9,
+      "NOT STARTED": 11,
+      "SOURCE INTEGRATED": 15
+    },
+    "by_founder_area": {
+      "Core app": 2,
+      "Directory/business/verification": 4,
+      "Maps/location": 2,
+      "Kinfolk conversation/discovery": 2,
+      "Kinfolk memory/voice/images/tools": 5,
+      "Community/social": 5,
+      "Safety": 3,
+      "Business-owner dashboard": 5,
+      "Founder/Admin dashboard": 2,
+      "Memberships/payments/entitlements": 11,
+      "Integrations/dependencies": 10,
+      "Web/iOS/Android/release readiness": 3
+    },
+    "unavailable_evidence_classes": [
+      "Complete historical requirement universe and all historical task records/timelines/outputs are not among the permitted evidence files.",
+      "Current authoritative source-tree-to-requirement mapping/full commit history is unavailable; only cited summaries/receipts are used.",
+      "Staging catalog evidence intentionally retains a categorical incompatibility, not object-level rows.",
+      "No authorized deployed staging, authenticated browser/member-visible, physical-device, mobile-build, provider-sandbox or real-database acceptance receipt is available.",
+      "No complete Stripe/Apple/Google/RevenueCat catalog, configuration, receipt, lifecycle or store-sandbox evidence is available.",
+      "The founder-authorized Option-B two-index private-console attempt emitted no attestable output; exact corrected-index existence/definition compatibility remains indeterminate pending a separately authorized observable read-only query."
+    ]
+  }
+}
