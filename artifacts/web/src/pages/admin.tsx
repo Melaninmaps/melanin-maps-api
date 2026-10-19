@@ -359,6 +359,55 @@ type AdminBusiness = {
   } | null;
 };
 
+type KinfolkCatalogState = "intake" | "review" | "ready" | "held" | "removed";
+type KinfolkCatalogMembership = {
+  catalogState: KinfolkCatalogState;
+  reason: string;
+  updatedAt: string;
+};
+
+const KINFOLK_CATALOG_STATES: KinfolkCatalogState[] = ["intake", "review", "ready", "held", "removed"];
+const KINFOLK_CATALOG_STATE_COPY: Record<KinfolkCatalogState, { english: string; spanish: string }> = {
+  intake: { english: "intake", spanish: "ingreso" },
+  review: { english: "review", spanish: "revisión" },
+  ready: { english: "ready", spanish: "listo" },
+  held: { english: "held", spanish: "en espera" },
+  removed: { english: "removed", spanish: "eliminado" },
+};
+
+function isKinfolkCatalogState(value: unknown): value is KinfolkCatalogState {
+  return typeof value === "string" && KINFOLK_CATALOG_STATES.includes(value as KinfolkCatalogState);
+}
+
+function kinfolkCatalogStatusCopy(membership: KinfolkCatalogMembership | undefined): string {
+  if (!membership) return "Not in Kinfolk Current / No está en Kinfolk Current";
+  const copy = KINFOLK_CATALOG_STATE_COPY[membership.catalogState];
+  return `Kinfolk Current: ${copy.english} / Estado de Kinfolk Current: ${copy.spanish}`;
+}
+
+function kinfolkCatalogRecoveryCopy(error: unknown): string {
+  const message = typeof error === "string" ? error : "";
+  if (message.includes("Confirmed duplicate")) {
+    return "Confirmed duplicate records cannot be added to Kinfolk Current. No change was made. / Los registros duplicados confirmados no se pueden agregar a Kinfolk Current. No se realizó ningún cambio.";
+  }
+  if (message.includes("existing Kinfolk Catalog membership")) {
+    return "Only an existing Kinfolk Current membership can be marked removed. No membership was created. / Solo una membresía existente de Kinfolk Current puede marcarse como removed. No se creó ninguna membresía.";
+  }
+  if (message.includes("not eligible for Kinfolk Current")) {
+    return "This business is not eligible for Kinfolk Current. Review its public canonical profile and documented promotion eligibility before adding it. / Este negocio no es elegible para Kinfolk Current. Revise su perfil canónico público y la elegibilidad de promoción documentada antes de agregarlo.";
+  }
+  if (message.includes("Business not found")) {
+    return "The business was not found, so Kinfolk Current was not changed. / No se encontró el negocio, por lo que Kinfolk Current no se modificó.";
+  }
+  if (message.includes("state must be") || message.includes("reason must be")) {
+    return "A valid Kinfolk Current state and a reason between 3 and 1000 characters are required. / Se requiere un estado válido de Kinfolk Current y un motivo de entre 3 y 1000 caracteres.";
+  }
+  if (message.includes("Admin required")) {
+    return "Administrator access is required to change Kinfolk Current. / Se requiere acceso de administrador para cambiar Kinfolk Current.";
+  }
+  return "Kinfolk Current could not be updated. Review the public canonical profile and documented eligibility; this control does not publish, archive, restore, or delete a business. / No se pudo actualizar Kinfolk Current. Revise el perfil canónico público y la elegibilidad documentada; este control no publica, archiva, restaura ni elimina un negocio.";
+}
+
 type BusinessReconciliationFilter =
   | "all"
   | "unreviewed"
@@ -936,6 +985,8 @@ export default function Admin() {
   const [hiddenUserCount, setHiddenUserCount] = useState(0);
   const [showHiddenUsers, setShowHiddenUsers] = useState(false);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
+  const [kinfolkCatalogMemberships, setKinfolkCatalogMemberships] = useState<Record<string, KinfolkCatalogMembership> | null>(null);
+  const [kinfolkCatalogUpdatingBusinessId, setKinfolkCatalogUpdatingBusinessId] = useState<string | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [reports, setReports] = useState<ContentReportRow[]>([]);
@@ -1060,6 +1111,7 @@ export default function Admin() {
     sort: "name_asc" as typeof bizSort,
   });
   const businessInventoryRequestId = useRef(0);
+  const kinfolkCatalogMembershipRequestId = useRef(0);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -1315,6 +1367,47 @@ export default function Admin() {
       .finally(() => setMetricsLoading(false));
   }, []);
 
+  const loadKinfolkCatalogMemberships = useCallback((businessIds: string[]) => {
+    const ids = [...new Set(businessIds
+      .filter((id) => typeof id === "string" && id.trim())
+      .map((id) => id.trim()))];
+    const requestId = ++kinfolkCatalogMembershipRequestId.current;
+    if (ids.length === 0) {
+      setKinfolkCatalogMemberships({});
+      return Promise.resolve();
+    }
+    setKinfolkCatalogMemberships(null);
+    const chunks = Array.from(
+      { length: Math.ceil(ids.length / 100) },
+      (_, index) => ids.slice(index * 100, index * 100 + 100),
+    );
+    return Promise.all(chunks.map(async (chunk) => {
+      const params = new URLSearchParams({ businessIds: chunk.join(",") });
+      const response = await fetch(`${BASE}api/admin/kinfolk-catalog?${params}`, { credentials: "include" });
+      const body = await response.json().catch(() => ({})) as { error?: string; memberships?: unknown };
+      if (!response.ok) throw new Error(body.error ?? "Could not load Kinfolk Current status");
+      return Array.isArray(body.memberships) ? body.memberships : [];
+    })).then((membershipGroups) => {
+      if (requestId !== kinfolkCatalogMembershipRequestId.current) return;
+      const next: Record<string, KinfolkCatalogMembership> = {};
+      for (const membership of membershipGroups.flat()) {
+        if (!membership || typeof membership !== "object") continue;
+        const row = membership as { businessId?: unknown; catalogState?: unknown; reason?: unknown; updatedAt?: unknown };
+        if (typeof row.businessId !== "string" || !isKinfolkCatalogState(row.catalogState)) continue;
+        next[row.businessId] = {
+          catalogState: row.catalogState,
+          reason: typeof row.reason === "string" ? row.reason : "",
+          updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : "",
+        };
+      }
+      setKinfolkCatalogMemberships(next);
+    }).catch(() => {
+      if (requestId === kinfolkCatalogMembershipRequestId.current) {
+        setKinfolkCatalogMemberships(null);
+      }
+    });
+  }, []);
+
   const loadBusinesses = useCallback((next: {
     page?: number;
     pageSize?: 50 | 100 | 250 | 500;
@@ -1370,6 +1463,7 @@ export default function Admin() {
 
     const requestId = ++businessInventoryRequestId.current;
     setBusinessInventoryLoading(true);
+    setKinfolkCatalogMemberships(null);
     return fetch(`${BASE}api/admin/businesses?${params}`, { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
@@ -1411,6 +1505,7 @@ export default function Admin() {
         }
         setBusinessInventoryFilterError(null);
         setBusinesses(responseBusinesses);
+        void loadKinfolkCatalogMemberships(responseBusinesses.map((business) => business.id));
         setBusinessInventoryIsTruncated(Boolean(data.inventoryIsTruncated));
         setBusinessInventoryTotal(
           typeof data.inventoryTotal === "number" ? data.inventoryTotal : 0,
@@ -1478,7 +1573,63 @@ export default function Admin() {
           setBusinessInventoryLoading(false);
         }
       });
-  }, []);
+  }, [loadKinfolkCatalogMemberships]);
+
+  const updateKinfolkCatalogMembership = async (business: AdminBusiness) => {
+    const current = kinfolkCatalogMemberships?.[business.id];
+    const state = window.prompt(
+      `Kinfolk Current state / Estado de Kinfolk Current for "${business.name}":\nEnter intake, review, ready, held, or removed. “ready” includes an eligible business in the current catalog; “removed” only changes an existing membership. / Ingrese intake, review, ready, held o removed. “ready” incluye un negocio elegible; “removed” solo cambia una membresía existente.`,
+      current?.catalogState ?? "ready",
+    )?.trim().toLowerCase();
+    if (!state) return;
+    if (!isKinfolkCatalogState(state)) {
+      window.alert("Choose intake, review, ready, held, or removed. / Elija intake, review, ready, held o removed.");
+      return;
+    }
+    const reason = window.prompt(
+      "Document the bounded editorial reason for this Kinfolk Current state. / Documente el motivo editorial limitado para este estado de Kinfolk Current.",
+      current?.reason || "Administrator reviewed Kinfolk Current eligibility",
+    )?.trim();
+    if (!reason) {
+      window.alert("Kinfolk Current was not changed because a reason is required. / Kinfolk Current no se modificó porque se requiere un motivo.");
+      return;
+    }
+    kinfolkCatalogMembershipRequestId.current += 1;
+    setKinfolkCatalogUpdatingBusinessId(business.id);
+    try {
+      const response = await fetch(`${BASE}api/admin/kinfolk-catalog/${business.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state, reason }),
+      });
+      const body = await response.json().catch(() => ({})) as {
+        error?: string;
+        membership?: { state?: unknown; reason?: unknown; updated_at?: unknown };
+      };
+      if (!response.ok) {
+        window.alert(kinfolkCatalogRecoveryCopy(body.error));
+        return;
+      }
+      if (isKinfolkCatalogState(body.membership?.state)) {
+        const membership: KinfolkCatalogMembership = {
+          catalogState: body.membership.state,
+          reason: typeof body.membership.reason === "string" ? body.membership.reason : reason,
+          updatedAt: typeof body.membership.updated_at === "string" ? body.membership.updated_at : "",
+        };
+        setKinfolkCatalogMemberships((existing) => ({ ...(existing ?? {}), [business.id]: membership }));
+        const copy = KINFOLK_CATALOG_STATE_COPY[membership.catalogState];
+        window.alert(`Kinfolk Current saved as ${copy.english}. / Kinfolk Current se guardó como ${copy.spanish}.`);
+      } else {
+        window.alert("Kinfolk Current was saved, but its status needs a refresh. / Kinfolk Current se guardó, pero su estado necesita actualizarse.");
+        void loadKinfolkCatalogMemberships([business.id]);
+      }
+    } catch {
+      window.alert("Kinfolk Current could not be updated. Please try again. / No se pudo actualizar Kinfolk Current. Inténtelo de nuevo.");
+    } finally {
+      setKinfolkCatalogUpdatingBusinessId(null);
+    }
+  };
 
   const loadSourceBackedDirectoryIntakePreview = useCallback(async (
     batch = sourceDirectoryIntakeBatch,
@@ -5665,6 +5816,26 @@ Selected: ${summary}`,
                               >
                                 <ExternalLink className="h-3.5 w-3.5" /> Open canonical MWM profile
                               </a>
+                              <div
+                                className="rounded-lg border border-[#5F1E2D]/15 bg-[#FAF6EF] px-3 py-2 text-[11px] leading-4 text-[#3A1F0E]/70"
+                                aria-live="polite"
+                              >
+                                {kinfolkCatalogMemberships === null
+                                  ? "Kinfolk Current status unavailable / Estado de Kinfolk Current no disponible"
+                                  : kinfolkCatalogStatusCopy(kinfolkCatalogMemberships[biz.id])}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => void updateKinfolkCatalogMembership(biz)}
+                                disabled={kinfolkCatalogUpdatingBusinessId === biz.id}
+                                title="Updates only the durable Kinfolk Current membership; it never publishes, archives, restores, or deletes the business. / Actualiza solo la membresía durable de Kinfolk Current; nunca publica, archiva, restaura ni elimina el negocio."
+                                className="flex items-center gap-1 text-xs font-bold text-[#5F1E2D] hover:text-[#7A2637] border border-[#7A2637]/25 hover:bg-[#7A2637]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-45"
+                              >
+                                <BookOpen className="h-3.5 w-3.5" />
+                                {kinfolkCatalogUpdatingBusinessId === biz.id
+                                  ? "Saving Kinfolk Current / Guardando Kinfolk Current"
+                                  : "Manage Kinfolk Current / Administrar Kinfolk Current"}
+                              </button>
                               <button
                                   onClick={() => {
                                     if (!biz.isDuplicate) {

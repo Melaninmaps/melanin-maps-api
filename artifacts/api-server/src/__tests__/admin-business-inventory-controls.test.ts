@@ -185,6 +185,16 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(sharedRowActions).toContain('target="_blank"');
     expect(sharedRowActions).toContain('rel="noopener noreferrer"');
     expect(sharedRowActions).not.toContain('href={`${BASE}business/${biz.id}`}');
+    expect(sharedRowActions).toContain("Manage Kinfolk Current / Administrar Kinfolk Current");
+    expect(sharedRowActions).toContain("Kinfolk Current status unavailable / Estado de Kinfolk Current no disponible");
+    expect(adminScreen).toContain("Kinfolk Current could not be updated. Please try again. / No se pudo actualizar Kinfolk Current. Inténtelo de nuevo.");
+    expect(sharedRowActions).toContain("onClick={() => void updateKinfolkCatalogMembership(biz)}");
+    expect(adminScreen).toContain('api/admin/kinfolk-catalog?${params}');
+    expect(adminScreen).toContain('api/admin/kinfolk-catalog/${business.id}');
+    expect(adminScreen).toContain("function kinfolkCatalogRecoveryCopy(error: unknown)");
+    expect(adminScreen).toContain("window.alert(kinfolkCatalogRecoveryCopy(body.error));");
+    expect(adminScreen).toContain("Este negocio no es elegible para Kinfolk Current");
+    expect(adminScreen).toContain("this control does not publish, archive, restore, or delete a business");
   });
 
   it("keeps confirmed duplicates in their own all-status vault with guarded deletion only", () => {

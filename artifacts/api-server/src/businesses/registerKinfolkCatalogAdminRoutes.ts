@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Express, Request, Response } from "express";
 import { pool as defaultPool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
+import { mwmDiasporaPromotionSqlPredicate } from "./mwmCoreDiscoveryPolicy";
 
 export const KINFOLK_CATALOG_COHORT_KEY = "kinfolk_catalog" as const;
 export const KINFOLK_CATALOG_STATES = ["intake", "review", "ready", "held", "removed"] as const;
@@ -27,6 +28,21 @@ export function parseKinfolkCatalogStateChange(body: unknown): CatalogStateChang
   return { state: state as KinfolkCatalogState, reason };
 }
 
+const MAX_CATALOG_STATUS_LOOKUP_IDS = 100;
+
+function parseCatalogStatusLookupIds(value: unknown): string[] {
+  if (value === undefined) return [];
+  if (typeof value !== "string") throw new Error("businessIds must be a comma-separated list");
+  const ids = value.split(",").map((id) => id.trim()).filter(Boolean);
+  if (ids.length === 0 || ids.length > MAX_CATALOG_STATUS_LOOKUP_IDS) {
+    throw new Error(`businessIds must include between 1 and ${MAX_CATALOG_STATUS_LOOKUP_IDS} businesses`);
+  }
+  if (ids.some((id) => id.length > 200) || new Set(ids).size !== ids.length) {
+    throw new Error("businessIds must be unique nonblank identifiers");
+  }
+  return ids;
+}
+
 function safePage(value: unknown): number {
   const page = Number.parseInt(String(value ?? "1"), 10);
   return Number.isFinite(page) && page > 0 ? page : 1;
@@ -46,6 +62,38 @@ export function registerKinfolkCatalogAdminRoutes(app: Express, database: Catalo
   app.get("/api/admin/kinfolk-catalog", async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
       res.status(403).json({ error: "Admin required" });
+      return;
+    }
+    let requestedBusinessIds: string[];
+    try {
+      requestedBusinessIds = parseCatalogStatusLookupIds(req.query.businessIds);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid businessIds" });
+      return;
+    }
+    if (requestedBusinessIds.length > 0) {
+      try {
+        const memberships = await database.query<{
+          business_id: string; state: KinfolkCatalogState; reason: string; updated_at: string;
+        }>(
+          `SELECT business_id, state, reason, updated_at
+             FROM business_catalog_cohort_memberships
+            WHERE cohort_key = $1 AND business_id = ANY($2::text[])
+            ORDER BY business_id ASC`,
+          [KINFOLK_CATALOG_COHORT_KEY, requestedBusinessIds],
+        );
+        res.json({
+          memberships: memberships.rows.map((row) => ({
+            businessId: row.business_id,
+            catalogState: row.state,
+            reason: row.reason,
+            updatedAt: row.updated_at,
+          })),
+        });
+      } catch (error) {
+        req.log.error({ error }, "Failed to load Kinfolk Catalog membership statuses");
+        res.status(500).json({ error: "Could not load Kinfolk Catalog membership statuses" });
+      }
       return;
     }
     const page = safePage(req.query.page);
@@ -168,21 +216,60 @@ export function registerKinfolkCatalogAdminRoutes(app: Express, database: Catalo
         [businessId, KINFOLK_CATALOG_COHORT_KEY],
       );
       const current = before.rows[0] ?? null;
-      const updated = await client.query<{
+      let membership: {
         business_id: string; state: KinfolkCatalogState; reason: string; created_at: string; updated_at: string;
-      }>(
-        `INSERT INTO business_catalog_cohort_memberships
-           (business_id, cohort_key, state, reason, created_by_user_id, updated_by_user_id)
-         VALUES ($1, $2, $3, $4, $5, $5)
-         ON CONFLICT (business_id, cohort_key) DO UPDATE
-           SET state = EXCLUDED.state,
-               reason = EXCLUDED.reason,
-               updated_by_user_id = EXCLUDED.updated_by_user_id,
-               updated_at = NOW()
-         RETURNING business_id, state, reason, created_at, updated_at`,
-        [businessId, KINFOLK_CATALOG_COHORT_KEY, change.state, change.reason, req.user?.id ?? null],
-      );
-      const membership = updated.rows[0];
+      } | undefined;
+      if (change.state === "removed") {
+        if (!current) {
+          await client.query("ROLLBACK");
+          res.status(409).json({ error: "Only an existing Kinfolk Catalog membership can be marked removed" });
+          return;
+        }
+        const updated = await client.query<{
+          business_id: string; state: KinfolkCatalogState; reason: string; created_at: string; updated_at: string;
+        }>(
+          `UPDATE business_catalog_cohort_memberships
+              SET state = $1,
+                  reason = $2,
+                  updated_by_user_id = $3,
+                  updated_at = NOW()
+            WHERE business_id = $4 AND cohort_key = $5
+            RETURNING business_id, state, reason, created_at, updated_at`,
+          [change.state, change.reason, req.user?.id ?? null, businessId, KINFOLK_CATALOG_COHORT_KEY],
+        );
+        membership = updated.rows[0];
+      } else {
+        const eligibleCurrentBusiness = await client.query<{ id: string }>(
+          `SELECT current_kinfolk.id
+             FROM public.public_businesses AS current_kinfolk
+            WHERE current_kinfolk.id = $1
+              AND ${mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")}`,
+          [businessId],
+        );
+        if (!eligibleCurrentBusiness.rows[0]) {
+          await client.query("ROLLBACK");
+          res.status(409).json({
+            error: "Business is not eligible for Kinfolk Current. Confirm a public canonical listing and documented promotion eligibility before adding it.",
+          });
+          return;
+        }
+        const updated = await client.query<{
+          business_id: string; state: KinfolkCatalogState; reason: string; created_at: string; updated_at: string;
+        }>(
+          `INSERT INTO business_catalog_cohort_memberships
+             (business_id, cohort_key, state, reason, created_by_user_id, updated_by_user_id)
+           VALUES ($1, $2, $3, $4, $5, $5)
+           ON CONFLICT (business_id, cohort_key) DO UPDATE
+             SET state = EXCLUDED.state,
+                 reason = EXCLUDED.reason,
+                 updated_by_user_id = EXCLUDED.updated_by_user_id,
+                 updated_at = NOW()
+           RETURNING business_id, state, reason, created_at, updated_at`,
+          [businessId, KINFOLK_CATALOG_COHORT_KEY, change.state, change.reason, req.user?.id ?? null],
+        );
+        membership = updated.rows[0];
+      }
+      if (!membership) throw new Error("Kinfolk Catalog membership update returned no row");
       await client.query(
         `INSERT INTO business_catalog_cohort_audit_events
            (id, business_id, cohort_key, action, actor_user_id, reason, before_state, after_state)
