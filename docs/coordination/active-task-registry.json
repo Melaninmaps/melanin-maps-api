@@ -193,9 +193,20 @@
     },
     {
       "id": "MAP-001-DIRECTORY-PUBLIC-HANDLE-HANDOFF",
-      "status": "IMPLEMENTING",
+      "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
-      "baseline": "86a70e80efa39ad686480cabc07463dfd20fd497",
+      "initialClaimBaseline": "86a70e80efa39ad686480cabc07463dfd20fd497",
+      "carrierBase": "90fcec460d7e9b0d8f188db8b5faf64bf6de841d",
+      "sourceCommit": "65c6e7bd2bb33827b56ee4390ada7003adaa19cd",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "carrier": {
+          "archiveSha256": "c40d5e6b745b9979c000353cb2139b49781092bf62e2937faf767c61cad10be2",
+          "patchSha256": "b58fe8cb25bad58f87253287d46df924c9187247d12c2619f76aad4c6a6bc062",
+          "manifestBaseAndEightPathHashesVerified": true
+        },
+        "reviewAdjustment": "Independent review found that domain-like and malformed dot forms could pass the original scalar grammar. Central integration now rejects URL-like prefixes, recognized domain-like suffixes, consecutive dots, and trailing dots while retaining ordinary non-domain dotted handles."
+      },
       "requirement": "Add an explicit Directory-to-Map handoff for one member-entered public social-handle scalar. The value must be sanitized and fail closed, traverse native Map and Expo Web fallback only, remain an active criterion until the member clears it, and be included only in the existing shared /api/businesses request identity and URL.",
       "paths": [
         "artifacts/mobile/lib/mapDirectoryHandoff.ts",
@@ -208,7 +219,7 @@
         "artifacts/mobile/app/(tabs)/map.web.tsx"
       ],
       "requiredBehavior": [
-        "Accept only one explicitly member-entered, normalized public handle; reject arrays, non-strings, blank, overlong, and malformed inputs without a route or request parameter.",
+        "Accept only one explicitly member-entered, normalized public handle; reject arrays, non-strings, blank, overlong, URL/domain-like, and malformed inputs without a route or request parameter.",
         "Keep the existing Directory business-detail card action; add a separate Map handoff only for the sanitized scalar. Do not derive it from returned business social fields, profile, contacts, Saved Places, device location, Kinfolk memory, preferences, conversation, or other result data.",
         "Carry the already-sanitized scalar through route parameters, FullMapView/useBusinesses request identity, the existing /api/businesses URL builder, native Map active criteria, Expo Web fallback active criteria, and each member-controlled clear action. Do not add pagination where none exists; any later continuation must preserve the same scalar.",
         "Preserve server public-social filtering, direct-name safety behavior, locality/pin policy, preference-neutral Map browsing, and all other Map collections. New user-visible handle wording must carry practical English/Spanish source text; no runtime translation or device acceptance may be claimed."
@@ -221,7 +232,13 @@
       "constraints": [
         "No API route, schema, migration, provider, cache activation, MapTabView, canonical-pin policy, device-location semantics, Kinfolk memory/preferences, Saved Places, contacts, private result data, Shared Plans, Community, D1, Cultural Explorer, browser, device, database, staging, or deployment work.",
         "The owner must verify this exact baseline and claim before editing; only the integration owner may accept and push a reviewed carrier."
-      ]
+      ],
+      "sourceVerification": {
+        "nativeTests": "3 files / 31 tests passed: native-directory-map-handoff, business-discovery-contract, map-locality-first",
+        "nativeTypecheck": "source-aligned no-emit passed with TypeScript 6.0.3 and Node heap limit 8192 MB",
+        "hygiene": ["archive checksum, patch checksum, manifest base, and all eight carrier result hashes verified", "independent semantic review completed", "exact eight-path scope verified", "sanitizer private-dependency boundary passed", "git diff --check passed", "temporary validation files removed"]
+      },
+      "externalAcceptance": "PENDING — no browser, physical device, authenticated API, server, database, schema/migration, provider, cache activation, staging/production, or deployment acceptance was performed."
     }
   ]
 }
