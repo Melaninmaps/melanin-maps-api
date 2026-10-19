@@ -1501,10 +1501,11 @@
         "artifacts/mobile/__tests__/community-content-first.test.ts"
       ],
       "completionContract": {
-        "journey": "An authenticated free member creates a Group from the mobile Community tab, appears as its first member, and another authenticated free member can join an eligible public Group through the live /group/[id] detail route; both remain within existing finite free capacity and receive clear neutral recovery at a reached cap.",
+        "journey": "An authenticated free member creates a Group from the mobile Community tab, receives an explicit success confirmation and opens that created Group through the live /group/[id] route; an authenticated free member can also discover a server-filtered eligible public Group from the existing authenticated catalog and join it through that same live detail route. Both journeys retain existing finite free capacity and neutral recovery at a reached cap.",
         "successStates": [
-          "Create retains current required name/category, creator membership, private/invite-only option, audience preference handling, maximum-member clamp, and responsive refresh behavior.",
-          "Join retains public-only admission, full-group handling, age restriction/date-of-birth safeguard, current-member content isolation, and server-side member insertion/duplicate behavior.",
+          "Create retains current required name/category, creator membership, private/invite-only option, audience preference handling, maximum-member clamp, and responsive refresh behavior; only a successful create may clear the draft and open the returned group.",
+          "Discovery uses the existing authenticated GET /groups catalog, which suppresses non-member private groups and applies current audience filtering. The mobile UI must expose only eligible non-member public catalog entries as navigation to the live /group/[id] route.",
+          "Join retains public-only admission, full-group handling, age restriction/date-of-birth safeguard, current-member content isolation, and server-side member insertion/duplicate behavior. A successful join refreshes the membership-scoped list and current detail state.",
           "A reached existing free join cap remains a 403 TIER_LIMIT_REACHED but has plan-neutral recovery and no upgrade URL or unapproved plan claim; create and join failures retain entered create data or current group state respectively."
         ],
         "nonGoals": [
@@ -1515,8 +1516,10 @@
       },
       "requiredBehavior": [
         "Remove only the direct free-tier denial from POST /groups so authenticated free members can create a Group under the existing free maximum-member cap; retain authentication, payload validation, creator-as-admin membership insertion, privacy/audience/rules handling, and all existing group controls.",
+        "Use the existing authenticated GET /groups catalog for mobile discovery; expose only server-returned public non-member groups as detail navigation. Preserve the route\u2019s private-group suppression, audience filtering, membership markers, authentication, and existing payload fields.",
+        "After a successful create, show confirmation, refresh membership state, and open the returned group through the live /group/[id] route. On non-success, show only safe server error text and preserve the form draft.",
         "Retain the existing finite free group-join count guard, but make only its reached-cap response neutral: preserve status 403 and TIER_LIMIT_REACHED while removing upgrade URL and commercial plan claims. Keep Navigator/Trailblazer capacity behavior untouched.",
-        "The live Community create form must show a returned safe server error without dismissing or clearing entered values. The live /group/[id] join screen must show the returned safe server error while retaining current group state; successful create/join behavior remains as-is."
+        "The live /group/[id] join screen must show the returned safe server error while retaining current group state; successful join refreshes its membership state. Do not change the stale app/groups/[id].tsx route."
       ],
       "constraints": [
         "No new numeric allowance, membership catalog/resolver semantics, payment/checkout, feature activation, Web source, provider call, schema/migration, database runtime action, deployment, remote Git, or browser/device acceptance.",
@@ -1524,8 +1527,8 @@
         "Use only safe server-provided error text already suitable for client display; never expose personal, membership, account, or group-member data in recovery UI."
       ],
       "validationPlan": [
-        "API focused Vitest: pnpm exec vitest run src/__tests__/community-groups-membership-contract.test.ts --reporter=dot from artifacts/api-server.",
-        "Mobile focused Vitest: pnpm exec vitest run __tests__/community-content-first.test.ts --reporter=dot from artifacts/mobile.",
+        "API focused Vitest: pnpm exec vitest run src/__tests__/community-groups-membership-contract.test.ts --reporter=dot from artifacts/api-server; include public catalog privacy/audience/membership assertions alongside free create/join/cap assertions.",
+        "Mobile focused Vitest: pnpm exec vitest run __tests__/community-content-first.test.ts --reporter=dot from artifacts/mobile; assert create confirmation/open, catalog discovery routing, membership refresh, neutral error and draft/state preservation.",
         "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit from artifacts/api-server.",
         "Mobile TypeScript: pnpm exec tsc -p tsconfig.json --noEmit from artifacts/mobile.",
         "Exact six-path scope, git diff --check, source boundaries, hash-verified carrier/apply reconstruction."
