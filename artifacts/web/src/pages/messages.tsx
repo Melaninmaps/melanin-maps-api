@@ -102,7 +102,7 @@ export default function MessagesPage() {
 
   async function send(event: FormEvent): Promise<void> {
     event.preventDefault();
-    if (!selected || !draft.trim()) return;
+    if (!selected || !draft.trim() || selected.requestStatus === "pending") return;
     setSending(true);
     try {
       const response = await authenticatedFetch(`${BASE}api/conversations/${selected.id}/messages`, {
@@ -187,7 +187,7 @@ export default function MessagesPage() {
               {isIncomingPending ? <div className="m-4 rounded-xl border border-[#CA922B]/30 bg-[#FFF8EC] p-4"><p className="text-sm leading-6 text-[#3A1F0E]/75">Accept this request before the sender can continue the conversation.</p><div className="mt-3 flex gap-2"><button type="button" disabled={requestLoading} onClick={() => void respondToRequest("accept")} className="rounded-lg bg-[#2B1507] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Accept</button><button type="button" disabled={requestLoading} onClick={() => void respondToRequest("decline")} className="rounded-lg border border-[#3A1F0E]/20 px-3 py-2 text-sm font-semibold text-[#3A1F0E] disabled:opacity-60">Decline</button></div></div> : null}
               {isOutgoingPending ? <p className="mx-4 mt-4 rounded-xl bg-[#FFF8EC] p-3 text-sm text-[#3A1F0E]/70">Your message request is waiting for this member’s approval.</p> : null}
               <div className="flex-1 space-y-3 overflow-y-auto p-5">{messagesLoading ? <Loader2 className="mx-auto h-5 w-5 animate-spin text-[#CA922B]" /> : messages.length ? messages.map((message) => <div key={message.id} className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-6 ${message.senderId === auth?.user?.id ? "ml-auto bg-[#2B1507] text-white" : "bg-[#FFF8EC] text-[#2B1507]"}`}>{message.content}</div>) : <p className="text-center text-sm text-[#3A1F0E]/50">No messages yet.</p>}</div>
-              <form className="border-t border-[#3A1F0E]/10 p-4" onSubmit={(event) => void send(event)}><div className="flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={isIncomingPending || sending} placeholder={isOutgoingPending ? "Waiting for approval" : "Write a message"} className="min-w-0 flex-1 rounded-xl border border-[#3A1F0E]/15 px-3 py-2.5 text-sm outline-none focus:border-[#CA922B] disabled:bg-[#F4EFE7]" /><button type="submit" disabled={!draft.trim() || isIncomingPending || sending} className="inline-flex items-center justify-center rounded-xl bg-[#CA922B] px-3 text-white disabled:opacity-45" aria-label="Send message">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div></form>
+              <form className="border-t border-[#3A1F0E]/10 p-4" onSubmit={(event) => void send(event)}><div className="flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={isIncomingPending || isOutgoingPending || sending} placeholder={isOutgoingPending ? "Waiting for approval" : "Write a message"} className="min-w-0 flex-1 rounded-xl border border-[#3A1F0E]/15 px-3 py-2.5 text-sm outline-none focus:border-[#CA922B] disabled:bg-[#F4EFE7]" /><button type="submit" disabled={!draft.trim() || isIncomingPending || isOutgoingPending || sending} className="inline-flex items-center justify-center rounded-xl bg-[#CA922B] px-3 text-white disabled:opacity-45" aria-label="Send message">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button></div></form>
             </>
           )}
         </section>

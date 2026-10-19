@@ -24,6 +24,15 @@ type UserRow = {
   profileImageUrl?: string | null;
 };
 
+type MessageRow = {
+  id: number;
+  conversationId: number;
+  role: string;
+  content: string;
+  senderId: string | null;
+  createdAt: Date;
+};
+
 type Predicate =
   | { kind: "eq"; column: unknown; value: unknown }
   | { kind: "and"; predicates: Predicate[] }
@@ -33,12 +42,16 @@ type Predicate =
 const fakes = vi.hoisted(() => ({
   state: {
     conversations: [] as ConversationRow[],
+    messages: [] as MessageRow[],
     users: [] as UserRow[],
     blockedPairs: new Set<string>(),
     nextConversationId: 100,
+    nextMessageId: 1_000,
     emptyAcceptMutation: false,
     emptyDeclineMutation: false,
   },
+  familyScan: vi.fn(async () => ({ blocked: false })),
+  notificationDelivery: vi.fn(async () => undefined),
   tables: {
     conversations: {
       table: "conversations",
@@ -49,7 +62,7 @@ const fakes = vi.hoisted(() => ({
       lastMessageAt: "conversation.lastMessageAt",
       lastMessagePreview: "conversation.lastMessagePreview",
     },
-    messages: { table: "messages" },
+    messages: { table: "messages", conversationId: "message.conversationId" },
     users: {
       table: "users",
       id: "user.id",
@@ -84,7 +97,7 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("../../lib/familyFilter", () => ({
-  scanForFamily: vi.fn(async () => ({ blocked: false })),
+  scanForFamily: fakes.familyScan,
 }));
 
 vi.mock("../../social/profileRelationshipAccess", () => ({
@@ -94,6 +107,10 @@ vi.mock("../../social/profileRelationshipAccess", () => ({
   usersAreBlocked: vi.fn(async (left: string, right: string) =>
     fakes.state.blockedPairs.has(pair(left, right)),
   ),
+}));
+
+vi.mock("../../community/communitySocialNotifications", () => ({
+  deliverCommunitySocialNotification: fakes.notificationDelivery,
 }));
 
 vi.mock("@workspace/db", () => {
@@ -195,6 +212,23 @@ vi.mock("@workspace/db", () => {
     insert: vi.fn((table: unknown) => ({
       values: (values: Record<string, unknown>) => ({
         returning: async () => {
+          if (table === fakes.tables.messages) {
+            const message: MessageRow = {
+              id: fakes.state.nextMessageId++,
+              conversationId:
+                typeof values.conversationId === "number"
+                  ? values.conversationId
+                  : -1,
+              role: typeof values.role === "string" ? values.role : "user",
+              content:
+                typeof values.content === "string" ? values.content : "",
+              senderId:
+                typeof values.senderId === "string" ? values.senderId : null,
+              createdAt: new Date("2026-10-19T00:00:00.000Z"),
+            };
+            fakes.state.messages.push(message);
+            return [message];
+          }
           if (table !== fakes.tables.conversations) return [];
           const conversation: ConversationRow = {
             id: fakes.state.nextConversationId++,
@@ -308,6 +342,7 @@ function seedPending(id = 1): ConversationRow {
 
 function resetFakes(): void {
   fakes.state.conversations = [];
+  fakes.state.messages = [];
   fakes.state.users = [
     { id: REQUESTER, isPrivate: false, allowDm: true },
     { id: RECIPIENT, isPrivate: true, allowDm: true },
@@ -315,8 +350,11 @@ function resetFakes(): void {
   ];
   fakes.state.blockedPairs.clear();
   fakes.state.nextConversationId = 100;
+  fakes.state.nextMessageId = 1_000;
   fakes.state.emptyAcceptMutation = false;
   fakes.state.emptyDeclineMutation = false;
+  fakes.familyScan.mockClear();
+  fakes.notificationDelivery.mockClear();
 }
 
 beforeEach(() => resetFakes());
@@ -379,6 +417,60 @@ describe("server-authoritative direct-message request lifecycle", () => {
     ]);
     expect(requesterAccepted.body.conversations).toEqual([
       expect.objectContaining({ id: 100, requestStatus: "accepted" }),
+    ]);
+  });
+
+  it("keeps both pending participants from sending content, then permits the requester after recipient acceptance", async () => {
+    const server = app();
+    const pending = seedPending(150);
+
+    const requesterPendingMessage = await request(server)
+      .post("/conversations/150/messages")
+      .set("x-member-id", REQUESTER)
+      .send({ content: "Please read this before accepting." });
+    const recipientPendingMessage = await request(server)
+      .post("/conversations/150/messages")
+      .set("x-member-id", RECIPIENT)
+      .send({ content: "I cannot reply before accepting." });
+
+    for (const response of [requesterPendingMessage, recipientPendingMessage]) {
+      expect(response.statusCode).toBe(403);
+      expect(response.body).toMatchObject({ code: "REQUEST_PENDING" });
+    }
+    expect(fakes.familyScan).not.toHaveBeenCalled();
+    expect(fakes.state.messages).toEqual([]);
+    expect(pending).toMatchObject({
+      requestStatus: "pending",
+      lastMessageAt: null,
+      lastMessagePreview: null,
+    });
+
+    const accepted = await request(server)
+      .post("/conversations/150/accept")
+      .set("x-member-id", RECIPIENT);
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.body.conversation).toMatchObject({
+      id: 150,
+      requestStatus: "accepted",
+    });
+
+    const requesterAcceptedMessage = await request(server)
+      .post("/conversations/150/messages")
+      .set("x-member-id", REQUESTER)
+      .send({ content: "Thank you for accepting." });
+    expect(requesterAcceptedMessage.statusCode).toBe(201);
+    expect(requesterAcceptedMessage.body.message).toMatchObject({
+      id: 1_000,
+      conversationId: 150,
+      content: "Thank you for accepting.",
+      senderId: REQUESTER,
+    });
+    expect(fakes.state.messages).toEqual([
+      expect.objectContaining({
+        conversationId: 150,
+        content: "Thank you for accepting.",
+        senderId: REQUESTER,
+      }),
     ]);
   });
 

@@ -179,4 +179,33 @@ describe("DM recipient request fail-closed recovery", () => {
       'const isIncomingPending = selected?.requestStatus === "pending" && selected.requestedBy !== auth?.user?.id;',
     );
   });
+
+  it("keeps both pending participants read-only until server-authoritative acceptance across web and native", () => {
+    const webSend = between(
+      webMessages,
+      "async function send",
+      "async function respondToRequest",
+    );
+    const nativeOutgoingReadOnly = between(
+      mobileChat,
+      ") : isOutgoingRequest ? (",
+      ") : (",
+    );
+
+    expect(webSend).toContain('selected.requestStatus === "pending"');
+    expect(webSend.indexOf('selected.requestStatus === "pending"')).toBeLessThan(
+      webSend.indexOf("authenticatedFetch"),
+    );
+    expect(webMessages).toMatch(
+      /disabled=\{isIncomingPending\s*\|\|\s*isOutgoingPending\s*\|\|\s*sending\}/,
+    );
+    expect(webMessages).toMatch(
+      /disabled=\{!draft\.trim\(\)\s*\|\|\s*isIncomingPending\s*\|\|\s*isOutgoingPending\s*\|\|\s*sending\}/,
+    );
+    expect(nativeOutgoingReadOnly).toContain(
+      "Waiting for them to accept your request",
+    );
+    expect(nativeOutgoingReadOnly).not.toContain("TextInput");
+    expect(nativeOutgoingReadOnly).not.toContain("sendMessage");
+  });
 });

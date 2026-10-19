@@ -275,7 +275,7 @@ router.post("/conversations/:id/messages", async (req: Request, res: Response) =
     if (await dmConversationIsBlocked(conv, req.user.id)) {
       return void res.status(403).json({ error: "This conversation is unavailable" });
     }
-    if (conv?.requestStatus === "pending" && conv.requestedBy !== req.user.id) {
+    if (conv?.requestStatus === "pending") {
       return void res.status(403).json({ error: "Message request not yet accepted", code: "REQUEST_PENDING" });
     }
 
