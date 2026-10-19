@@ -2845,7 +2845,7 @@
     {
       "id": "OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "OAUTH-003",
@@ -2903,12 +2903,25 @@
           "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/in-memory-vault.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 fake in-memory source contract only.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 inert in-memory fake source contract only; OAUTH-001 NO-GO remains controlling.",
       "baseTransfer": {
         "handoff_id": "hnd_Z4wkKQH3u5u86KdQTvl55rAH",
         "file": "OAUTH003_IN_MEMORY_VAULT_REDACTION_BASE_2026-10-19.tar.gz",
         "sha256": "7da92d0d5e939153b5884ba7cc8e0ef47383b1b10615830c415ebbfb37ba34e2",
         "expires_at": "2026-10-20T22:52:06.455Z"
+      },
+      "sourceCommit": "bec8e23aa56efa64fbf19fba49fdb81917531331",
+      "carrier": {
+        "handoff_id": "hnd_VCq9hXOEfYhaRVhX-1njUDbr",
+        "file": "MWM_OAUTH003_IN_MEMORY_VAULT_REDACTION_CARRIER_2026-10-19.tar.gz",
+        "sha256": "4712139d59b245a598fd83de498d9e756b5e42a821a4aaadd67dc4032bb532be",
+        "patch_sha256": "1098d1af35ddda1cfc10f76997041d68fdbddfb39c21791c940a22dfe786c050"
+      },
+      "centralValidation": {
+        "api_vitest": "3 files / 18 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "existing feature gate defaults false; injected deterministic fixtures may test only opaque-handle/generic-unavailable owner/provider/purpose isolation and exact revocation; no transport/persistence path",
+        "scope": "exact three new paths; git diff --check PASS"
       }
     },
     {
@@ -3009,6 +3022,61 @@
         "sha256": "a0db1df05150878db855bf757a2695a7a21cbf77fb7910e206e55d46549b323e",
         "expires_at": "2026-10-20T22:57:49.335Z"
       }
+    },
+    {
+      "id": "COMM-001-DM-PENDING-MESSAGE-READ-GUARD",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "bec8e23aa56efa64fbf19fba49fdb81917531331",
+      "paths": [
+        "artifacts/api-server/src/routes/conversations.ts",
+        "artifacts/api-server/src/routes/__tests__/dm-pending-message-read-guard.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS / COMM-001 direct-message request lifecycle.",
+        "founderOutcome": "Before recipient acceptance, either participant may see the generic pending request but cannot read stale content, timestamps, or previews; after fresh acceptance ordinary participant history follows server-authoritative state.",
+        "participantPerspectives": [
+          "Requester A: sees a neutral pending request without stale history or preview; receives ordinary view only after B accepts.",
+          "Recipient B: can understand/act on pending request without receiving stale content; may accept or decline under existing authority.",
+          "Outsider: remains unauthorized and receives no request/history."
+        ],
+        "interactionChain": "Request -> generic pending list visibility with preview/timestamp redacted -> attempted history read fails neutral 403 REQUEST_PENDING before message query -> recipient accepts -> fresh list/read has ordinary accepted behavior; decline retains existing deletion/list absence.",
+        "privacyAndPermissions": "Retain auth, conversation lookup, participant, direct-message, and block fences. Never expose stale content/preview/timestamp or denial details while pending; no client or notification change.",
+        "completionBoundary": "Worker returns a source-only carrier. No runtime DB persistence, delivery/read receipt, account switching, browser/device/staging/member/founder acceptance is claimed."
+      },
+      "requiredBehavior": [
+        "GET /conversations/:id/messages must load requestStatus and fail closed with existing neutral 403 REQUEST_PENDING for a pending DM before any message query.",
+        "GET /conversations retains pending request visibility fields needed by clients but redacts pending-DM lastMessagePreview and lastMessageAt to null.",
+        "Accepted/non-DM behavior remains unchanged; existing decline continues to remove the request.",
+        "New deterministic mocked route harness must exercise both participants and outsider, read-query nonreachability, fresh acceptance visibility/read, and decline absence."
+      ],
+      "constraints": [
+        "Exactly the two listed API paths; no client/mobile/Web, notification producer/channel/routing, schema/persistence, relationship/block policy, DB/runtime, browser/device, remote Git, provider, deployment, migration, or activation.",
+        "Do not claim runtime delivery/durability/account switch/member/founder completion."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/routes/__tests__/dm-pending-message-read-guard.test.ts src/routes/__tests__/dm-recipient-request-lifecycle.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope and git diff --check; semantic read-query nonreachability and pending list redaction."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "bec8e23aa56efa64fbf19fba49fdb81917531331",
+        "ownedBaseHashes": {
+          "artifacts/api-server/src/routes/conversations.ts": "a27a2998a187b6f4d8eb340846263140910c93bc962452d6ec67ce777368c454",
+          "artifacts/api-server/src/routes/__tests__/dm-pending-message-read-guard.test.ts": null
+        },
+        "readOnlyDependencyHashes": {
+          "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts": "6ffd17373e426b9a81152ec2665b0762a4f2b14b7dfc9580473c5579c39eaaac"
+        }
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only pending-DM privacy repair."
     }
   ],
   "globalDirectiveDelivery": [

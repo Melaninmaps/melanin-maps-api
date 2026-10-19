@@ -349,9 +349,9 @@
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central); yINBiovLIPiFnyQCFfSycn (#2 returned mobile send fail-closed carrier under review).",
-      "dependencies_or_blockers": "Both #1 pending-consent guard and #2 mobile send recovery are source integrated. A bounded cumulative local DM lifecycle matrix is next; runtime DB persistence, actual channel delivery/receipt, account switching, Web/iOS/Android/browser/staging/member and founder acceptance remain separate.",
-      "next_action": "Run cumulative source-level requester/recipient DM matrix, then repair only demonstrated unclaimed source gaps.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central); IIUhb1wR0gfLjzmdLmEovt active #3 pending-message read guard.",
+      "dependencies_or_blockers": "#3 P0 server privacy repair now active: current GET history/list can disclose stale pending-DM content/preview before acceptance. Runtime persistence/delivery/account switching/staging/browser/device/member/founder acceptance remains external.",
+      "next_action": "Central-review #3 carrier and rerun cumulative source-level DM lifecycle matrix; no parent completion until external gates are separately evidenced.",
       "founder_approval_needed": "No free-core reapproval; approval for optional paid capacity.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1424,14 +1424,14 @@
       "founder_requirement": "Prepare a pure, default-disabled Calendar Availability authorization-attempt state/PKCE contract using deterministic injected test values only, without creating an OAuth client, callback, token, consent flow, provider request, route, or connection.",
       "acceptance_criteria": "Exactly two new pure API leaf files validate a purpose-bound, provider-family-bound, time-bounded fake attempt/state/PKCE policy and fail closed. They create no authorization URL, callback endpoint, scope request, real code/token handling, persistence, route, client, configuration, network, or activation.",
       "status": "SOURCE INTEGRATED",
-      "source_evidence": "Central local-only integration `9a177c4511c6541968b29c61c744ea0e317060d3` accepted OAUTH-003 from carrier SHA-256 `adc738e4b74afe9dea6e8dac68bceb7cedf6647e72f40a69af27868de5d62984`, patch `55c17a2c5b2b94291ab1603db4c802bec686ef3f3bd57d7fe9ac6b9848184929`, supplied base `9ba944d7fbe8ba44491b089861dee52612cb9d0b`. The two new files passed full-authority API Vitest 1 file/5 tests, API no-emit, Prettier, result-hash, exact scope and static no-network/no-client/no-route/no-persistence/no-ambient-clock review. It is a constant-false default gate, fixture-only pure policy; no client, OAuth flow, consent, provider request, token/state persistence, route/configuration, database, or activation exists. Numbered source queue #3 dispatches `OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT` to S9 at `b10234732011f3d57537f61081babae91efb6601`: exactly three all-new, default-disabled in-memory vault/redaction files. It supports future owner/provider/purpose isolation and deterministic revocation deletion without any real OAuth, provider, persistence, route, client, configuration, or activation behavior.",
+      "source_evidence": "Central local-only integration `9a177c4511c6541968b29c61c744ea0e317060d3` accepted OAUTH-003 from carrier SHA-256 `adc738e4b74afe9dea6e8dac68bceb7cedf6647e72f40a69af27868de5d62984`, patch `55c17a2c5b2b94291ab1603db4c802bec686ef3f3bd57d7fe9ac6b9848184929`, supplied base `9ba944d7fbe8ba44491b089861dee52612cb9d0b`. The two new files passed full-authority API Vitest 1 file/5 tests, API no-emit, Prettier, result-hash, exact scope and static no-network/no-client/no-route/no-persistence/no-ambient-clock review. It is a constant-false default gate, fixture-only pure policy; no client, OAuth flow, consent, provider request, token/state persistence, route/configuration, database, or activation exists. Numbered source queue #3 dispatches `OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT` to S9 at `b10234732011f3d57537f61081babae91efb6601`: exactly three all-new, default-disabled in-memory vault/redaction files. It supports future owner/provider/purpose isolation and deterministic revocation deletion without any real OAuth, provider, persistence, route, client, configuration, or activation behavior. Central local-only integration `bec8e23aa56efa64fbf19fba49fdb81917531331` accepted inert in-memory vault/redaction leaf: API **3 files / 18 tests** and no-emit passed; exact three-new-path scope. Default false gate and opaque/generic result boundaries retained; OAUTH-001 NO-GO unchanged.",
       "staging_evidence": "MISSING EVIDENCE \u2014 prohibited; no OAuth/provider action authorized.",
       "web_evidence": "MISSING EVIDENCE \u2014 no client/consent/callback UI authorized.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "android_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "responsible_owner_or_task": "S9iVHR3fQY0fcmRMQKLpOO (exclusive source carrier); QJATRGk7nUgzDlccMCUcG6 (central acceptance)",
       "dependencies_or_blockers": "OAUTH-001 NO-GO remains controlling. Real authorization needs separate approved client/configuration, exact consent decision, token vault/revocation/persistence, routes, provider networking, member-data, pilot, deployment, and activation claims.",
-      "next_action": "Validate the active all-new in-memory vault/redaction contract only. OAUTH-001 NO-GO and all real consent/client/token/network/pilot/release gates remain binding.",
+      "next_action": "Do not activate OAuth. Keep source-only leaves default-disabled; external consent/client/provider/token/storage requirements remain separately gated.",
       "founder_approval_needed": "No for the isolated fake state/PKCE source leaf only; Yes for any OAuth client/configuration, scope/consent, callback, code/token, provider/network, member-data, pilot, deployment, or activation action.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1944,6 +1944,10 @@
     {
       "date": "2026-10-19",
       "event": "Accepted COMM-001 #2 mobile send fail-closed source receipt at `44d6777a50a3a2b4aa259a0e78042dc5f6ad6ef0`: mobile 4/4 and no-emit PASS; strict sending->sent only on success; exact provisional cleanup/draft recovery on all failed outcomes. Parent remains IN PROGRESS."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Accepted OAUTH-003 inert in-memory vault/redaction leaf at `bec8e23aa56efa64fbf19fba49fdb81917531331` after API 3 files/18 tests and no-emit. Registered COMM-001 P0 #3 pending message/history read guard after concrete source trace; it is not parent acceptance."
     }
   ],
   "evidence_gaps": [
@@ -2047,13 +2051,13 @@
           "COMM-001"
         ],
         "existing_implementation": "Free event/post/group/Spotlight repairs plus DM guard/recovery child receipts are linked.",
-        "missing_broken_elements": "Source repairs #1 and #2 are integrated; execute cumulative source matrix. Runtime persistence/notification receipt, ambiguous timeout/idempotency reconciliation, account switching, Web/iOS/Android/device/staging/member/founder acceptance remain open.",
-        "current_active_repair": "Cumulative source-level direct-message lifecycle matrix; next IIU source repair only if a concrete gap is demonstrated.",
+        "missing_broken_elements": "P0 #3 pending-DM read/list privacy gap: stale history, last-message preview, and timestamp remain visible before acceptance.",
+        "current_active_repair": "`COMM-001-DM-PENDING-MESSAGE-READ-GUARD` (IIU): server-only pending history/previews redaction and read fence.",
         "integrated_source": "Guard `e3665ecaf8a529e74204200ce8134f1511f6d84d`; recovery `7cc2e1deef831283d5199b81195aa7aecfdc95af`; notification `dfe4b9c3a8d7708c21fdd52b0e3f07139136b793`; lifecycle contract `93af8b11cd545ffc5e4661bb5a0f3a9a94d501c5`; inbox routing `bfe0f50d4a96931c270b5bc6e7cfdabf38b18ced`; other linked source receipts. Pending communication-consent guard `c7d1bb0199806e3db9f0598b44f11e5ba894b373` (API 9/9, mobile 6/6, API/Web/mobile no-emit). Mobile send fail-closed `44d6777a50a3a2b4aa259a0e78042dc5f6ad6ef0` (mobile 4/4, no-emit).",
         "test_evidence": "Notification producer: 3 API files / 10 tests and API no-emit; server-authoritative lifecycle: 4 API files / 14 tests and API no-emit; inbox routing: mobile 4/4, Web 4/4, API 8/8, mobile/Web no-emit. #1 requires separate focused authority checks. #1 current-authority receipt: API 9/9; mobile 6/6; API/Web/mobile no-emit PASS. #2 current-authority receipt: mobile 4/4 and no-emit PASS.",
         "external_gates": "Controlled accounts/data, notifications runtime, Web/iOS/Android and release acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Run cumulative source matrix across request, notification route, pending/accept/decline, send state, privacy and recovery. Do not credit external runtime channels."
+        "next_action": "Integrate #3 then rerun cumulative source matrix; external runtime/delivery/account-switch/device/staging/member acceptance remains gated."
       },
       {
         "experience_id": "EXP-KINFOLK-CIRCLES-AND-SHARED-PLANS",
@@ -2194,12 +2198,12 @@
         ],
         "existing_implementation": "NO-GO packet, normalizers and state/PKCE pure leaves are linked.",
         "missing_broken_elements": "Active #3 source-only fake in-memory vault/redaction leaf. Real delegated consent, OAuth clients/scopes/callbacks, credentials, encrypted persistence, provider connection, route/client wiring, pilot, and runtime/member acceptance remain unimplemented and blocked.",
-        "current_active_repair": "#3 `OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT` (S9).",
-        "integrated_source": "All current children locally source-integrated only.",
-        "test_evidence": "Focused pure contracts only.",
+        "current_active_repair": "No active Calendar implementation claim; source leaves remain default-disabled.",
+        "integrated_source": "All current children locally source-integrated only. Inert vault/redaction leaf `bec8e23aa56efa64fbf19fba49fdb81917531331` (API 3/18, no-emit).",
+        "test_evidence": "Focused pure contracts only. Current-authority vault/normalizer/state-PKCE: 3 files/18 tests + API no-emit PASS.",
         "external_gates": "Consent, OAuth configuration, security review, controlled pilot and platform acceptance.",
         "completion_status": "SOURCE VALIDATED",
-        "next_action": "Integrate and validate only #3\u2019s fake in-memory vault/redaction contract. Preserve default-disabled state and every real OAuth/provider/external acceptance gate."
+        "next_action": "Maintain default-disabled state; external consent/client/token/provider/persistence work needs separate approval."
       },
       {
         "experience_id": "EXP-MWM-RELEASE-RUNTIME-AND-CROSS-PLATFORM-ACCEPTANCE",
