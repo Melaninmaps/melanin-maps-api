@@ -122,10 +122,10 @@ export default function BusinessOwnerHome() {
         } else if (aRes.status === 403) {
           setAnalyticsLocked(true);
         }
-        const sRes = await fetch(`${getApiBase()}/api/kinfolk/skip-feedback`, { headers });
+        const sRes = await fetch(`${getApiBase()}/api/businesses/mine/skip-feedback`, { headers });
         if (sRes.ok) {
-          const sData = await sRes.json() as { messages?: string[] };
-          setSkipInsights(sData.messages ?? []);
+          const sData = await sRes.json() as { feedback?: { message: string }[] };
+          setSkipInsights((sData.feedback ?? []).map((feedback) => feedback.message));
         }
         const needsRes = await fetch(`${getApiBase()}/api/businesses/${managedBusiness.id}/kinfolk-community-needs`, { headers });
         if (needsRes.ok) {
