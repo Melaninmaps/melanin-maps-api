@@ -1669,6 +1669,62 @@
         },
         "reviewDisposition": "Accepted local source-only effective-entitlement analytics-depth vertical. Claim released; BIZ-003 remains incomplete for broader business intelligence, account/payment lifecycle, and runtime/member-visible acceptance."
       }
+    },
+    {
+      "id": "COMM-001-FREE-HIDDEN-GEMS-COMMUNITY-SPOTLIGHTS",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "4861aab2938b4545a08a46513ab0cd788cdbcd6f",
+      "paths": [
+        "artifacts/api-server/src/routes/hidden-gems.ts",
+        "artifacts/api-server/src/routes/__tests__/hidden-gems-free-core-contract.test.ts",
+        "artifacts/mobile/__tests__/hidden-gems-free-core-contract.test.ts"
+      ],
+      "completionContract": {
+        "journey": "An unauthenticated visitor retains the current locked auth_required Community Spotlights result. An authenticated effective-free member requests the existing GET /api/hidden-gems list; it reaches the existing active/public/expiry/filter/order/image response and the existing mobile Home Community Spotlights consumer recognizes locked false and renders the returned cards.",
+        "successStates": [
+          "Unauthenticated auth_required locked response is unchanged.",
+          "Authenticated free no longer receives the paid_required short-circuit and receives the same locked:false list shape used by existing authenticated paid members.",
+          "Existing mobile Home endpoint fetch, locked handling, and unlocked Community Spotlights card rendering remain compatible; no mobile implementation path changes."
+        ],
+        "nonGoals": [
+          "No nomination/admin award/revoke/status change; no business/media eligibility change; no payment/catalog/checkout/tier/cap/schema/migration/provider/Map/client implementation change; no activation."
+        ],
+        "externalAcceptance": "PENDING \u2014 local source validation does not establish a deployed list, runtime database eligibility, mobile device behavior, or member-visible acceptance."
+      },
+      "requiredBehavior": [
+        "Retain unauthenticated { locked: true, lockedReason: \"auth_required\", gems: [] } behavior exactly.",
+        "Remove only the authenticated paid-tier/getUserTier/PAID_TIERS short-circuit so free authenticated members continue to the existing list query and { locked: false, gems } response.",
+        "Retain active hiddenGemLabel, unexpired hiddenGemExpiresAt, city/state/category/limit filters, nomination ordering, selected fields, attachEligibleBusinessImages, and all nomination/admin/status routes.",
+        "Add focused API and mobile static journey contracts; mobile test may read the existing Home source but must not change any mobile implementation."
+      ],
+      "constraints": [
+        "Do not modify frozen COMM events/community/Groups paths or the existing mobile Community test.",
+        "No new tier, grant, cap, commercial copy, checkout/payment, schema/migration, provider, DB/runtime action, browser/device, deployment, remote Git, Map/Directory work, or feature activation.",
+        "Do not change client implementation; stop if current client endpoint/locked handling cannot satisfy the existing full journey."
+      ],
+      "validationPlan": [
+        "API Vitest: src/routes/__tests__/hidden-gems-free-core-contract.test.ts.",
+        "Mobile Vitest: __tests__/hidden-gems-free-core-contract.test.ts.",
+        "API and mobile TypeScript no-emit on full authority.",
+        "Exact three-path scope, git diff --check, API access/list-boundary review, and mobile existing-consumer compatibility review."
+      ],
+      "carrierDisposition": "Return an uncommitted, hash-verified three-path review carrier only; central owner alone may integrate, validate, commit, or update requirement status.",
+      "externalAcceptance": "PENDING \u2014 no runtime database, staging, device, or member-visible evidence is implied.",
+      "sourceBase": {
+        "authority": "4861aab2938b4545a08a46513ab0cd788cdbcd6f",
+        "paths": {
+          "artifacts/api-server/src/routes/hidden-gems.ts": "587ba1c7a73b8968699cc043eed8be8e23889086f3f1c889b01ee324f75a50d7"
+        },
+        "newPaths": [
+          "artifacts/api-server/src/routes/__tests__/hidden-gems-free-core-contract.test.ts",
+          "artifacts/mobile/__tests__/hidden-gems-free-core-contract.test.ts"
+        ],
+        "disposition": "Compact path-only base transfer pending; carrier-only return required."
+      }
     }
   ],
   "globalDirectiveDelivery": [
