@@ -215,6 +215,34 @@
       "externalAcceptance": "PENDING — this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
     },
     {
+      "id": "KINFOLK-SESSION-DELETION-OWNER-BOUNDARY",
+      "priority": "P0",
+      "status": "IMPLEMENTING_LOCAL_ONLY",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "316b122c2b75271e43ea25909226627ce030ea0f",
+      "publicationBoundary": "Local source-only repair. Do not fetch, push, inspect connectors/staging, deploy, or perform release actions without separate founder authorization.",
+      "sourceEvidence": "Current Kinfolk session routes permit owner-scoped read and archive/restore/pin/unpin but expose no member deletion route. Persistent conversation messages live in kinfolk_sessions and its per-owner list cache; the current roadmap explicitly pulls individual and full session deletion into the server-only safety deploy.",
+      "requirement": "Add authenticated, owner-scoped deletion for one persistent Kinfolk session and for all of the authenticated member's persistent Kinfolk sessions. A missing or another member's session must be indistinguishable as a 404. Successful deletion must invalidate only the authenticated member's session cache. Deletion must remain available even when Kinfolk continuity is currently disabled, so a member can remove previously persisted conversations.",
+      "paths": [
+        "artifacts/api-server/src/routes/kinfolk.ts",
+        "artifacts/api-server/src/routes/__tests__/kinfolk-session-deletion-contract.test.ts"
+      ],
+      "requiredBehavior": [
+        "Preserve existing unauthenticated 401, session list/detail, archive/restore/pin/unpin, chat persistence, explicit-memory, and private-memory behaviors.",
+        "Delete only kinfolk_sessions rows bound to req.user.id. Do not delete private memories, user preferences, feedback, account data, schema data, or any other member's session.",
+        "Use no provider, browser, external service, schema/migration, or client/UI work. Tests must be provider-free and demonstrate authentication, owner isolation, missing-session behavior, whole-owner deletion boundary, and cache invalidation wiring."
+      ],
+      "constraints": [
+        "This claim does not alter blocked UM-001 private-memory revoke, retention, permanent-clear wording, storage deletion, or memory-manager semantics despite sharing the Kinfolk route file.",
+        "Do not modify SP-001, SP-002, SP-003, D1, Community, UM-002, LA, CI, MAP, calendar, availability, Circle, provider, database, staging, deployment, browser, or device paths.",
+        "Only this local unified owner may edit the two claimed paths; no additional branch, worktree, carrier, or remote publication is authorized."
+      ],
+      "validationPlan": [
+        "Focused provider-free route source contract verifies two DELETE routes, 401-before-delete ordering, id-plus-owner matching for individual deletion, owner-only matching for bulk deletion, generic 404, and cache invalidation after success.",
+        "Run focused contract tests, repository API no-emit, exact two-path scope check, and git diff --check."
+      ]
+    },
+    {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
       "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
