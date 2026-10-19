@@ -18,6 +18,12 @@ function managedSpecialtiesRoute(): string {
   return businessRoutes.slice(start, legacyRead);
 }
 
+function managedProfilePatch(): string {
+  const start = businessRoutes.indexOf('router.patch("/businesses/mine/managed/:businessId/profile"');
+  const specialtiesRoute = businessRoutes.indexOf('router.put("/businesses/mine/managed/:businessId/specialties"', start);
+  return businessRoutes.slice(start, specialtiesRoute);
+}
+
 describe("owner-scoped managed business read contract", () => {
   it("lists every approved, unrevoked owner relationship without mutations", () => {
     const route = managedBusinessRoute();
@@ -76,6 +82,27 @@ describe("owner-scoped managed business read contract", () => {
     expect(selectedPatch).not.toContain("listingStatus");
     expect(selectedPatch).not.toContain("ownershipDesignations");
     expect(selectedPatch).not.toContain("latitude");
+  });
+
+  it("requires the current selected owner's canonical revision before an ordinary profile write", () => {
+    const selectedPatch = managedProfilePatch();
+    const revisionRead = selectedPatch.indexOf('.select({ updatedAt: businessesTable.updatedAt })');
+    const staleCheck = selectedPatch.indexOf("businessProfileRevisionMatches(current.updatedAt, expectedUpdatedAt)");
+    const update = selectedPatch.indexOf(".update(businessesTable)");
+    const returning = selectedPatch.indexOf(".returning()", update);
+
+    expect(selectedPatch).toContain("expectedUpdatedAt: expectedUpdatedAtRaw");
+    expect(selectedPatch).toContain("parseExpectedBusinessProfileUpdatedAt(expectedUpdatedAtRaw)");
+    expect(selectedPatch).toContain('code: "BUSINESS_PROFILE_REVISION_REQUIRED"');
+    expect(selectedPatch).toContain("approvedOwnerPredicate(String(userId))");
+    expect(revisionRead).toBeGreaterThanOrEqual(0);
+    expect(staleCheck).toBeGreaterThan(revisionRead);
+    expect(update).toBeGreaterThan(staleCheck);
+    expect(selectedPatch).toContain("GREATEST(clock_timestamp(), ${businessesTable.updatedAt} + INTERVAL '1 millisecond')");
+    expect(selectedPatch).toContain("date_trunc('milliseconds', ${businessesTable.updatedAt}) = ${expectedUpdatedAt}");
+    expect(selectedPatch).toContain("sendBusinessProfileStaleWrite(res)");
+    expect(returning).toBeGreaterThan(update);
+    expect(businessRoutes).toContain('code: "BUSINESS_PROFILE_STALE_WRITE"');
   });
 
   it("replaces only the selected approved owner's structured specialties in one locked transaction", () => {

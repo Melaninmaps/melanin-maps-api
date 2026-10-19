@@ -1607,6 +1607,34 @@ router.get("/businesses/mine/managed", async (req: any, res: Response) => {
   }
 });
 
+function parseExpectedBusinessProfileUpdatedAt(value: unknown): Date | null {
+  if (
+    typeof value !== "string"
+    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
+  ) {
+    return null;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString() !== value
+    ? null
+    : parsed;
+}
+
+function businessProfileRevisionMatches(
+  current: Date | string | null | undefined,
+  expected: Date,
+): boolean {
+  const parsed = current instanceof Date ? current : new Date(String(current ?? ""));
+  return !Number.isNaN(parsed.getTime()) && parsed.getTime() === expected.getTime();
+}
+
+function sendBusinessProfileStaleWrite(res: Response) {
+  res.status(409).json({
+    error: "This profile changed before your update. Reload and review it before trying again.",
+    code: "BUSINESS_PROFILE_STALE_WRITE",
+  });
+}
+
 // The target ID is mandatory for multi-business profile work. This route is
 // intentionally narrower than the legacy /mine profile endpoint: it permits
 // only ordinary profile/contact fields and never changes publication,
@@ -1658,13 +1686,27 @@ router.patch("/businesses/mine/managed/:businessId/profile", async (req: any, re
     name, category, subcategory, description, phone, website, hours,
     instagram, tiktok, facebook, twitter, youtube, pinterest,
     primarySocialPlatform, businessTagline, ownerName, ownerBio, ownerStory,
+    expectedUpdatedAt: expectedUpdatedAtRaw,
   } = req.body as Record<string, string | null | undefined>;
+  const expectedUpdatedAt = parseExpectedBusinessProfileUpdatedAt(expectedUpdatedAtRaw);
+  if (!expectedUpdatedAt) {
+    res.status(400).json({
+      error: "A valid profile revision is required.",
+      code: "BUSINESS_PROFILE_REVISION_REQUIRED",
+    });
+    return;
+  }
   if (category && !ALL_VALID_CATEGORY_NAMES.includes(category)) {
     res.status(400).json({ error: "Invalid category" });
     return;
   }
 
-  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  // The API exposes Date's millisecond ISO representation, so make each
+  // canonical revision advance by at least one visible millisecond and compare
+  // against that representation in the conditional write below.
+  const updates: Record<string, unknown> = {
+    updatedAt: sql`GREATEST(clock_timestamp(), ${businessesTable.updatedAt} + INTERVAL '1 millisecond')`,
+  };
   if (name?.trim()) updates.name = name.trim();
   if (category) {
     updates.category = category;
@@ -1687,16 +1729,34 @@ router.patch("/businesses/mine/managed/:businessId/profile", async (req: any, re
   if (ownerStory !== undefined) updates.ownerStory = ownerStory?.trim() || null;
 
   try {
+    const [current] = await db
+      .select({ updatedAt: businessesTable.updatedAt })
+      .from(businessesTable)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .limit(1);
+    if (!current) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    if (!businessProfileRevisionMatches(current.updatedAt, expectedUpdatedAt)) {
+      sendBusinessProfileStaleWrite(res);
+      return;
+    }
+
     const [updated] = await db
       .update(businessesTable)
       .set(updates)
       .where(and(
         eq(businessesTable.id, businessId),
         approvedOwnerPredicate(String(userId)),
+        sql`date_trunc('milliseconds', ${businessesTable.updatedAt}) = ${expectedUpdatedAt}`,
       ))
       .returning();
     if (!updated) {
-      res.status(404).json({ error: "Managed business not found." });
+      sendBusinessProfileStaleWrite(res);
       return;
     }
     res.json({ business: updated });
@@ -4373,12 +4433,13 @@ type AdminBusinessProfileRow = {
   photos: string[] | null;
   listing_status: string | null;
   is_duplicate: boolean;
+  updated_at: string;
 };
 
 const ADMIN_PROFILE_SELECT = `SELECT id, name, description, address, city, state, latitude, longitude,
   phone, website, hours, price_range, instagram, tiktok, facebook, twitter, youtube, pinterest,
   ownership_designations, vibes, tags, category, subcategory, photos, listing_status,
-  COALESCE(is_duplicate, false) AS is_duplicate
+  COALESCE(is_duplicate, false) AS is_duplicate, updated_at
   FROM businesses WHERE id = $1`;
 
 function toAdminBusinessProfile(row: AdminBusinessProfileRow) {
@@ -4409,6 +4470,7 @@ function toAdminBusinessProfile(row: AdminBusinessProfileRow) {
     photos: Array.isArray(row.photos) ? row.photos : [],
     listingStatus: row.listing_status,
     isDuplicate: row.is_duplicate,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -4504,6 +4566,16 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
     return;
   }
   const businessId = String(req.params.id ?? "").trim();
+  const expectedUpdatedAt = parseExpectedBusinessProfileUpdatedAt(
+    (req.body as Record<string, unknown> | undefined)?.expectedUpdatedAt,
+  );
+  if (!expectedUpdatedAt) {
+    res.status(400).json({
+      error: "A valid profile revision is required.",
+      code: "BUSINESS_PROFILE_REVISION_REQUIRED",
+    });
+    return;
+  }
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -4517,6 +4589,11 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
     if (existing.is_duplicate) {
       await client.query("ROLLBACK");
       res.status(409).json({ error: "Confirmed duplicate records are read-only until an audited restore resolves the duplicate" });
+      return;
+    }
+    if (!businessProfileRevisionMatches(existing.updated_at, expectedUpdatedAt)) {
+      await client.query("ROLLBACK");
+      sendBusinessProfileStaleWrite(res);
       return;
     }
 
@@ -4608,11 +4685,13 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
       .map(([key, binding], index) => `${allowedColumns[key]} = $${index + 1}${binding.jsonb ? "::jsonb" : ""}`)
       .join(", ");
     const update = await client.query<AdminBusinessProfileRow>(
-      `UPDATE businesses SET ${setClauses}, updated_at = NOW() WHERE id = $${entries.length + 1}
+      `UPDATE businesses
+         SET ${setClauses}, updated_at = GREATEST(clock_timestamp(), updated_at + INTERVAL '1 millisecond')
+       WHERE id = $${entries.length + 1}
        RETURNING id, name, description, address, city, state, latitude, longitude,
          phone, website, hours, price_range, instagram, tiktok, facebook, twitter, youtube, pinterest,
          ownership_designations, vibes, tags, category, subcategory, photos, listing_status,
-         COALESCE(is_duplicate, false) AS is_duplicate`,
+         COALESCE(is_duplicate, false) AS is_duplicate, updated_at`,
       [...entries.map(([, binding]) => binding.value), businessId],
     );
     const updated = update.rows[0];

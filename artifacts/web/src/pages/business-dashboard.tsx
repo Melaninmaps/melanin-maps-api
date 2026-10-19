@@ -22,6 +22,7 @@ type BusinessSummary = {
 };
 type ManagedBusinessProfile = {
   id: string;
+  updatedAt: string;
   description: string;
   phone: string;
   website: string;
@@ -66,8 +67,11 @@ function managedProfileFromResponse(payload: unknown, expectedBusinessId: string
   const record = business as Record<string, unknown>;
   if (record.id !== expectedBusinessId) return null;
   const text = (value: unknown) => typeof value === "string" ? value : "";
+  const updatedAt = text(record.updatedAt);
+  if (!updatedAt) return null;
   return {
     id: expectedBusinessId,
+    updatedAt,
     description: text(record.description),
     phone: text(record.phone),
     website: text(record.website),
@@ -145,7 +149,7 @@ export default function BusinessDashboard() {
   const [managedProfile, setManagedProfile] = useState<ManagedBusinessProfile | null>(null);
   const [managedProfileLoading, setManagedProfileLoading] = useState(false);
   const [managedProfileLoadState, setManagedProfileLoadState] = useState<"idle" | "ready" | "failed">("idle");
-  const [managedProfileSaveState, setManagedProfileSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const [managedProfileSaveState, setManagedProfileSaveState] = useState<"idle" | "saving" | "saved" | "failed" | "stale">("idle");
   const managedProfileRequestVersion = useRef(0);
 
   useEffect(() => {
@@ -263,6 +267,7 @@ export default function BusinessDashboard() {
       phone: profile.phone,
       website: profile.website,
       hours: profile.hours,
+      expectedUpdatedAt: profile.updatedAt,
     };
     setManagedProfileSaveState("saving");
     try {
@@ -272,7 +277,14 @@ export default function BusinessDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profilePayload),
       });
-      if (!response.ok) throw new Error("Managed profile update failed");
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null) as { code?: unknown } | null;
+        if (response.status === 409 && failure?.code === "BUSINESS_PROFILE_STALE_WRITE") {
+          if (requestVersion === managedProfileRequestVersion.current) setManagedProfileSaveState("stale");
+          return;
+        }
+        throw new Error("Managed profile update failed");
+      }
 
       const refreshedProfile = await fetchManagedBusinessProfile(businessId);
       if (requestVersion !== managedProfileRequestVersion.current) return;
@@ -508,6 +520,7 @@ export default function BusinessDashboard() {
                               {managedProfileSaveState === "saving" ? "Saving… / Guardando…" : "Save Profile / Guardar perfil"}
                             </Button>
                             {managedProfileSaveState === "saved" && <p className="text-sm text-[#2D7A4F] font-medium" role="status" aria-live="polite">Saved after a refreshed profile read. / Guardado después de volver a leer el perfil.</p>}
+                            {managedProfileSaveState === "stale" && <p className="text-sm text-amber-800" role="alert">This profile changed before your save. Your edits are still here; reload and review the latest profile before saving again. / Este perfil cambió antes de guardar. Tus cambios siguen aquí; recarga y revisa el perfil más reciente antes de guardar otra vez.</p>}
                             {managedProfileSaveState === "failed" && <p className="text-sm text-red-700" role="alert">Failed to save. Your changes are still here; please try again. / No se pudo guardar. Tus cambios siguen aquí; inténtalo de nuevo.</p>}
                           </div>
                         </form>

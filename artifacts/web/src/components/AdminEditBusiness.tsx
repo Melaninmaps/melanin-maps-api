@@ -90,6 +90,7 @@ type FullBusiness = {
   photos: string[];
   listingStatus: "live_unclaimed" | "live_claimed" | "archived" | "staged" | null;
   isDuplicate: boolean;
+  updatedAt: string;
 };
 
 type Props = {
@@ -167,15 +168,17 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
     setListingStatus(b.listingStatus ?? "live_unclaimed");
   }, []);
 
-  const fetchBiz = useCallback(async () => {
+  const fetchBiz = useCallback(async (): Promise<boolean> => {
     setLoading(true); setFetchError("");
     try {
-      const response = await authenticatedFetch(`${BASE}/api/admin/businesses/${businessId}/profile`);
+      const response = await authenticatedFetch(`${BASE}/api/admin/businesses/${businessId}/profile`, { cache: "no-store" });
       const data = await response.json() as { error?: string; business?: FullBusiness; ownershipReceipt?: OwnershipReceipt | null; catalogMembership?: CatalogMembership; fieldReceipts?: FieldReceipt[]; profileAudit?: ProfileAuditEvent[] };
       if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
       hydrate(data);
+      return true;
     } catch {
       setFetchError("Could not load the administrator business profile. Confirm admin access and try again.");
+      return false;
     } finally { setLoading(false); }
   }, [businessId, hydrate]);
 
@@ -185,6 +188,10 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
   }, [biz, category]);
 
   async function saveProfile() {
+    if (!biz?.updatedAt) {
+      setSaveError("The current profile revision is unavailable. Reload and review the profile before saving. / La revisión actual del perfil no está disponible. Recarga y revisa el perfil antes de guardar.");
+      return;
+    }
     setSaving(true); setSaveError(""); setSavedMessage("");
     try {
       const body: Record<string, unknown> = {
@@ -193,6 +200,7 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
         instagram: instagram || null, tiktok: tiktok || null, facebook: facebook || null,
         twitter: twitter || null, youtube: youtube || null, pinterest: pinterest || null,
         ownershipDesignations, category, subcategory, vibes: selectedVibes, tags: selectedTags, changeNote,
+        expectedUpdatedAt: biz.updatedAt,
       };
       if (ownershipReceipt.sourceUrl || ownershipReceipt.sourceLabel || ownershipReceipt.observedAt || ownershipReceipt.note) {
         body.ownershipReceipt = ownershipReceipt;
@@ -203,13 +211,23 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
       const response = await authenticatedFetch(`${BASE}/api/admin/businesses/${businessId}/profile`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
-      const data = await response.json() as { error?: string; business?: FullBusiness; message?: string };
-      if (!response.ok) { setSaveError(data.error ?? "Profile save failed."); return; }
-      if (data.business) setBiz(data.business);
+      const data = await response.json() as { error?: string; code?: string; business?: FullBusiness; message?: string };
+      if (!response.ok) {
+        if (response.status === 409 && data.code === "BUSINESS_PROFILE_STALE_WRITE") {
+          setSaveError("This profile changed before your save. Your edits are still here; reload and review the latest profile before saving again. / Este perfil cambió antes de guardar. Tus cambios siguen aquí; recarga y revisa el perfil más reciente antes de guardar otra vez.");
+          return;
+        }
+        setSaveError(data.error ?? "Profile save failed.");
+        return;
+      }
+      const refreshed = await fetchBiz();
+      if (!refreshed) {
+        setSaveError("Profile saved, but the current profile could not be re-read. Reload and review it before another save. / El perfil se guardó, pero no se pudo volver a leer. Recarga y revísalo antes de volver a guardar.");
+        return;
+      }
       setSavedMessage(data.message ?? "Profile saved with an audit receipt.");
       setChangeNote("");
       setSourceReceipts([]);
-      await fetchBiz();
       onSaved();
     } catch { setSaveError("Could not save this business. Check the connection and try again."); }
     finally { setSaving(false); }

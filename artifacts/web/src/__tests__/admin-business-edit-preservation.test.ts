@@ -37,6 +37,25 @@ describe("audited admin business editor", () => {
     expect(editor).toContain("It never creates a listing, changes public visibility, or turns a business into an owner-verified profile.");
   });
 
+  it("submits the loaded canonical revision and retains the Admin draft on a stale profile write", () => {
+    const editor = source();
+    const stale = editor.indexOf('response.status === 409 && data.code === "BUSINESS_PROFILE_STALE_WRITE"');
+    const reread = editor.indexOf("const refreshed = await fetchBiz()", stale);
+    const saved = editor.indexOf("setSavedMessage(data.message", reread);
+
+    expect(editor).toContain("updatedAt: string;");
+    expect(editor).toContain('{ cache: "no-store" }');
+    expect(editor).toContain("expectedUpdatedAt: biz.updatedAt");
+    expect(editor).toContain("The current profile revision is unavailable.");
+    expect(stale).toBeGreaterThanOrEqual(0);
+    expect(editor).toContain("This profile changed before your save. Your edits are still here; reload and review the latest profile before saving again.");
+    expect(editor).toContain("Este perfil cambió antes de guardar.");
+    expect(reread).toBeGreaterThan(stale);
+    expect(editor).toContain("if (!refreshed)");
+    expect(editor).toContain("Profile saved, but the current profile could not be re-read.");
+    expect(saved).toBeGreaterThan(reread);
+  });
+
   it("exposes the separate Kinfolk Catalog review surface while retaining the reconciliation ledger", () => {
     const page = adminPage();
     expect(page).toContain("KinfolkCatalogCohort");

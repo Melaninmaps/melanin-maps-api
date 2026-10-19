@@ -33,7 +33,7 @@ describe("Business Dashboard multi-business access", () => {
     expect(dashboard).toContain(".then((r) => (r.ok ? r.json() : null))");
   });
 
-  it("loads and saves only the selected approved managed profile with credentials", () => {
+  it("loads the selected approved managed profile revision and submits it with the narrow credentialed payload", () => {
     const transport = managedProfileTransport();
     const payloadStart = transport.indexOf("const profilePayload = {");
     const payloadEnd = transport.indexOf("    };", payloadStart);
@@ -47,7 +47,11 @@ describe("Business Dashboard multi-business access", () => {
     expect(payload).toContain("phone: profile.phone");
     expect(payload).toContain("website: profile.website");
     expect(payload).toContain("hours: profile.hours");
+    expect(payload).toContain("expectedUpdatedAt: profile.updatedAt");
     expect(payload).not.toMatch(/\b(name|category|address|city|state|latitude|longitude|listingStatus|verified)\s*:/);
+    expect(dashboard).toContain("const updatedAt = text(record.updatedAt);");
+    expect(dashboard).toContain("if (!updatedAt) return null;");
+    expect(dashboard).toContain("updatedAt,");
   });
 
   it("shows Saved only after the selected canonical record is re-read and preserves draft values on failure", () => {
@@ -64,6 +68,21 @@ describe("Business Dashboard multi-business access", () => {
     expect(saved).toBeGreaterThan(reread);
     expect(failure).toContain('setManagedProfileSaveState("failed")');
     expect(failure).not.toContain("setManagedProfile(");
+  });
+
+  it("retains the owner draft and never reports Saved after the stable stale-write response", () => {
+    const transport = managedProfileTransport();
+    const stale = transport.indexOf('failure?.code === "BUSINESS_PROFILE_STALE_WRITE"');
+    const reread = transport.indexOf("await fetchManagedBusinessProfile(businessId)");
+    const saved = transport.indexOf('setManagedProfileSaveState("saved")');
+
+    expect(dashboard).toContain('"idle" | "saving" | "saved" | "failed" | "stale"');
+    expect(stale).toBeGreaterThanOrEqual(0);
+    expect(transport).toContain('setManagedProfileSaveState("stale")');
+    expect(reread).toBeGreaterThan(stale);
+    expect(saved).toBeGreaterThan(reread);
+    expect(managedProfileEditor()).toContain("This profile changed before your save. Your edits are still here; reload and review the latest profile before saving again.");
+    expect(managedProfileEditor()).toContain("Este perfil cambió antes de guardar.");
   });
 
   it("replaces the misleading claim-page handoff with a bilingual selected-profile editor without publication controls", () => {

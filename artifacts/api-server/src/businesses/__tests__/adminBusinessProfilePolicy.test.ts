@@ -78,4 +78,38 @@ describe("audited administrator business profile policy", () => {
     expect(directCreateRoute).toContain("FIELD_RECEIPTS_REQUIRED_FOR_PRESENCE");
     expect(directCreateRoute).toContain("STAGED_CREATION_REQUIRED");
   });
+
+  it("uses the canonical updated timestamp as an Admin profile revision and denies stale writes before receipts or audit effects", () => {
+    const source = routeSource();
+    const profileRead = source.slice(
+      source.indexOf('router.get("/admin/businesses/:id/profile"'),
+      source.indexOf('router.patch("/admin/businesses/:id/profile"'),
+    );
+    const profilePatch = source.slice(
+      source.indexOf('router.patch("/admin/businesses/:id/profile"'),
+      source.indexOf('router.post(\n  "/admin/seed-known-businesses"'),
+    );
+    const lock = profilePatch.indexOf("FOR UPDATE");
+    const staleCheck = profilePatch.indexOf("businessProfileRevisionMatches(existing.updated_at, expectedUpdatedAt)");
+    const validation = profilePatch.indexOf("validateAdminBusinessProfilePatch", staleCheck);
+    const update = profilePatch.indexOf("UPDATE businesses", validation);
+    const receipts = profilePatch.indexOf("INSERT INTO business_profile_field_receipts", update);
+    const audit = profilePatch.indexOf("INSERT INTO business_admin_profile_edit_audit_events", receipts);
+
+    expect(source).toContain("is_duplicate: boolean;\n  updated_at: string;");
+    expect(source).toContain("AS is_duplicate, updated_at");
+    expect(source).toContain("updatedAt: row.updated_at");
+    expect(profileRead).toContain("business: toAdminBusinessProfile(row)");
+    expect(profilePatch).toContain("parseExpectedBusinessProfileUpdatedAt(");
+    expect(profilePatch).toContain('code: "BUSINESS_PROFILE_REVISION_REQUIRED"');
+    expect(lock).toBeGreaterThanOrEqual(0);
+    expect(staleCheck).toBeGreaterThan(lock);
+    expect(source).toContain('code: "BUSINESS_PROFILE_STALE_WRITE"');
+    expect(validation).toBeGreaterThan(staleCheck);
+    expect(update).toBeGreaterThan(validation);
+    expect(receipts).toBeGreaterThan(update);
+    expect(audit).toBeGreaterThan(receipts);
+    expect(profilePatch).toContain("AS is_duplicate, updated_at");
+    expect(profilePatch).toContain("GREATEST(clock_timestamp(), updated_at + INTERVAL '1 millisecond')");
+  });
 });
