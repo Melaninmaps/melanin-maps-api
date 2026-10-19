@@ -75,7 +75,12 @@
         "api": "2 files / 12 tests passed: stripe-checkout-retirement and membership-price-integrity",
         "web": "1 file / 4 tests passed: family-plan-web-checkout, including unauthenticated account-entry ordering",
         "native": "1 file / 3 tests passed: web-payment-handoff",
-        "staticChecks": ["API, web, and native no-emit passed", "direct three-handler 401-to-identical-409 order reviewed", "client checkout initiator absence reviewed", "git diff --check passed"]
+        "staticChecks": [
+          "API, web, and native no-emit passed",
+          "direct three-handler 401-to-identical-409 order reviewed",
+          "client checkout initiator absence reviewed",
+          "git diff --check passed"
+        ]
       },
       "requiredBehavior": [
         "Return identical authenticated 409 closed-enrollment responses at /billing/checkout, /membership/family/add-seat, and /stripe/checkout before any body, user, database, provider, session, entitlement, or secret read.",
@@ -118,7 +123,11 @@
         "nativeTests": "1 file, 2 tests passed",
         "apiTypecheck": "passed",
         "nativeTypecheck": "passed with Node heap limit 8192 MB",
-        "hygiene": ["registry JSON valid", "git diff --check passed", "retired mobile curatorMemberId selector absent"]
+        "hygiene": [
+          "registry JSON valid",
+          "git diff --check passed",
+          "retired mobile curatorMemberId selector absent"
+        ]
       },
       "externalAcceptance": "PENDING — no staging deployment, database operation, provider call, browser validation, or device validation was performed."
     },
@@ -163,7 +172,13 @@
       "sourceVerification": {
         "apiTests": "4 files / 28 tests passed: shared-plan free/busy policy, private availability-block policy, Circle plan preference policy, and Circle private-invite policy",
         "apiTypecheck": "repository API no-emit passed",
-        "hygiene": ["archive, nested manifest, patch, source snapshots, and temporary-index reconstruction hashes verified", "exact two add-only paths and git apply --check --whitespace=error passed", "import-free/no-activation and injected-time boundaries passed", "independent local semantic review passed after the proxy-safe correction", "git diff --check passed"]
+        "hygiene": [
+          "archive, nested manifest, patch, source snapshots, and temporary-index reconstruction hashes verified",
+          "exact two add-only paths and git apply --check --whitespace=error passed",
+          "import-free/no-activation and injected-time boundaries passed",
+          "independent local semantic review passed after the proxy-safe correction",
+          "git diff --check passed"
+        ]
       },
       "externalAcceptance": "PENDING — this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
     },
@@ -210,7 +225,13 @@
       "sourceVerification": {
         "apiTests": "4 files / 29 tests passed: Circle itinerary privacy, Circle plan preference policy, Shared Plan free/busy policy, and private availability-block policy",
         "apiTypecheck": "repository API no-emit passed",
-        "hygiene": ["exact two-path source diff verified", "static handler check retained membership, Circle shared saves/dates, and branch persistence while excluding user_preferences, favorite_categories, dietary_notes, lifestyle_services, and memberProfiles", "provider-free source contract test only", "independent local semantic review passed", "git diff --check passed"]
+        "hygiene": [
+          "exact two-path source diff verified",
+          "static handler check retained membership, Circle shared saves/dates, and branch persistence while excluding user_preferences, favorite_categories, dietary_notes, lifestyle_services, and memberProfiles",
+          "provider-free source contract test only",
+          "independent local semantic review passed",
+          "git diff --check passed"
+        ]
       },
       "externalAcceptance": "PENDING — this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
     },
@@ -245,7 +266,12 @@
       "sourceVerification": {
         "apiTests": "3 files / 14 tests passed: the new session-deletion contract plus directly relevant Kinfolk reset/relevance and private-memory encryption route contracts.",
         "apiTypecheck": "repository API no-emit passed",
-        "hygiene": ["exact two-path local source commit verified", "static route-boundary verification confirmed 401-before-delete, individual id-plus-owner matching, bulk owner matching, generic 404, authenticated-owner cache invalidation, and no continuity gate for deletion", "private-memory, feedback, preferences, provider, account-reset, schema, client, and external-service coupling excluded", "git diff --check passed"],
+        "hygiene": [
+          "exact two-path local source commit verified",
+          "static route-boundary verification confirmed 401-before-delete, individual id-plus-owner matching, bulk owner matching, generic 404, authenticated-owner cache invalidation, and no continuity gate for deletion",
+          "private-memory, feedback, preferences, provider, account-reset, schema, client, and external-service coupling excluded",
+          "git diff --check passed"
+        ],
         "independentReview": "Passed with no material correctness or privacy regression identified."
       },
       "separateTestObservation": "A broader exploratory command also included the unchanged kinfolk-route-wiring contract, which reported its own current-research chat assertion failure outside the new session handlers. It was not used as validation for this two-path repair; the direct relevant contract set passed.",
@@ -278,7 +304,13 @@
       "sourceVerification": {
         "apiTests": "1 file, 8 tests passed",
         "apiTypecheck": "passed",
-        "hygiene": ["handoff archive and patch checksums verified", "manifest and exact two-file scope verified", "git apply --check --whitespace=error passed", "static no-import boundary passed", "git diff --check passed"],
+        "hygiene": [
+          "handoff archive and patch checksums verified",
+          "manifest and exact two-file scope verified",
+          "git apply --check --whitespace=error passed",
+          "static no-import boundary passed",
+          "git diff --check passed"
+        ],
         "reviewAdjustment": "Integration review added a fail-closed confidence-evidence requirement and its focused regression."
       },
       "externalAcceptance": "PENDING — no route activation, database/schema/migration, UI, provider, cache, notification, client, deployment, staging, browser, device, or member acceptance was performed. The policy creates no visible scorecard."
@@ -334,7 +366,13 @@
       "sourceVerification": {
         "apiTests": "3 files / 14 tests passed: explicit-memory-consent, continuity-memory-boundaries, and the existing bounded private-memory-encryption route harness",
         "apiTypecheck": "passed",
-        "hygiene": ["carrier archive, patch, base, exact two-path scope, and manifest result hashes verified through a temporary Git index", "independent read-only review passed after source call-site reconciliation", "shared direct create/edit sensitive-enforcement seam verified", "narrow first-person matcher and generic-family regression verified", "git diff --check passed"]
+        "hygiene": [
+          "carrier archive, patch, base, exact two-path scope, and manifest result hashes verified through a temporary Git index",
+          "independent read-only review passed after source call-site reconciliation",
+          "shared direct create/edit sensitive-enforcement seam verified",
+          "narrow first-person matcher and generic-family regression verified",
+          "git diff --check passed"
+        ]
       },
       "externalAcceptance": "PENDING — no database/DSN action, provider call, browser, device, authenticated member, staging/production, deployment, migration, or mobile build acceptance was performed."
     },
@@ -398,7 +436,15 @@
         "nativeTests": "1 file / 2 tests passed: life-journey-free-text-boundary",
         "apiTypecheck": "passed",
         "nativeTypecheck": "source-aligned no-emit passed with TypeScript 6.0.3 and Node heap limit 8192 MB",
-        "hygiene": ["carrier archive, patch, base, exact four-path scope, and all manifest result hashes verified through a temporary Git index", "independent semantic review completed", "native/server controlled-need allowlist parity passed", "description and selected-needs guard ordering passed", "exact six-path scope verified", "git diff --check passed", "temporary validation artifacts removed"]
+        "hygiene": [
+          "carrier archive, patch, base, exact four-path scope, and all manifest result hashes verified through a temporary Git index",
+          "independent semantic review completed",
+          "native/server controlled-need allowlist parity passed",
+          "description and selected-needs guard ordering passed",
+          "exact six-path scope verified",
+          "git diff --check passed",
+          "temporary validation artifacts removed"
+        ]
       },
       "externalAcceptance": "PENDING — no provider/OpenAI call, database/schema/migration action, browser, web/iOS/Android device, authenticated member, staging/production, deployment, or mobile build acceptance was performed."
     },
@@ -424,7 +470,11 @@
         "nativeTests": "1 file, 3 tests passed",
         "apiTypecheck": "passed",
         "nativeTypecheck": "passed with Node heap limit 8192 MB",
-        "hygiene": ["existing verified_source source field confirmed", "registry JSON valid", "git diff --check passed"]
+        "hygiene": [
+          "existing verified_source source field confirmed",
+          "registry JSON valid",
+          "git diff --check passed"
+        ]
       },
       "externalAcceptance": "PENDING — no database query, staging deployment, provider call, browser validation, or device validation was performed."
     },
@@ -473,7 +523,14 @@
       "sourceVerification": {
         "nativeTests": "3 files / 31 tests passed: native-directory-map-handoff, business-discovery-contract, map-locality-first",
         "nativeTypecheck": "source-aligned no-emit passed with TypeScript 6.0.3 and Node heap limit 8192 MB",
-        "hygiene": ["archive checksum, patch checksum, manifest base, and all eight carrier result hashes verified", "independent semantic review completed", "exact eight-path scope verified", "sanitizer private-dependency boundary passed", "git diff --check passed", "temporary validation files removed"]
+        "hygiene": [
+          "archive checksum, patch checksum, manifest base, and all eight carrier result hashes verified",
+          "independent semantic review completed",
+          "exact eight-path scope verified",
+          "sanitizer private-dependency boundary passed",
+          "git diff --check passed",
+          "temporary validation files removed"
+        ]
       },
       "externalAcceptance": "PENDING — no browser, physical device, authenticated API, server, database, schema/migration, provider, cache activation, staging/production, or deployment acceptance was performed."
     },
@@ -784,7 +841,13 @@
       "sourceVerification": {
         "apiTests": "1 file / 5 tests passed: business-owner-multi-business-contract",
         "apiTypecheck": "repository API TypeScript no-emit passed",
-        "hygiene": ["archive and patch SHA-256 values verified", "temporary-index application changed exactly the two claimed paths", "carrier result hashes matched after authority application", "static route boundary confirmed input validation before pool connection, selected approved-owner recheck and FOR UPDATE lock, relation-only delete/insert, lexical readback, and protected-field absence", "git diff --check passed"],
+        "hygiene": [
+          "archive and patch SHA-256 values verified",
+          "temporary-index application changed exactly the two claimed paths",
+          "carrier result hashes matched after authority application",
+          "static route boundary confirmed input validation before pool connection, selected approved-owner recheck and FOR UPDATE lock, relation-only delete/insert, lexical readback, and protected-field absence",
+          "git diff --check passed"
+        ],
         "independentReview": "Passed with no required correction."
       },
       "externalAcceptance": "PENDING — no authenticated owner, database write, runtime propagation timing, browser/device, provider, staging/production, or deployment validation is authorized or recorded."
@@ -826,7 +889,7 @@
     {
       "id": "LA-002-QUALIFIED-CARE-NAVIGATION-PHRASE-COVERAGE",
       "priority": "P0",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "f3d4457abdb3ef7858cea0f68c2238b435129935",
@@ -851,7 +914,33 @@
         "This is additive phrase coverage only; do not remove or weaken existing health-care override, medical-safety, source, or ordinary-discovery safeguards.",
         "Task yINBiovLIPiFnyQCFfSycn is the sole implementation owner and may return only an uncommitted review carrier. The unified local integration owner is the sole acceptor."
       ],
-      "externalAcceptance": "PENDING — source-only local claim. No provider, database, browser/device, authenticated member, staging/deployment, or feature activation action is authorized or recorded."
+      "externalAcceptance": "PENDING — source-only local integration. No remote operation, provider call, database/schema/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred.",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "68695deab2b6d8859596edfe7ae3c71924db7957",
+        "carrier": {
+          "archiveSha256": "886d79203c659e577a051160f3014fc2745c6eebc1fda62524115ef9e55c4bf9",
+          "manifestSha256": "15093a6312fa68ae32586e0f954fb47e27b30f4749c905954c54fb4f50e1b849",
+          "patchSha256": "658eada135c756d6b0a81aaae27a68dca07e1b6c9a6dde6465472db6cf9cab55",
+          "declaredCarrierBase": "7d4880d9ae4e59e63379dcac2d9905febf01bbdc",
+          "exactTwoPathScopeVerified": true,
+          "pathBaseCompatibilityVerified": true,
+          "applyCheckWithWhitespaceErrorPassed": true,
+          "resultHashesVerified": {
+            "artifacts/api-server/src/kinfolk/health-care-override.ts": "207404c8a58110960c3ac36652cad3a3d4a9b006fa99e3c748fe0c491c7aa2b5",
+            "artifacts/api-server/src/kinfolk/__tests__/health-care-override.test.ts": "7b4e7bcfe7a3ae2ee495a12f560fb0d8a03fe73a0da703d5d71f0dd8e6863900"
+          }
+        },
+        "reviewConclusion": "The patch adds only three imperative alternatives to CARE_NAVIGATION_RE and table-driven coverage. It preserves the medical_health intent gate, official finder sources, private-origin protection, no-diagnosis/no-referral/ordinary-MWM-card safeguards, and non-health behavior.",
+        "validation": {
+          "healthCareOverrideContract": "PASS — 1 file / 11 tests",
+          "apiTypeScriptNoEmit": "PASS",
+          "diffCheck": "PASS",
+          "qualifiedCareStaticWiringAssertions": "PASS — 2 tests (57 skipped)",
+          "fullStaticWiringSuite": "ATTEMPTED — five failures in unchanged static route-wiring test/route inputs. The test reads static sources and does not import either LA-002 path; no unrelated change was made or attributed to this carrier."
+        }
+      },
+      "claimDisposition": "Implementation claim closed after central local-only two-path integration; no external acceptance is implied."
     }
   ]
 }

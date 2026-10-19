@@ -495,19 +495,21 @@
       "platform": "API",
       "founder_requirement": "Direct qualified-care requests must not bypass the existing pure safety override.",
       "acceptance_criteria": "The designated two-path source repair and focused regression prove the override runs before qualified-care selection/recommendation; no provider, data, browser, or runtime claim is implied.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "LA-002 is exclusively claimed local-only at 7d4880d9ae4e59e63379dcac2d9905febf01bbdc for the existing pure matcher and focused regression; no carrier, repair commit, or test receipt exists yet.",
+      "status": "SOURCE INTEGRATED",
+      "source_evidence": "Central local-only LA-002 integration at 68695deab2b6d8859596edfe7ae3c71924db7957: archive SHA-256 886d79203c659e577a051160f3014fc2745c6eebc1fda62524115ef9e55c4bf9 and patch SHA-256 658eada135c756d6b0a81aaae27a68dca07e1b6c9a6dde6465472db6cf9cab55 verified; the exact two paths matched carrier base 7d4880d9ae4e59e63379dcac2d9905febf01bbdc; git apply --check --whitespace=error and applied-result hashes passed. Focused health-care override contract: 1 file / 11 tests passed; API tsc --noEmit passed; git diff --check passed. The named static wiring contract is located at src/kinfolk/__tests__/kinfolk-route-wiring.test.ts in this authority: its two qualified-care assertions passed (2 passed; 57 skipped). Its full suite was also attempted and reported five failures in unchanged route/test inputs, so no unrelated route repair was made or attributed to LA-002.",
       "staging_evidence": "MISSING EVIDENCE — no authorized deployment/member journey receipt.",
       "web_evidence": "Not a completed Web acceptance item.",
       "ios_evidence": "Not a completed iOS acceptance item.",
       "android_evidence": "Not a completed Android acceptance item.",
-      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn; central integration owner QJATRGk7nUgzDlccMCUcG6",
-      "dependencies_or_blockers": "MISSING EVIDENCE — carrier and focused source validation are pending; runtime authorization remains separate.",
-      "next_action": "Return only the bounded LA-002 carrier, then centrally reconcile its evidence.",
+      "responsible_owner_or_task": "Central integration owner QJATRGk7nUgzDlccMCUcG6; implementation carrier owner yINBiovLIPiFnyQCFfSycn (claim closed)",
+      "dependencies_or_blockers": "MISSING EVIDENCE — no authorized deployed/staging/member journey; provider/data/browser/runtime acceptance remains separate. The unchanged full static route-wiring suite has five non-LA-002 failures and needs separate ownership; it was not modified.",
+      "next_action": "Retain this two-path local source receipt; only separately authorized staging/runtime/member validation may advance later evidence layers.",
       "founder_approval_needed": "No new product decision for the narrow source repair; separate runtime authorization remains required.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
-        "Q task coordination receipt, 2026-10-19"
+        "Q task coordination receipt, 2026-10-19",
+        "LA-002 carrier archive 886d79203c659e577a051160f3014fc2745c6eebc1fda62524115ef9e55c4bf9; patch 658eada135c756d6b0a81aaae27a68dca07e1b6c9a6dde6465472db6cf9cab55",
+        "Central local source commit 68695deab2b6d8859596edfe7ae3c71924db7957"
       ]
     },
     {
@@ -1204,17 +1206,18 @@
       "status": "BLOCKED",
       "source_evidence": "Canonical owner and Admin profile-update seams and BUSINESS-OWNER-001 structured-specialty backend are locally integrated, but BIZ-005 is one backend capability only and does not establish complete dashboard acceptance.",
       "staging_evidence": "MISSING EVIDENCE — current staging authentication checkpoint failed before an authenticated editor journey could begin; no business record or fixture changed.",
-      "web_evidence": "MISSING EVIDENCE — no authenticated owner/Admin browser acceptance is credited.",
+      "web_evidence": "READ-ONLY EXTERNAL EVIDENCE — an authenticated production-domain page at https://www.mappingwithmelanin.com/business-dashboard and its existing View Public Listing link opened the same public business profile; anonymous same-origin /health returned 200 and /api/health returned 401. This establishes a production-domain frontend with a same-origin API only. It does not establish database target, save durability, update propagation/timing, approval, or Kinfolk freshness; no real listing was edited.",
       "ios_evidence": "Not required for this minimum Web/API editor acceptance layer.",
       "android_evidence": "Not required for this minimum Web/API editor acceptance layer.",
       "responsible_owner_or_task": "Founder for external authorization; central release/integration owner for a bounded acceptance packet.",
-      "dependencies_or_blockers": "FAILED STAGING AUTHENTICATION CHECKPOINT (BIZ-008); no authorized named test owner, provisioning/reset procedure, fixture plan, or verified current staging candidate.",
-      "next_action": "Founder selects exactly one later authorization: a controlled non-production test-owner provisioning/reset workflow, or a separately authorized read-only production Admin route check. Do not request real business corrections or execute either path yet.",
+      "dependencies_or_blockers": "FAILED STAGING AUTHENTICATION CHECKPOINT (BIZ-008); the read-only production-domain check is browse-only and deliberately made no real-record edit. MISSING EVIDENCE — a founder-designated disposable/non-real public test business, or a separately approved reversible field on one named record, plus scoped save/readback authorization and a verified test-owner procedure.",
+      "next_action": "After explicit authorization, use a founder-designated disposable/non-real public test business (preferred), or an explicitly approved reversible field on a named record, for one controlled save then public-profile/Directory/Map readback. Keep Kinfolk freshness and staging authentication separate; do not edit a real listing without that authorization.",
       "founder_approval_needed": "Yes — external account/browser access and, if selected, narrow staging test-owner provisioning/reset or a read-only production route check.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
         "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
-        "BUSINESS-OWNER-001 local receipt ddf73c4374a4231151a29eb4236585adca11202e"
+        "BUSINESS-OWNER-001 local receipt ddf73c4374a4231151a29eb4236585adca11202e",
+        "S9 read-only production-domain dashboard verification, 2026-10-19"
       ]
     },
     {
@@ -1489,6 +1492,14 @@
     {
       "date": "2026-10-19",
       "event": "Read-only Take Control staging checkpoint: unauthenticated dashboard redirected to /waitlist as expected; /login loaded; founder-operated sign-in returned generic Invalid email or password. This is a failed staging authentication checkpoint only; no credentials retained/retried and no data, fixture, console, network, or log inference."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Central local-only LA-002 integration: source commit 68695deab2b6d8859596edfe7ae3c71924db7957 changed exactly the qualified-care matcher and its focused test. Carrier/archive/patch hashes, declared base/path compatibility, apply check, result hashes, 11-test focused contract, API no-emit and diff check passed; two directly relevant unchanged wiring assertions passed. The full unchanged wiring suite reported five unrelated static failures and was not altered. No remote Git, database/schema/migration, provider, staging/deployment, browser/device, authenticated-member, or feature activation action occurred."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Read-only external dashboard evidence: authenticated production-domain /business-dashboard and View Public Listing reached an existing public business; anonymous same-origin /health returned 200 and /api/health returned 401. This proves only a production-domain frontend/same-origin API, not a database target, save, durability, propagation, approval, or Kinfolk freshness. No real listing was edited; a disposable/non-real test business or separately approved reversible field remains required."
     }
   ],
   "evidence_gaps": [
@@ -1506,9 +1517,9 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 9,
+      "IN DEVELOPMENT": 8,
       "NOT STARTED": 11,
-      "SOURCE INTEGRATED": 15
+      "SOURCE INTEGRATED": 16
     },
     "by_founder_area": {
       "Core app": 2,
