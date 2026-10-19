@@ -2482,7 +2482,7 @@
     {
       "id": "COMM-001-DM-SERVER-AUTHORITATIVE-LIFECYCLE-CONTRACT",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -2528,7 +2528,22 @@
         "file": "COMM001_DM_SERVER_AUTHORITATIVE_LIFECYCLE_BASE_2026-10-19.tar.gz",
         "sha256": "ccb73f431aff0db964fd1da603fae1e20d054ba812bfb437a2eabb391a689103",
         "expires_at": "2026-10-20T22:21:26.063Z"
-      }
+      },
+      "sourceCommit": "93af8b11cd545ffc5e4661bb5a0f3a9a94d501c5",
+      "carrier": {
+        "handoff_id": "hnd_SdBpiQNrmH3_ZM6u8ocH1-Rq",
+        "file": "COMM001_DM_SERVER_AUTHORITATIVE_LIFECYCLE_CONTRACT_CARRIER_2026-10-19.tar.gz",
+        "sha256": "4b420d9575893c846c4757b0bc2f2fcd413248b8edc99828a67ee0833cb3d0fa",
+        "patch_sha256": "8857e436941805da3a7ce8f727561b886c8894425b44d5d7f897c36f44abe8fe",
+        "result_sha256": "057d3c8db247bd93e7f721f871f8e0fd0c6773c0d063f867d9359bbcfd64c111"
+      },
+      "centralValidation": {
+        "api_vitest": "4 files / 14 tests PASS",
+        "api_tsc": "PASS",
+        "scope": "one new test path only; git diff --check PASS",
+        "note": "The prior compact-overlay Circle assertion was not reproduced; the exact current-authority aggregate passed."
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic mocked route-harness evidence only; no runtime persistence, delivery, staging, browser/device, or member-visible evidence."
     },
     {
       "id": "COMM-001-DM-PENDING-REQUEST-RECIPIENT-NOTIFICATION",
@@ -2645,7 +2660,13 @@
           "artifacts/web/src/__tests__/safety-checkin-recipient-alert-contract.test.ts": "026f753a1cf660da9093fe26b6ae6f217bec60c68a4d1cf34dba353a5e8ce501"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no runtime notification delivery, database, staging, browser/device, or member-visible validation."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 no runtime notification delivery, database, staging, browser/device, or member-visible validation.",
+      "baseTransfer": {
+        "handoff_id": "hnd_GjcL9oZ_01hpQYJcJMikf9eT",
+        "file": "COMM001_DM_NOTIFICATION_INBOX_NAVIGATION_BASE_2026-10-19.tar.gz",
+        "sha256": "9593235c20e1b46aeed04dc734b6adcddfb56b0fa28d687b8f85f7a11f0dff36",
+        "expires_at": "2026-10-20T22:40:08.508Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
