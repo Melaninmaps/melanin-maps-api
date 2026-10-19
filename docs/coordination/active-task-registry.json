@@ -128,13 +128,19 @@
     },
     {
       "id": "CI-001-CULTURAL-EXPLORER-SOURCE-ATTRIBUTION",
-      "status": "UNCLAIMED",
+      "status": "IMPLEMENTING",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirement": "Pass the public cultural-site verifiedSource label through the Explorer API adapter to the already-rendered mobile source row.",
+      "baseline": "03fe94219fa36a5eb6d55b51fc9d0628995af0cb",
       "paths": [
         "artifacts/api-server/src/routes/cultural-explorer.ts",
         "artifacts/api-server/src/routes/__tests__/cultural-explorer.test.ts",
         "artifacts/mobile/app/cultural-heritage.tsx",
         "artifacts/mobile/__tests__/cultural-explorer-contract.test.ts"
+      ],
+      "constraints": [
+        "Pass through only the existing public verifiedSource label; do not infer, alter, or promote an external URL as evidentiary provenance.",
+        "No database/schema, migration, route activation, provider, external call, or mobile visual redesign is authorized."
       ]
     }
   ]
