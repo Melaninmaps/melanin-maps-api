@@ -517,10 +517,11 @@
     },
     {
       "id": "D9-BUSINESS-DETAIL-DESTINATION-ONLY-MAPS-COPY",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "aa2ec26abddd2e30dbcd5741b8d8e3cf101af2ae",
+      "sourceCommit": "685d2809a6f5bcd4c3b20515d31d24aaa2371f56",
       "sourceFinding": "The c711 source snapshot retains a legacy isNavigator in-app directions branch that adds membership gating, origin/device-location acquisition, directions API work, and a modal beside the public destination-only Maps URL. The founder-approved free-core action must retain only the valid-public-pin external handoff; its English-only label also discards openURL failure silently.",
       "ownershipTransfer": {
         "fromTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
@@ -545,18 +546,28 @@
         "The focused source contract must prove the bilingual external Maps label/recovery, retained public latitude/longitude guard and destination-only URLs, and explicit absence of Navigator/in-app/origin/directions-API behavior."
       ],
       "validationPlan": [
-        "On the authorized non-Git overlay, run the supplied deterministic two-path source validator and return a final-source/hash carrier; the integration owner will run the focused business-discovery contract and a source-aligned mobile no-emit check after central application.",
-        "Verify exact two-path scope and candidate whitespace hygiene; no browser or device validation is claimed."
+        "Run the focused business-discovery contract and a source-aligned mobile no-emit check on the clean integration successor.",
+        "Verify exact two-path scope, retired-branch absence, and git diff --check; no browser or device validation is claimed."
       ],
       "constraints": [
         "No change to public destination validation or URLs, API/provider behavior, web fallback, Maps SDK, membership model, or visual redesign. The explicitly retired legacy Navigator gating/origin/in-app directions branch must not remain or be recreated.",
-        "The designated owner must use the corrected c711 path-only overlay and return only an uncommitted two-file review carrier; the integration owner remains the sole acceptor.",
+        "The environment-only transfer from S9 is complete; S9 did not receive, extract, or alter the earlier c711 source snapshot, and the integration owner applied this exact two-path repair on the clean successor.",
         "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
       ],
+      "sourceVerification": {
+        "nativeTests": "1 file / 10 tests passed: business-discovery-contract",
+        "nativeTypecheck": "passed with Node heap limit 8192 MB",
+        "hygiene": [
+          "exact two-path scope verified",
+          "public-pin guard and platform destination URLs retained",
+          "action-level and screen-level Navigator, origin, Expo Location, directions API/request, fetch, token, state, modal, route-metric, and mode artifacts absent",
+          "git diff --check passed before commit"
+        ]
+      },
       "externalAcceptance": "PENDING — no authenticated member, browser, device, Maps application, staging/production, or deployment acceptance is authorized or recorded."
     },
     {
-      "id": "BA-001-CANONICAL-BUSINESS-INVENTORY-PROFILE-LINK",
+      "id": "BUSINESS-ADMIN-001-CANONICAL-PROFILE-NAVIGATION",
       "status": "CLAIMED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
