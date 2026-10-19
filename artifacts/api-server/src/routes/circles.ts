@@ -18,6 +18,7 @@ import { eq, and, inArray, desc, sql, not } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { storage } from "../storage";
 import { sendPushToUser } from "../lib/pushNotifications";
+import { canUseOwnCirclePlanPreferences } from "../kinfolk/circle-plan-preference-policy";
 
 // Tier limits for circle creation
 const CIRCLE_LIMITS: Record<string, { maxCircles: number; maxPrivateMembers: number; maxCommunityMembers: number }> = {
@@ -581,13 +582,16 @@ router.post("/circles/:id/plans", async (req: Request, res: Response) => {
 
     // Fetch member prefs when planning by a specific member's taste
     let memberPrefs: MemberPrefsContext | null = null;
-    if (resolvedCuratorMode === "by_member" && typeof curatorMemberId === "string" && curatorMemberId) {
-      const [curatorMembership] = await db.select({ userId: circleMembers.userId })
-        .from(circleMembers)
-        .where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, curatorMemberId)))
-        .limit(1);
-      if (!curatorMembership) {
-        res.status(400).json({ error: "The selected member is not in this circle" });
+    if (resolvedCuratorMode === "by_member") {
+      if (typeof curatorMemberId !== "string" || !curatorMemberId) {
+        res.status(400).json({ error: "Choose your own saved preferences for this plan" });
+        return;
+      }
+      if (!canUseOwnCirclePlanPreferences(uid(req), curatorMemberId)) {
+        res.status(403).json({
+          code: "CIRCLE_MEMBER_PREFERENCES_NOT_SHARED",
+          error: "Circle plans can use only your own saved preferences until another member explicitly enables Circle-specific preference sharing.",
+        });
         return;
       }
       const [prefs] = await db.select().from(userPreferencesTable)

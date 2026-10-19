@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "authority": {
+    "repository": "Melaninmaps/melanin-maps-api",
+    "branch": "staging/kinfolk-full-candidate-20261014",
+    "verifiedHead": "f818056c93840794ad08c9bb90b68f2500635a25",
+    "verifiedAgainst": "origin/staging/kinfolk-full-candidate-20261014",
+    "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+    "integrationRule": "Only the integration owner may push accepted work to this branch. Every push must fetch origin and pass a clean, fast-forward authority check first."
+  },
+  "claimProtocol": {
+    "dispatcher": "QJATRGk7nUgzDlccMCUcG6",
+    "mechanism": "The dispatcher records exclusive source-path claims here and assigns work through Manus task messages. The GitHub authority branch and non-fast-forward push rejection are the final conflict controls.",
+    "historicalEvidenceSources": [
+      "docs/handoffs/KINFOLK_SCOPE_LOCK_AND_RELEASE_COMPLETION_2026-09-17.md",
+      "docs/reviews/MANUS_RECONCILIATION_REPORT.md",
+      "replit/combined-release/ACCEPTANCE_MATRIX.md"
+    ]
+  },
+  "claims": [
+    {
+      "id": "D1-CLOSED-CHECKOUT-CUSTOMER-RECONCILIATION",
+      "status": "BLOCKED",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "requirement": "Retire obsolete checkout enrollment across API, web, and native surfaces while preserving provider-owned purchase access and existing members.",
+      "localEvidence": {
+        "branch": "staging/kinfolk-full-candidate-20261014",
+        "reportedBase": "7ce24646dfe5b0049ff1236afa0f10a01fda5579",
+        "reportedLocalCommit": "a724a97f15eeb1356ccafb80aead494cb44d9379",
+        "state": "Local-only commit plus ten uncommitted customer-facing paths; neither reference is currently verified on GitHub authority."
+      },
+      "paths": [
+        "artifacts/api-server/src/__tests__/membership-price-integrity.test.ts",
+        "artifacts/api-server/src/routes/__tests__/stripe-checkout-retirement.test.ts",
+        "artifacts/api-server/src/routes/stripe.ts",
+        "artifacts/mobile/__tests__/web-payment-handoff.test.ts",
+        "artifacts/mobile/app/family-plan.tsx",
+        "artifacts/web/src/__tests__/family-plan-web-checkout.test.ts",
+        "artifacts/web/src/components/membership-gate.tsx",
+        "artifacts/web/src/pages/billing.tsx",
+        "artifacts/web/src/pages/family-plan.tsx",
+        "artifacts/web/src/pages/membership.tsx"
+      ],
+      "focusedEvidence": {
+        "api": "31 tests passed across checkout-retirement and membership-price-integrity",
+        "web": "3 family-plan checkout tests passed",
+        "native": "4 payment-handoff/family lifecycle tests passed",
+        "staticChecks": ["API, web, and native no-emit passed", "git diff --check passed"]
+      },
+      "blocker": "The preserved worktree is unavailable to the surviving owner runtime, and its local references are not on the verified GitHub authority.",
+      "nextAction": "Obtain the recorded six-command, read-only Git provenance from the environment that hosts the worktree; then reconcile onto the verified authority without discarding any preserved diff."
+    },
+    {
+      "id": "SP-001-CIRCLE-PLAN-PREFERENCE-CONSENT",
+      "status": "IMPLEMENTING",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirement": "Prevent a Circle member from causing another member's account-level preferences to be sent to Kinfolk for plan generation until a Circle-scoped opt-in exists.",
+      "baseline": "f818056c93840794ad08c9bb90b68f2500635a25",
+      "paths": [
+        "artifacts/api-server/src/routes/circles.ts",
+        "artifacts/api-server/src/kinfolk/circle-plan-preference-policy.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/circle-plan-preference-policy.test.ts",
+        "artifacts/api-server/src/routes/__tests__/circles-private-invite-only.test.ts",
+        "artifacts/api-server/src/__tests__/social-authorization-contract.test.ts",
+        "artifacts/mobile/app/circles/[id].tsx",
+        "artifacts/mobile/__tests__/circle-plan-preference-boundary.test.ts"
+      ],
+      "requiredBehavior": [
+        "Legacy by_member requests may use only the authenticated member's own preference record.",
+        "Another member's account-level preferences are rejected before preference lookup or AI generation.",
+        "The member-facing Circle plan selector does not present cross-member preference use as available."
+      ]
+    },
+    {
+      "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "requirement": "Prepare a future, unmerged Community-Frequented Alternatives and Scorecard V1 candidate with explicit consent, separate signals, city-scoped reputation, and manipulation protections.",
+      "baseline": "No implementation path or focused test is yet claimed; source work may start only after a fresh verified-authority check and a concrete path claim.",
+      "paths": [],
+      "constraints": [
+        "Remain unmerged from the TestFlight delivery path.",
+        "Do not use raw private conversations or infer account-level preference sharing."
+      ]
+    },
+    {
+      "id": "UM-001-INDIVIDUAL-MEMORY-DELETE-SEMANTICS",
+      "status": "BLOCKED",
+      "requirement": "Resolve the member-facing delete/permanent-clear wording versus revoke-only persistence semantics for private memories.",
+      "paths": [
+        "artifacts/api-server/src/routes/kinfolk.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/private-memory-encryption-routes.test.ts",
+        "artifacts/web/src/components/kinfolk/KinfolkMemoryManager.tsx",
+        "artifacts/mobile/app/kinfolk-memory.tsx"
+      ],
+      "blocker": "A retention and erasure decision is required before changing revoke-only storage or making permanent-clear claims."
+    },
+    {
+      "id": "LA-001-LEGACY-LIFE-JOURNEY-FREE-TEXT-BOUNDARY",
+      "status": "UNCLAIMED",
+      "requirement": "Prevent legacy Journey free text from reaching the model provider or plaintext aiContext persistence without the newer explicit-consent and encrypted contract.",
+      "paths": [
+        "artifacts/api-server/src/routes/journeys.ts",
+        "artifacts/api-server/src/routes/__tests__/journey-member-owned-contract.test.ts",
+        "artifacts/mobile/app/life-journey.tsx",
+        "lib/db/src/schema/life-journeys.ts"
+      ]
+    },
+    {
+      "id": "CI-001-CULTURAL-EXPLORER-SOURCE-ATTRIBUTION",
+      "status": "UNCLAIMED",
+      "requirement": "Pass the public cultural-site verifiedSource label through the Explorer API adapter to the already-rendered mobile source row.",
+      "paths": [
+        "artifacts/api-server/src/routes/cultural-explorer.ts",
+        "artifacts/api-server/src/routes/__tests__/cultural-explorer.test.ts",
+        "artifacts/mobile/app/cultural-heritage.tsx",
+        "artifacts/mobile/__tests__/cultural-explorer-contract.test.ts"
+      ]
+    }
+  ]
+}

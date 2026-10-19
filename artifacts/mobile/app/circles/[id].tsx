@@ -60,10 +60,9 @@ const DATE_TYPES = [
 const CURATOR_MODES = [
   { id: "votes", emoji: "🗳", label: "Circle votes", desc: "Top-voted spots lead the plan" },
   { id: "random", emoji: "🎲", label: "Surprise me", desc: "Kinfolk picks — nobody knows" },
-  { id: "by_member", emoji: "👤", label: "A member's taste", desc: "Their KinfolkAI prefs drive the plan" },
 ] as const;
 
-type CuratorMode = "votes" | "random" | "by_member";
+type CuratorMode = "votes" | "random";
 
 const GOLD = "#C9922B";
 
@@ -102,7 +101,6 @@ export default function CircleDetailScreen() {
   // ── Plan modal state ─────────────────────────────────────────────────────────
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [curatorMode, setCuratorMode] = useState<CuratorMode>("votes");
-  const [curatorMemberId, setCuratorMemberId] = useState<string>("");
   const [planVibe, setPlanVibe] = useState("");
   const [planBudget, setPlanBudget] = useState("$50");
   const [planWindows, setPlanWindows] = useState<string[]>([]);
@@ -265,7 +263,6 @@ export default function CircleDetailScreen() {
 
   const generatePlan = async () => {
     if (curatorMode !== "random" && !planVibe) { Alert.alert("Choose a vibe", "Pick a vibe for the plan."); return; }
-    if (curatorMode === "by_member" && !curatorMemberId) { Alert.alert("Pick a member", "Choose which member's taste to use."); return; }
     setGeneratingPlan(true);
     try {
       const headers = await authHeaders();
@@ -277,7 +274,6 @@ export default function CircleDetailScreen() {
           availabilityWindows: planWindows,
           planDate: planDate || undefined,
           curatorMode,
-          curatorMemberId: curatorMemberId || undefined,
           title: planVibe ? `${planVibe} Day` : undefined,
         }),
       });
@@ -285,7 +281,7 @@ export default function CircleDetailScreen() {
       if (!res.ok) { Alert.alert("Error", data.error ?? "Try again."); return; }
       setPlans((prev) => [data.plan!, ...prev]);
       setShowPlanModal(false);
-      setPlanVibe(""); setPlanWindows([]); setCuratorMode("votes"); setCuratorMemberId("");
+      setPlanVibe(""); setPlanWindows([]); setCuratorMode("votes");
       setActiveTab("plan");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch { Alert.alert("Error", "Couldn't generate plan."); }
@@ -856,7 +852,7 @@ export default function CircleDetailScreen() {
                         backgroundColor: selected ? colors.primary + "12" : colors.card,
                         borderColor: selected ? colors.primary : colors.border,
                       }]}
-                      onPress={() => { setCuratorMode(mode.id); setCuratorMemberId(""); }}
+                      onPress={() => { setCuratorMode(mode.id); }}
                       activeOpacity={0.8}
                     >
                       <Text style={s.curatorEmoji}>{mode.emoji}</Text>
@@ -870,39 +866,7 @@ export default function CircleDetailScreen() {
                 })}
               </View>
 
-              {/* Member picker when by_member mode selected */}
-              {curatorMode === "by_member" && (
-                <View style={{ marginTop: 4, marginBottom: 4 }}>
-                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Which member&apos;s taste?</Text>
-                  <ScrollView
-        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
-                    {members.map((m) => {
-                      const selected = curatorMemberId === m.userId;
-                      const label = m.userId === user?.id ? "Me (you)" : m.role === "host" ? "👑 Host" : "Member";
-                      return (
-                        <TouchableOpacity activeOpacity={0.85}
-                          key={m.id}
-                          style={[s.chip, {
-                            backgroundColor: selected ? colors.primary : colors.card,
-                            borderColor: selected ? colors.primary : colors.border,
-                          }]}
-                          onPress={() => setCuratorMemberId(m.userId)}
-                        >
-                          <Feather name="user" size={12} color={selected ? "#fff" : colors.mutedForeground} />
-                          <Text style={[s.chipText, { color: selected ? "#FFFFFF" : colors.foreground }]}>{label}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                  <View style={[s.memberTasteHint, { backgroundColor: GOLD + "12", borderColor: GOLD + "25" }]}>
-                    <Text style={[s.memberTasteHintText, { color: colors.mutedForeground }]}>
-                      ✨ Kinfolk uses this member&apos;s personal preferences — favorite categories, budget, dietary notes, and lifestyle services — to build the plan.
-                    </Text>
-                  </View>
-                </View>
-              )}
-
-              {/* Vibe picker (hidden for random/by_member) */}
+              {/* Vibe picker */}
               {curatorMode === "votes" && (
                 <>
                   <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>What&apos;s the Vibe?</Text>
@@ -950,7 +914,7 @@ export default function CircleDetailScreen() {
               />
 
               <Text style={[s.privacyText, { color: colors.mutedForeground, marginTop: 8, lineHeight: 17 }]}>
-                🔒 Kinfolk uses only shared suggestions and selected member preferences. Personal activity outside this circle is never used.
+                🔒 Kinfolk uses Circle suggestions and your selected plan choices. It does not use any Circle member&apos;s account-level preferences.
               </Text>
             </ScrollView>
 

@@ -26,7 +26,8 @@ describe("social authorization contracts", () => {
   it("requires Circle membership and binds all votes to the URL Circle", () => {
     expect(circles).toMatch(/router\.post\("\/circles\/:id\/suggestions\/:sugId\/upvote",[\s\S]*?getCircleWithAuth\(circleId, uid\(req\), res\)/);
     expect(circles).toMatch(/router\.delete\("\/circles\/:id\/suggestions\/:sugId",[\s\S]*?getCircleWithAuth\(circleId, uid\(req\), res\)/);
-    expect(circles).toContain("The selected member is not in this circle");
+    expect(circles).toContain("canUseOwnCirclePlanPreferences(uid(req), curatorMemberId)");
+    expect(circles).toContain('code: "CIRCLE_MEMBER_PREFERENCES_NOT_SHARED"');
     expect(circles).toContain("Plan not found in this circle");
     expect(circles).toContain("plan.circleId !== circleId");
   });

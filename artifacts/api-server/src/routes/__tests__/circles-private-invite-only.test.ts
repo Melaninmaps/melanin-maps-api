@@ -24,4 +24,13 @@ describe("Circle private invite-only server policy", () => {
     expect(circlesRoute).toContain("Circles are invite-only. Ask the Circle host to add you.");
     expect(circlesRoute).toContain('code: "CIRCLE_INVITE_REQUIRED"');
   });
+
+  it("does not load another member's account preferences for a Circle plan", () => {
+    const preferenceGuard = circlesRoute.indexOf("canUseOwnCirclePlanPreferences(uid(req), curatorMemberId)");
+    const preferenceLookup = circlesRoute.indexOf(".from(userPreferencesTable)");
+
+    expect(circlesRoute).toContain('code: "CIRCLE_MEMBER_PREFERENCES_NOT_SHARED"');
+    expect(preferenceGuard).toBeGreaterThan(-1);
+    expect(preferenceLookup).toBeGreaterThan(preferenceGuard);
+  });
 });
