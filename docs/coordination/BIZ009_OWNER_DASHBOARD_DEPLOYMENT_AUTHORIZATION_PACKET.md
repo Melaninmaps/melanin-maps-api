@@ -5,7 +5,7 @@
 **Controlling requirement:** `BIZ-009` in `MWM_KINFOLK_MASTER_COMPLETION_CHECKLIST.{md,json}`.
 **Related minimum editor acceptance:** `BIZ-006`; staging authentication checkpoint: `BIZ-008`.
 
-**Supplement:** [No-deployment release-binding addendum](BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md), prepared from local source and inherited evidence only.
+**Supplement:** [No-deployment release-binding addendum](BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md), prepared from local source and inherited evidence only. The subsequent authorized inspection and current no-deployment disposition are in the [production deployment decision packet](BIZ009_PRODUCTION_DEPLOYMENT_DECISION_PACKET_2026-10-19.md).
 
 ## 1. Exact locally integrated source candidate
 

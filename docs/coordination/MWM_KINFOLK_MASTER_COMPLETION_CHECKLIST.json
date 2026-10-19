@@ -1280,8 +1280,8 @@
       "ios_evidence": "Not required for the first Web/API owner-editor slice; no iOS acceptance is implied.",
       "android_evidence": "Not required for the first Web/API owner-editor slice; no Android acceptance is implied.",
       "responsible_owner_or_task": "Central integration/acceptance owner QJATRGk7nUgzDlccMCUcG6; BUSINESS-OWNER-002 and BUSINESS-OWNER-003 source subclaims are closed local-only.",
-      "dependencies_or_blockers": "Production acceptance is pending. The local candidate is not published or deployed; its exact production service binding, remote ref, deployed database contract, current release, rollback SHA/procedure, and pre-existing startup-writer inventory are unverified. BIZ-008 staging authentication remains failed. Field-level last-approved/Pending Approval requires a current moderation contract/schema; current Admin field receipts remain audit/source metadata only. Any live test requires a founder-designated non-real fixture or a separately approved reversible production field, account/context, Take Control session, and restoration receipt.",
-      "next_action": "Use docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md and docs/coordination/BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md only as preparation. First obtain explicit authorization for one read-only release-binding inspection; it must establish exact remote candidate/ref matching local `897910cba14d720276b20bc1011232e68b0d16df`, deployment target, actual database/startup compatibility facts, and verified rollback. Then request a separate no-placeholder deployment approval and, only after a successful approved deployment, separate Take Control approval for one reversible description save/restore/readback. Do not start services/specialties/images/other fields, moderated-field work, or a broader dashboard claim.",
+      "dependencies_or_blockers": "Authorized release binding now identifies Railway production project `melanin-maps-api` / environment `production` / API service `api-server`; the current known-successful baseline is `8fd6989bea317f53dfa6f170c2c5054cf0de74a4` with rollback deployment `0add2499-0c78-4b41-abf2-f3ad70cc84e1`. BIZ-009 candidate `897910cba14d720276b20bc1011232e68b0d16df` remains local-only and unpublished. The separately authorized production schema query was not executed: Railway MCP has no SQL console and the Sandbox browser has no active Railway session; the existing public TCP proxy was not used. Actual startup-writer configuration remains unresolved: deployed source has pre-traffic schema helpers and conditional workers even in explicit release mode. BIZ-008 remains failed. Last-approved/Pending Approval requires a current moderation contract/schema; any browser/fixture/production edit needs separate approval.",
+      "next_action": "Use docs/coordination/BIZ009_PRODUCTION_DEPLOYMENT_DECISION_PACKET_2026-10-19.md as the controlling no-deployment decision. First obtain an explicit remote-publication authorization naming the immutable remote ref/tag and exact local candidate `897910cba14d720276b20bc1011232e68b0d16df`. Separately retry the exact one-query private-console schema inspection only through an active founder-controlled Railway session; do not use the public proxy or another connection method. Then obtain writer-disposition evidence/approval and a no-placeholder deployment/rollback approval. Only after successful authorized deployment may a separately approved Take Control save/restore/readback occur. Do not start services/specialties/images/other fields, moderated-field work, or a broader dashboard claim.",
       "founder_approval_needed": "No for the bounded local source carrier. Yes for any fixture/create/reset, production field edit, authenticated browser save/readback, database action, deployment, provider-backed Kinfolk check, or release assertion.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1295,7 +1295,8 @@
         "docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md",
         "BUSINESS-OWNER-003 carrier 7160024f6d45442b4be0f9717399eff156bc1af1bd297cb9f584aa9ed50b40ca; patch 3d148077372cb783bfd07a4228afb454e941fcab431db1cdba1b153c2d7d7a2a; accepted source commit 897910cba14d720276b20bc1011232e68b0d16df",
         "BIZ-009 deployment authorization packet revised for both local source receipts, 2026-10-19",
-        "docs/coordination/BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md"
+        "docs/coordination/BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md",
+        "docs/coordination/BIZ009_PRODUCTION_DEPLOYMENT_DECISION_PACKET_2026-10-19.md"
       ]
     }
   ],
@@ -1561,6 +1562,10 @@
     {
       "date": "2026-10-19",
       "event": "BIZ-009 moved to BLOCKED / production acceptance pending after both local-only source receipts (9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e; 897910cba14d720276b20bc1011232e68b0d16df). The revised BIZ-009 release packet identifies local candidate/ref only and requires separately authorized release-binding, deployment, and Take Control acceptance gates."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Founder-authorized BIZ-009 production release-binding inspection completed read-only: Railway identifies production project melanin-maps-api / production / api-server, latest known-successful API deployment 0add2499-0c78-4b41-abf2-f3ad70cc84e1 at source 8fd6989bea317f53dfa6f170c2c5054cf0de74a4, no staged production changes, and a retrievable rollback mechanism. Targeted deployed-startup source review found pre-traffic schema helpers and conditional writer/worker paths; actual feature-mode/worker values remain unverified without secret-variable access. The separately authorized one-query schema inspection was not executed because Railway MCP has no SQL console and the browser lacks an active Railway session; the existing public TCP proxy was not used. No remote publication, deployment, database session, proxy creation/use, mutation, account/fixture, provider, or browser edit occurred. BIZ-009 remains BLOCKED; see the production decision packet."
     }
   ],
   "evidence_gaps": [
