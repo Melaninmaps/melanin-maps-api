@@ -2921,6 +2921,12 @@
       "founderLifecycleContext": {
         "parentExperience": "Complete mapped founder experience; worker implements only bounded source seam and Q retains integrated lifecycle acceptance.",
         "completionBoundary": "No runtime/delivery/persistence/account-switch/device/browser/staging/member/founder evidence is claimed."
+      },
+      "baseTransfer": {
+        "handoff_id": "hnd_Dvgi1oNramA8l8tLlyCZfAEY",
+        "file": "BIZ003_OWNER_HOME_SKIP_INSIGHTS_BASE_2026-10-19.tar.gz",
+        "sha256": "a7bd45b00ef7067677981a2b0e622bb0291c2a301e1e3ae7da2755ba99790b60",
+        "expires_at": "2026-10-20T22:57:49.122Z"
       }
     },
     {
@@ -2967,6 +2973,12 @@
       "founderLifecycleContext": {
         "parentExperience": "Complete mapped founder experience; worker implements only bounded source seam and Q retains integrated lifecycle acceptance.",
         "completionBoundary": "No runtime/delivery/persistence/account-switch/device/browser/staging/member/founder evidence is claimed."
+      },
+      "baseTransfer": {
+        "handoff_id": "hnd_-xGNEQZNtVzAQ_-ydzMeGF0L",
+        "file": "FLIGHT004_ARRIVAL_COORDINATION_ELIGIBILITY_BASE_2026-10-19.tar.gz",
+        "sha256": "a0db1df05150878db855bf757a2695a7a21cbf77fb7910e206e55d46549b323e",
+        "expires_at": "2026-10-20T22:57:49.335Z"
       }
     }
   ],
