@@ -1487,8 +1487,8 @@
     {
       "id": "COMM-001-FREE-GROUP-CREATE-JOIN-NEUTRAL-CAPS",
       "priority": "P0",
-      "status": "CLAIMED",
-      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
+      "ownerTaskId": null,
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
       "baseline": "1a56f0397eeb9e9efdabbd77d9a4d9fe29348fd3",
@@ -1534,7 +1534,7 @@
         "Exact six-path scope, git diff --check, source boundaries, hash-verified carrier/apply reconstruction."
       ],
       "carrierDisposition": "Return an uncommitted, hash-verified six-path review carrier only; central owner alone may apply, validate, commit, and update source status.",
-      "externalAcceptance": "PENDING \u2014 no runtime database action, provider, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance is authorized or implied.",
+      "externalAcceptance": "PENDING \u2014 no runtime database persistence, staging, Web/iOS/Android device, browser, provider, deployment, or member-visible acceptance occurred.",
       "sourceBaseCarrier": {
         "authorityBase": "bf645aba13a022cbbcfce00b660b25969cae7693",
         "claimBaseline": "1a56f0397eeb9e9efdabbd77d9a4d9fe29348fd3",
@@ -1551,6 +1551,35 @@
           "artifacts/mobile/__tests__/community-content-first.test.ts": "e678eaeacd39a274321a54682c597efad36d3d962405651dd4762d62802e69be"
         },
         "disposition": "Private compact six-path source base transferred to the exclusive owner; recipient must hash-verify, work only in the declared paths, and return an uncommitted carrier."
+      },
+      "implementationOwnerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "claimReleased": true,
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "ea3c1a30acd0637c82d492611fc7e7ba59fbe6b8",
+        "carrier": {
+          "handoffId": "hnd_mf05fXEaNrxgN1nHpM2hIWCo",
+          "archiveSha256": "db6d474036a587c4b7e92f7cc4b4c6564559ca49a9ad0a047925b3d5587c2e55",
+          "patchSha256": "42d25aa1dca9282babae960bca545bf656ba17bcca6f237ddc3f3888e51c628e",
+          "baseCommit": "bf645aba13a022cbbcfce00b660b25969cae7693",
+          "verifiedExactSixPathScope": true,
+          "verifiedBaseAndCarrierResultHashes": true
+        },
+        "centralReconciliation": {
+          "path": "artifacts/api-server/src/routes/groups.ts",
+          "reason": "Carrier\u2019s free-cap early return made the following existing free-tier ternary unreachable under TypeScript narrowing.",
+          "change": "Replaced only `joinTier === \"free\" ? \"Explorer+\" : \"Navigator\"` with the behavior-equivalent constant `\"Navigator\"` on the post-return Navigator branch.",
+          "finalSha256": "9150444522ca256ccb829de403a7d2f0675d3622fde77179fa4178e6c929afcb"
+        },
+        "validation": {
+          "apiFocusedVitest": "1 file / 6 tests passed",
+          "mobileFocusedVitest": "1 file / 11 tests passed",
+          "apiNoEmit": "passed after the one-line TypeScript reconciliation",
+          "mobileNoEmit": "passed",
+          "scopeAndWhitespace": "exact six paths; git diff --check passed",
+          "localE2E": "No Group-specific integration/E2E harness exists locally; no runtime/device claim."
+        },
+        "reviewDisposition": "Accepted local source-only free-group create \u2192 confirmation/open \u2192 server-filtered public discovery \u2192 join \u2192 refreshed membership journey. The claim is released. This does not complete broader Community Groups or any runtime/member-visible layer."
       }
     },
     {
