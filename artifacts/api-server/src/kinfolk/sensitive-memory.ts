@@ -37,7 +37,7 @@ const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{
   },
   {
     key: "children",
-    pattern: /\b(?:children|kids?|son|daughter|child(?:'s)? school|daycare|aftercare|school pickup|custody|minor child|newborn|toddler|teenager)\b/i,
+    pattern: /\b(?:children|kids?|son|daughter|child(?:'s)? school|daycare|aftercare|school pickup|custody|minor child|newborn|toddler|teenager|my\s+(?:mother|father|parents?))\b/i,
   },
 ];
 
