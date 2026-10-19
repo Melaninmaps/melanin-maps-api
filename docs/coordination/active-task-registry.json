@@ -3664,7 +3664,13 @@
         "central apply only after Flight #7; then relevant Flight source matrix plus exact three-path scope/diff."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified three-new-path carrier only; central owner integrates after Flight #7 receipt.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only injected fixtures, not real participant, venue, provider, or member experience evidence."
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only injected fixtures, not real participant, venue, provider, or member experience evidence.",
+      "baseTransfer": {
+        "handoff_id": "hnd_-OgWKjwF8yOVm6zbLCPazzOL",
+        "file": "FLIGHT008_THREE_PARTICIPANT_INJECTED_ARRIVAL_VENUE_COMPOSITION_BASE_2026-10-19.tar.gz",
+        "sha256": "1c1ebbe4753c2c91164e17392e0eb20173e8bd603929df3a48d16d170bafda31",
+        "expires_at": "2026-10-20T23:44:50.688Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
