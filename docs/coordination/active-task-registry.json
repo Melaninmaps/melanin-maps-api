@@ -1228,7 +1228,15 @@
         "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit.",
         "Exact two-path scope and git diff --check."
       ],
-      "carrierDisposition": "Return an uncommitted, hash-verified two-path review carrier only; central owner alone may integrate or update status."
+      "carrierDisposition": "Return an uncommitted, hash-verified two-path review carrier only; central owner alone may integrate or update status.",
+      "sourceBaseCarrier": {
+        "authorityBase": "10b1d91d206f23ef013cd724c5b057e4d35aab6a",
+        "handoffId": "hnd_GYA-5bVtCNHAdMd898Ptk7C6",
+        "file": "COMM001_FREE_EVENT_HOSTING_BASE_2026-10-19.tar.gz",
+        "sha256": "4cae17cfe9ec49fc55f88c8ac66e7047d48de709b03317eca51161dcc47b3693",
+        "expiresAt": "2026-10-20T20:05:08.031Z",
+        "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
+      }
     }
   ]
 }
