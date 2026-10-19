@@ -28,7 +28,12 @@ export const HERITAGE_CITIES: readonly HeritageCity[] = [
     city: "Philadelphia",
     state: "PA",
     stateName: "Pennsylvania",
-    aliases: ["Philly", "City of Brotherly Love", "The City of Brotherly Love"],
+    aliases: [
+      "Philly",
+      "Filadelfia",
+      "City of Brotherly Love",
+      "The City of Brotherly Love",
+    ],
   },
   { city: "Allentown", state: "PA", stateName: "Pennsylvania" },
   {

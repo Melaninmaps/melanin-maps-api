@@ -15,6 +15,23 @@ export {
 };
 
 const DIRECT_LOCAL_TIME_REQUEST = /\b(?:what(?:'s| is) the time|what time is it|local time|time ?zone|central time)\b/i;
+const TEMPLE_PHILADELPHIA_LANDMARK =
+  /(?:^|[^\p{L}\p{N}])((?:Temple\s+University|Universidad\s+Temple|Temple\s+main(?:-|\s+)campus|campus\s+principal\s+de\s+Temple))(?!\s+[\p{L}\p{N}])(?=$|[^\p{L}\p{N}])/iu;
+
+function resolveTemplePhiladelphiaLandmark(
+  message: string,
+): TurnGeographyResolution | null {
+  const matchedText = message.match(TEMPLE_PHILADELPHIA_LANDMARK)?.[1];
+  return matchedText
+    ? {
+        city: "Philadelphia",
+        state: "PA",
+        source: "alias",
+        currentTurn: true,
+        matchedText,
+      }
+    : null;
+}
 
 /**
  * Deterministic local-time support for the active Minneapolis audit city. It
@@ -139,6 +156,9 @@ export function resolveTurnGeography(
       matchedText: unregistered,
     };
   }
+
+  const templeLandmark = resolveTemplePhiladelphiaLandmark(message);
+  if (templeLandmark) return templeLandmark;
 
   const current = resolveHeritageCity(message);
   if (current) {

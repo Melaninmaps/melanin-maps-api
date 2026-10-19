@@ -154,6 +154,58 @@ describe("turn geography and enabled-session continuity", () => {
     });
   });
 
+  it.each([
+    "Temple University",
+    "Universidad Temple",
+    "Temple main campus",
+    "Temple main-campus",
+    "campus principal de Temple",
+  ])("resolves only the permitted Temple landmark form: %s", (landmark) => {
+    expect(resolveTurnGeography(`Find a barbershop near ${landmark}.`, null)).toMatchObject({
+      city: "Philadelphia",
+      state: "PA",
+      source: "alias",
+      currentTurn: true,
+      matchedText: landmark,
+    });
+  });
+
+  it("keeps unlisted or extended Temple terms outside the landmark alias", () => {
+    for (const message of [
+      "Find a barbershop near Temple.",
+      "Find a barbershop near Temple's main campus.",
+      "Find a barbershop near Temple University Hospital.",
+      "Find a barbershop near Howard University.",
+    ]) {
+      expect(resolveTurnGeography(message, null)).not.toMatchObject({
+        city: "Philadelphia",
+        state: "PA",
+      });
+    }
+  });
+
+  it("keeps an explicit Atlanta destination ahead of the Temple landmark", () => {
+    expect(
+      resolveTurnGeography("Find a barbershop near Temple University in Atlanta.", null),
+    ).toMatchObject({
+      city: "Atlanta",
+      state: "GA",
+      currentTurn: true,
+    });
+  });
+
+  it("registers Filadelfia through the shared Philadelphia resolver", () => {
+    expect(resolveHeritageCity("Filadelfia")).toMatchObject({
+      city: "Philadelphia",
+      state: "PA",
+      matchKind: "alias",
+    });
+    expect(getHeritageCity("Filadelfia")).toMatchObject({
+      city: "Philadelphia",
+      state: "PA",
+    });
+  });
+
   it("uses a direct city-location question instead of stale session geography", () => {
     expect(resolveTurnGeography("where is aspen?", "Jamison")).toEqual({
       city: "Aspen",

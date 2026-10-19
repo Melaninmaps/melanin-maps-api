@@ -15,6 +15,7 @@
 
 import { deriveBusinessSubject } from "./business-subject";
 import { resolveEmotionalSupportGuidance } from "./emotional-support";
+import { resolveTurnGeography } from "./heritage-city-registry";
 import { isExplicitCurrentItineraryRequest } from "./itinerary-response";
 
 export type DiscoveryKind =
@@ -61,6 +62,7 @@ const BUSINESS_CATEGORY_RE =
   /\b(businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b/i;
 const DISCOVERY_ACTION_RE =
   /\b(?:find|recommend|suggest|locate|search(?:\s+for)?|show|browse|looking\s+for|help\s+me\s+find|tell\s+me\s+about|where\s+can\s+(?:i|we)|where\s+should\s+(?:i|we)|what|which|any\s+good|need|want)\b/i;
+const NARROW_SPANISH_DISCOVERY_ACTION_RE = /\b(?:necesito|encuentra)\b/i;
 const CATEGORY_LOCATION_RE =
   /\b(?:food|restaurant|restaurants|eat|eating|dining|dinner|lunch|breakfast|cafe|caf[eé]|coffee|bakery|meal|spots?|nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b[\s\S]{0,48}\b(?:in|near|around|at)\b/i;
 const TRAVEL_PLANNING_RE =
@@ -115,6 +117,7 @@ function cleanLocation(raw: string | undefined): string | null {
 function hasExplicitDiscoveryIntent(input: {
   text: string;
   hasBusinessSubject: boolean;
+  hasCurrentTurnCanonicalCity: boolean;
 }): boolean {
   const hasCategory =
     FOOD_RE.test(input.text) ||
@@ -122,7 +125,12 @@ function hasExplicitDiscoveryIntent(input: {
     BUSINESS_CATEGORY_RE.test(input.text) ||
     input.hasBusinessSubject;
   return hasCategory &&
-    (DISCOVERY_ACTION_RE.test(input.text) || CATEGORY_LOCATION_RE.test(input.text));
+    (
+      DISCOVERY_ACTION_RE.test(input.text) ||
+      CATEGORY_LOCATION_RE.test(input.text) ||
+      (input.hasCurrentTurnCanonicalCity &&
+        NARROW_SPANISH_DISCOVERY_ACTION_RE.test(input.text))
+    );
 }
 
 /**
@@ -139,9 +147,14 @@ export function classifyKinfolkRequest(
   const lower = text.toLowerCase();
   const businessSubject = deriveBusinessSubject(text);
   const normalizedBusinessSubject = businessSubject !== null;
+  const currentTurnGeography = resolveTurnGeography(text, null);
+  const hasCurrentTurnCanonicalCity = Boolean(
+    currentTurnGeography?.currentTurn && currentTurnGeography.state,
+  );
   const explicitDiscoveryIntent = hasExplicitDiscoveryIntent({
     text,
     hasBusinessSubject: normalizedBusinessSubject,
+    hasCurrentTurnCanonicalCity,
   });
   const currentTurnLocation = cleanLocation(text.match(LOCATION_RE)?.[1]);
   // An explicit itinerary action is actionable only when it names a destination

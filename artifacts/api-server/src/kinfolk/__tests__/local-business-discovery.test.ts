@@ -10,7 +10,12 @@ vi.mock("@workspace/integrations-openai-ai-server", () => ({
 }));
 
 import { resolveNamedBusinessTurn } from "../business-reference";
-import { deriveBusinessSubject, deriveFoodIntent } from "../business-subject";
+import {
+  deriveBusinessSubject,
+  deriveFoodIntent,
+  matchesDocumentedServiceRequirement,
+  matchesStructuredBusinessSubject,
+} from "../business-subject";
 import type { GovernedKinfolkBusiness, GovernedKinfolkMapPlace } from "../governedBusinessRepository";
 import {
   buildBusinessDiscoveryWebQueries,
@@ -293,6 +298,43 @@ describe("local business subject classification", () => {
     expect(subject?.searchTerms).toEqual(expect.arrayContaining(["loctician", "locs", "loc maintenance"]));
   });
 
+  it("keeps loc-retwist discovery more specific than a generic barber mention", () => {
+    expect(
+      deriveBusinessSubject("Find a barber offering loc retwists in Philadelphia."),
+    ).toMatchObject({ key: "locs", label: "loc and natural-hair care" });
+  });
+
+  it.each([
+    ["I need a hot towel shave in Philadelphia.", "hot towel shave"],
+    ["Necesito un afeitado con toalla caliente en Filadelfia.", "hot towel shave"],
+    ["I need a kid-friendly cut in Philadelphia.", "kid-friendly haircut"],
+    ["Necesito un corte para niños en Filadelfia.", "kid-friendly haircut"],
+    ["I need a hair cut in Philadelphia.", "haircut"],
+    ["Necesito un corte de pelo en Filadelfia.", "haircut"],
+    ["I need a shape-up in Philadelphia.", "shape-up"],
+    ["Necesito un delineado en Filadelfia.", "shape-up"],
+  ])("recognizes documented barber service evidence: %s", (message, label) => {
+    expect(deriveBusinessSubject(message)).toMatchObject({
+      key: "barber",
+      documentedServiceRequirement: {
+        label,
+        evidenceScope: "profile_description_or_specialty",
+        requiredStructuredSubject: "barber",
+      },
+    });
+  });
+
+  it("keeps ordinary generic barber discovery eligible for an explicit barber name", () => {
+    const subject = deriveBusinessSubject("Find a barber in Philadelphia.")!;
+    expect(subject.documentedServiceRequirement).toBeUndefined();
+    expect(matchesStructuredBusinessSubject({
+      name: "Northside Barbershop",
+      category: "Personal Care",
+      subcategory: "Grooming",
+      specialties: [],
+    }, subject)).toBe(true);
+  });
+
   it.each([
     ["wig installation", "wig installation"],
     ["bundle install", "bundle or extension installation"],
@@ -307,6 +349,110 @@ describe("local business subject classification", () => {
 });
 
 describe("deterministic local business discovery", () => {
+  it("requires both structured barber classification and documented profile service evidence before emitting a card", async () => {
+    const subject = deriveBusinessSubject("Find a hot towel shave in Philadelphia.")!;
+    const structuredBarber = {
+      ...governedBusiness,
+      id: "synthetic-documented-barber",
+      name: "Synthetic Documented Barber",
+      city: "Philadelphia",
+      stateCode: "PA",
+      category: "Personal Care",
+      subcategory: "Barbershop",
+      description: "Published profile: hot towel shaves for appointments.",
+      specialties: [],
+      tags: ["coffee"],
+      sourceReceipt: true,
+    };
+    const salonWithSourceBackedBarberTag = {
+      ...governedBusiness,
+      id: "synthetic-salon-with-barber-tag",
+      name: "Synthetic Salon",
+      city: "Philadelphia",
+      stateCode: "PA",
+      category: "Personal Care",
+      subcategory: "Salon",
+      description: "Published profile: hot towel shaves for appointments.",
+      specialties: [],
+      tags: ["barber"],
+      sourceReceipt: true,
+    };
+    expect(matchesStructuredBusinessSubject(structuredBarber, subject)).toBe(true);
+    expect(
+      matchesDocumentedServiceRequirement(
+        structuredBarber,
+        subject.documentedServiceRequirement!,
+      ),
+    ).toBe(true);
+    expect(
+      matchesStructuredBusinessSubject(salonWithSourceBackedBarberTag, subject),
+    ).toBe(false);
+    expect(
+      matchesDocumentedServiceRequirement(
+        salonWithSourceBackedBarberTag,
+        subject.documentedServiceRequirement!,
+      ),
+    ).toBe(false);
+    expect(
+      matchesDocumentedServiceRequirement(
+        {
+          category: "Personal Care",
+          subcategory: "Grooming",
+          description: "",
+          tags: ["salon"],
+          specialties: ["Barber services", "Hot towel shave"],
+        },
+        subject.documentedServiceRequirement!,
+      ),
+    ).toBe(true);
+
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      subject,
+      repository: repository({
+        businesses: [structuredBarber, salonWithSourceBackedBarberTag],
+      }),
+      documentedSourceTaxonomy: true,
+      webSearch: vi.fn().mockResolvedValue({
+        state: "completed",
+        attempted: false,
+        provider: null,
+        results: [],
+      }),
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({
+        id: "synthetic-documented-barber",
+        detailUrl: "/businesses/synthetic-documented-barber",
+      }),
+    ]);
+    expect(result.resultView.cards).toEqual([
+      expect.objectContaining({
+        id: "synthetic-documented-barber",
+        actions: expect.arrayContaining([
+          expect.objectContaining({ label: "View details" }),
+        ]),
+      }),
+    ]);
+  });
+
+  it("does not accept a generic tag as barber service evidence", () => {
+    const subject = deriveBusinessSubject("Find a hot towel shave in Philadelphia.")!;
+    expect(
+      matchesDocumentedServiceRequirement(
+        {
+          category: "Personal Care",
+          subcategory: "Barbershop",
+          description: "Published barber profile.",
+          tags: ["hot towel shave"],
+          specialties: [],
+        },
+        subject.documentedServiceRequirement!,
+      ),
+    ).toBe(false);
+  });
+
   it("labels documented vegan restaurant results without claiming a generic restaurant match", async () => {
     const subject = deriveBusinessSubject(
       "Find a vegan restaurant in Philadelphia",

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { resolveBusinessLocationClarificationFollowUp } from "../business-discovery-clarification";
 import { routeEvidence } from "../evidence-route";
-import { resolveTurnGeography } from "../heritage-city-registry";
+import {
+  destinationForEnabledSession,
+  resolveTurnGeography,
+} from "../heritage-city-registry";
 import { extractExplicitOwnershipDesignationFilterIds } from "@workspace/constants";
 import { classifyIntent } from "../intent-router";
 import { classifyKinfolkRequest } from "../request-classifier";
@@ -32,6 +35,97 @@ describe("governed business discovery location clarifications", () => {
         location?.city ?? null,
       ),
     ).toMatchObject({ route: "business_discovery", discoveryKind: "food" });
+  });
+
+  it.each([
+    "Find a Black-owned barbershop near Temple University.",
+    "Encuentra una barbería cerca de la Universidad Temple.",
+    "Find a barbershop near Temple main campus.",
+    "Find a barbershop near Temple main-campus.",
+    "Encuentra una barbería cerca del campus principal de Temple.",
+  ])("resolves the exact current-turn Temple landmark to Philadelphia: %s", (message) => {
+    expect(resolveTurnGeography(message, "Atlanta")).toMatchObject({
+      city: "Philadelphia",
+      state: "PA",
+      source: "alias",
+      currentTurn: true,
+    });
+  });
+
+  it("keeps bare Temple and generic universities outside the Philadelphia landmark rule", () => {
+    const bareTemple = resolveTurnGeography(
+      "I need a barber near Temple.",
+      "Philadelphia",
+    );
+    expect(bareTemple).toMatchObject({
+      city: "Temple",
+      state: null,
+      source: "explicit",
+      currentTurn: true,
+    });
+    expect(
+      destinationForEnabledSession({
+        turn: bareTemple,
+        existingDestination: "Philadelphia",
+        modelDestination: "Atlanta",
+      }),
+    ).toBe("Temple");
+    expect(
+      resolveTurnGeography("I need a barber near Howard University.", null),
+    ).not.toMatchObject({ city: "Philadelphia", state: "PA" });
+  });
+
+  it.each([
+    "Necesito un afeitado con toalla caliente en Filadelfia.",
+    "Encuentra una barbería con corte para niños en Filadelfia.",
+    "Necesito un corte de pelo en Filadelfia.",
+    "Encuentra una barbería para un delineado en Filadelfia.",
+  ])("routes each narrow Spanish discovery action only after Filadelfia resolves canonically: %s", (message) => {
+    const turn = resolveTurnGeography(message, null);
+    expect(turn).toMatchObject({
+      city: "Philadelphia",
+      state: "PA",
+      source: "alias",
+      currentTurn: true,
+    });
+    expect(classifyKinfolkRequest(message, turn?.city ?? null)).toMatchObject({
+      route: "business_discovery",
+      location: "Philadelphia",
+    });
+  });
+
+  it("does not route a narrow Spanish action without a canonical resolved city", () => {
+    expect(
+      classifyKinfolkRequest("Necesito un afeitado con toalla caliente.", null),
+    ).not.toMatchObject({ route: "business_discovery" });
+  });
+
+  it("does not use a session-held city for a narrow Spanish discovery action", () => {
+    const sessionOnly = resolveTurnGeography(
+      "Necesito un corte de pelo.",
+      "Philadelphia",
+    );
+    expect(sessionOnly).toMatchObject({
+      city: "Philadelphia",
+      state: "PA",
+      source: "session",
+      currentTurn: false,
+    });
+    expect(
+      classifyKinfolkRequest(
+        "Necesito un corte de pelo.",
+        sessionOnly?.city ?? null,
+      ),
+    ).not.toMatchObject({ route: "business_discovery" });
+  });
+
+  it("does not expand Spanish discovery actions beyond Necesito and Encuentra", () => {
+    expect(
+      classifyKinfolkRequest(
+        "Busca una barbería con toalla caliente en Filadelfia.",
+        "Philadelphia",
+      ),
+    ).not.toMatchObject({ route: "business_discovery" });
   });
 
   it("does not inherit a subject from a generic assistant response", () => {

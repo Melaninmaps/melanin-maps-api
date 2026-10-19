@@ -63,6 +63,10 @@ export type DietaryRequirement = Readonly<{
 export type DocumentedServiceRequirement = Readonly<{
   label: string;
   searchTerms: readonly string[];
+  /** Limits evidence to member-visible profile description or specialties. */
+  evidenceScope?: "profile_description_or_specialty";
+  /** Required structured classification for narrowly governed barber services. */
+  requiredStructuredSubject?: "barber";
 }>;
 
 type SubjectDefinition = NormalizedBusinessSubject &
@@ -100,8 +104,16 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "barber",
     label: "barbershops",
-    match: /\b(?:barbers?|barber[ -]?shops?)\b/i,
-    searchTerms: ["barber", "barbershop", "barber shop"],
+    match:
+      /\b(?:barbers?|barber[ -]?shops?|barberos?|barber[ií]as?|hot[ -]?towel\s+shaves?|toalla\s+caliente|kid[ -]?friendly\s+(?:hair\s*)?cuts?|corte\s+para\s+ni[ñn]os|hair\s*cuts?|corte\s+de\s+pelo|shape[ -]?ups?|delineados?)\b/i,
+    searchTerms: [
+      "barber",
+      "barbershop",
+      "barber shop",
+      "barbero",
+      "barberia",
+      "barbería",
+    ],
   },
   {
     key: "braider",
@@ -402,6 +414,63 @@ const WASHING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   ],
 };
 
+// These barber phrases are narrower than the generic barber category. They
+// require both a structured barber classification and member-visible service
+// evidence; tags alone cannot establish either condition.
+const HOT_TOWEL_SHAVE_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "hot towel shave",
+  searchTerms: [
+    "hot towel shave",
+    "hot towel shaves",
+    "afeitado con toalla caliente",
+    "toalla caliente",
+  ],
+  evidenceScope: "profile_description_or_specialty",
+  requiredStructuredSubject: "barber",
+};
+
+const KID_FRIENDLY_HAIRCUT_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "kid-friendly haircut",
+  searchTerms: [
+    "kid friendly",
+    "kid-friendly",
+    "kid friendly haircut",
+    "kid friendly cut",
+    "corte para niños",
+    "corte para ninos",
+  ],
+  evidenceScope: "profile_description_or_specialty",
+  requiredStructuredSubject: "barber",
+};
+
+const HAIRCUT_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "haircut",
+  searchTerms: [
+    "haircut",
+    "haircuts",
+    "hair cut",
+    "hair cuts",
+    "corte de pelo",
+    "cortes de pelo",
+  ],
+  evidenceScope: "profile_description_or_specialty",
+  requiredStructuredSubject: "barber",
+};
+
+const SHAPE_UP_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "shape-up",
+  searchTerms: [
+    "shape up",
+    "shape ups",
+    "shape-up",
+    "shape-ups",
+    "delineado",
+    "delineados",
+  ],
+  evidenceScope: "profile_description_or_specialty",
+  requiredStructuredSubject: "barber",
+};
+
 // Wigs and bundles are not interchangeable with a generic salon listing. The
 // member's current-turn wording is a hard published-service requirement, so a
 // general stylist cannot be substituted for documented installation work.
@@ -580,6 +649,18 @@ export function deriveDocumentedServiceRequirement(
   const quoted = quotedServiceRequirement(message);
   if (quoted) return quoted;
   if (/\bethiopian\b/i.test(message)) return ETHIOPIAN_CUISINE_REQUIREMENT;
+  if (/\b(?:hot[ -]?towel\s+shaves?|(?:afeitado\s+con\s+)?toalla\s+caliente)\b/i.test(message)) {
+    return HOT_TOWEL_SHAVE_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:kid[ -]?friendly\s+(?:hair\s*)?cuts?|corte\s+para\s+ni[ñn]os)\b/i.test(message)) {
+    return KID_FRIENDLY_HAIRCUT_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:shape[ -]?ups?|delineados?)\b/i.test(message)) {
+    return SHAPE_UP_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:hair\s*cuts?|corte\s+de\s+pelo)\b/i.test(message)) {
+    return HAIRCUT_SERVICE_REQUIREMENT;
+  }
   if (/\b(?:custom\s+wigs?|wig\s+(?:maker|makers|making))\b/i.test(message)) {
     return CUSTOM_WIG_MAKING_SERVICE_REQUIREMENT;
   }
@@ -730,8 +811,10 @@ export function matchesStructuredBusinessSubject(
   }>,
   subject: NormalizedBusinessSubject,
 ): boolean {
+  const requiresStructuredBarber =
+    subject.documentedServiceRequirement?.requiredStructuredSubject === "barber";
   const structured = [
-    business.name ?? "",
+    ...(requiresStructuredBarber ? [] : [business.name ?? ""]),
     business.category ?? "",
     business.subcategory ?? "",
     ...(business.specialties ?? []),
@@ -757,7 +840,13 @@ export function matchesStructuredBusinessSubject(
   return (
     matchesService &&
     (!subject.dietaryRequirement ||
-      matchesDocumentedDietaryRequirement(business, subject.dietaryRequirement))
+      matchesDocumentedDietaryRequirement(business, subject.dietaryRequirement)) &&
+    (subject.key !== "barber" ||
+      !subject.documentedServiceRequirement ||
+      matchesDocumentedServiceRequirement(
+        business,
+        subject.documentedServiceRequirement,
+      ))
   );
 }
 
@@ -812,12 +901,33 @@ export function matchesDocumentedServiceRequirement(
   }>,
   requirement: DocumentedServiceRequirement,
 ): boolean {
-  const evidence = [
-    business.name ?? "",
+  const structuredBarberEvidence = [
     business.category ?? "",
     business.subcategory ?? "",
+    ...(business.specialties ?? []),
+  ]
+    .map(normalizeEvidenceTerm)
+    .join(" ");
+  if (
+    requirement.requiredStructuredSubject === "barber" &&
+    !["barber", "barbershop", "barber shop", "barbero", "barberia"].some(
+      (term) => ` ${structuredBarberEvidence} `.includes(` ${term} `),
+    )
+  ) {
+    return false;
+  }
+  const profileOrSpecialtyOnly =
+    requirement.evidenceScope === "profile_description_or_specialty";
+  const evidence = [
+    ...(profileOrSpecialtyOnly
+      ? []
+      : [
+          business.name ?? "",
+          business.category ?? "",
+          business.subcategory ?? "",
+        ]),
     business.description ?? "",
-    ...(business.tags ?? []),
+    ...(profileOrSpecialtyOnly ? [] : (business.tags ?? [])),
     ...(business.specialties ?? []),
   ]
     .join(" ")
