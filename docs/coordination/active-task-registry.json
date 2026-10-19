@@ -2775,7 +2775,7 @@
     {
       "id": "COMM-001-MOBILE-DM-SEND-FAIL-CLOSED",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -2821,12 +2821,25 @@
           "artifacts/mobile/__tests__/dm-chat-send-fail-closed.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-level client outcome handling only.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only client recovery; no runtime delivery/persistence/device/member/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_aMZCzQMTsm-N9ssy4vbpT7gf",
         "file": "COMM001_MOBILE_DM_SEND_FAIL_CLOSED_BASE_2026-10-19.tar.gz",
         "sha256": "ded67ed4969f0f285a07d870f1c07062707a7dcec113bf4c7ef0d7fb13b93e88",
         "expires_at": "2026-10-20T22:50:13.957Z"
+      },
+      "sourceCommit": "44d6777a50a3a2b4aa259a0e78042dc5f6ad6ef0",
+      "carrier": {
+        "handoff_id": "hnd_-T5m-YLQvLIz5t58Fl3PKv8R",
+        "file": "COMM001_MOBILE_DM_SEND_FAIL_CLOSED_REVIEW_CARRIER_476d3017.tar.gz",
+        "sha256": "d58f7b77ef54837ca26c65deccc6e56cd14814dcb202693bbb8275cd34af404e",
+        "patch_sha256": "97829d74dc00b05d199a5168b33602182bc61a675843ee8d8921ced6c98bbc9b"
+      },
+      "centralValidation": {
+        "mobile_vitest": "1 file / 4 tests PASS",
+        "mobile_tsc": "PASS",
+        "semantic": "provisional sending only; exact-ID success promotion; all non-OK/malformed/transport failure cleanup; draft preservation and bilingual generic recovery; no delivery claim",
+        "scope": "exact two paths; git diff --check PASS"
       }
     },
     {
