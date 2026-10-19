@@ -1339,7 +1339,7 @@
     {
       "id": "KMEM-005-PUBLIC-TRANSIT-RESOURCE-QUERY-ALIAS",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "KMEM-005",
@@ -1376,7 +1376,32 @@
           "artifacts/api-server/src/__tests__/resource-provider-contract.test.ts": "2d2c6d7eca1a5f4dbe0f51c6acb86ebf0e88b359700d7581f3e58bea79d73345"
         },
         "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
-      }
+      },
+      "externalAcceptance": "PENDING — local source-only integration. No database seed/runtime query, provider/network/OAuth action, deployment, browser/device action, activation, or member-visible resource-search acceptance occurred.",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "1223344b750fdf69dfde7eca18ab95f4ae4ef4bf",
+        "carrier": {
+          "archiveSha256": "340456e086c0452e88da27e5877ef8eb46fa8a7b4debd1be42203101f7a90d99",
+          "patchSha256": "4edb54a31f50a4fdf089437725bcc11581729878f609cf82a5d31e0f30820af4",
+          "declaredCarrierBase": "7ebd38a97029c86d5059b8151314ad2cea822ecb",
+          "exactTwoPathScopeVerified": true,
+          "pathBaseCompatibilityVerified": true,
+          "applyCheckWithWhitespaceErrorPassed": true,
+          "resultHashesVerified": {
+            "artifacts/api-server/src/routes/resources.ts": "11d482bdedad545b27ccbfa1045fb4ffcf58e872e6c3770048b46e821ebda09f",
+            "artifacts/api-server/src/__tests__/resource-provider-contract.test.ts": "78c8743e9a89b85de2ed270694c522a6c4218824cd28b4fe5ad8de6ed350acb0"
+          }
+        },
+        "reviewConclusion": "The public GET /resources q block retains literal title/description/organization/keywords matching and existing eligibility/ordering/pagination. Only for transit, public transport, bus, train, or subway it ORs the existing transportation keyword. Rideshare and generic ride/directions/nearby/travel/location terms are excluded; no private memory, provider/network, route, fare/ETA/status, origin/device location, booking, monitoring, sharing, payment, Maps, Kinfolk prompt/provider, client, schema/migration/seed execution, or runtime mutation was introduced.",
+        "validation": {
+          "resourceProviderContract": "PASS — 1 file / 4 tests",
+          "apiTypeScriptNoEmit": "PASS",
+          "diffCheck": "PASS",
+          "sourceBoundaryReview": "PASS — exact two paths; five aliases only; literal matching and public eligibility preserved; no provider/location/booking scope."
+        }
+      },
+      "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is a source-only public-transit query-alias repair; it does not prove seeded data, runtime search results, member-visible behavior, or broader KMEM-005 completion."
     }
   ]
 }
