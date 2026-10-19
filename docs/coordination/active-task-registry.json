@@ -3560,7 +3560,7 @@
     {
       "id": "FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3602,7 +3602,7 @@
         "exact two-path scope; git diff --check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 all provider, Calendar/OAuth, durable consent, participant UI/delivery/venue, runtime and member/release/founder evidence excluded.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 not three-party, venue, provider/Calendar/OAuth, durable consent, UI/runtime/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_DrNE0JsqsEUPyJFBQGVFbQLj",
         "file": "FLIGHT007_STATUS_TIMESTAMP_COMPOSITION_BASE_2026-10-19.tar.gz",
@@ -3613,6 +3613,20 @@
         "at": "2026-10-19T23:41:14Z",
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged exact baseline, exclusive paths, shared-arrival-only flexible status grammar, strict Calendar grammar, and source-only boundary."
+      },
+      "sourceCommit": "8205d971ca6f32e750917970fe2cad3826835e36",
+      "carrier": {
+        "handoff_id": "hnd_BEqXWhUuaAIIAU9jwc5jKujA",
+        "file": "FLIGHT007_STATUS_TIMESTAMP_COMPOSITION_CARRIER_2026-10-19.tar.gz",
+        "sha256": "958b3dd4085f2e2a35a76fbea19c7321b2257efdfa349b91a5bfce46d541097f",
+        "patch_sha256": "70460d5072c0af816dfa7f57fe0a3c1a2dfba4c89fcd1136b3478f8ec9627db3"
+      },
+      "centralValidation": {
+        "focused_lifecycle_vitest": "1 file / 41 tests PASS",
+        "cumulative_flight_matrix": "5 files / 113 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "dedicated shared-arrival parser accepts valid UTC seconds/1\u20133 fractional digits and canonicalizes; existing strict .SSSZ parser remains governing windows and busy intervals",
+        "scope": "exact two modified paths; git diff --check PASS"
       }
     },
     {
@@ -3630,7 +3644,12 @@
       ],
       "integrationDependency": {
         "claim": "FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION",
-        "condition": "Central source integration of Flight #7 must precede central application of this carrier; Flight #7\u2019s public lifecycle resolver signature remains read-only."
+        "condition": "Central source integration of Flight #7 must precede central application of this carrier; Flight #7\u2019s public lifecycle resolver signature remains read-only.",
+        "satisfiedBy": {
+          "sourceCommit": "8205d971ca6f32e750917970fe2cad3826835e36",
+          "receiptCommit": "PENDING_CURRENT_COMMIT",
+          "scope": "Only central carrier-application ordering is released. All Flight #8 external and truthfulness limits remain."
+        }
       },
       "readOnlyDependencies": [
         "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle.ts",
