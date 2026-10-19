@@ -2702,7 +2702,7 @@
     {
       "id": "COMM-001-DM-PENDING-COMMUNICATION-CONSENT-GUARD",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -2748,12 +2748,28 @@
           "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts": "b470b3e4cb4a8225e9e19c06511dad86d92620d1559638ab8acf8b6bf9095619"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only repair; runtime persistence/delivery/staging/browser/device/member evidence remains separate.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only consent guard; no delivery/persistence/runtime/member acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_KyqRqbRIU7Sk0r1l940HYwv6",
         "file": "COMM001_DM_PENDING_COMMUNICATION_CONSENT_GUARD_BASE_2026-10-19.tar.gz",
         "sha256": "73933ac77b1979f697b2fbc82c9cda1098cfec8c37f12746d9d17788347acf34",
         "expires_at": "2026-10-20T22:46:00.769Z"
+      },
+      "sourceCommit": "c7d1bb0199806e3db9f0598b44f11e5ba894b373",
+      "carrier": {
+        "handoff_id": "hnd_atZj1ztioBzY9XRzeM2bm12Z",
+        "file": "COMM001_DM_PENDING_COMMUNICATION_CONSENT_GUARD_CARRIER_2026-10-19.tar.gz",
+        "sha256": "1a6f814a8ef8433bf3f188a2f312a2c716f0645c274ce32fe40d604803e7a8d0",
+        "patch_sha256": "8561a52b72807badef7f62db8d608dbf23a25c77ce8e29168ed5939d32da053e"
+      },
+      "centralValidation": {
+        "api_vitest": "2 files / 9 tests PASS",
+        "mobile_vitest": "1 file / 6 tests PASS",
+        "api_tsc": "PASS",
+        "web_tsc": "PASS",
+        "mobile_tsc": "PASS",
+        "semantic": "pending guard follows auth/participant/block fences and precedes scan/write; Web disables and early-returns both incoming/outgoing pending composer",
+        "scope": "exact four paths; git diff --check PASS"
       }
     },
     {
