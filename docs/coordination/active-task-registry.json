@@ -2507,6 +2507,12 @@
           "artifacts/api-server/src/__tests__/profile-relationship-boundary-contract.test.ts": "37cf84617198776b9a23decef8d74aee809eef49c29014eb8fa5d124d4878a21"
         },
         "newPath": "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts"
+      },
+      "baseTransfer": {
+        "handoff_id": "hnd_xQ27CrlTLCjaTxYjfSqajjuJ",
+        "file": "COMM001_DM_SERVER_AUTHORITATIVE_LIFECYCLE_BASE_2026-10-19.tar.gz",
+        "sha256": "ccb73f431aff0db964fd1da603fae1e20d054ba812bfb437a2eabb391a689103",
+        "expires_at": "2026-10-20T22:21:26.063Z"
       }
     },
     {
@@ -2548,6 +2554,12 @@
           "artifacts/api-server/src/__tests__/social-authorization-contract.test.ts": "689fd7fb74839093d4a60f498c9365d7e348a3d56a087a10be539f70eb1566c3"
         },
         "newPath": "artifacts/api-server/src/routes/__tests__/conversation-request-notification.test.ts"
+      },
+      "baseTransfer": {
+        "handoff_id": "hnd_hXW1y9CYBK6hsyt3tZAQmmDR",
+        "file": "COMM001_DM_PRIVATE_REQUEST_NOTIFICATION_BASE_2026-10-19.tar.gz",
+        "sha256": "868d6b2a00d16289dc2e5249b95ebee800c06922cd5132503275ac5307b53d1f",
+        "expires_at": "2026-10-20T22:21:26.323Z"
       }
     }
   ],
