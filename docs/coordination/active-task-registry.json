@@ -1871,7 +1871,7 @@
     {
       "id": "KMEM-005-OFFICIAL-RESOURCE-MOBILE-HANDOFF-FAIL-CLOSED",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "KMEM-005",
@@ -1911,7 +1911,7 @@
         "Mobile no-emit, exact two-path scope, git diff --check, prove no raw silent resource Linking.openURL remains."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "PENDING \u2014 local source work establishes neither deployment nor member-visible acceptance.",
+      "externalAcceptance": "PENDING \u2014 no runtime seed/device/open-link/member-visible evidence or release claim.",
       "sourceBaseTransfer": {
         "handoffId": "hnd_c6IpbtAYoXFOlAlMG30-ScOn",
         "archive": "KMEM005_OFFICIAL_RESOURCE_MOBILE_HANDOFF_BASE_2026-10-19.tar.gz",
@@ -1919,6 +1919,20 @@
         "expiresAt": "2026-10-20T21:17:40.902Z",
         "authority": "c6858ba7d8f33ba2e566ddf257f65dd937634303",
         "disposition": "Private compact path-only base transferred; uncommitted hash-verified carrier required."
+      },
+      "sourceCommit": "cfa83f24ce19a05d8107b5e8c9bf0207196a44e0",
+      "carrier": {
+        "handoffId": "hnd_BLPZzNz_gyqsZsQt2mDwK9xh",
+        "archive": "KMEM005_OFFICIAL_RESOURCE_MOBILE_HANDOFF_REVIEW_CARRIER_c6858ba7.tar.gz",
+        "archiveSha256": "c2fec502e69c430707ab80b8eaaabdea1a5c4b25026fd2bf5aa2f941ad88bfaf",
+        "patchSha256": "1069c3bab2a06df28308fe29c8327e1c899431b587878b9c345588e2fcfb0cf2"
+      },
+      "centralValidation": {
+        "mobileVitest": "1 file / 2 tests passed",
+        "mobileNoEmit": "passed",
+        "scope": "exact two paths; git diff --check passed",
+        "integrity": "outer/internal/base/result hashes plus clean reconstruction verified",
+        "boundary": "existing shared safeLinking openExternalUrl provides URL normalization, canOpenURL and visible unavailable recovery; resource fetch/auth/q, telephone, opportunity, metadata/trust, API/transit-alias and AI flows preserved"
       }
     }
   ],
