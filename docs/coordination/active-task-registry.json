@@ -1335,6 +1335,35 @@
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is one ordinary community-post cap response repair only; it does not complete COMM-001 or establish external acceptance."
+    },
+    {
+      "id": "KMEM-005-PUBLIC-TRANSIT-RESOURCE-QUERY-ALIAS",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "KMEM-005",
+      "baseline": "1961ddc44b091116d6d150c094e2fb6aea48dda6",
+      "paths": [
+        "artifacts/api-server/src/routes/resources.ts",
+        "artifacts/api-server/src/__tests__/resource-provider-contract.test.ts"
+      ],
+      "requiredBehavior": [
+        "For public GET /resources search only, a query containing a bounded public-transit term (transit, public transport, bus, train, or subway) retains its literal match and adds only the existing transportation keyword as an OR fallback, so the current official 211 transportation resource can be discovered without a provider integration.",
+        "Retain existing active/expiry, city/state/national, category, source-tier, pagination, literal-query, official-first ordering, report, opportunity, alert, AI-search, admin-seed, provider-route, and parameter-route behavior.",
+        "Rideshare is deliberately not an alias. The repair must not introduce private-memory use, fare/ETA/status claims, route planning, origin or device location, provider account/OAuth access, booking, monitoring, sharing, or payment behavior."
+      ],
+      "constraints": [
+        "Do not add a new external source, provider/network call, database schema/migration/seed execution, client/mobile change, Maps handoff, Kinfolk prompt/provider use, or runtime data mutation.",
+        "Do not broaden to travel or generic direction words; retain direct literal search and add only the bounded public-transit fallback term.",
+        "No remote Git, staging/deployment, database/provider/browser/device action, activation, or external acceptance."
+      ],
+      "validationPlan": [
+        "Focused Vitest: src/__tests__/resource-provider-contract.test.ts.",
+        "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit.",
+        "Exact two-path scope and git diff --check."
+      ],
+      "carrierDisposition": "Return an uncommitted hash-verified two-path review carrier only; central owner alone may integrate or update status."
     }
   ]
 }

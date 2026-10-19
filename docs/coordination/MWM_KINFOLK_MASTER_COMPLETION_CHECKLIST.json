@@ -321,15 +321,15 @@
       "platform": "API/Web/iOS/Android",
       "founder_requirement": "Transportation discovery is inclusive/free; rideshare preference is consented memory, never provider access/live quote/booking/location/sharing permission.",
       "acceptance_criteria": "Official-source rail/bus/basic-route discovery is free/no fabrication; later monitor/notify/share is separately consented, source-fresh and fail-closed.",
-      "status": "NOT STARTED",
-      "source_evidence": "Cumulative matrix §55–85 planned only; Universal Memory §67 queues a provider-free candidate.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Cumulative matrix §55–85 planned only; Universal Memory §67 queues a provider-free candidate. Exclusive P1 local source-only claim `KMEM-005-PUBLIC-TRANSIT-RESOURCE-QUERY-ALIAS` issued at authority `1961ddc44b091116d6d150c094e2fb6aea48dda6` to task `yINBiovLIPiFnyQCFfSycn` for a bounded provider-free public-transit query alias in the existing `GET /resources` path and its focused static contract. The current source has an official 211 transportation resource but literal `bus`/`train`/`subway`/`transit` search text does not match its `transportation` metadata. Scope retains literal matching and adds only the existing transportation fallback; rideshare, private memory, location/origin, routes, fares, provider access, booking, monitoring, payments, clients, seed execution and runtime actions are excluded.",
       "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Unified owner",
-      "dependencies_or_blockers": "MISSING EVIDENCE — selected source slice and runtime/provider/device proof.",
-      "next_action": "Choose one smallest provider-free official-source/no-fabrication existing-path slice.",
+      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn (exclusive carrier implementation); QJATRGk7nUgzDlccMCUcG6 (central integration)",
+      "dependencies_or_blockers": "MISSING EVIDENCE — carrier review, full-authority source validation, and later separately authorized runtime/member proof. Provider, location, booking, fare/ETA/status, monitoring and account scopes remain excluded.",
+      "next_action": "Assigned owner returns only the hash-verified two-path public-transit resource-query carrier; central owner runs the named API test/no-emit and determines integration. Do not broaden to rideshare or any provider/location/booking behavior.",
       "founder_approval_needed": "Yes for provider, monitoring, notification, OAuth, booking or location.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1622,6 +1622,10 @@
     {
       "date": "2026-10-19",
       "event": "COMM-001 two-path ordinary free community-post-cap integration `1138ea621c3e81d273f076c7e1c616bf3d0a3456`: carrier/archive/patch/result hashes and base compatibility verified; one formatting-only indentation reconciliation; full-authority community-feed contract 1 file / 27 tests, API no-emit, exact scope and diff check passed. Requirement remains IN DEVELOPMENT because other community surfaces and all external acceptance are not evidenced."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "KMEM-005 exclusive P1 two-path provider-free public-transit resource-query alias claim `KMEM-005-PUBLIC-TRANSIT-RESOURCE-QUERY-ALIAS` issued at `1961ddc44b091116d6d150c094e2fb6aea48dda6` to `yINBiovLIPiFnyQCFfSycn`; no carrier, source integration, provider, runtime, or external action credited."
     }
   ],
   "evidence_gaps": [
@@ -1639,8 +1643,8 @@
     "by_primary_status": {
       "BLOCKED": 21,
       "FAILED": 1,
-      "IN DEVELOPMENT": 8,
-      "NOT STARTED": 11,
+      "IN DEVELOPMENT": 9,
+      "NOT STARTED": 10,
       "SOURCE INTEGRATED": 17
     },
     "by_founder_area": {
