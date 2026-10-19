@@ -2204,6 +2204,47 @@
         "exact four-path scope; git diff --check; static no-network/no-credential/no-provider-name scan"
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner integrates if clean."
+    },
+    {
+      "id": "OAUTH-003-DEFAULT-DISABLED-STATE-PKCE",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "OAUTH-003",
+      "baseline": "79c06f5bfa61ba6f11140e596fc5d25b9aea9ca8",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/calendar-availability/state-pkce.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/state-pkce.test.ts"
+      ],
+      "sourceBase": {
+        "authority": "79c06f5bfa61ba6f11140e596fc5d25b9aea9ca8",
+        "allPathsNew": true,
+        "pathStates": {
+          "artifacts/api-server/src/kinfolk/calendar-availability/state-pkce.ts": "ABSENT",
+          "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/state-pkce.test.ts": "ABSENT"
+        },
+        "readOnlyEvidence": {
+          "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts": "8cf8863c35aa3baa8bcf8e2ba9788bcbc28b308c80550baf4f01999d0dc324b5",
+          "docs/coordination/CALENDAR_OAUTH_AVAILABILITY_READINESS_DECISION_PACKET_2026-10-19.md": "719bcebf80e0c0618a243184134a3316f748c766d60bb638340daa4f5176edd7"
+        }
+      },
+      "requiredBehavior": [
+        "Pure deterministic attempt-policy values only: shared_plan_free_busy purpose, supported provider-family enum, injected test state/verifier values, fixed 31-day availability window and strict expiry/replay/ownership mismatch rejection.",
+        "Constant-false default gate; generic unavailable/fail-closed outcomes with no real authorization code, token, account, calendar, redirect, scope or provider payload retained.",
+        "No authorization URL, callback route, client ID, redirect URI, PKCE exchange, consent presentation, random/time global, network, persistence, configuration or runtime wiring."
+      ],
+      "constraints": [
+        "Exactly two new allowlisted files; no edits to OAUTH-002 normalizers/contracts or any existing file.",
+        "No OAuth/client/callback/configuration/scope/consent action; no real code/token, provider call, network, DB/schema, route, client/mobile, queue/poller, logging, deployment or activation.",
+        "No Calendar/Kinfolk/Map/Directory/Community/Safety/Shared Plans evaluator modification."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/kinfolk/calendar-availability/__tests__/state-pkce.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope; git diff --check; static no-URL/no-network/no-token/no-route/no-persistence scan"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-new-file carrier only; central owner alone integrates."
     }
   ],
   "globalDirectiveDelivery": [
