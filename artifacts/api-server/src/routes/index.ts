@@ -28,6 +28,8 @@ import groupsRouter from "./groups";
 import adminRouter from "./admin";
 import businessIngestRouter from "./business-ingest";
 import kinfolkRouter, { probeKinfolkAI } from "./kinfolk";
+import kinfolkJourneysRouter from "./kinfolk-journeys";
+import kinfolkConnectedAppsRouter from "./kinfolk-connected-apps";
 import kinfolkPrivatePlacesRouter from "./kinfolk-private-places";
 import kinfolkTemporaryStaysRouter from "./kinfolk-temporary-stays";
 import kinfolkTripsRouter from "./kinfolk-trips";
@@ -306,6 +308,10 @@ router.use(adminRouter);
 router.use(businessIngestRouter);
 router.use(libraryGrowthAdminRouter);
 router.use(kinfolkRouter);
+// Private travel plans and Connected Apps are member-only, source-disabled until
+// their additive migrations and explicit feature configuration are approved.
+router.use(kinfolkJourneysRouter);
+router.use(kinfolkConnectedAppsRouter);
 // Private Places is a separately consented, encrypted member feature. It is
 // not a Kinfolk chat or ordinary-memory route and remains disabled by default.
 router.use(kinfolkPrivatePlacesRouter);

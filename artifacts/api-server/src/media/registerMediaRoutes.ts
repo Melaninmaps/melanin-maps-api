@@ -36,13 +36,23 @@ const VIDEO_MIMES = new Set([
 const DOC_MIMES = new Set([
   "application/pdf",
 ]);
+const JOURNEY_DOCUMENT_MIMES = new Set([
+  "application/pdf",
+  "message/rfc822",
+  "text/calendar",
+  "application/ics",
+]);
+const BLOCKED_JOURNEY_DOCUMENT_MIMES = new Set([
+  "application/vnd.apple.pkpass",
+  "application/vnd.google.wallet",
+]);
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const MAX_DOC_BYTES = 10 * 1024 * 1024;
 const MAX_KINFOLK_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PURPOSES = new Set([
-  "general", "community_post", "community_post_private", "business_submission", "business_claim", "business_photo", "kinfolk_question", "kinfolk_question_document",
+  "general", "community_post", "community_post_private", "business_submission", "business_claim", "business_photo", "kinfolk_question", "kinfolk_question_document", "kinfolk_journey_private",
 ]);
 export const MEDIA_UPLOAD_ERROR_CODES = {
   FILE_REQUIRED: "MEDIA_FILE_REQUIRED",
@@ -101,6 +111,9 @@ function extFromMime(mime: string): string {
     "video/quicktime": "mov",
     "video/webm": "webm",
     "application/pdf": "pdf",
+    "message/rfc822": "eml",
+    "text/calendar": "ics",
+    "application/ics": "ics",
   };
   return map[mime] ?? "bin";
 }
@@ -270,7 +283,8 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
   const kinfolkQuestionBucketConfigured = Boolean(getKinfolkQuestionImageBucketId());
   const isPrivateKinfolkQuestion = purpose === "kinfolk_question" || purpose === "kinfolk_question_document";
   const isPrivateCommunityPost = purpose === "community_post_private";
-  const isPrivatePurpose = isPrivateKinfolkQuestion || isPrivateCommunityPost;
+  const isPrivateJourney = purpose === "kinfolk_journey_private";
+  const isPrivatePurpose = isPrivateKinfolkQuestion || isPrivateCommunityPost || isPrivateJourney;
   const storage = isPrivateKinfolkQuestion
     ? getKinfolkQuestionImageStorageDiagnostics()
     : getObjectStorageDiagnostics();
@@ -278,8 +292,8 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
     ...(storage.configured ? [] : ["Object-storage credential mode is invalid or incomplete."]),
     ...(isPrivateKinfolkQuestion
       ? (kinfolkQuestionBucketConfigured ? [] : ["KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk attachment uploads."])
-      : isPrivateCommunityPost
-      ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private Community uploads."])
+      : isPrivateCommunityPost || isPrivateJourney
+      ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."])
       : [
           ...(delivery.blocker ? [delivery.blocker] : []),
           ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."]),
@@ -432,6 +446,7 @@ async function handleMediaUpload(
   }
   const isKinfolkQuestionImage = purpose === "kinfolk_question";
   const isKinfolkQuestionDocument = purpose === "kinfolk_question_document";
+  const isPrivateJourney = purpose === "kinfolk_journey_private";
   const isPrivateKinfolkQuestion = isKinfolkQuestionImage || isKinfolkQuestionDocument;
   if (isKinfolkQuestionImage && req.body?.kinfolkVisionConsent !== "true") {
     respondWithError(
@@ -457,7 +472,18 @@ async function handleMediaUpload(
   const mime = req.file.mimetype.toLowerCase();
   const isImage = IMAGE_MIMES.has(mime);
   const isVideo = VIDEO_MIMES.has(mime);
-  const isDoc = DOC_MIMES.has(mime);
+  const isJourneyDocument = isPrivateJourney && JOURNEY_DOCUMENT_MIMES.has(mime);
+  const isDoc = DOC_MIMES.has(mime) || isJourneyDocument;
+  if (isPrivateJourney && BLOCKED_JOURNEY_DOCUMENT_MIMES.has(mime)) {
+    respondWithError(
+      res,
+      415,
+      MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE,
+      "Wallet passes are not accepted. Select an email, calendar file, readable PDF, or image for private review instead.",
+      requestId,
+    );
+    return;
+  }
   if (!isImage && !isVideo && !isDoc) {
     logUploadFailure(req, "warn", { event: "media_upload_rejected", requestId, code: MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE, purpose, mime }, "Media upload type rejected");
     respondWithError(res, 415, MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE, "File type not supported. Please upload JPEG, PNG, WebP, HEIC, MP4, MOV, WebM, or PDF.", requestId);
@@ -484,7 +510,7 @@ async function handleMediaUpload(
     return;
   }
   const isPrivateCommunityPost = purpose === "community_post_private";
-  const isPrivate = isPrivateKinfolkQuestion || isPrivateCommunityPost || purpose === "business_submission";
+  const isPrivate = isPrivateKinfolkQuestion || isPrivateCommunityPost || isPrivateJourney || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
   const activeStorageClient = isPrivateKinfolkQuestion ? kinfolkQuestionStorageClient : storageClient;
   const storageDiagnostics = isPrivateKinfolkQuestion
@@ -528,6 +554,8 @@ async function handleMediaUpload(
       ? "media-uploads/business-submission-private"
       : isPrivateCommunityPost
       ? "media-uploads/community-post-private"
+      : isPrivateJourney
+      ? "media-uploads/kinfolk-journeys-private"
       : isKinfolkQuestionDocument
       ? "media-uploads/kinfolk-private-documents"
       : "media-uploads/kinfolk-private"
@@ -567,11 +595,10 @@ async function handleMediaUpload(
 
   let url: string | null;
   try {
-    if (isPrivateKinfolkQuestion || isPrivateCommunityPost) {
+    if (isPrivateKinfolkQuestion || isPrivateCommunityPost || isPrivateJourney) {
       // The browser gets a local preview only. A short-lived signed URL is
       // created server-side only for the active, consented model request. Private
-      // Community media is streamed by an authenticated Community route instead;
-      // neither flow returns or stores a provider URL in the client.
+      // Community and Journey media never return or store a provider URL in the client.
       url = null;
     } else if (isPrivate) {
       const [signedUrl] = await storageFile.getSignedUrl({ action: "read", expires: Date.now() + 15 * 60 * 1000 });

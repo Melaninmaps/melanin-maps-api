@@ -30,6 +30,8 @@ export * from "./groups";
 export * from "./business-invites";
 export * from "./user-preferences";
 export * from "./kinfolk-sessions";
+export * from "./kinfolk-journeys";
+export * from "./kinfolk-connected-apps";
 export * from "./kinfolk-private-memories";
 export * from "./kinfolk-private-places";
 export * from "./kinfolk-temporary-stays";
