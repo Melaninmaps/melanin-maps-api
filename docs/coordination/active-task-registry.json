@@ -1406,7 +1406,7 @@
     {
       "id": "MEM-D6-PROFILE-READ-TRIAL-MUTATION-REMOVAL",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "MEM-D6",
@@ -1444,7 +1444,32 @@
         },
         "disposition": "Private compact two-path source base transferred to exclusive owner; recipient must hash-verify and return an uncommitted carrier.",
         "metadataCorrection": "2026-10-19: Initial task-message per-file hashes were erroneous. The private archive manifest and extracted bytes, verified against committed authority be89b37649497542caea556a642fcff7e0664109, supersede them. Outer archive SHA remains unchanged and valid."
-      }
+      },
+      "externalAcceptance": "PENDING — local source-only integration. No authenticated runtime/database observation, cohort grant, provider/payment action, deployment, browser/device action, activation, or member-visible acceptance occurred.",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "9f2114e8edd25343991f7b2c8222fc58d17aafe7",
+        "carrier": {
+          "archiveSha256": "3c81e45cae01c07807de85fab58f2f5a113b2a94f16a6b925c15b12ef89ea23d",
+          "patchSha256": "1f3a26ad7c1bdd3ceb63b0cd5c9cb35b1f78082b3e9ee742c39196cd733d5058",
+          "declaredCarrierBase": "be89b37649497542caea556a642fcff7e0664109",
+          "exactTwoPathScopeVerified": true,
+          "correctedBaseHashesVerified": true,
+          "applyCheckWithWhitespaceErrorPassed": true,
+          "resultHashesVerified": {
+            "artifacts/api-server/src/routes/users.ts": "b3d66314f21b9753f8af35acc9fd29894b73abe1aeded5f457313c14414d25e8",
+            "artifacts/api-server/src/__tests__/private-membership-profile-contract.test.ts": "646dd7c72815e8cb0e7dad9b2965bb7dbfe47b632e2972088e8d972395220213"
+          }
+        },
+        "reviewConclusion": "Only the authenticated GET /users/me automatic 90-day trialEndsAt database update and local replacement were removed. The handler retains direct auth 401, owner-scoped usersTable lookup, 404, stored user response with existing stripeCustomerId/stripeSubscriptionId/pushToken redaction, and an already-stored explicit trialEndsAt value. The separate owner-only membership-status route and getUserTier/effective-entitlement semantics are untouched.",
+        "validation": {
+          "privateMembershipProfileContract": "PASS — 1 file / 4 tests",
+          "apiTypeScriptNoEmit": "PASS",
+          "diffCheck": "PASS",
+          "sourceBoundaryReview": "PASS — exact two paths; profile-read handler has no trialEndsAt/db.update/Date.now/90-day mutation; auth, lookup, redaction, membership-status boundaries retained."
+        }
+      },
+      "claimDisposition": "Implementation claim closed after central local-only two-path integration. This removes one unauthorized implicit profile-read allocation; it does not add/alter explicit cohort grants or establish runtime/member-visible acceptance."
     }
   ]
 }
