@@ -1013,6 +1013,47 @@
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is not BIZ-006/BIZ-009 live completion and does not authorize deployment or a real save."
+    },
+    {
+      "id": "BUSINESS-OWNER-003-STALE-PROFILE-WRITE-PROTECTION",
+      "priority": "P0",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "5f0666372aa332a021bcaca15ad999ec9ac20d9b",
+      "requirementIds": [
+        "BIZ-009"
+      ],
+      "sourceFinding": "Current-authority static evidence establishes a stale full-form write risk between the two canonical profile writers. The owner selected-profile PATCH directly updates businesses with id/approved-owner conditions and a new updatedAt but accepts and compares no expected revision; the owner Dashboard mapper/payload carries no revision. The Admin profile GET select/type does not expose updated_at, and the Admin PATCH locks then updates the row but accepts and compares no expected revision; the reusable Admin editor submits a full stale form without a revision. A later Owner or Admin write can therefore overwrite an earlier allowed profile-field write. This is a source-level lost-update finding only; no concurrent request or database action was performed.",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/api-server/src/routes/__tests__/business-owner-multi-business-contract.test.ts",
+        "artifacts/api-server/src/businesses/__tests__/adminBusinessProfilePolicy.test.ts",
+        "artifacts/web/src/pages/business-dashboard.tsx",
+        "artifacts/web/src/__tests__/business-dashboard-managed-access.test.ts",
+        "artifacts/web/src/components/AdminEditBusiness.tsx",
+        "artifacts/web/src/__tests__/admin-business-edit-preservation.test.ts"
+      ],
+      "requirement": "Add a common business-profile stale-write guard to the existing selected owner and audited Admin generic profile routes. Both profile read responses and both current Web editors must exchange a canonical revision token; a stale Owner or Admin save must fail closed before any canonical profile, receipt, or audit write and give the editor a safe reload/review recovery state.",
+      "requiredBehavior": [
+        "Expose only the canonical business updated-at revision required by the existing GET response, then require a syntactically valid expectedUpdatedAt for both selected-owner and Admin generic profile PATCHes. Do not add a schema column or change endpoint names.",
+        "Compare the supplied revision against the current authorized/locked row in the same update decision. A mismatch must return HTTP 409 with a stable BUSINESS_PROFILE_STALE_WRITE code and must not write businesses, field receipts, ownership receipts, profile audit events, lifecycle state, catalog membership, map coordinates, or any other data.",
+        "The owner Dashboard and AdminEditBusiness must submit the loaded revision on their existing profile PATCH only. On 409 they must not mark success, must preserve the draft, and must show a precise reload/review recovery message without exposing another actor or record detail.",
+        "Preserve owner field limits (description/phone/website/hours), Admin authorization/source-receipt/audit requirements, and all distinct publication, eligibility, ownership, verification, duplicate, archive, map-pin, Kinfolk Current, specialty, and media workflows."
+      ],
+      "validationPlan": [
+        "From artifacts/api-server: pnpm exec vitest run src/routes/__tests__/business-owner-multi-business-contract.test.ts src/businesses/__tests__/adminBusinessProfilePolicy.test.ts --reporter=dot",
+        "From artifacts/api-server: pnpm exec tsc -p tsconfig.json --noEmit",
+        "From artifacts/web: pnpm exec vitest run src/__tests__/business-dashboard-managed-access.test.ts src/__tests__/admin-business-edit-preservation.test.ts --reporter=dot",
+        "From artifacts/web: pnpm exec tsc -p tsconfig.json --noEmit",
+        "Verify exact seven-path scope and git diff --check; return an uncommitted relative-patch carrier with per-file base/result SHA-256 hashes and validation totals."
+      ],
+      "constraints": [
+        "This is a demonstrated-defect exception to the frozen BUSINESS-OWNER-001/002 and BA-001/002 file history, limited strictly to revision-token conflict protection. Do not refactor or reopen any prior behavior outside the required guard and focused contracts.",
+        "No schema/migration/startup writer, database execution, public profile/Directory/Map/Kinfolk reader or eligibility change, moderation/Pending Approval model, address/map policy change, provider, payment/entitlement, mobile, source-receipt policy, feature activation, staging/deployment, browser/device, production, or remote Git action.",
+        "Task yINBiovLIPiFnyQCFfSycn is the sole implementation owner and returns only an uncommitted review carrier. The unified local integration owner alone accepts and updates status."
+      ],
+      "externalAcceptance": "PENDING — source-only claim. No concurrent runtime, authenticated editor, database, staging/deployment, browser/device, provider, production, or feature-activation operation is authorized or recorded."
     }
   ]
 }
