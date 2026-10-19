@@ -27,6 +27,22 @@ describe("public event feed visibility contract", () => {
     expect(eventRoutes).toContain("!event || !isUpcomingOneOffEventDate(event.date)");
   });
 
+  it("keeps authenticated free and Navigator hosting under one neutral monthly cap", () => {
+    const eventRoutes = source("../routes/events.ts");
+    const postHandler = eventRoutes.slice(
+      eventRoutes.indexOf('router.post("/events"'),
+      eventRoutes.indexOf('router.patch("/events/:id"'),
+    );
+
+    expect(postHandler).toContain('if (!req.user?.id)');
+    expect(postHandler).toContain('res.status(401).json({ error: "Authentication required" });');
+    expect(postHandler).toContain('if (tier === "free" || tier === "navigator")');
+    expect(postHandler).toMatch(/if \(tier === "free" \|\| tier === "navigator"\)[\s\S]*?if \(count >= 3\)/);
+    expect(postHandler).toContain('error: "You can host up to 3 events per calendar month."');
+    expect(postHandler).not.toMatch(/upgradeUrl|Upgrade to|Explorer\+/);
+    expect(postHandler).toContain('if (!title || !date || !city || !state)');
+  });
+
   it("uses recurring_events.active_until as the recurring-event expiry contract", () => {
     const recurringEvents = source("../routes/recurring-events-route.ts");
     expect(recurringEvents).toContain("(active_until IS NULL OR active_until >= CURRENT_DATE)");

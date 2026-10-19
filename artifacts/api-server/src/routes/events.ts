@@ -157,17 +157,10 @@ router.post("/events", async (req: Request, res: Response) => {
       return;
     }
 
-    // Tier gate
+    // Free-core hosting cap: free and Navigator members share the existing
+    // three-events-per-calendar-month limit. Trailblazer remains unlimited.
     const tier = await getUserTier(req.user.id);
-    if (tier === "free") {
-      res.status(403).json({
-        error: "Hosting events requires an Explorer+ or higher membership.",
-        code: "TIER_LIMIT_REACHED",
-        upgradeUrl: "/membership",
-      });
-      return;
-    }
-    if (tier === "navigator") {
+    if (tier === "free" || tier === "navigator") {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -177,9 +170,8 @@ router.post("/events", async (req: Request, res: Response) => {
         .where(and(eq(eventsTable.createdById, req.user.id), gte(eventsTable.createdAt, startOfMonth)));
       if (count >= 3) {
         res.status(403).json({
-          error: "Explorer+ members can host up to 3 events per month. Upgrade to Navigator for unlimited events.",
+          error: "You can host up to 3 events per calendar month.",
           code: "TIER_LIMIT_REACHED",
-          upgradeUrl: "/membership",
         });
         return;
       }
