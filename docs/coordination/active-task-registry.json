@@ -155,6 +155,31 @@
       "blocker": "A retention and erasure decision is required before changing revoke-only storage or making permanent-clear claims."
     },
     {
+      "id": "UM-002-PARENT-CONTEXT-SENSITIVE-CLASSIFICATION",
+      "status": "IMPLEMENTING",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "baseline": "2878721ff6cbbea3d61aee9f16df81e6c81604f5",
+      "requirement": "Classify narrow first-person parent details in an explicit memory-save request as the existing children/family sensitive topic before consent selection, so the existing sensitive confirmation, vault reauthentication, encryption, and restricted-use path applies rather than ordinary-memory handling.",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/sensitive-memory.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/explicit-memory-consent.test.ts"
+      ],
+      "requiredBehavior": [
+        "Treat only first-person parent references such as my mother, my father, my parent, or my parents as the existing children/family sensitive topic when present in an explicitly requested memory clause.",
+        "Keep generic family-oriented preferences, travel, dining, and ordinary support preferences outside this narrow classifier unless they independently match an existing sensitive category.",
+        "Preserve clause isolation: adjacent ordinary preferences, such as a food preference, remain ordinary while the parent-context clause appears as Children or family information in the sensitive consent choice."
+      ],
+      "validationPlan": [
+        "Update the explicit-memory-consent regression so my mother lives in Philadelphia is sensitive with the existing Children or family information label while an adjacent Caribbean-food preference remains ordinary.",
+        "Run focused explicit-memory-consent and continuity-memory-boundaries Vitest files, API no-emit, exact two-path scope check, and git diff --check."
+      ],
+      "constraints": [
+        "No route, schema, migration, provider, database action, client/UI, browser/device, staging, or deployment work.",
+        "This does not overlap blocked UM-001: do not alter DELETE, revoke, retention duration, permanent-clear wording, storage deletion, or memory manager semantics.",
+        "The implementation owner may return only an uncommitted review carrier. Only the integration owner may accept, commit, and push a reviewed repair."
+      ]
+    },
+    {
       "id": "LA-001-LEGACY-LIFE-JOURNEY-FREE-TEXT-BOUNDARY",
       "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
