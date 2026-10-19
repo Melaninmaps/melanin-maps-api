@@ -3724,6 +3724,13 @@
           "Require exact outer/pair `nowEpochMs` equality before invoking pair resolver and test clock mismatch fails closed before output.",
           "Return another uncommitted/unstaged carrier; preserve all prior no-I/O, fixture-only, no-real-venue boundaries."
         ]
+      },
+      "repairBaseTransfer": {
+        "handoff_id": "hnd_-0j0aT_jmwj_EX7oaMrFdrhx",
+        "file": "FLIGHT008_TRIAD_REPAIR_BASE_2026-10-19.tar.gz",
+        "sha256": "bc8d833fa85b98f370e47bd6cb6ce3d30c5fb50fc4be9e9876a67cfe4a987e66",
+        "expires_at": "2026-10-20T23:54:34.436Z",
+        "authority_base": "82e80ac1fee8cb404181a5a957293fc0557e06ee"
       }
     }
   ],
