@@ -1204,14 +1204,14 @@
       "founder_requirement": "Minimum usable owner/Admin editor is an immediate P0 and is independent of Kinfolk discovery, payment, and mobile: an authenticated authorized owner or Founder/Admin locates a controlled business, edits description, website, phone, address and hours, receives explicit saved/pending/failed state, refreshes or relogs, and reopens the staged profile.",
       "acceptance_criteria": "A controlled non-production test owner or separately authorized production read-only Admin route proves the stated editor journey without changing production data. Staging-only test edits must remain isolated; durable production-ready edits require their own explicit authorization and preservation/rollback handling.",
       "status": "BLOCKED",
-      "source_evidence": "Canonical owner/Admin profile-update seams, BUSINESS-OWNER-001 structured-specialty backend, and local-only BUSINESS-OWNER-002 dashboard bridge at 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e are integrated. The bridge uses existing selected-owner GET/PATCH for ordinary description/phone/website/hours and returns a Saving/Saved/Failed/re-read receipt. It does not make BIZ-005 or BIZ-006 dashboard completion claims.",
+      "source_evidence": "Canonical owner/Admin profile-update seams, BUSINESS-OWNER-001 structured-specialty backend, local-only BUSINESS-OWNER-002 `9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e`, and local-only BUSINESS-OWNER-003 `897910cba14d720276b20bc1011232e68b0d16df` are integrated. The owner bridge uses existing selected-owner GET/PATCH for ordinary description/phone/website/hours and requires patch plus fresh re-read before Saved; the shared owner/Admin stale-write guard uses the existing updated_at revision and draft-preserving 409 recovery. This does not establish a completed dashboard workflow or any runtime persistence/public propagation.",
       "staging_evidence": "MISSING EVIDENCE — current staging authentication checkpoint failed before an authenticated editor journey could begin; no business record or fixture changed.",
       "web_evidence": "READ-ONLY EXTERNAL EVIDENCE — an authenticated production-domain page at https://www.mappingwithmelanin.com/business-dashboard and its existing View Public Listing link opened the same public business profile; anonymous same-origin /health returned 200 and /api/health returned 401. This establishes a production-domain frontend with a same-origin API only. It does not establish database target, save durability, update propagation/timing, approval, or Kinfolk freshness; no real listing was edited.",
       "ios_evidence": "Not required for this minimum Web/API editor acceptance layer.",
       "android_evidence": "Not required for this minimum Web/API editor acceptance layer.",
       "responsible_owner_or_task": "Founder for external authorization; central release/integration owner for a bounded acceptance packet.",
       "dependencies_or_blockers": "FAILED STAGING AUTHENTICATION CHECKPOINT (BIZ-008); the production read-only browser observation predates this undeployed local source repair. MISSING EVIDENCE — named integrated deploy candidate/writer inventory approval, test-owner procedure, disposable non-real public test business (or approved reversible field), and scoped save/readback authorization.",
-      "next_action": "Use the preparation-only BIZ-009 deployment packet as the release gate. First obtain explicit authorization for one read-only release-binding inspection that names target, deployable remote SHA, rollback SHA, and startup-writer inventory. Only then may the founder consider a separate exact deployment approval and, after success, a separately approved controlled browser save/readback. Do not retry browser save or infer release metadata.",
+      "next_action": "Use docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md as the preparation-only gate. First explicitly authorize one read-only release-binding inspection for exact remote candidate/target/rollback/startup-writer facts; only then consider separate deployment and controlled browser-save approval. Do not retry staging sign-in or browser save, infer release metadata, or couple this minimum editor acceptance to Kinfolk freshness.",
       "founder_approval_needed": "Yes — external account/browser access and, if selected, narrow staging test-owner provisioning/reset or a read-only production route check.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1273,15 +1273,15 @@
       "platform": "Web/API/Directory/Map/Kinfolk discovery",
       "founder_requirement": "P0 durable owner/Admin edit chain: authorized validation and canonical save must yield a clear dashboard persistence state and preserve the current approved public profile, Directory/Map eligibility, and governed Kinfolk data boundaries. Moderated fields retain the last approved value and show explicit Pending Approval; verification, ownership, suspension, archive, publication, and Kinfolk Current are never changed by an ordinary profile edit.",
       "acceptance_criteria": "An approved owner or Founder/Admin performs one authorized low-risk save on a controlled non-real fixture or explicitly approved reversible live field; after refresh/relogin, the dashboard returns the saved value and the current approved public profile/Directory/Map/governed Kinfolk reads are assessed separately. Only a successful founder-approved live save/readback may complete this requirement.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Central local-only BUSINESS-OWNER-002 integration at 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e closed the direct ordinary-profile editor gap. A bounded post-integration source trace on 5f0666372aa332a021bcaca15ad999ec9ac20d9b then found a distinct stale-write risk: neither selected-owner nor Admin generic profile PATCH compares a caller revision; the owner Dashboard and reusable Admin editor submit full current-form values without an updated-at token. Admin field receipts are append-only source evidence/audit metadata, not a last-approved or Pending Approval profile state, and their startup schema helper is a database writer. BUSINESS-OWNER-003 is exclusively claimed to add only cross-role revision conflict protection without a schema change.",
+      "status": "BLOCKED",
+      "source_evidence": "Both bounded source repairs are centrally integrated locally: BUSINESS-OWNER-002 ordinary selected-owner editor `9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e` and BUSINESS-OWNER-003 cross-role stale-write protection `897910cba14d720276b20bc1011232e68b0d16df`. Final authority validation: API focused 2 files / 17 tests passed; API no-emit passed; Web focused 2 files / 11 tests passed; Web no-emit passed; exact seven-path scope and diff check passed. The central reconciliation corrected the carrier’s Admin Saved-before-fresh-read ordering, timestamp precision after SQL timestamp writes, and two focused static-test slice literals without expanding the seven-path claim. The result uses the existing canonical updated_at only; no schema/migration/startup path changed. This proves local source only, not runtime persistence, public propagation, or broader editing completion.",
       "staging_evidence": "MISSING EVIDENCE — BIZ-008 staging authentication failed before an editor journey; no fixture, save, public readback, propagation timing, or governed retrieval was authorized.",
       "web_evidence": "READ-ONLY EXTERNAL EVIDENCE — authenticated production https://www.mappingwithmelanin.com/business-dashboard: clicking the existing Edit Profile action for Mapping With Melanin navigated to https://www.mappingwithmelanin.com/for-business-owners?claim=c678e359-0000-4000-8000-000000000001, a public marketing/claim/submit page rather than an authorized editor. In-dashboard public-label/experience/voice controls do not replace canonical profile editing. No write, fixture, source, provider, database, staging, deployment, or browser retry occurred. This confirms the visible navigation blocker only; it is not a persistence, publication, Directory/Map, or Kinfolk readback result.",
       "ios_evidence": "Not required for the first Web/API owner-editor slice; no iOS acceptance is implied.",
       "android_evidence": "Not required for the first Web/API owner-editor slice; no Android acceptance is implied.",
-      "responsible_owner_or_task": "Central integration/acceptance owner QJATRGk7nUgzDlccMCUcG6; BUSINESS-OWNER-002 implementation subclaim by yINBiovLIPiFnyQCFfSycn is closed local-only.",
-      "dependencies_or_blockers": "The local ordinary editor is undeployed; BIZ-008 staging authentication still prevents acceptance. The separate demonstrated stale-write defect is now under a seven-path source-only claim. Owner address needs a map/pin safety decision. Founder-required last-approved/Pending Approval needs a current authoritative moderation contract/schema; current Admin field receipts are source/audit evidence only and their migration helper writes schema. A founder-approved non-real fixture or explicit reversible production field is required for any live save/readback.",
-      "next_action": "Preserve the local-only two-path ordinary editor and the separately claimed stale-write repair. The preparation-only packet at docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md requires an explicit read-only release-binding inspection before any no-placeholder deployment/rollback approval can be requested. Do not begin moderated-field work without a current contract/schema, and do not treat local source tests as public/Directory/Map/Kinfolk proof.",
+      "responsible_owner_or_task": "Central integration/acceptance owner QJATRGk7nUgzDlccMCUcG6; BUSINESS-OWNER-002 and BUSINESS-OWNER-003 source subclaims are closed local-only.",
+      "dependencies_or_blockers": "Production acceptance is pending. The local candidate is not published or deployed; its exact production service binding, remote ref, deployed database contract, current release, rollback SHA/procedure, and pre-existing startup-writer inventory are unverified. BIZ-008 staging authentication remains failed. Field-level last-approved/Pending Approval requires a current moderation contract/schema; current Admin field receipts remain audit/source metadata only. Any live test requires a founder-designated non-real fixture or a separately approved reversible production field, account/context, Take Control session, and restoration receipt.",
+      "next_action": "Use docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md only as preparation. First obtain explicit authorization for one read-only release-binding inspection; it must establish exact remote candidate/ref matching local `897910cba14d720276b20bc1011232e68b0d16df`, deployment target, actual database/startup compatibility facts, and verified rollback. Then request a separate no-placeholder deployment approval and, only after a successful approved deployment, separate Take Control approval for one reversible description save/restore/readback. Do not start services/specialties/images/other fields, moderated-field work, or a broader dashboard claim.",
       "founder_approval_needed": "No for the bounded local source carrier. Yes for any fixture/create/reset, production field edit, authenticated browser save/readback, database action, deployment, provider-backed Kinfolk check, or release assertion.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1292,7 +1292,9 @@
         "S9 read-only production Edit Profile navigation verification, 2026-10-19",
         "BUSINESS-OWNER-002 carrier 61bf3b51c485bc7ea81ef70d8fa519591f7ade99b59ccf68bbb80db45ecf2239; source commit 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e",
         "BUSINESS-OWNER-003 source-only stale-write trace/claim, 2026-10-19",
-        "docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md"
+        "docs/coordination/BIZ009_OWNER_DASHBOARD_DEPLOYMENT_AUTHORIZATION_PACKET.md",
+        "BUSINESS-OWNER-003 carrier 7160024f6d45442b4be0f9717399eff156bc1af1bd297cb9f584aa9ed50b40ca; patch 3d148077372cb783bfd07a4228afb454e941fcab431db1cdba1b153c2d7d7a2a; accepted source commit 897910cba14d720276b20bc1011232e68b0d16df",
+        "BIZ-009 deployment authorization packet revised for both local source receipts, 2026-10-19"
       ]
     }
   ],
@@ -1550,6 +1552,14 @@
     {
       "date": "2026-10-19",
       "event": "BIZ-009 deployment/rollback authorization packet prepared locally for source commit 9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e. It intentionally names no deploy target, deployable remote SHA, rollback SHA, or startup-writer approval: an explicit read-only release-binding inspection is required before a no-placeholder deployment request. No external action occurred."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "BUSINESS-OWNER-003 centrally source-integrated locally at 897910cba14d720276b20bc1011232e68b0d16df: exact seven claimed paths; API focused 2 files/17 tests and API no-emit passed; Web focused 2 files/11 tests and Web no-emit passed; scope/diff check passed. Carrier reconciliation was limited to timestamp precision, Admin fresh-read-before-Saved ordering, and static-test slice literals. No external action occurred."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "BIZ-009 moved to BLOCKED / production acceptance pending after both local-only source receipts (9bc54b36e7ad0d3a11b7a53e3e44a8d50d25bb7e; 897910cba14d720276b20bc1011232e68b0d16df). The revised BIZ-009 release packet identifies local candidate/ref only and requires separately authorized release-binding, deployment, and Take Control acceptance gates."
     }
   ],
   "evidence_gaps": [
@@ -1565,9 +1575,9 @@
     "label": "PROVISIONAL — original 54 baseline IDs are immutable; added IDs are bounded evidence-based additions, not a complete founder-vision count.",
     "unique_requirement_ids": 58,
     "by_primary_status": {
-      "BLOCKED": 21,
+      "BLOCKED": 22,
       "FAILED": 1,
-      "IN DEVELOPMENT": 9,
+      "IN DEVELOPMENT": 8,
       "NOT STARTED": 11,
       "SOURCE INTEGRATED": 16
     },

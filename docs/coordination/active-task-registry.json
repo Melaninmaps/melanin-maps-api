@@ -1017,7 +1017,7 @@
     {
       "id": "BUSINESS-OWNER-003-STALE-PROFILE-WRITE-PROTECTION",
       "priority": "P0",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "5f0666372aa332a021bcaca15ad999ec9ac20d9b",
@@ -1053,7 +1053,28 @@
         "No schema/migration/startup writer, database execution, public profile/Directory/Map/Kinfolk reader or eligibility change, moderation/Pending Approval model, address/map policy change, provider, payment/entitlement, mobile, source-receipt policy, feature activation, staging/deployment, browser/device, production, or remote Git action.",
         "Task yINBiovLIPiFnyQCFfSycn is the sole implementation owner and returns only an uncommitted review carrier. The unified local integration owner alone accepts and updates status."
       ],
-      "externalAcceptance": "PENDING — source-only claim. No concurrent runtime, authenticated editor, database, staging/deployment, browser/device, provider, production, or feature-activation operation is authorized or recorded."
+      "externalAcceptance": "PENDING — local source integration only. No concurrent runtime, authenticated Owner/Admin, database, staging/deployment, browser/device, provider, production, fixture, remote Git, or feature-activation action occurred.",
+      "acceptedSourceCommit": "897910cba14d720276b20bc1011232e68b0d16df",
+      "carrier": {
+        "handoffId": "hnd_JCCfRTZcrKLC4Rei-HythXjm",
+        "archiveSha256": "7160024f6d45442b4be0f9717399eff156bc1af1bd297cb9f584aa9ed50b40ca",
+        "patchSha256": "3d148077372cb783bfd07a4228afb454e941fcab431db1cdba1b153c2d7d7a2a",
+        "declaredBase": "0f113013786530eb05541e60c40cab109a831c1c",
+        "carrierResultHashesVerified": true
+      },
+      "centralValidation": {
+        "apiFocused": "2 files / 17 tests passed",
+        "apiNoEmit": "passed",
+        "webFocused": "2 files / 11 tests passed",
+        "webNoEmit": "passed",
+        "scope": "exact seven claimed paths",
+        "diffCheck": "passed",
+        "carrierReconciliation": [
+          "Changed only within claimed paths: revised timestamp comparison/update to keep the existing canonical updated_at usable at JavaScript millisecond representation after raw SQL timestamp writes.",
+          "Changed only within claimed paths: moved Admin Saved messaging after a successful fresh profile read and added safe reread-failure recovery.",
+          "Changed only within claimed paths: corrected two static test slice/search literals so the focused contracts reach the actual Admin profile receipt/audit route code."
+        ]
+      }
     }
   ]
 }
