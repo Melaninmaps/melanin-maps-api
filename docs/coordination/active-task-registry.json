@@ -1430,7 +1430,20 @@
         "API TypeScript: pnpm exec tsc -p tsconfig.json --noEmit.",
         "Exact two-path scope and git diff --check."
       ],
-      "carrierDisposition": "Return an uncommitted hash-verified two-path review carrier only; central owner alone may integrate or update status."
+      "carrierDisposition": "Return an uncommitted hash-verified two-path review carrier only; central owner alone may integrate or update status.",
+      "sourceBaseCarrier": {
+        "authorityBase": "be89b37649497542caea556a642fcff7e0664109",
+        "claimBaseline": "1122e6386d377a9ce07509190a71428c339b2c0e",
+        "handoffId": "hnd_lLj_S7fz7oloQCVxhpQ32fJ_",
+        "file": "MEMD6_NO_AUTO_PROFILE_TRIAL_BASE_2026-10-19.tar.gz",
+        "sha256": "0eec404a0f16c00336078b11c52208f66e3bbc98980d642286050587fd314f14",
+        "expiresAt": "2026-10-20T20:28:34.146Z",
+        "pathSha256": {
+          "artifacts/api-server/src/routes/users.ts": "e5e3999e97c0209b2a007b6a5252bb96805126103323d45adf606dd2a74b0a4f",
+          "artifacts/api-server/src/__tests__/private-membership-profile-contract.test.ts": "6db21f46ef4f24e24ef1710aee002d9a981374afbc28d043d0aa52aed6f2e113"
+        },
+        "disposition": "Private compact two-path source base transferred to exclusive owner; recipient must hash-verify and return an uncommitted carrier."
+      }
     }
   ]
 }
