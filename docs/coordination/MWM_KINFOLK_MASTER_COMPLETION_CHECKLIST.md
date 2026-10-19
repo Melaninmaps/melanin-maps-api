@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Accepted canonical OAUTH-003 default-disabled injected Calendar admission at `806eb915d6a2eed952789bbb7d7de8759192d6fa`: API **4 files / 26**, no-emit, exact two new paths PASS. The carrier’s historical OAUTH-004 label is metadata only; OAUTH-001 remains NO-GO. |
 | 2026-10-19 | Accepted BIZ-003 explicit owner skip-feedback projection at `f100d7694db1b829196ea6af26a5c6d2502b68e6`: API **1 / 4**, mobile consumer contracts **2 / 6**, API no-emit and exact two-path scope PASS. The parent owner journey and BIZ-009 release gates remain open. |
 | 2026-10-19 | Accepted FLIGHT-005 simulated dual-consent meeting-time source lifecycle at `5e79ab3e97253aa5be41e75870fdd7564ba164e1`: API **4 files / 91**, no-emit, exact three-path scope PASS. Registered COMM-001 P0 mobile inbox malformed-2xx response validation; both remain source-only. |
 | 2026-10-19 | Cumulative COMM-001 deterministic source matrix PASS: API **5 files / 18**, mobile **3 / 14**, Web **2 / 7**, with API/mobile/Web no-emit. This verifies local mocked/static source behavior only; persistence, delivery/read, timeout/account-switch, browser/device/staging/member/founder gates remain open. |

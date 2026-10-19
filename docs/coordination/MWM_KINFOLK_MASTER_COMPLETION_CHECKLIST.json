@@ -1424,14 +1424,14 @@
       "founder_requirement": "Prepare a pure, default-disabled Calendar Availability authorization-attempt state/PKCE contract using deterministic injected test values only, without creating an OAuth client, callback, token, consent flow, provider request, route, or connection.",
       "acceptance_criteria": "Exactly two new pure API leaf files validate a purpose-bound, provider-family-bound, time-bounded fake attempt/state/PKCE policy and fail closed. They create no authorization URL, callback endpoint, scope request, real code/token handling, persistence, route, client, configuration, network, or activation.",
       "status": "SOURCE INTEGRATED",
-      "source_evidence": "Central local-only integration `9a177c4511c6541968b29c61c744ea0e317060d3` accepted OAUTH-003 from carrier SHA-256 `adc738e4b74afe9dea6e8dac68bceb7cedf6647e72f40a69af27868de5d62984`, patch `55c17a2c5b2b94291ab1603db4c802bec686ef3f3bd57d7fe9ac6b9848184929`, supplied base `9ba944d7fbe8ba44491b089861dee52612cb9d0b`. The two new files passed full-authority API Vitest 1 file/5 tests, API no-emit, Prettier, result-hash, exact scope and static no-network/no-client/no-route/no-persistence/no-ambient-clock review. It is a constant-false default gate, fixture-only pure policy; no client, OAuth flow, consent, provider request, token/state persistence, route/configuration, database, or activation exists. Numbered source queue #3 dispatches `OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT` to S9 at `b10234732011f3d57537f61081babae91efb6601`: exactly three all-new, default-disabled in-memory vault/redaction files. It supports future owner/provider/purpose isolation and deterministic revocation deletion without any real OAuth, provider, persistence, route, client, configuration, or activation behavior. Central local-only integration `bec8e23aa56efa64fbf19fba49fdb81917531331` accepted inert in-memory vault/redaction leaf: API **3 files / 18 tests** and no-emit passed; exact three-new-path scope. Default false gate and opaque/generic result boundaries retained; OAUTH-001 NO-GO unchanged. Active P1 `OAUTH-003-INJECTED-LIFECYCLE-ADMISSION-FAKE` at `f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3`: all-new default-disabled fake admission composition of existing state/PKCE, opaque vault, normalizer and aggregate port; no OAuth/provider capability.",
+      "source_evidence": "Central local-only integration `9a177c4511c6541968b29c61c744ea0e317060d3` accepted OAUTH-003 from carrier SHA-256 `adc738e4b74afe9dea6e8dac68bceb7cedf6647e72f40a69af27868de5d62984`, patch `55c17a2c5b2b94291ab1603db4c802bec686ef3f3bd57d7fe9ac6b9848184929`, supplied base `9ba944d7fbe8ba44491b089861dee52612cb9d0b`. The two new files passed full-authority API Vitest 1 file/5 tests, API no-emit, Prettier, result-hash, exact scope and static no-network/no-client/no-route/no-persistence/no-ambient-clock review. It is a constant-false default gate, fixture-only pure policy; no client, OAuth flow, consent, provider request, token/state persistence, route/configuration, database, or activation exists. Numbered source queue #3 dispatches `OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT` to S9 at `b10234732011f3d57537f61081babae91efb6601`: exactly three all-new, default-disabled in-memory vault/redaction files. It supports future owner/provider/purpose isolation and deterministic revocation deletion without any real OAuth, provider, persistence, route, client, configuration, or activation behavior. Central local-only integration `bec8e23aa56efa64fbf19fba49fdb81917531331` accepted inert in-memory vault/redaction leaf: API **3 files / 18 tests** and no-emit passed; exact three-new-path scope. Default false gate and opaque/generic result boundaries retained; OAUTH-001 NO-GO unchanged. Active P1 `OAUTH-003-INJECTED-LIFECYCLE-ADMISSION-FAKE` at `f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3`: all-new default-disabled fake admission composition of existing state/PKCE, opaque vault, normalizer and aggregate port; no OAuth/provider capability. Central local-only integration `806eb915d6a2eed952789bbb7d7de8759192d6fa` accepted injected fixture admission: Calendar API **4 files / 26 tests**, API no-emit, exact two new paths. Default omission returns null before all injected seams; exact tuple/vault/normalizer admission supplies aggregate only busy purpose/window intervals.",
       "staging_evidence": "MISSING EVIDENCE \u2014 prohibited; no OAuth/provider action authorized.",
       "web_evidence": "MISSING EVIDENCE \u2014 no client/consent/callback UI authorized.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "android_evidence": "MISSING EVIDENCE \u2014 no mobile OAuth flow authorized.",
       "responsible_owner_or_task": "S9iVHR3fQY0fcmRMQKLpOO (exclusive source carrier); QJATRGk7nUgzDlccMCUcG6 (central acceptance)",
-      "dependencies_or_blockers": "OAUTH-001 NO-GO remains controlling. Real authorization needs separate approved client/configuration, exact consent decision, token vault/revocation/persistence, routes, provider networking, member-data, pilot, deployment, and activation claims.",
-      "next_action": "Validate the inert fixture admission carrier; retain OAUTH-001 external consent/provider/client/persistence gates.",
+      "dependencies_or_blockers": "OAUTH-001 NO-GO still controls external behavior. Real OAuth client/scope/consent, Microsoft personal basic-event-data decision, tokens/durable vault, route/client/persistence/runtime/browser/device/staging/member/release/founder evidence remain open.",
+      "next_action": "Run a bounded Calendar source matrix or trace a concrete unclaimed source defect; do not turn this fake composition into real OAuth wiring.",
       "founder_approval_needed": "No for the isolated fake state/PKCE source leaf only; Yes for any OAuth client/configuration, scope/consent, callback, code/token, provider/network, member-data, pilot, deployment, or activation action.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1976,6 +1976,10 @@
     {
       "date": "2026-10-19",
       "event": "Accepted BIZ-003 owner skip-feedback explicit privacy projection at `f100d7694db1b829196ea6af26a5c6d2502b68e6`: API 4/4, mobile canonical consumer 6/6, API no-emit, exact two-path scope. BIZ-009 remains untouched and release-blocked."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Accepted canonical OAUTH-003 default-disabled injected Calendar fixture admission at `806eb915d6a2eed952789bbb7d7de8759192d6fa`: API 4 files/26 tests and no-emit PASS, exact two new paths. Carrier historical OAUTH-004 label retained as metadata only; OAUTH-001 NO-GO unchanged."
     }
   ],
   "evidence_gaps": [
@@ -2225,13 +2229,13 @@
           "OAUTH-003"
         ],
         "existing_implementation": "NO-GO packet, normalizers and state/PKCE pure leaves are linked.",
-        "missing_broken_elements": "P1 fake-lifecycle admission composition is active; real OAuth/consent/provider/persistence/client journey remains externally gated.",
-        "current_active_repair": "`OAUTH-003-INJECTED-LIFECYCLE-ADMISSION-FAKE` (S9): default-disabled fixture-only state/opaque-vault/normalizer/aggregate admission.",
-        "integrated_source": "All current children locally source-integrated only. Inert vault/redaction leaf `bec8e23aa56efa64fbf19fba49fdb81917531331` (API 3/18, no-emit).",
-        "test_evidence": "Focused pure contracts only. Current-authority vault/normalizer/state-PKCE: 3 files/18 tests + API no-emit PASS.",
+        "missing_broken_elements": "No remaining confirmed source defect from this two-file composition alone. Real client/scope/consent, token/durable vault, provider/network, route/client, runtime/browser/device/staging/member/release/founder gates remain unperformed; Microsoft personal Calendars.ReadBasic is not availability-only.",
+        "current_active_repair": "No active Calendar code claim pending a bounded source matrix or demonstrated source defect.",
+        "integrated_source": "All current children locally source-integrated only. Inert vault/redaction leaf `bec8e23aa56efa64fbf19fba49fdb81917531331` (API 3/18, no-emit). OAUTH-003 injected default-disabled admission `806eb915d6a2eed952789bbb7d7de8759192d6fa` (API 4/26, no-emit).",
+        "test_evidence": "Focused pure contracts only. Current-authority vault/normalizer/state-PKCE: 3 files/18 tests + API no-emit PASS. Admission composition current-authority matrix: API 4 files/26 tests and no-emit PASS.",
         "external_gates": "Consent, OAuth configuration, security review, controlled pilot and platform acceptance.",
         "completion_status": "SOURCE VALIDATED",
-        "next_action": "Review admission carrier; do not activate OAuth or represent Microsoft personal basic-event scope as availability-only."
+        "next_action": "Trace only an exact default-disabled fake-source gap; OAUTH-001 external NO-GO remains controlling."
       },
       {
         "experience_id": "EXP-MWM-RELEASE-RUNTIME-AND-CROSS-PLATFORM-ACCEPTANCE",

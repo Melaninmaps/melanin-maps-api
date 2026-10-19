@@ -3288,7 +3288,7 @@
     {
       "id": "OAUTH-003-INJECTED-LIFECYCLE-ADMISSION-FAKE",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "OAUTH-003",
@@ -3341,12 +3341,27 @@
           "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/injected-lifecycle-admission.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 default-disabled injected fixture composition only; OAUTH-001 NO-GO unchanged.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 OAUTH-001 NO-GO remains controlling. No real OAuth/client/scope/consent/token/provider/persistence/route/client/runtime/browser/device/staging/member/release/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_tnxQdrMDfmERWLZq155t64Ij",
         "file": "OAUTH004_INJECTED_LIFECYCLE_ADMISSION_BASE_2026-10-19.tar.gz",
         "sha256": "fd0dd297a39fc8069d309961d0ff432fea53729c4cde4bb5207273e5434781c6",
         "expires_at": "2026-10-20T23:14:37.749Z"
+      },
+      "sourceCommit": "806eb915d6a2eed952789bbb7d7de8759192d6fa",
+      "carrier": {
+        "handoff_id": "hnd_8oNR-9UHqHZYHYGTOfCGK0Gt",
+        "file": "MWM_OAUTH004_INJECTED_LIFECYCLE_ADMISSION_CARRIER_2026-10-19.tar.gz",
+        "sha256": "39a19c5293ddcadd67ab8b2c796b0cdccc6a06dcc5cb64468c52b87aaac2f66a",
+        "patch_sha256": "4a2b1adb7ac6fc6b6a2a14fdb4dfa0d8b988c419dfb51a51c6c6b88b5c98e7df",
+        "labelNote": "Carrier base/archive historical label OAUTH-004; the recorded, assigned, and canonical requirement claim remains OAUTH-003-INJECTED-LIFECYCLE-ADMISSION-FAKE."
+      },
+      "centralValidation": {
+        "api_vitest": "4 files / 26 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "omitted default-false gate returns null before vault/reader/normalizer/aggregate; injected true fixture gate requires exact usable owner/provider/purpose/handle tuple and only normalizer-derived busy projection reaches aggregate",
+        "scope": "exact two new paths; git diff --check PASS",
+        "staticBoundary": "no network, OAuth/client/consent/token/account/crypto, persistence/DB/config/log/route/client/queue/wall-clock/activation capability"
       }
     },
     {
