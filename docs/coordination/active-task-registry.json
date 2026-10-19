@@ -3614,6 +3614,57 @@
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged exact baseline, exclusive paths, shared-arrival-only flexible status grammar, strict Calendar grammar, and source-only boundary."
       }
+    },
+    {
+      "id": "FLIGHT-008-THREE-PARTICIPANT-INJECTED-ARRIVAL-VENUE-COMPOSITION",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-001",
+      "baseline": "0e1bfd31859674ecc910de158eb6f4a14ebdc2b0",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/flight-status/three-participant-arrival-venue-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/three-participant-arrival-venue-composition.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/three-participant-arrival-venue-composition.test.ts"
+      ],
+      "integrationDependency": {
+        "claim": "FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION",
+        "condition": "Central source integration of Flight #7 must precede central application of this carrier; Flight #7\u2019s public lifecycle resolver signature remains read-only."
+      },
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-policy.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-policy.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "FLIGHT-005/FLIGHT-001 remains a single central Flight coordination experience; this is the source-only simulated three-participant extension, not a standalone feature.",
+        "targetJourney": "Injected Sean/Mia pair result plus independently authorized initiating coordinator availability; only then select a fixture candidate from explicitly authorized sanitized city/state/accessibility/preference inputs.",
+        "permissions": "Exactly three distinct, versioned, revocable, time-bounded named authorizations bind an opaque coordination ID and duplicate-free other-participant set. No friendship/Circle/DM/membership inference.",
+        "venueTruthfulness": "Fixture marker `injected_verified` is an input assertion only; it is never evidence that a real venue is verified or current.",
+        "completionBoundary": "No route/UI/invitation/reply/notification/delivery, real provider/Calendar/OAuth, consent persistence, real venue search/DB/catalog, location/routing/booking, runtime/browser/device/staging/member/release/founder evidence."
+      },
+      "evidence": "Current pair resolver safely emits only canonical start/end. Existing named pair sharing/eligibility prove no third-person authority; existing Calendar result carries safe normalized busy union. Business repository records cannot be imported because they carry DB-oriented repository capability, so an all-new minimal injected fixture shape is required.",
+      "requiredBehavior": [
+        "Compose existing pair resolver; do not duplicate Flight sharing, freshness, eligibility, or slot selection.",
+        "Require three exact active named authorizations and one active triad-bound coordinator busy-only normalized availability permission; no alternate time is invented.",
+        "Read sanitized planning profile/venue fixture fields only after all required authorizations validate; require common city/state and ordered candidate match on unioned authorized accessibility/preference labels.",
+        "Return frozen minimum `{startAt,endAt,venue:{id,name,city,stateCode},explanation}` with constant fixture-only non-factual explanation; all failure/hostile input returns one generic frozen unavailable result.",
+        "Pure no-I/O/no-ambient-clock/no-mutation; implementation may import only pair resolver and type-only Calendar contract."
+      ],
+      "constraints": [
+        "All-new listed paths only; no active FLIGHT-007 paths.",
+        "No real venue facts/verification/provenance/search; no DB/catalog route/UI/location/geocoding/travel/booking/payment; no provider/Calendar/OAuth/persistence/notification/delivery/runtime/network/logging/browser/device/staging/deploy/activation."
+      ],
+      "validationPlan": [
+        "focused three-participant composition test: positive triad, per-person denial matrix, pair/coordinator unavailable/busy/window cases, authorized-data isolation, venue shape/order/stripping, hostile/purity checks",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit",
+        "central apply only after Flight #7; then relevant Flight source matrix plus exact three-path scope/diff."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified three-new-path carrier only; central owner integrates after Flight #7 receipt.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only injected fixtures, not real participant, venue, provider, or member experience evidence."
     }
   ],
   "globalDirectiveDelivery": [

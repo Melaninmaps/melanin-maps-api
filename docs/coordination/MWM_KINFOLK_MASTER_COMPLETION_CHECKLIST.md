@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Registered P0 `FLIGHT-008-THREE-PARTICIPANT-INJECTED-ARRIVAL-VENUE-COMPOSITION` at `0e1bfd31859674ecc910de158eb6f4a14ebdc2b0` for an all-new, pure injected three-participant authorization/time/venue-fixture composition. Central application is ordered after FLIGHT-007; `injected_verified` is test input only, never real venue verification. |
 | 2026-10-19 | COMM-001 runtime-lifecycle accountability: `QJATRGk7nUgzDlccMCUcG6` is the sole acceptance coordinator. All controlled account/data, safe runtime/DB/notification, browser/device/build, staging, member/release/founder phases remain separately unauthorized and blocked; no source receipt implies delivery or runtime acceptance. |
 | 2026-10-19 | Registered P0 `FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION` at `72bfacf158af14abc40613a404c8831675845fb9` after reproducing a valid source-normalized no-fraction/short-fraction UTC arrival timestamp that sharing/eligibility accept but lifecycle consumption rejects. Calendar and Flight retain the same canonical UTC 31×24-hour maximum; no DST/local-calendar policy change was made. |
 | 2026-10-19 | Cumulative Flight local source matrix PASS: API **5 files / 106 tests** (status gate, sharing, eligibility, simulated meeting lifecycle, Calendar normalizers) and API no-emit. It remains injected-fake source evidence only; provider, Calendar, runtime, and member gates stay open. |
