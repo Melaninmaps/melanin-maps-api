@@ -111,6 +111,34 @@
       "externalAcceptance": "PENDING — no staging deployment, database operation, provider call, browser validation, or device validation was performed."
     },
     {
+      "id": "SP-002-SHARED-PLAN-FREE-BUSY-AVAILABILITY-ENGINE",
+      "status": "IMPLEMENTING_LOCAL_ONLY",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "baseline": "12e0b7268a4148ce3e948400af79cf6280b893cf",
+      "publicationBoundary": "Local source-only claim under the controlling boundary. Do not fetch, push, inspect connectors/staging, deploy, or perform release actions without separate founder authorization.",
+      "requirement": "Add a deterministic, import-free Shared Plan free/busy availability engine that consumes only already-authorized normalized participant intervals and returns aggregate candidate overlap windows. The founder-selected default is free/busy only: never expose event titles, details, reasons, exact location, flight/itinerary data, calendar information, or participant-level availability.",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/shared-plans/free-busy-availability.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/shared-plans-free-busy-availability.test.ts"
+      ],
+      "requiredBehavior": [
+        "Accept only explicit plan-, purpose-, participant-, and finite-time-bounded normalized inputs. Require a matching granted participant authorization that is neither pending, declined, revoked, expired, cross-plan, nor cross-purpose.",
+        "Accept only unambiguous UTC interval timestamps paired with a valid named time zone; reject malformed, unknown-zone, inverted, out-of-window, overlapping/ambiguous, recurrence, or unbounded interval input rather than guessing.",
+        "Return only aggregate candidate windows plus aggregate availability counts/minimum-threshold outcome. Never return participant IDs, per-person availability, busy intervals, titles, details, locations, flights, itineraries, calendars, or reasons.",
+        "Remain deterministic, injected-time, and mutation-free. Manual availability must remain representable for unconnected/free invitees without inferring any relationship, Circle, friend, follower, or account context."
+      ],
+      "validationPlan": [
+        "Focused synthetic tests cover overlap/minimum-availability calculations, no raw-participant disclosure, matching active grant acceptance, and deterministic injected-time expiry.",
+        "Focused synthetic denial tests cover malformed/unknown-zone/ambiguous/out-of-window input; pending, declined, revoked, expired, cross-plan, and cross-purpose grants; recurrence/unbounded input; and forbidden title/detail/location/flight/itinerary/calendar fields.",
+        "Static no-import boundary plus source-aligned API no-emit, exact two-new-path scope check, and git diff --check."
+      ],
+      "constraints": [
+        "No route, UI, schema, migration, database/storage/persistence, calendar OAuth/provider, external invitation/link, notification, monitoring, AI, entitlement, cache, Circle lookup, flight, location, itinerary, or feature activation work.",
+        "Do not modify SP-001 Circle preference boundaries, Phase A access-policy paths, private availability blocks, UM-001/UM-002, D1, Community, LA, CI, or MAP paths.",
+        "The owner may return only an uncommitted local review carrier. The integration owner may perform only local source review/recording until separate founder authorization allows any remote publication."
+      ]
+    },
+    {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
       "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
