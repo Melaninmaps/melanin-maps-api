@@ -344,14 +344,14 @@
       "founder_requirement": "Existing free community participation—reviews/check-ins, feed/profiles, events/RSVPs, messaging and resources—must not be payment-gated.",
       "acceptance_criteria": "Acceptance proves ordinary participation needs authentication where applicable, not payment; basic resources remain free while AI capacity is separately bounded.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Membership audit D2 identifies source-present partial/unverified community surfaces and required preservation. Exclusive P0 local source-only claim `COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE` issued at authority `4440821a40ba68ab43529bc3cd1cb9170ba9e14d` to task `yINBiovLIPiFnyQCFfSycn` for the direct free event-hosting gate in `events.ts` and its focused public-event contract. Scope is limited to allowing authenticated free users under the existing three-events-per-calendar-month guard, preserving Navigator’s same guard and all other event controls. No commercial allowance, provider, schema, client, deployment, or runtime claim is authorized.",
+      "source_evidence": "Membership audit D2 identifies source-present partial/unverified community surfaces and required preservation. Exclusive P0 local source-only claim `COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE` issued at authority `4440821a40ba68ab43529bc3cd1cb9170ba9e14d` to task `yINBiovLIPiFnyQCFfSycn` for the direct free event-hosting gate in `events.ts` and its focused public-event contract. Scope is limited to allowing authenticated free users under the existing three-events-per-calendar-month guard, preserving Navigator’s same guard and all other event controls. No commercial allowance, provider, schema, client, deployment, or runtime claim is authorized. Central local-only integration `d7e340905c88f94b511a854e7d0cd7a07aeb6f29` accepted the two-path event-hosting repair: free and navigator share the pre-existing three-events-per-calendar-month guard; the cap response is neutral and contains no upgrade URL or plan claim. Carrier archive `383b7020e230884e6e0d025488987dde35f4fb9b9c402338668910360a22d934`, patch `e93e05c5801cc4c09dc21ef500d55424a61fb923c8c6e71c8c67f3f7305e78e2`, declared base `10b1d91d206f23ef013cd724c5b057e4d35aab6a`, compatibility/apply/result hashes verified. Full authority validation: public event contract **1 file / 4 tests PASS**, API no-emit PASS, exact two-path scope/diff check PASS. It retains authentication, required fields, ownership, notification fan-out, edit/delete authorization, public visibility, RSVP, recurring-event, pricing and featured behavior. No runtime database/provider/remote/staging/deployment/browser/device/activation/member-visible action occurred. This source receipt covers only one direct event-hosting gate; COMM-001 remains IN DEVELOPMENT for other named community surfaces.",
       "staging_evidence": "MISSING EVIDENCE — no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE — source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE — no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE — no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "yINBiovLIPiFnyQCFfSycn (exclusive carrier implementation); QJATRGk7nUgzDlccMCUcG6 (central integration)",
-      "dependencies_or_blockers": "MISSING EVIDENCE — entitlement contracts and member-visible acceptance.",
-      "next_action": "Assigned owner returns only the hash-verified two-path COMM-001 event-hosting carrier; central owner runs the named API test/no-emit and determines integration. Do not broaden to RSVP, media, business promotion, client work, or commercial catalog terms.",
+      "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central source integration); yINBiovLIPiFnyQCFfSycn (event-hosting carrier implementation, claim closed)",
+      "dependencies_or_blockers": "MISSING EVIDENCE — remaining named community participation gate inventory and entitlement contracts; staging/member-visible Web/iOS/Android acceptance remains separate.",
+      "next_action": "Keep the completed two-path event-hosting repair frozen. Before another source edit, select and claim one non-overlapping remaining named community surface from current authority; do not infer full COMM-001 completion or external free-core acceptance.",
       "founder_approval_needed": "No free-core reapproval; approval for optional paid capacity.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1610,6 +1610,10 @@
     {
       "date": "2026-10-19",
       "event": "COMM-001 exclusive P0 source claim `COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE` issued at `4440821a40ba68ab43529bc3cd1cb9170ba9e14d` to `yINBiovLIPiFnyQCFfSycn`: two paths only, reusing the existing three-event monthly guard so authenticated free event hosting is not a paid denial; no commercial policy expansion or external action."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "COMM-001 two-path free event-hosting source integration `d7e340905c88f94b511a854e7d0cd7a07aeb6f29`: carrier/archive/patch/result hashes and base compatibility verified; full-authority public-event contract 1 file / 4 tests, API no-emit, exact scope and diff check passed. Requirement remains IN DEVELOPMENT because other named community surfaces and all external acceptance are not evidenced."
     }
   ],
   "evidence_gaps": [

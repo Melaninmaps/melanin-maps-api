@@ -1204,7 +1204,7 @@
     {
       "id": "COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -1236,7 +1236,32 @@
         "sha256": "4cae17cfe9ec49fc55f88c8ac66e7047d48de709b03317eca51161dcc47b3693",
         "expiresAt": "2026-10-20T20:05:08.031Z",
         "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
-      }
+      },
+      "externalAcceptance": "PENDING — local source-only integration. No runtime database write, provider call, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance occurred.",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "d7e340905c88f94b511a854e7d0cd7a07aeb6f29",
+        "carrier": {
+          "archiveSha256": "383b7020e230884e6e0d025488987dde35f4fb9b9c402338668910360a22d934",
+          "patchSha256": "e93e05c5801cc4c09dc21ef500d55424a61fb923c8c6e71c8c67f3f7305e78e2",
+          "declaredCarrierBase": "10b1d91d206f23ef013cd724c5b057e4d35aab6a",
+          "exactTwoPathScopeVerified": true,
+          "pathBaseCompatibilityVerified": true,
+          "applyCheckWithWhitespaceErrorPassed": true,
+          "resultHashesVerified": {
+            "artifacts/api-server/src/routes/events.ts": "a584bca7f8b9a42c9c64ebb97dab44264d2a18c76b48bcaba0de2db913b840e4",
+            "artifacts/api-server/src/__tests__/public-event-feed-contract.test.ts": "f16239d5d3cfb9bf8cb24fa5e140d0f8a5426afc52a0565dc752fe030142330b"
+          }
+        },
+        "reviewConclusion": "The patch removes only the free-tier event-hosting denial and reuses the existing calendar-month count guard for free and navigator. It keeps Trailblazer and all other existing tier behavior untouched; the cap response is neutral with no upgrade URL or plan claim. It retains the unauthenticated 401, required title/date/city/state validation, event ownership, notification fan-out, error handling, edit/delete authorization, public visibility, RSVP, recurring-event, pricing, and featured boundaries.",
+        "validation": {
+          "publicEventFeedContract": "PASS — 1 file / 4 tests",
+          "apiTypeScriptNoEmit": "PASS",
+          "diffCheck": "PASS",
+          "sourceBoundaryReview": "PASS — exact two paths; free/navigator shared existing cap; no upgrade URL/plan claim in POST /events; required auth/validation/ownership/notification controls retained."
+        }
+      },
+      "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is one direct free event-hosting gate only; it does not complete COMM-001 or establish external acceptance."
     }
   ]
 }
