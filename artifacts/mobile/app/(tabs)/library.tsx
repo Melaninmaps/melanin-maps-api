@@ -735,7 +735,7 @@ export default function LibraryScreen() {
             <View style={[styles.section, { marginTop: 18 }]}>
               <Text style={[styles.collectionEyebrow, { color: "#8D5C17" }]}>BEGIN WITH OUR COMPLETE LIVES</Text>
               <Text style={[styles.collectionHeading, { color: colors.foreground }]}>Choose a Library collection</Text>
-              <Text style={[styles.collectionIntro, { color: colors.mutedForeground }]}>Opening a collection immediately starts its approved-first, source-governed research path. You can also choose a narrower subject without retyping it.</Text>
+              <Text style={[styles.collectionIntro, { color: colors.mutedForeground }]}>Opening a collection searches approved Library knowledge first. You can choose a narrower subject without retyping it; fresh research is always a separate confirmed action.</Text>
               {libraryCollectionsUnavailable ? (
                 <Text style={[styles.collectionIntro, { color: "#8A2424" }]}>Library research paths are temporarily unavailable. The rest of your Library remains available.</Text>
               ) : null}

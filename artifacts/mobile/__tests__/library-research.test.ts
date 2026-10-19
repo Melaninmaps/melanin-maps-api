@@ -16,11 +16,12 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain("Library Research");
   });
 
-  it("searches approved Library content before requesting a researched brief", () => {
+  it("searches approved Library content before an explicit provider-free availability check", () => {
     expect(researchScreen).toContain("/api/library/search?");
-    expect(researchScreen).toContain("/api/library/research");
+    expect(researchScreen).toContain("/api/library/research/preflight");
     expect(researchScreen).toContain("No approved Library entry answers this yet.");
-    expect(researchScreen).toContain("Research vetted sources");
+    expect(researchScreen).toContain("Check fresh-research availability");
+    expect(researchScreen).toContain("durable allowance protections");
   });
 
   it("requires a member to choose a close spelling correction before research", () => {
@@ -72,16 +73,24 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain("appliedSuggestedQuestion.current = true");
   });
 
-  it("makes every server-provided Library collection path an immediate governed research handoff", () => {
-    expect(libraryCollectionResearchParams("  Redlining  ")).toEqual({ question: "Redlining", research: "true" });
+  it("clears member-scoped Library state and ignores late responses when the account changes", () => {
+    expect(researchScreen).toContain("const { user } = useAuth()");
+    expect(researchScreen).toContain("const activeMemberId = user?.id ?? null");
+    expect(researchScreen).toContain("accountGeneration.current += 1");
+    expect(researchScreen).toContain("setContextConsent(null)");
+    expect(researchScreen).toContain("generation !== accountGeneration.current");
+  });
+
+  it("makes every server-provided Library collection path a browse-only handoff", () => {
+    expect(libraryCollectionResearchParams("  Redlining  ")).toEqual({ question: "Redlining" });
     expect(libraryTab).toContain("loadLibraryResearchPathManifest");
     expect(libraryTab).toContain("collection.paths.map");
     expect(libraryTab).toContain("libraryCollectionResearchParams(path.question)");
     expect(libraryTab).toContain('pathname: "/library-research"');
     expect(libraryTab).toContain("params: libraryCollectionResearchParams(path.question)");
-    expect(researchScreen).toContain('researchOnOpen === "true"');
-    expect(researchScreen).toContain("void searchLibrary(visibleQuestion, true, routedTags)");
-    expect(researchScreen).toContain("if (forceResearch || !hasPublishedEntry)");
+    expect(researchScreen).not.toContain("researchOnOpen");
+    expect(researchScreen).toContain("void searchLibrary(visibleQuestion, routedTags)");
+    expect(researchScreen).not.toContain("forceResearch");
   });
 
   it("runs related questions through the same approved-first path", () => {
@@ -91,7 +100,7 @@ describe("mobile Library research experience", () => {
 
   it("keeps an approved-topic recovery path visible when current research is unavailable", () => {
     expect(researchScreen).toContain("APPROVED_TOPIC_STARTERS");
-    expect(researchScreen).toContain("browse a verified Library topic instead of seeing a dead end");
+    expect(researchScreen).toContain("browse verified Library topics without provider work");
     expect(researchScreen).toContain("Breast cancer screening");
     expect(researchScreen).toContain("HBCU college admissions");
   });

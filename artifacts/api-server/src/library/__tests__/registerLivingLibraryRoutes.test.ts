@@ -87,106 +87,70 @@ describe("GET /api/library/search", () => {
   });
 });
 
-describe("POST /api/library/research", () => {
-  it("denies unauthenticated research before provider or persistence", async () => {
+describe("Library fresh-research allowance boundary", () => {
+  it("denies unauthenticated preflight before provider or persistence", async () => {
     const repository = createRepository(); const researchProvider = provider();
-    const response = await supertest(createApp(repository, { researchProvider })).post("/api/library/research").send({ question: "How do I start HVAC training?" });
+    const response = await supertest(createApp(repository, { researchProvider }))
+      .post("/api/library/research/preflight")
+      .send({ question: "How do I start HVAC training?" });
     expect(response.status).toBe(401);
     expect(researchProvider.search).not.toHaveBeenCalled();
     expect(repository.saveEntry).not.toHaveBeenCalled();
   });
 
-  it("reuses approved internal knowledge without invoking live research", async () => {
+  it("reuses approved internal knowledge during preflight or direct retrieval without an allowance or provider", async () => {
     const repository = createRepository(); const researchProvider = provider();
     vi.mocked(repository.findReusableEntry).mockResolvedValue(approvedEntry());
-    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider })).post("/api/library/research").send({ question: "How do I start HVAC training?", internalResultCount: 1 });
+    const app = createApp(repository, { userId: "member-1", researchProvider });
+    const preflight = await supertest(app)
+      .post("/api/library/research/preflight")
+      .send({ question: "How do I start HVAC training?" });
+    expect(preflight.status).toBe(200);
+    expect(preflight.body).toMatchObject({
+      status: "approved_content",
+      allowance: { used: 0, charged: false },
+      result: { origin: "internal", reused: true, provider: { name: "internal" } },
+    });
+    const response = await supertest(app)
+      .post("/api/library/research")
+      .send({ question: "How do I start HVAC training?" });
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ origin: "internal", reused: true, published: true, persisted: false, provider: { name: "internal" } });
-    expect(response.body.libraryPurposeConsent).toMatchObject({
-      purpose: "library_saved_context",
-      controlsSavedContextAugmentation: true,
-      controlsRankingPersonalization: true,
+    expect(researchProvider.search).not.toHaveBeenCalled();
+    expect(repository.saveEntry).not.toHaveBeenCalled();
+    expect(repository.recordCoverageSignal).not.toHaveBeenCalled();
+  });
+
+  it("requires an explicit confirmation for a fresh request but never invokes a provider without the ledger", async () => {
+    const repository = createRepository(); const researchProvider = provider();
+    const app = createApp(repository, { userId: "member-1", researchProvider });
+    const unconfirmed = await supertest(app)
+      .post("/api/library/research")
+      .send({ question: "How do I start HVAC training?" });
+    expect(unconfirmed.status).toBe(409);
+    expect(unconfirmed.body).toMatchObject({ code: "LIBRARY_RESEARCH_CONFIRMATION_REQUIRED", confirmationRequired: true });
+    const confirmed = await supertest(app)
+      .post("/api/library/research")
+      .send({ question: "How do I start HVAC training?", confirmFreshResearch: true });
+    expect(confirmed.status).toBe(503);
+    expect(confirmed.body).toMatchObject({
+      code: "LIBRARY_RESEARCH_LEDGER_UNAVAILABLE",
+      usesKinfolkAiAllowance: true,
+      confirmationRequired: true,
     });
     expect(researchProvider.search).not.toHaveBeenCalled();
-    expect(repository.recordCoverageSignal).toHaveBeenCalledWith(expect.objectContaining({ outcome: "internal", internalResultCount: 1 }));
+    expect(repository.saveEntry).not.toHaveBeenCalled();
+    expect(repository.recordCoverageSignal).not.toHaveBeenCalled();
   });
 
-  it("researches zero-entry HVAC, returns citations, and persists pending-only", async () => {
-    const repository = createRepository();
-    const response = await supertest(createApp(repository, { userId: "member-1" })).post("/api/library/research").send({ question: "How do I start HVAC training?", internalResultCount: 0 });
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ origin: "researched", persisted: true, published: false, answer: { publicationStatus: "pending", sourceCount: 2 } });
-    expect(repository.saveEntry).toHaveBeenCalledWith(expect.objectContaining({ topicSlug: "trades-skills-certifications", provider: "openai" }));
-    expect(repository.recordCoverageSignal).toHaveBeenCalledWith(expect.objectContaining({ outcome: "researched", usedLiveResearch: true, internalResultCount: 0 }));
-  });
-
-  it("returns an honest retryable state when providers are unavailable", async () => {
-    const repository = createRepository();
-    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider: null })).post("/api/library/research").send({ question: "oldest bookstore in the US" });
+  it("returns the same fail-closed result from preflight when approved content is absent", async () => {
+    const repository = createRepository(); const researchProvider = provider();
+    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider }))
+      .post("/api/library/research/preflight")
+      .send({ question: "What treatment helps high blood pressure?" });
     expect(response.status).toBe(503);
-    expect(response.body).toMatchObject({ code: "LIBRARY_RESEARCH_PROVIDER_UNAVAILABLE", retryable: true, provider: { status: "unavailable" } });
-    expect(response.body).not.toHaveProperty("answer");
-  });
-
-  it("preserves authoritative medical safeguards and never sends profile identity context", async () => {
-    const repository = createRepository(); const researchProvider = provider([
-      { url: "https://www.cdc.gov/a", title: "CDC", content: "A".repeat(220), publisher: "cdc.gov", publishedAt: null },
-      { url: "https://medlineplus.gov/b", title: "MedlinePlus", content: "B".repeat(220), publisher: "medlineplus.gov", publishedAt: null },
-    ]); const synthesisWriter = writer();
-    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider, synthesisWriter })).post("/api/library/research").send({ question: "What treatment helps high blood pressure?", profile: { race: "invented", religion: "invented" } });
-    expect(response.status).toBe(200);
-    expect(researchProvider.search).toHaveBeenCalledWith(expect.objectContaining({ allowedDomains: expect.arrayContaining(["cdc.gov", "medlineplus.gov"]) }));
-    expect(synthesisWriter.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ disclaimer: expect.stringMatching(/not a medical diagnosis/i), communityLens: expect.stringMatching(/requested evidence scope, not a claim about the reader/i) }));
-    expect(JSON.stringify(vi.mocked(researchProvider.search).mock.calls)).not.toContain("invented");
-  });
-
-  it("returns an explicit group-level research scope without claiming it is the member's identity", async () => {
-    const repository = createRepository();
-    const researchProvider = provider([
-      { url: "https://www.cdc.gov/a", title: "CDC", content: "Black women pregnancy evidence. ".repeat(12), publisher: "cdc.gov", publishedAt: null },
-      { url: "https://pubmed.ncbi.nlm.nih.gov/123456/", title: "PubMed", content: "B".repeat(220), publisher: "pubmed.ncbi.nlm.nih.gov", publishedAt: null },
-    ]);
-    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider }))
-      .post("/api/library/research")
-      .send({ question: "What should Black women ages 45-50 know about planning for pregnancy?" });
-    expect(response.status).toBe(200);
-    expect(response.body.researchScope).toMatchObject({
-      domain: "medical",
-      requestedGroup: "Black women ages 45–50",
-      groupGuidance: expect.stringMatching(/not the reader/i),
-    });
-    expect(response.body.researchScope.connectedTopics).toEqual(expect.arrayContaining([
-      expect.objectContaining({ label: "Health & Wellness" }),
-    ]));
-    expect(response.body).toMatchObject({
-      answer: expect.objectContaining({ researchLenses: ["#Diaspora"] }),
-      foundation: expect.objectContaining({ researchLenses: ["#Diaspora"] }),
-      communityContext: expect.objectContaining({
-        status: "available",
-        researchLenses: ["#BlackWomen"],
-        answer: expect.objectContaining({ researchLenses: ["#BlackWomen"] }),
-      }),
-    });
-  });
-
-  it("returns the foundation when a requested community supplement has no direct evidence", async () => {
-    const repository = createRepository();
-    const researchProvider = provider([
-      { url: "https://www.cdc.gov/a", title: "CDC breast cancer overview", content: "General breast cancer screening information from CDC. ".repeat(8), publisher: "cdc.gov", publishedAt: null },
-      { url: "https://www.cancer.gov/b", title: "NCI breast cancer overview", content: "General breast cancer screening research from NCI. ".repeat(8), publisher: "cancer.gov", publishedAt: null },
-    ]);
-    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider }))
-      .post("/api/library/research")
-      .send({ question: "#BlackWomen breast cancer screening" });
-
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({
-      foundation: { sourceCount: 2, researchLenses: ["#Diaspora"] },
-      communityContext: {
-        status: "insufficient",
-        researchLenses: ["#BlackWomen"],
-      },
-    });
-    expect(researchProvider.search).toHaveBeenCalledTimes(2);
+    expect(response.body).toMatchObject({ code: "LIBRARY_RESEARCH_LEDGER_UNAVAILABLE", retryable: false });
+    expect(researchProvider.search).not.toHaveBeenCalled();
+    expect(repository.saveEntry).not.toHaveBeenCalled();
   });
 });

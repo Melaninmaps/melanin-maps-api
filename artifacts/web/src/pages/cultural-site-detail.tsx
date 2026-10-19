@@ -497,7 +497,7 @@ export default function CulturalSiteDetail() {
             Open a guided Library search for historical context, reputable sources, and connected topics about {site.name}.
           </p>
           <Link
-            href={`/library/search?q=${encodeURIComponent(`${site.name}: history, context, and reputable sources`)}&research=true`}
+            href={`/library/search?q=${encodeURIComponent(`${site.name}: history, context, and reputable sources`)}`}
             aria-label={`Research ${site.name} in the Mapping With Melanin Library`}
           >
             <span className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold cursor-pointer hover:underline" style={{ color: accentColor }}>
@@ -634,7 +634,7 @@ export default function CulturalSiteDetail() {
               Explore this institution through separate academic, student-life, tradition, and mentorship lenses. Community media is reviewed and remains in the category selected by its contributor.
             </p>
             <Link
-              href={`/library/search?q=${encodeURIComponent(`${site.name} academics, student life, alumni mentorship, and college planning`)}&research=true`}
+              href={`/library/search?q=${encodeURIComponent(`${site.name} academics, student life, alumni mentorship, and college planning`)}`}
               aria-label={`Research ${site.name} in the Mapping With Melanin Library`}
             >
               <span className="inline-flex mt-3 text-sm font-semibold cursor-pointer hover:underline" style={{ color: accentColor }}>

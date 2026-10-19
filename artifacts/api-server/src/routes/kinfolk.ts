@@ -150,10 +150,8 @@ import {
   VOICE_MAX_DURATION_SECONDS,
 } from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
-import {
-  answerWithLivingLibrary,
-  findApprovedLibraryAnswer,
-} from "../kinfolk/kinfolkLibraryBridge";
+import { findApprovedLibraryAnswer } from "../kinfolk/kinfolkLibraryBridge";
+import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
 import { createPostgresLibraryRepository } from "../library/postgresLibraryRepository";
 import { createTavilyResearchProvider } from "../library/tavilyResearchProvider";
 import { createOpenAiWebResearchProvider } from "../library/openAiWebResearchProvider";
@@ -336,7 +334,6 @@ import {
   type ResourceCard,
   type EntityCandidate,
 } from "../kinfolk/resource-library";
-import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
 import { applySavedMemberResearchContext } from "../kinfolk/saved-member-research-context";
 import {
   answerPlanDomainForIntent,
@@ -9163,88 +9160,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     );
     const experienceMarker = staffDemoResponseMarker(modelPolicy);
 
-    // ── Enforce monthly query limits ──────────────────────────────────────────
-    chatStage = "quota_check";
-    let queriesUsedThisCall: number | null = null;
-    let aiPoolCircleId: string | null = null;
-    if (req.user?.id) {
-      // ── Controlled staff-demo quota bypass ───────────────────────────────
-      // The same authenticated administrator-or-active-tester policy that selects
-      // the demo model also permits the controlled demo call. Standard users keep
-      // their existing free and paid quota behavior unchanged.
-      if (modelPolicy.mode !== "staff_demo" && !staffAuditPolicy) {
-        const resolvedTier = getTierFromMemberType(user?.memberType);
-
-        // A paid subscription or active trial with an unset/unknown memberType is
-        // a data gap — treat as legacy_member (unlimited) so we never show "pool of 0".
-        const hasPaidAccount =
-          !!user?.stripeSubscriptionId ||
-          !!(user?.trialEndsAt && user.trialEndsAt > new Date());
-        const effectiveTier: ReturnType<typeof getTierFromMemberType> =
-          hasPaidAccount && resolvedTier === "free"
-            ? "legacy_member"
-            : resolvedTier;
-
-        const isFree = effectiveTier === "free";
-
-        if (isFree) {
-          const currentMonth = new Date().toISOString().slice(0, 7);
-          const sameMonth = user?.kinfolkQueryMonth === currentMonth;
-          const usedQueries = sameMonth
-            ? (user?.kinfolkQueriesThisMonth ?? 0)
-            : 0;
-
-          if (usedQueries >= FREE_MONTHLY_LIMIT) {
-            res.status(429).json({
-              error: `You've used your ${FREE_MONTHLY_LIMIT} free KinfolkAI conversations this month. Upgrade to Navigator or Trailblazer for unlimited access.`,
-              code: "KINFOLK_LIMIT_REACHED",
-              used: usedQueries,
-              limit: FREE_MONTHLY_LIMIT,
-              upgradeUrl: "/membership",
-            });
-            return;
-          }
-
-          queriesUsedThisCall = sameMonth ? usedQueries + 1 : 1;
-          await db
-            .update(usersTable)
-            .set({
-              kinfolkQueryMonth: currentMonth,
-              kinfolkQueriesThisMonth: queriesUsedThisCall,
-            })
-            .where(eq(usersTable.id, req.user.id));
-        }
-
-        // ── Paid-tier AI pool check ────────────────────────────────────────────
-        if (!isFree) {
-          try {
-            const poolStatus = await checkAiPool(req.user.id, effectiveTier);
-            if (!poolStatus.allowed) {
-              const month = new Date().toLocaleDateString("en-US", {
-                month: "long",
-              });
-              res.status(429).json({
-                error: `Your KinfolkAI pool of ${poolStatus.limit} conversations has been used for ${month}. Upgrade your plan or wait until next month.`,
-                code: "AI_POOL_EXHAUSTED",
-                used: poolStatus.used,
-                limit: poolStatus.limit,
-                upgradeUrl: "/membership",
-              });
-              return;
-            }
-            aiPoolCircleId = poolStatus.circleId;
-          } catch (poolErr) {
-            // family_ai_usage table may not exist on this deployment — treat as unlimited
-            // rather than blocking the user. The startup migration will create it on next boot.
-            console.error(
-              "[kinfolk-pool-check] checkAiPool failed, treating as unlimited",
-              safeKinfolkErrorMetadata(poolErr),
-            );
-          }
-        }
-      } // closes: standard quota policy
-    }
-
     // Fetch personalization context (optional auth — works for guests too)
     let prefs: typeof userPreferencesTable.$inferSelect | null = null;
     let likedSpots: string[] = [];
@@ -10167,6 +10082,152 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // Fresh Library research is a deliberate allowance-governed action. Do not
+    // launch an external provider from a conversational turn or charge a member
+    // merely for being routed to the Library. The direct Library surface performs
+    // approved-content reuse and, once durable metering is available, confirmation.
+    if (
+      shouldResearchInLibrary &&
+      intentClass !== "medical_health" &&
+      !contextualResearchEnabled &&
+      !destination &&
+      message.trim().length > 15
+    ) {
+      recordKinfolkTelemetry({
+        requestId: _kinfolkReqId,
+        questionClass: intentClass,
+        status: 200,
+        degraded: true,
+        degradedReason: "LIBRARY_RESEARCH_CONFIRMATION_REQUIRED",
+        providerStatus: null,
+        latencyMs: Date.now() - _kinfolkStartedAt,
+        taskMode: null,
+        retrievalState: "not_used",
+        sourceCount: 0,
+      });
+      res.json({
+        sessionId,
+        reply:
+          "Fresh source-cited Library research is a separate KinfolkAI allowance-governed action. It is temporarily unavailable while durable allowance protections are finalized; you can still browse and search approved Library content for free.",
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: ["Search approved Library knowledge"],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: {
+          type: "open_research",
+          query: message,
+          href: `/library/search?q=${encodeURIComponent(message)}`,
+          confirmationRequired: true,
+          currentlyAvailable: false,
+        },
+        intentClass,
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: "library_research_action",
+        structuredContent: null,
+        mediaLinks: [],
+        relatedConnections: [],
+        researchStatus: {
+          usedInternal: false,
+          usedLiveWeb: false,
+          degraded: true,
+          web: {
+            attempted: false,
+            state: "unavailable",
+            provider: null,
+            fallbackUsed: false,
+            partial: false,
+          },
+          asOf: new Date().toISOString(),
+        },
+      });
+      return;
+    }
+
+    // ── Enforce monthly query limits ──────────────────────────────────────────
+    chatStage = "quota_check";
+    let queriesUsedThisCall: number | null = null;
+    let aiPoolCircleId: string | null = null;
+    if (req.user?.id) {
+      // ── Controlled staff-demo quota bypass ───────────────────────────────
+      // The same authenticated administrator-or-active-tester policy that selects
+      // the demo model also permits the controlled demo call. Standard users keep
+      // their existing free and paid quota behavior unchanged.
+      if (modelPolicy.mode !== "staff_demo" && !staffAuditPolicy) {
+        const resolvedTier = getTierFromMemberType(user?.memberType);
+
+        // A paid subscription or active trial with an unset/unknown memberType is
+        // a data gap — treat as legacy_member (unlimited) so we never show "pool of 0".
+        const hasPaidAccount =
+          !!user?.stripeSubscriptionId ||
+          !!(user?.trialEndsAt && user.trialEndsAt > new Date());
+        const effectiveTier: ReturnType<typeof getTierFromMemberType> =
+          hasPaidAccount && resolvedTier === "free"
+            ? "legacy_member"
+            : resolvedTier;
+
+        const isFree = effectiveTier === "free";
+
+        if (isFree) {
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          const sameMonth = user?.kinfolkQueryMonth === currentMonth;
+          const usedQueries = sameMonth
+            ? (user?.kinfolkQueriesThisMonth ?? 0)
+            : 0;
+
+          if (usedQueries >= FREE_MONTHLY_LIMIT) {
+            res.status(429).json({
+              error: `You've used your ${FREE_MONTHLY_LIMIT} free KinfolkAI conversations this month. Upgrade to Navigator or Trailblazer for unlimited access.`,
+              code: "KINFOLK_LIMIT_REACHED",
+              used: usedQueries,
+              limit: FREE_MONTHLY_LIMIT,
+              upgradeUrl: "/membership",
+            });
+            return;
+          }
+
+          queriesUsedThisCall = sameMonth ? usedQueries + 1 : 1;
+          await db
+            .update(usersTable)
+            .set({
+              kinfolkQueryMonth: currentMonth,
+              kinfolkQueriesThisMonth: queriesUsedThisCall,
+            })
+            .where(eq(usersTable.id, req.user.id));
+        }
+
+        // ── Paid-tier AI pool check ────────────────────────────────────────────
+        if (!isFree) {
+          try {
+            const poolStatus = await checkAiPool(req.user.id, effectiveTier);
+            if (!poolStatus.allowed) {
+              const month = new Date().toLocaleDateString("en-US", {
+                month: "long",
+              });
+              res.status(429).json({
+                error: `Your KinfolkAI pool of ${poolStatus.limit} conversations has been used for ${month}. Upgrade your plan or wait until next month.`,
+                code: "AI_POOL_EXHAUSTED",
+                used: poolStatus.used,
+                limit: poolStatus.limit,
+                upgradeUrl: "/membership",
+              });
+              return;
+            }
+            aiPoolCircleId = poolStatus.circleId;
+          } catch (poolErr) {
+            // family_ai_usage table may not exist on this deployment — treat as unlimited
+            // rather than blocking the user. The startup migration will create it on next boot.
+            console.error(
+              "[kinfolk-pool-check] checkAiPool failed, treating as unlimited",
+              safeKinfolkErrorMetadata(poolErr),
+            );
+          }
+        }
+      } // closes: standard quota policy
+    }
+
     // Community excerpts are optional, topic-matched perspective only. Retrieval
     // enforces a stricter public visibility boundary than the member feed and never
     // supplies citations or high-consequence evidence.
@@ -10398,75 +10459,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    // ── Diaspora-first research plan ──────────────────────────────────────────
-    // Permanently enriches every retrieval query with community-first context so
-    // Black women and minority community sources surface before generic results.
-    // researchQuery replaces the raw message in external searches only —
-    // it never changes Kinfolk's spoken answer or identifies the member.
-    // clarification is an optional offer rendered AFTER the general answer.
+    // This planning value only supplies optional post-answer clarification copy.
+    // It does not call a provider or launch Library research.
     const researchPlan = prepareKinfolkResearchPlan(researchContextMessage, {
       subject: "unknown",
     });
 
-    // ── Conversational research branch ─────────────────────────────────────────
-    // Stable general knowledge should feel like a normal conversation. Search is
-    // reserved for high-stakes or changing questions; Library publication remains
-    // optional enrichment and may never block an in-chat answer.
-    if (
-      shouldResearchInLibrary &&
-      intentClass !== "medical_health" &&
-      !contextualResearchEnabled &&
-      !destination &&
-      message.trim().length > 15
-    ) {
-      try {
-        const deps = getLivingLibraryDeps();
-        if (!deps.researchProvider)
-          throw new Error("KINFOLK_LIBRARY_RESEARCH_NOT_CONFIGURED");
-        const result = await answerWithLivingLibrary({
-          memberQuestion: researchPlan.researchQuery,
-          locationLabel: null,
-          repository: deps.repository,
-          researchProvider: deps.researchProvider,
-          writer: deps.writer,
-        });
-        if (!result.isReliable) {
-          req.log?.info(
-            { intentClass, sourceCount: result.sourceCount },
-            "[kinfolk] research coverage insufficient — answering conversationally",
-          );
-          throw new Error("KINFOLK_RESEARCH_COVERAGE_INSUFFICIENT");
-        }
-        res.json({
-          sessionId,
-          reply: result.message,
-          recommendations: null,
-          followUpSuggestions: [],
-          smartPromotion: null,
-          taskAction: null,
-          libraryAction: null,
-          intentClass,
-          sources: result.sources,
-          communityContext: result.communityContext,
-          libraryEntry: result.libraryEntry,
-          provenanceNote: result.disclaimer ?? null,
-          needsClarification: false,
-          originalQuery: message,
-          // Optional personalization offer — rendered after the general answer, never a gate.
-          clarificationSteps:
-            researchPlan.clarification.length > 0
-              ? researchPlan.clarification
-              : undefined,
-        });
-        return;
-      } catch (libraryErr: unknown) {
-        req.log?.warn(
-          { err: libraryErr },
-          "[kinfolk] Living Library branch failed — falling through to LLM",
-        );
-        // Fall through to standard LLM path below
-      }
-    }
+    // Fresh Library research is handled only by the explicit Library action above.
+    // The generic Kinfolk path below never invokes Living Library providers implicitly.
 
     // ── Context resolution — entity disambiguation + biography mode detection ──
     // Runs before buildSystemPrompt so server-authoritative entity facts (e.g. Ryan Coogler

@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatLibraryLensLabels, formatLibraryResearchBody } from "@workspace/constants";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/lib/auth";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_API_ORIGIN) return process.env.EXPO_PUBLIC_API_ORIGIN;
@@ -199,7 +200,9 @@ export default function LibraryResearchScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { question: suggestedQuestion, research: researchOnOpen } = useLocalSearchParams<{ question?: string; research?: string }>();
+  const { user } = useAuth();
+  const activeMemberId = user?.id ?? null;
+  const { question: suggestedQuestion } = useLocalSearchParams<{ question?: string }>();
   const [question, setQuestion] = useState("");
   const [searchedQuestion, setSearchedQuestion] = useState("");
   const [search, setSearch] = useState<LibrarySearch | null>(null);
@@ -212,6 +215,7 @@ export default function LibraryResearchScreen() {
   const [contextConsent, setContextConsent] = useState<LibraryPurposeConsent | null>(null);
   const [contextConsentState, setContextConsentState] = useState<"idle" | "saving" | "error">("idle");
   const appliedSuggestedQuestion = useRef(false);
+  const accountGeneration = useRef(0);
   const activeResearchLensTags = selectedResearchTags;
 
   const internalEntry = search?.results.find((result): result is { kind: "entry" } & LibraryEntry => result.kind === "entry") ?? null;
@@ -220,6 +224,17 @@ export default function LibraryResearchScreen() {
   );
 
   useEffect(() => {
+    accountGeneration.current += 1;
+    setSearch(null);
+    setResearch(null);
+    setMessage("");
+    setState("idle");
+    setContextConsent(null);
+    setContextConsentState("idle");
+  }, [activeMemberId]);
+
+  useEffect(() => {
+    const generation = accountGeneration.current;
     const controller = new AbortController();
     void (async () => {
       try {
@@ -231,16 +246,19 @@ export default function LibraryResearchScreen() {
         });
         if (request.status === 401) return;
         if (!request.ok) throw new Error("LIBRARY_CONSENT_UNAVAILABLE");
-        setContextConsent(await request.json() as LibraryPurposeConsent);
+        const consent = await request.json() as LibraryPurposeConsent;
+        if (generation !== accountGeneration.current) return;
+        setContextConsent(consent);
       } catch (error) {
-        if ((error as { name?: string }).name !== "AbortError") setContextConsentState("error");
+        if (generation === accountGeneration.current && (error as { name?: string }).name !== "AbortError") setContextConsentState("error");
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [activeMemberId]);
 
   async function updateContextConsent(granted: boolean) {
     if (!contextConsent || contextConsentState === "saving") return;
+    const generation = accountGeneration.current;
     setContextConsentState("saving");
     try {
       const headers = await authHeaders();
@@ -252,12 +270,13 @@ export default function LibraryResearchScreen() {
       });
       const body = await request.json() as LibraryPurposeConsent | { error?: string };
       if (!request.ok || !("granted" in body)) throw new Error("LIBRARY_CONSENT_UPDATE_FAILED");
+      if (generation !== accountGeneration.current) return;
       setContextConsent(body);
       setContextConsentState("idle");
       // The next search and research request both use this same consent state;
       // existing evidence is not silently rewritten when it changes.
     } catch {
-      setContextConsentState("error");
+      if (generation === accountGeneration.current) setContextConsentState("error");
     }
   }
 
@@ -269,20 +288,20 @@ export default function LibraryResearchScreen() {
       setQuestion(visibleQuestion);
       setSelectedResearchTags(routedTags);
       appliedSuggestedQuestion.current = true;
-      // Collection subjects are intentional, prefilled Library questions—not
-      // decoration. Search approved Library material immediately, then obtain a
-      // current source-governed brief without requiring the member to retype it.
-      if (researchOnOpen === "true") void searchLibrary(visibleQuestion, true, routedTags);
+      // Collection subjects are intentional, prefilled Library questions. They
+      // search approved content only; no route parameter may trigger provider work.
+      void searchLibrary(visibleQuestion, routedTags);
     }
-  }, [researchOnOpen, suggestedQuestion]);
+  }, [suggestedQuestion]);
 
-  async function searchLibrary(questionOverride?: string, forceResearch = false, tagsOverride = activeResearchLensTags, keywordsOverride = filterKeywords) {
+  async function searchLibrary(questionOverride?: string, tagsOverride = activeResearchLensTags, keywordsOverride = filterKeywords) {
     const visibleQuestion = withoutResearchLensTags(questionOverride ?? question).normalize("NFKC").trim().replace(/\s+/g, " ");
     if (visibleQuestion.length < 3) {
       setMessage("Enter a question with at least three characters.");
       return;
     }
     const cleaned = buildLibraryResearchQuery(visibleQuestion, tagsOverride, keywordsOverride);
+    const generation = accountGeneration.current;
     setState("searching");
     setMessage("");
     setResearch(null);
@@ -292,19 +311,15 @@ export default function LibraryResearchScreen() {
       const payload = await request.json() as LibrarySearch | { error?: string };
       if (!request.ok) throw new Error("error" in payload ? payload.error : "The Library search is temporarily unavailable.");
       const internal = payload as LibrarySearch;
+      if (generation !== accountGeneration.current) return;
       setSearch(internal);
       setState("ready");
       if (internal.searchClarification?.kind === "possible_spelling" && internal.searchClarification.source === "returned_catalog_term") {
         setMessage("Choose the possible spelling correction below if it matches what you meant. The Library will not assume a different topic.");
         return;
       }
-      const hasPublishedEntry = internal.results.some((result) => result.kind === "entry");
-      if (forceResearch || !hasPublishedEntry) {
-        // First-time questions take longer: Library research gathers and checks
-        // authorized sources before it returns a brief and next-question path.
-        await researchVettedSources(cleaned, internal.total);
-      }
     } catch (error) {
+      if (generation !== accountGeneration.current) return;
       setState("error");
       setMessage(error instanceof Error ? error.message : "The Library search is temporarily unavailable.");
     }
@@ -313,22 +328,29 @@ export default function LibraryResearchScreen() {
   async function researchVettedSources(questionOverride?: string, internalResultCount?: number) {
     const targetQuestion = questionOverride ?? searchedQuestion;
     if (!targetQuestion || state === "researching") return;
+    const generation = accountGeneration.current;
     setState("researching");
     setMessage("");
     try {
       const headers = await authHeaders();
-      const request = await fetch(`${getApiBase()}/api/library/research`, {
+      const request = await fetch(`${getApiBase()}/api/library/research/preflight`, {
         method: "POST",
         credentials: "include",
         headers: { ...headers, "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ question: targetQuestion, internalResultCount: internalResultCount ?? search?.total ?? 0 }),
       });
-      const payload = await request.json() as ResearchResponse | { error?: string; code?: string };
+      const payload = await request.json() as { status?: string; result?: ResearchResponse; error?: string; code?: string };
+      if (generation !== accountGeneration.current) return;
       if (request.status === 401) throw new Error("Sign in to request a new source-governed Library brief. Existing Library search remains available.");
-      if (!request.ok || !("answer" in payload)) throw new Error("error" in payload && payload.error ? payload.error : "The Library could not verify enough reliable sources for this question yet.");
-      setResearch(payload as ResearchResponse);
-      setState("ready");
+      if (request.ok && payload.status === "approved_content" && payload.result) {
+        setResearch(payload.result);
+        setState("ready");
+        return;
+      }
+      if (!request.ok) throw new Error(payload.error ?? "Fresh Library research is temporarily unavailable. No allowance or provider work was used.");
+      throw new Error("The Library could not check approved coverage right now. No allowance or provider work was used.");
     } catch (error) {
+      if (generation !== accountGeneration.current) return;
       setState("error");
       setMessage(error instanceof Error ? error.message : "Live Library research is temporarily unavailable.");
     }
@@ -340,7 +362,7 @@ export default function LibraryResearchScreen() {
     const visibleQuestion = withoutResearchLensTags(cleaned);
     setQuestion(visibleQuestion);
     setSelectedResearchTags(routedTags);
-    void searchLibrary(visibleQuestion, true, routedTags);
+    void searchLibrary(visibleQuestion, routedTags);
   }
 
   return (
@@ -506,7 +528,7 @@ export default function LibraryResearchScreen() {
         {search && !internalEntry && !search.searchClarification ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No approved Library entry answers this yet.</Text>
-            <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>A current source-governed brief can be requested below. Until that service is available, browse a verified Library topic instead of seeing a dead end.</Text>
+            <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Fresh source research uses KinfolkAI allowance and requires explicit confirmation. Until durable allowance protections are available, browse verified Library topics without provider work.</Text>
             <View style={styles.starterTopicList}>
               {APPROVED_TOPIC_STARTERS.map((topic) => (
                 <TouchableOpacity key={topic} activeOpacity={0.8} onPress={() => startPrefilledResearch(topic)} style={[styles.starterTopicButton, { borderColor: colors.border, backgroundColor: colors.background }]}>
@@ -521,8 +543,8 @@ export default function LibraryResearchScreen() {
           <TouchableOpacity activeOpacity={0.85} disabled={state === "researching" || state === "searching"} onPress={() => void researchVettedSources()} style={[styles.researchButton, { borderColor: "#CA922B", backgroundColor: "#FFF8E8", opacity: state === "researching" || state === "searching" ? 0.65 : 1 }]}>
             {state === "researching" ? <ActivityIndicator color="#70480F" /> : <Feather name="book-open" size={18} color="#70480F" />}
             <View style={{ flex: 1 }}>
-              <Text style={styles.researchButtonTitle}>{state === "researching" ? "Researching vetted sources…" : internalEntry ? "Refresh with vetted current sources" : "Research vetted sources"}</Text>
-              <Text style={styles.researchButtonCopy}>Shows citations, why the evidence matters, and related next questions.</Text>
+              <Text style={styles.researchButtonTitle}>{state === "researching" ? "Checking approved coverage…" : internalEntry ? "Check approved current coverage" : "Check fresh-research availability"}</Text>
+              <Text style={styles.researchButtonCopy}>Approved content is free. Fresh provider research remains disabled until allowance protections are available.</Text>
             </View>
             <Feather name="chevron-right" size={18} color="#70480F" />
           </TouchableOpacity>

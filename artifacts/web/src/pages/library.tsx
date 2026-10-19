@@ -441,7 +441,7 @@ export function LibraryTopicPage() {
               approved-content search; if coverage is sparse, the Library will request a
               current source-governed foundation brief rather than leave a dead end.
             </p>
-            <Link href={governedLibraryResearchHref(researchCollection?.defaultQuestion ?? topic.title)}>Research this collection</Link>
+            <Link href={governedLibraryResearchHref(researchCollection?.defaultQuestion ?? topic.title)}>Browse this collection</Link>
             <Link href="/library">Explore another foundation</Link>
           </section>
         )}

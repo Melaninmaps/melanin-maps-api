@@ -1,6 +1,7 @@
-import { type FormEvent, useCallback, useEffect, useId, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { formatLibraryLensLabels, formatLibraryResearchBody } from "@workspace/constants";
+import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { MwmTopicIcon } from "@/components/brand/MwmTopicIcon";
 import { safeLibrarySourceHref } from "./librarySourceUrl";
 import "@/styles/mwm-topic-icons.css";
@@ -287,10 +288,11 @@ function ResultCard({ result }: { result: SearchResult }) {
 }
 
 export function LibrarySearchPage() {
+  const { data: auth } = useGetCurrentAuthUser();
+  const activeMemberId = auth?.user?.id ?? null;
   const rawSearch = useSearch();
   const params = new URLSearchParams(rawSearch);
   const routeQuery = params.get("q")?.trim() ?? "";
-  const researchOnOpen = params.get("research") === "true";
   const [input, setInput] = useState(withoutResearchLensTags(routeQuery));
   const [selectedResearchTags, setSelectedResearchTags] = useState<string[]>(() => selectedResearchLensTags(routeQuery));
   const [filterKeywords, setFilterKeywords] = useState("");
@@ -302,10 +304,21 @@ export function LibrarySearchPage() {
   const [contextConsentState, setContextConsentState] = useState<"idle" | "saving" | "error">("idle");
   const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(routeQuery ? "loading" : "idle");
   const [researchState, setResearchState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const accountGeneration = useRef(0);
   const [, navigate] = useLocation();
   const activeResearchLensTags = selectedResearchTags;
 
   useEffect(() => {
+    accountGeneration.current += 1;
+    setResearch(null);
+    setResearchFailure(null);
+    setResearchState("idle");
+    setContextConsent(null);
+    setContextConsentState("idle");
+  }, [activeMemberId]);
+
+  useEffect(() => {
+    const generation = accountGeneration.current;
     const controller = new AbortController();
     fetch(`${BASE}/api/library/context-consent`, {
       credentials: "include",
@@ -317,16 +330,19 @@ export function LibrarySearchPage() {
         if (!request.ok) throw new Error("LIBRARY_CONSENT_UNAVAILABLE");
         return request.json() as Promise<LibraryPurposeConsent>;
       })
-      .then((consent) => setContextConsent(consent))
+      .then((consent) => {
+        if (generation === accountGeneration.current) setContextConsent(consent);
+      })
       .catch((error: unknown) => {
-        if ((error as { name?: string }).name !== "AbortError") setContextConsentState("error");
+        if (generation === accountGeneration.current && (error as { name?: string }).name !== "AbortError") setContextConsentState("error");
       });
     return () => controller.abort();
-  }, []);
+  }, [activeMemberId]);
 
   const updateContextConsent = useCallback(async (granted: boolean) => {
     if (!contextConsent || contextConsentState === "saving") return;
     setContextConsentState("saving");
+    const generation = accountGeneration.current;
     try {
       const request = await fetch(`${BASE}/api/library/context-consent`, {
         method: "PUT",
@@ -336,13 +352,14 @@ export function LibrarySearchPage() {
       });
       const body = await request.json() as LibraryPurposeConsent | { error?: string };
       if (!request.ok || !("granted" in body)) throw new Error("LIBRARY_CONSENT_UPDATE_FAILED");
+      if (generation !== accountGeneration.current) return;
       setContextConsent(body);
       setContextConsentState("idle");
       // Ranking changes only after explicit consent changes; rerun the current
       // approved-index search rather than silently mutating visible ordering.
       if (routeQuery) navigate(`/library/search?q=${encodeURIComponent(routeQuery)}`);
     } catch {
-      setContextConsentState("error");
+      if (generation === accountGeneration.current) setContextConsentState("error");
     }
   }, [contextConsent, contextConsentState, navigate, routeQuery]);
 
@@ -356,6 +373,7 @@ export function LibrarySearchPage() {
     setResearchState("idle");
     if (!routeQuery) { setState("idle"); return; }
     const controller = new AbortController();
+    const generation = accountGeneration.current;
     setState("loading");
     const query = new URLSearchParams({ q: routeQuery });
     fetch(`${BASE}/api/library/search?${query.toString()}`, {
@@ -368,12 +386,15 @@ export function LibrarySearchPage() {
         if (!request.ok) throw new Error("error" in body && body.error ? body.error : "LIBRARY_SEARCH_UNAVAILABLE");
         return body as LibrarySearchResponse;
       })
-      .then((body) => { setResponse(body); setResults(body.results); setState("ready"); })
+      .then((body) => {
+        if (generation !== accountGeneration.current) return;
+        setResponse(body); setResults(body.results); setState("ready");
+      })
       .catch((error: unknown) => {
-        if ((error as { name?: string }).name !== "AbortError") setState("error");
+        if (generation === accountGeneration.current && (error as { name?: string }).name !== "AbortError") setState("error");
       });
     return () => controller.abort();
-  }, [routeQuery]);
+  }, [activeMemberId, routeQuery]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -383,24 +404,39 @@ export function LibrarySearchPage() {
 
   const researchCurrentQuestion = useCallback(async () => {
     if (!routeQuery || researchState === "loading") return;
+    const generation = accountGeneration.current;
     setResearchState("loading");
     setResearchFailure(null);
     try {
-      const request = await fetch(`${BASE}/api/library/research`, {
+      const request = await fetch(`${BASE}/api/library/research/preflight`, {
         method: "POST",
         credentials: "include",
         headers: { Accept: "application/json", "Content-Type": "application/json" },
         body: JSON.stringify({ question: routeQuery, internalResultCount: response?.total ?? 0 }),
       });
-      const body = await request.json() as LibraryResearchResponse | ResearchFailure;
-      if (!request.ok || !("answer" in body)) {
+      const body = await request.json() as ResearchFailure & {
+        status?: string;
+        result?: LibraryResearchResponse;
+      };
+      if (generation !== accountGeneration.current) return;
+      if (request.ok && body.status === "approved_content" && body.result) {
+        setResearch(body.result);
+        setResearchState("ready");
+        return;
+      }
+      if (!request.ok) {
         setResearchFailure(body as ResearchFailure);
         setResearchState("error");
         return;
       }
-      setResearch(body);
-      setResearchState("ready");
+      setResearchFailure({
+        code: "LIBRARY_RESEARCH_PREFLIGHT_UNAVAILABLE",
+        error: "The Library could not check whether approved content covers this question. No KinfolkAI allowance or provider work was used.",
+        retryable: true,
+      });
+      setResearchState("error");
     } catch {
+      if (generation !== accountGeneration.current) return;
       setResearchFailure({
         code: "LIBRARY_RESEARCH_PROVIDER_UNAVAILABLE",
         error: "Live research is temporarily unavailable. Please retry.",
@@ -410,18 +446,6 @@ export function LibrarySearchPage() {
       setResearchState("error");
     }
   }, [researchState, response?.total, routeQuery]);
-
-  useEffect(() => {
-    if (!routeQuery || state !== "ready" || !response || research || researchState !== "idle") return;
-    // A close spelling correction is a member choice, not an automatic rewrite.
-    // Do not spend a source-governed research request until that choice is made.
-    if (response.searchClarification) return;
-    const hasPublishedEntry = results.some((result) => result.kind === "entry");
-    if (!researchOnOpen && (hasPublishedEntry || response.webResearch.status === "not_needed")) return;
-    // A new general Library question does the source-governed work on its first
-    // search. The server, not the client, decides whether it is reusable.
-    void researchCurrentQuestion();
-  }, [research, researchCurrentQuestion, researchOnOpen, researchState, response, results, routeQuery, state]);
 
   async function loadMore() {
     if (!response?.nextCursor) return;
@@ -544,12 +568,12 @@ export function LibrarySearchPage() {
 
         {state === "ready" && response && !research && !response.searchClarification && response.webResearch.status !== "not_needed" ? (
           <section className="library-search-empty library-research-offer">
-            <h2>{researchState === "loading" ? "Researching this question from vetted sources…" : "No approved entry answers this yet."}</h2>
-            <p>{researchState === "loading" ? "The first search takes a little longer because the Library is gathering, checking, and summarizing sources before it offers related next questions." : "The Library will gather and summarize reputable sources appropriate to the question, then show the explanation first and the cited websites directly below it."}</p>
+            <h2>{researchState === "loading" ? "Checking approved Library coverage…" : "No approved entry answers this yet."}</h2>
+            <p>{researchState === "loading" ? "The Library is checking whether approved, current content can be reused without an allowance or provider request." : "Fresh source research uses KinfolkAI allowance and requires explicit confirmation. Until durable allowance protections are available, fresh research stays disabled and approved Library browsing remains free."}</p>
             <button disabled={researchState === "loading"} onClick={() => void researchCurrentQuestion()} type="button">
-              {researchState === "loading" ? "Building your research brief…" : "Research vetted sources"}
+              {researchState === "loading" ? "Checking approved coverage…" : "Check fresh-research availability"}
             </button>
-            <p className="library-research-governance">A general question that clears the source, citation, and provider-health gate becomes a reusable Library brief. Member-specific questions remain private.</p>
+            <p className="library-research-governance">A reusable approved answer is free. A future fresh request will show the KinfolkAI allowance and confirmation before any provider work begins.</p>
           </section>
         ) : null}
 

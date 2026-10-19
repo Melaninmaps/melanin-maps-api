@@ -178,8 +178,21 @@ type PacketResult = {
   providerStatus: ResearchProviderStatus;
 };
 
-async function answerResearchPacket(input: PacketInput): Promise<PacketResult> {
-  const currentAfter = new Date(Date.now() - input.policy.archiveTtlHours * 60 * 60 * 1_000);
+type ReusablePacketInput = Pick<
+  PacketInput,
+  | "normalizedQuestion"
+  | "domain"
+  | "communityLens"
+  | "researchLensFacetKeys"
+  | "locationLabel"
+  | "repository"
+>;
+
+async function findReusableResearchPacket(
+  input: ReusablePacketInput,
+): Promise<PacketResult | null> {
+  const policy = getResearchPolicy(input.normalizedQuestion);
+  const currentAfter = new Date(Date.now() - policy.archiveTtlHours * 60 * 60 * 1_000);
   const reusable = await input.repository.findReusableEntry({
     normalizedQuestion: input.normalizedQuestion,
     domain: input.domain,
@@ -188,17 +201,23 @@ async function answerResearchPacket(input: PacketInput): Promise<PacketResult> {
     locationLabel: input.locationLabel,
     currentAfter,
   });
+  if (!reusable) return null;
+  if (reusable.publicationStatus !== "published") {
+    throw new Error("Library repository returned non-published reusable content.");
+  }
+  return {
+    entry: reusable,
+    reused: true,
+    origin: "internal",
+    providerStatus: "available",
+  };
+}
+
+async function answerResearchPacket(input: PacketInput): Promise<PacketResult> {
+  const reusable = await findReusableResearchPacket(input);
   if (reusable) {
-    if (reusable.publicationStatus !== "published") {
-      throw new Error("Library repository returned non-published reusable content.");
-    }
     await input.recordCoverage?.("internal", false);
-    return {
-      entry: reusable,
-      reused: true,
-      origin: "internal",
-      providerStatus: "available",
-    };
+    return reusable;
   }
 
   let providerResult;
@@ -309,6 +328,69 @@ function failedCommunityContext(
     providerStatus: "unavailable",
     retryable: true,
     message: `The current foundation above is still available. The provider could not complete the separate ${tags.join(" ")} community-context packet right now. This is an operational failure, not a finding that community evidence is absent.`,
+  };
+}
+
+/**
+ * Looks up only already-published, sufficiently current Library evidence. This
+ * performs no provider, writer, or persistence work, so callers may safely use
+ * it before deciding whether a fresh request needs KinfolkAI allowance metering.
+ */
+export async function findReusableLibraryAnswer(input: {
+  question: string;
+  repository: LibraryRepository;
+}): Promise<LivingLibraryAnswer | null> {
+  const policy = getResearchPolicy(input.question);
+  const selectedLenses = resolveCommunityResearchLenses(input.question);
+  const supplementLenses = resolveCommunityResearchSupplementLenses(
+    input.question,
+    selectedLenses,
+  );
+  const foundationQuestion = stripCommunityResearchScope(
+    input.question,
+    supplementLenses,
+  ) || input.question.normalize("NFKC").trim();
+  const foundationLenses = defaultCommunityResearchLenses();
+  const foundation = await findReusableResearchPacket({
+    normalizedQuestion: normalizeResearchQuestion(foundationQuestion),
+    domain: policy.domain,
+    communityLens: researchLensCommunityLabel(foundationLenses),
+    researchLensFacetKeys: researchLensFacetKeys(foundationLenses),
+    locationLabel: null,
+    repository: input.repository,
+  });
+  if (!foundation) return null;
+
+  let communityContext: CommunityResearchContext | undefined;
+  if (supplementLenses.length > 0) {
+    const tags = supplementLenses.map((lens) => lens.tag);
+    const community = await findReusableResearchPacket({
+      normalizedQuestion: normalizeResearchQuestion(input.question),
+      domain: policy.domain,
+      communityLens: researchLensCommunityLabel(supplementLenses),
+      researchLensFacetKeys: researchLensFacetKeys(supplementLenses),
+      locationLabel: null,
+      repository: input.repository,
+    });
+    if (community) {
+      communityContext = {
+        status: "available",
+        researchLenses: tags,
+        answer: community.entry,
+        providerStatus: community.providerStatus,
+        retryable: false,
+        message: `Directly sourced community context for ${tags.join(" ")} was reused from approved Library evidence.`,
+      };
+    }
+  }
+
+  return {
+    entry: foundation.entry,
+    foundation: foundation.entry,
+    communityContext,
+    reused: true,
+    origin: "internal",
+    providerStatus: "available",
   };
 }
 

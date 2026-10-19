@@ -53,12 +53,10 @@ export async function loadLibraryResearchPathManifest(
 
 /**
  * A collection or subject carries an intentional, prefilled question into the
- * approved-first route and requests governed research immediately. The member
- * can still edit or erase the prefill on the destination screen.
+ * approved-first route. It never starts fresh provider research by navigation.
  */
 export function libraryCollectionResearchParams(question: string): {
   question: string;
-  research: "true";
 } {
-  return { question: question.normalize("NFKC").trim(), research: "true" };
+  return { question: question.normalize("NFKC").trim() };
 }

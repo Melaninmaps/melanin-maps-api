@@ -112,7 +112,7 @@ export function LivingLibraryHome() {
                 <div>
                   <h3>{collection.title}</h3>
                   <p>{collection.summary}</p>
-                  <span>Research this collection</span>
+                  <span>Browse this collection</span>
                 </div>
               </Link>
             ))}

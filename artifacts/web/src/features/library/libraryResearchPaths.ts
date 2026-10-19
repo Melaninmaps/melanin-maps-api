@@ -53,5 +53,5 @@ export async function loadLibraryResearchPathManifest(
 }
 
 export function governedLibraryResearchHref(question: string): string {
-  return `/library/search?q=${encodeURIComponent(question.trim())}&research=true`;
+  return `/library/search?q=${encodeURIComponent(question.trim())}`;
 }

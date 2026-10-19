@@ -57,21 +57,24 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("People also explore these evidence-led next questions.");
   });
 
-  it("automatically researches sparse coverage and explains the reusable-publication gate", () => {
+  it("keeps sparse coverage provider-free until the member explicitly checks availability", () => {
     expect(pageSource).toContain("No approved entry answers this yet.");
-    expect(pageSource).toContain("Research vetted sources");
-    expect(pageSource).toContain("researchCurrentQuestion();");
-    expect(pageSource).toContain("The first search takes a little longer");
-    expect(pageSource).toContain("source, citation, and provider-health gate");
+    expect(pageSource).toContain("Check fresh-research availability");
+    expect(pageSource).toContain("/api/library/research/preflight");
+    expect(pageSource).toContain("researchCurrentQuestion");
+    expect(pageSource).not.toContain("researchOnOpen");
+    expect(pageSource).not.toContain("void researchCurrentQuestion();");
+    expect(pageSource).toContain("Fresh source research uses KinfolkAI allowance");
+    expect(pageSource).toContain("durable allowance protections");
     expect(pageSource).toContain("Source-governed Library entry");
     expect(pageSource).toContain('response.webResearch.status !== "not_needed"');
   });
 
-  it("shows a member-confirmed spelling correction before starting source-governed research", () => {
+  it("shows a member-confirmed spelling correction before any explicit research preflight", () => {
     expect(pageSource).toContain("Possible spelling correction");
     expect(pageSource).toContain("The Library will not assume a different topic.");
-    expect(pageSource).toContain("if (response.searchClarification) return;");
     expect(pageSource).toContain("!response.searchClarification");
+    expect(pageSource).not.toContain("researchOnOpen");
   });
 
   it("renders an honest retryable provider failure rather than a fake zero-result answer", () => {
@@ -122,20 +125,28 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("this is for a friend");
   });
 
-  it("gives each website collection subject a prefilled governed search and no empty collection dead end", () => {
+  it("gives each website collection subject a free browse/search route and no empty collection dead end", () => {
     expect(collectionSource).toContain("loadLibraryResearchPathManifest");
     expect(collectionSource).toContain("governedLibraryResearchHref");
     expect(collectionSource).toContain("collectionSubtopics.map");
     expect(collectionSource).toContain("href={governedLibraryResearchHref(subtopic.question)}");
-    expect(collectionSource).toContain("Research this collection");
+    expect(collectionSource).toContain("Browse this collection");
     expect(collectionSource).toContain("governedLibraryResearchHref(researchCollection?.defaultQuestion ?? topic.title)");
-    expect(researchPathSource).toContain("&research=true");
-    expect(pageSource).toContain("void researchCurrentQuestion();");
+    expect(researchPathSource).not.toContain("research=true");
+    expect(pageSource).not.toContain("researchOnOpen");
   });
 
   it("sends cultural and HBCU learning handoffs to the working governed search route", () => {
     expect(culturalSiteSource).toContain("/library/search?q=");
-    expect(culturalSiteSource).toContain("&research=true");
+    expect(culturalSiteSource).not.toContain("&research=true");
     expect(culturalSiteSource).not.toContain("href={`/library?q=");
+  });
+
+  it("clears member-scoped Library state and ignores late responses when the account changes", () => {
+    expect(pageSource).toContain("useGetCurrentAuthUser");
+    expect(pageSource).toContain("const activeMemberId = auth?.user?.id ?? null");
+    expect(pageSource).toContain("accountGeneration.current += 1");
+    expect(pageSource).toContain("setContextConsent(null)");
+    expect(pageSource).toContain("generation !== accountGeneration.current");
   });
 });
