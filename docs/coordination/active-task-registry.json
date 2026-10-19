@@ -3129,7 +3129,7 @@
     {
       "id": "FLIGHT-005-SIMULATED-ARRIVAL-MEETING-TIME-LIFECYCLE",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3188,12 +3188,25 @@
           "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic injected-fake source lifecycle only.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 simulated injected-fake source lifecycle only; no provider, Calendar connection, persistence, route/client, venue, delivery, runtime/member/release/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_UcZC__C4-VRixukILqXrm8ju",
         "file": "FLIGHT005_SIMULATED_ARRIVAL_MEETING_TIME_LIFECYCLE_BASE_2026-10-19.tar.gz",
         "sha256": "8e36656f4c22ab0b8660cce33903c93f0a78ed3dfc2936317d40c4aac3499eeb",
         "expires_at": "2026-10-20T23:13:21.092Z"
+      },
+      "sourceCommit": "5e79ab3e97253aa5be41e75870fdd7564ba164e1",
+      "carrier": {
+        "handoff_id": "hnd_7-cpcBy-fWO87Tagb-AHjw4z",
+        "file": "FLIGHT005_SIMULATED_ARRIVAL_MEETING_TIME_LIFECYCLE_CARRIER_2026-10-19.tar.gz",
+        "sha256": "60777278c8b4ed4fbcbec1f46640c39e3935e511835ce0dd08cda338e301ed3a",
+        "patch_sha256": "c279297cc44a9d40ab56fd2c8bf7f802a4d2702770fa90ad253df06139cfda16"
+      },
+      "centralValidation": {
+        "api_vitest": "4 files / 91 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "composes existing named-recipient sharing before eligibility; dual pair-bound busy-only normalized availability inputs yield only frozen startAt/endAt or generic unavailable",
+        "scope": "exact three new paths; git diff --check PASS"
       }
     },
     {
@@ -3321,6 +3334,55 @@
         "sha256": "fd0dd297a39fc8069d309961d0ff432fea53729c4cde4bb5207273e5434781c6",
         "expires_at": "2026-10-20T23:14:37.749Z"
       }
+    },
+    {
+      "id": "COMM-001-MOBILE-INBOX-REQUEST-RESPONSE-VALIDATION",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "COMM-001",
+      "baseline": "5e79ab3e97253aa5be41e75870fdd7564ba164e1",
+      "paths": [
+        "artifacts/mobile/hooks/useConversations.ts",
+        "artifacts/mobile/__tests__/dm-inbox-request-response-validation.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/mobile/app/messages.tsx",
+        "artifacts/mobile/app/chat/[id].tsx",
+        "artifacts/api-server/src/routes/conversations.ts",
+        "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS / COMM-001 direct-message request journey.",
+        "founderOutcome": "Pending request stays server-authoritative when inbox action receives malformed or semantically mismatched 2xx JSON; unchanged UI shows generic recovery, not premature navigation/removal.",
+        "interactionChain": "Messages -> hook POST -> parse and validate action-specific 2xx body before local mutation -> false into existing recovery on malformed/mismatched -> retain pending state; valid body retains existing transition.",
+        "privacyAndPermissions": "No server, messages/chat, notification, relationship/block or persistence change.",
+        "completionBoundary": "Source-only mobile hook contract; no network/DB/delivery/account-switch/browser/device/staging/member/founder acceptance."
+      },
+      "requiredBehavior": [
+        "acceptRequest parses before mutation and requires returned conversation id exactly convId plus requestStatus exactly accepted.",
+        "declineRequest parses before mutation and requires returned ok strictly true.",
+        "Malformed JSON, missing fields, mismatch and wrong 2xx decline shape return false/retain state; valid response keeps current transition."
+      ],
+      "constraints": [
+        "Exactly hook plus new test; Messages/chat/server/notification/policy/schema/persistence are read-only.",
+        "No runtime/device/browser/staging/provider/deploy/activation or member/founder claim."
+      ],
+      "validationPlan": [
+        "pnpm --dir artifacts/mobile exec vitest run __tests__/dm-inbox-request-response-validation.test.ts __tests__/dm-recipient-request-recovery.test.ts --reporter=dot",
+        "pnpm --dir artifacts/mobile exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope, git diff --check, mutation only after parsed action-specific contract."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "5e79ab3e97253aa5be41e75870fdd7564ba164e1",
+        "baseHashes": {
+          "artifacts/mobile/hooks/useConversations.ts": "3b0f6390395b37d20953712dfed42aaaf645982ff2575a1a475e484643cb3f0c",
+          "artifacts/mobile/__tests__/dm-inbox-request-response-validation.test.ts": null
+        }
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic source-only inbox validation."
     }
   ],
   "globalDirectiveDelivery": [

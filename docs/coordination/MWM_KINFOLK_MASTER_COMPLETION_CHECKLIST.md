@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Accepted FLIGHT-005 simulated dual-consent meeting-time source lifecycle at `5e79ab3e97253aa5be41e75870fdd7564ba164e1`: API **4 files / 91**, no-emit, exact three-path scope PASS. Registered COMM-001 P0 mobile inbox malformed-2xx response validation; both remain source-only. |
 | 2026-10-19 | Cumulative COMM-001 deterministic source matrix PASS: API **5 files / 18**, mobile **3 / 14**, Web **2 / 7**, with API/mobile/Web no-emit. This verifies local mocked/static source behavior only; persistence, delivery/read, timeout/account-switch, browser/device/staging/member/founder gates remain open. |
 | 2026-10-19 | Registered BIZ-003 P0 explicit owner feedback projection privacy repair and OAUTH-003 P1 default-disabled injected admission facade at `f25fa3a09ae284bdc5f01ab2a6095ebb27af03a3`. Both are exact source-only claims; neither parent experience is complete. |
 | 2026-10-19 | Accepted COMM-001 **#3** pending history/read guard at `c3e293e88e8f0a046567bbbd662300f5ccc42438`: API **8/8**, no-emit, exact two-path scope PASS. Registered FLIGHT-001 P0 **#6** dual-consent simulated meeting-time lifecycle (fixture-only); neither parent is complete. |
