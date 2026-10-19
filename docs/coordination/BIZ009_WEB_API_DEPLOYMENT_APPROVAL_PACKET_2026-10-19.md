@@ -50,17 +50,13 @@ A proposed tag `refs/tags/biz009-owner-editor-897910cb` is currently available o
 
 **Result:** there is no safe direct immutable publication request for `897910cb…` itself. This is a release-containment stop condition, not a request to reopen or reimplement BIZ-009.
 
-### 2.3 Smallest safe publication prerequisite
+### 2.3 Authorized isolation attempt — stopped at exact dependency boundary
 
-Before an immutable publication request can be created, the founder must separately authorize a **source-only candidate-isolation step**:
+The founder authorized the source-only candidate-isolation step. It used the freshly verified, non-failed remote baseline `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`; the final seven-path net patch was ANSI-free, exact in scope, and failed its clean apply check before any source was applied.
 
-1. start from a named, freshly read-only verified remote baseline;
-2. transplant only the final BIZ-009 net source delta, with no coordination/docs, mobile, Kinfolk, Maps, membership, or unrelated Admin changes;
-3. validate the same focused API/Web contracts and no-emit checks on that isolated candidate;
-4. prove the resulting tree diff contains exactly the seven BIZ-009 source paths above; and
-5. return the exact new full commit SHA and remote-ref proposal for approval.
+That baseline lacks the Owner managed-profile PATCH route and Dashboard managed-access test seam that the final BIZ-009 delta modifies. The baseline dashboard still uses the claim-page detour, and two named focused regression paths are absent. The local prerequisite history is named in [BIZ009_SOURCE_ISOLATION_BLOCKER_2026-10-19.md](BIZ009_SOURCE_ISOLATION_BLOCKER_2026-10-19.md).
 
-This is release packaging only. It does not reopen BIZ-009 behavior, alter the completed local commit, or authorize publication. A new exact immutable remote ref cannot honestly be named until that isolated candidate exists.
+No isolated candidate SHA, build, focused regression, no-emit result, or remote-ref proposal exists. The attempt stops here under the founder's exact-dependency rule. A future explicit decision must select either a named non-failed baseline that already contains the prerequisite Owner editor contract, or a fresh bounded prerequisite-expansion claim. Neither is implicit in this packet.
 
 ## 3. Exact eventual immutable-publication approval shape
 
