@@ -47,15 +47,16 @@
         "native": "4 payment-handoff/family lifecycle tests passed",
         "staticChecks": ["API, web, and native no-emit passed", "git diff --check passed"]
       },
-      "blocker": "The preserved worktree is unavailable to the surviving owner runtime, and its local references are not on the verified GitHub authority.",
-      "nextAction": "Obtain the recorded six-command, read-only Git provenance from the environment that hosts the worktree; then reconcile onto the verified authority without discarding any preserved diff."
+      "blocker": "The local closure is non-ancestral and non-equivalent to the verified GitHub authority, so it requires semantic/path-level reconciliation rather than an automatic merge.",
+      "nextAction": "The D1 owner reviews the privately transferred manifest-and-patch provenance against the verified authority, maps only compatible changes, and returns an exact target-path and focused-test plan before any integration."
     },
     {
       "id": "SP-001-CIRCLE-PLAN-PREFERENCE-CONSENT",
-      "status": "IMPLEMENTING",
+      "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirement": "Prevent a Circle member from causing another member's account-level preferences to be sent to Kinfolk for plan generation until a Circle-scoped opt-in exists.",
       "baseline": "f818056c93840794ad08c9bb90b68f2500635a25",
+      "sourceCommit": "c8e4bc73d581a943e94bcdc0cfdb857690a27ab5",
       "paths": [
         "artifacts/api-server/src/routes/circles.ts",
         "artifacts/api-server/src/kinfolk/circle-plan-preference-policy.ts",
@@ -69,7 +70,15 @@
         "Legacy by_member requests may use only the authenticated member's own preference record.",
         "Another member's account-level preferences are rejected before preference lookup or AI generation.",
         "The member-facing Circle plan selector does not present cross-member preference use as available."
-      ]
+      ],
+      "sourceVerification": {
+        "apiTests": "3 files, 9 tests passed",
+        "nativeTests": "1 file, 2 tests passed",
+        "apiTypecheck": "passed",
+        "nativeTypecheck": "passed with Node heap limit 8192 MB",
+        "hygiene": ["registry JSON valid", "git diff --check passed", "retired mobile curatorMemberId selector absent"]
+      },
+      "externalAcceptance": "PENDING — no staging deployment, database operation, provider call, browser validation, or device validation was performed."
     },
     {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
