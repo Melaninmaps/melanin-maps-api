@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Accepted FLIGHT-004 arrival-coordination eligibility source leaf at `d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0`: API **51/51**, no-emit, exact three-new-path scope PASS. It is an injected consent/freshness privacy policy only; the Flight Coordination journey remains in progress. |
 | 2026-10-19 | Accepted BIZ-003 Owner Home canonical skip-insights read at `6e244c6676a1f0725b4aac2348540dff783b91bd`: mobile **3/3**, API **2/2**, mobile no-emit and exact two-path scope PASS. This is a private source-only owner-read milestone; BIZ-003/BIZ-009 remain open at their broader gates. |
 | 2026-10-19 | Accepted OAUTH-003 inert vault/redaction source leaf at `bec8e23aa56efa64fbf19fba49fdb81917531331`: Calendar suite **18/18**, API no-emit, exact three-new-path scope PASS. Registered COMM-001 P0 **#3** pending-message read guard after a bounded trace found stale pending-DM preview/history exposure; parent remains in progress. |
 | 2026-10-19 | Accepted COMM-001 **#2** mobile send fail-closed at `44d6777a50a3a2b4aa259a0e78042dc5f6ad6ef0`: focused mobile **4/4**, no-emit, exact two paths and semantic checks PASS. Rejected messages never remain sent; parent remains in progress pending cumulative source and external lifecycle evidence. |

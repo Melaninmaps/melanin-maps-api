@@ -1336,14 +1336,14 @@
       "founder_requirement": "A future flight-provider decision must compare current official provider access constraints and demonstrate a provider-neutral, consented, fail-closed source contract before any partner selection, credential, call, shopping, booking, payment, or member-data transfer.",
       "acceptance_criteria": "Decision packet names official comparison evidence, existing private-flight/status boundaries, exact missing provider-neutral contract, no-consent/no-enable/no-credential fallback, and all separate approval gates. It does not select, activate, or contact a provider.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Bounded external official research and read-only source trace completed: current source is encrypted owner-scoped private flight context plus optional direct AviationStack status only, not provider-neutral shopping/booking. Focused source-only flight policy/routes 2 files/11 tests and mobile context 1 file/2 tests passed without provider call. Central local-only documentation integration `d7c25baeab852693f93785128030266e28f1b328` accepted `FLIGHT_PROVIDER_READINESS_DECISION_PACKET_2026-10-19.md` (carrier outer SHA-256 `6bf88163d4fc0d0b06cfe3f78daf01ac407853f480057703c97c4205303594f9`; document SHA-256 `68e9136299191af096acd4c766ae885a979200c51dc4603f211a11702d552e52`). It preserves AviationStack Basic as a future direction only, records $0.019996 automatic overage exposure, and retains NO-GO until written enforceable hard-stop/no-overage evidence plus separate approvals. This is decision documentation only, not provider or member-journey acceptance. Numbered queue dispatch `FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION` at `6d4e0e55edf95a5b3c831df413337e5cbbf7ede1`; exact source-only child claim, parent remains open.",
+      "source_evidence": "Bounded external official research and read-only source trace completed: current source is encrypted owner-scoped private flight context plus optional direct AviationStack status only, not provider-neutral shopping/booking. Focused source-only flight policy/routes 2 files/11 tests and mobile context 1 file/2 tests passed without provider call. Central local-only documentation integration `d7c25baeab852693f93785128030266e28f1b328` accepted `FLIGHT_PROVIDER_READINESS_DECISION_PACKET_2026-10-19.md` (carrier outer SHA-256 `6bf88163d4fc0d0b06cfe3f78daf01ac407853f480057703c97c4205303594f9`; document SHA-256 `68e9136299191af096acd4c766ae885a979200c51dc4603f211a11702d552e52`). It preserves AviationStack Basic as a future direction only, records $0.019996 automatic overage exposure, and retains NO-GO until written enforceable hard-stop/no-overage evidence plus separate approvals. This is decision documentation only, not provider or member-journey acceptance. Numbered queue dispatch `FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION` at `6d4e0e55edf95a5b3c831df413337e5cbbf7ede1`; exact source-only child claim, parent remains open. Central local-only integration `d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0` accepted FLIGHT-004 arrival-coordination eligibility composition after archive/manifest/result hash review. Current authority passed eligibility+sharing API **2 files / 51 tests**, API no-emit, exact three-new-path scope/diff. The leaf combines only injected fresh owner\u2192named-recipient sharing and separate reciprocal intent into frozen generic eligible/unavailable; no provider/Calendar/client/persistence/venue/delivery behavior is implemented or implied.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "QJATRGk7nUgzDlccMCUcG6 (central coordinator); M7uJoQ8nKsaPvoHdWtU0E9 (active decision-packet owner)",
       "dependencies_or_blockers": "Provider account/call remains blocked by no documented hard no-overage ceiling, no separate purchase approval, and no deployment/pilot authorization. The source lifecycle additionally requires independently claimed owner-to-named-recipient sharing, route/client journey wiring, persistence design, and governed coordination acceptance; none is implied by a documentation packet or status leaf.",
-      "next_action": "Validate `FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION` when returned; retain all distinct external and parent-lifecycle gates.",
+      "next_action": "Trace a concrete all-new simulated Flight Coordination journey-composition gap using injected fake inputs; preserve provider and runtime gates.",
       "founder_approval_needed": "Yes \u2014 future contract approval, provider selection/access/credentials, any provider call, member data transfer, paid plan, deployment or release require separate founder approval.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -1952,6 +1952,10 @@
     {
       "date": "2026-10-19",
       "event": "Accepted BIZ-003 Owner Home canonical skip-insights source leaf at `6e244c6676a1f0725b4aac2348540dff783b91bd`: mobile 3/3, API owner contract 2/2, mobile no-emit; canonical owner-bound message-only read remains a source-only milestone."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Accepted FLIGHT-004 arrival-coordination eligibility leaf at `d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0`: API 2 files/51 tests and no-emit PASS; source-only privacy composition, not Flight Coordination completion."
     }
   ],
   "evidence_gaps": [
@@ -2184,12 +2188,12 @@
         ],
         "existing_implementation": "NO-GO readiness, default-disabled status leaf and named-recipient sharing policy are integrated source children.",
         "missing_broken_elements": "Consent/revocation persistence, relationship/availability/venue integration, routes/clients/Kinfolk workflow, hard-cap terms and runtime acceptance are missing.",
-        "current_active_repair": "#5 Flight arrival-coordination eligibility composition (M7).",
-        "integrated_source": "FLIGHT-002 `1ec062aceb93e170ced6ba754881cc78ab2b4bd7`; FLIGHT-003 `0f9a474210f4a3d824b9870eb5a9eec9b879157f`; local/default-disabled only.",
-        "test_evidence": "FLIGHT-003: 2 files / 34 API tests and API no-emit; no member journey.",
+        "current_active_repair": "No active Flight implementation claim; source-integrated leaves require a simulated multi-member journey composition next.",
+        "integrated_source": "FLIGHT-002 `1ec062aceb93e170ced6ba754881cc78ab2b4bd7`; FLIGHT-003 `0f9a474210f4a3d824b9870eb5a9eec9b879157f`; local/default-disabled only. FLIGHT-004 eligibility `d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0` (API 2/51, no-emit).",
+        "test_evidence": "FLIGHT-003: 2 files / 34 API tests and API no-emit; no member journey. Current-authority FLIGHT-004 + sharing: API 2 files/51 tests, API no-emit PASS.",
         "external_gates": "Provider hard-cap/account/call approval, consent design, runtime/deployment and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Dispatch the next non-overlapping consent/persistence or journey-wiring source vertical."
+        "next_action": "Assign a concrete all-new source-only fake-provider/availability simulated-lifecycle composition; retain no-provider/no-runtime/no-member acceptance gates."
       },
       {
         "experience_id": "EXP-KINFOLK-CALENDAR-AVAILABILITY-AND-MEETING-PLANNING",

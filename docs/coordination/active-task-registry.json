@@ -2989,7 +2989,7 @@
     {
       "id": "FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3036,7 +3036,21 @@
         "file": "FLIGHT004_ARRIVAL_COORDINATION_ELIGIBILITY_BASE_2026-10-19.tar.gz",
         "sha256": "a0db1df05150878db855bf757a2695a7a21cbf77fb7910e206e55d46549b323e",
         "expires_at": "2026-10-20T22:57:49.335Z"
-      }
+      },
+      "sourceCommit": "d9b8c7297046a4e1d36b5fffd0f712f0fe9481f0",
+      "carrier": {
+        "handoff_id": "hnd_8he3pGmfuXfTtxX4LeBF48gn",
+        "file": "FLIGHT004_ARRIVAL_COORDINATION_ELIGIBILITY_CARRIER_2026-10-19.tar.gz",
+        "sha256": "c28d1d712ecd61aceb84ce7173fbc7bbbb40b65c51757bc895696b828bde61ac",
+        "patch_sha256": "1751e739f5505b8acd07fb8315728444302a9a70d124ebc77448da8589d731ab"
+      },
+      "centralValidation": {
+        "api_vitest": "2 files / 51 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "pure injected-clock, owner-recipient reciprocal consent/arrival freshness composition; frozen neutral eligible/unavailable only; no provider/network/persistence/client/calendar/venue detail",
+        "scope": "exact three new paths; git diff --check PASS"
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only fake-policy composition; provider, runtime, member, release and founder acceptance remain pending."
     },
     {
       "id": "COMM-001-DM-PENDING-MESSAGE-READ-GUARD",
