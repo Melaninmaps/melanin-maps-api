@@ -142,6 +142,14 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   });
 
   it("opens one paginated full-management inventory while preserving status-specific safeguards", () => {
+    const sharedRows = adminScreen.slice(
+      adminScreen.indexOf("{filteredBiz.map"),
+      adminScreen.indexOf("</tbody>", adminScreen.indexOf("{filteredBiz.map")),
+    );
+    const sharedRowActions = sharedRows.slice(
+      sharedRows.indexOf('<div className="flex flex-col gap-1.5">'),
+      sharedRows.indexOf("</td>", sharedRows.indexOf('<div className="flex flex-col gap-1.5">')),
+    );
     expect(adminRoute).toContain('const status = String(query.status ?? "active")');
     expect(adminRoute).toContain("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
     expect(adminRoute).toContain("const liveInventoryWhere");
@@ -172,6 +180,11 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Current Kinfolk catalog");
     expect(adminScreen).toContain("Archived records in master list");
     expect(adminScreen).toContain("Unhide / restore public listing");
+    expect(sharedRowActions).toContain('href={`${BASE}businesses/${biz.id}`}');
+    expect(sharedRowActions).toContain("Open canonical MWM profile");
+    expect(sharedRowActions).toContain('target="_blank"');
+    expect(sharedRowActions).toContain('rel="noopener noreferrer"');
+    expect(sharedRowActions).not.toContain('href={`${BASE}business/${biz.id}`}');
   });
 
   it("keeps confirmed duplicates in their own all-status vault with guarded deletion only", () => {

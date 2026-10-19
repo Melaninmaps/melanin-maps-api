@@ -5657,6 +5657,14 @@ Selected: ${summary}`,
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1.5">
                             <>
+                              <a
+                                href={`${BASE}businesses/${biz.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs font-bold text-[#5F1E2D] hover:text-[#7A2637] border border-[#7A2637]/25 hover:bg-[#7A2637]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" /> Open canonical MWM profile
+                              </a>
                               <button
                                   onClick={() => {
                                     if (!biz.isDuplicate) {
