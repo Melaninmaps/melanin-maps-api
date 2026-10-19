@@ -1078,7 +1078,7 @@
     },
     {
       "id": "BIZ-009-PREREQUISITE-EXPANSION",
-      "status": "IN_DEVELOPMENT",
+      "status": "LOCAL_CANDIDATE_VALIDATED_AWAITING_PUBLICATION_AUTHORIZATION",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "BIZ-009",
       "baseline": "8fd6989bea317f53dfa6f170c2c5054cf0de74a4",
@@ -1115,7 +1115,41 @@
         "Focused Dashboard managed-access and Admin editor preservation contracts.",
         "API/Web no-emit, combined production build, exact seven-path diff inventory, and git diff --check."
       ],
-      "carrierDisposition": "Central local candidate only; no publication/deployment claim until a fresh immutable-source authorization."
+      "carrierDisposition": "Central local candidate only; no publication/deployment claim until a fresh immutable-source authorization.",
+      "candidate": {
+        "commit": "046eb767326c6d87d9dc41b29572eb26c759b9a4",
+        "directParent": "8fd6989bea317f53dfa6f170c2c5054cf0de74a4",
+        "exactPathCount": 7,
+        "paths": [
+          "artifacts/api-server/src/routes/businesses.ts",
+          "artifacts/api-server/src/routes/__tests__/business-owner-multi-business-contract.test.ts",
+          "artifacts/api-server/src/businesses/__tests__/adminBusinessProfilePolicy.test.ts",
+          "artifacts/web/src/pages/business-dashboard.tsx",
+          "artifacts/web/src/__tests__/business-dashboard-managed-access.test.ts",
+          "artifacts/web/src/components/AdminEditBusiness.tsx",
+          "artifacts/web/src/__tests__/admin-business-edit-preservation.test.ts"
+        ],
+        "localOnly": true,
+        "validation": {
+          "apiFocused": "2 files / 19 tests passed",
+          "apiNoEmit": "passed",
+          "webFocused": "2 files / 11 tests passed",
+          "webNoEmit": "passed",
+          "combinedBuild": {
+            "passed": true,
+            "builtFromSha": "046eb767326c6d87d9dc41b29572eb26c759b9a4",
+            "bundleSha256": "4a09e356ba1448971dacb2b708f1a99accbfb23ce3a5f6af4647e75d6a1f3d25"
+          },
+          "hygiene": [
+            "exact seven-path diff verified",
+            "git diff --check passed",
+            "generated build output restored/removed"
+          ]
+        }
+      },
+      "publicationAuthorizationRequest": "docs/coordination/BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md",
+      "remotePublicationStatus": "NOT AUTHORIZED — no remote collision check, ref creation, tag, push, fetch, or verification occurred after the candidate was formed.",
+      "nextAction": "Await separate founder approval of the exact publication request; do not deploy or change Railway source selection/configuration."
     },
     {
       "id": "SAFE-001-CORE-SAFETY-FREE-CORE-ROUTE-GATE-REMOVAL",

@@ -1,7 +1,7 @@
 # BIZ-009 Source-Only Candidate Isolation — Exact Dependency Blocker
 
 **Date:** 2026-10-19
-**Disposition:** **STOPPED — no isolated candidate created.**
+**Disposition:** **RESOLVED IN LOCAL SOURCE-ONLY RECONCILIATION — seven-path candidate validated locally; remote publication and deployment remain unapproved.**
 **Controlling requirement:** `BIZ-009`
 **Authorization applied:** Founder-authorized source-only candidate isolation under §2.3 of [BIZ009_WEB_API_DEPLOYMENT_APPROVAL_PACKET_2026-10-19.md](BIZ009_WEB_API_DEPLOYMENT_APPROVAL_PACKET_2026-10-19.md).
 
@@ -85,3 +85,26 @@ Either option must still yield a final candidate whose tree diff is explicitly r
 ## 6. Cleanup and preservation
 
 The disposable worktree and transient patch should be removed only after this receipt is committed. The main authority and completed original BIZ-009 commits remain unchanged.
+
+
+## 7. Authorized prerequisite-expansion resolution
+
+The founder subsequently authorized the exact prerequisite-expansion path, still limited to the same seven BIZ paths. The detached worktree stayed parented to the verified successful base `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`. The reconciliation did not import the 40-commit local ancestry, alter the central authority product tree, or add any path outside the seven-path inventory.
+
+| Check | Result |
+|---|---|
+| Local detached candidate | **Passed** — `046eb767326c6d87d9dc41b29572eb26c759b9a4` is parented directly by `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`. |
+| Exact tree diff | **Passed** — exactly the seven paths listed in §2; `git diff --check` passed. |
+| Focused API contracts | **Passed** — 2 files / 19 tests. |
+| API no-emit | **Passed** — `pnpm exec tsc -p tsconfig.json --noEmit`. |
+| Focused Web contracts | **Passed** — 2 files / 11 tests. |
+| Web no-emit | **Passed** — `pnpm exec tsc -p tsconfig.json --noEmit`. |
+| Coupled API/Web build | **Passed** — `pnpm --filter @workspace/api-server run build`; rebuilt after commit with `built_from_sha` `046eb767326c6d87d9dc41b29572eb26c759b9a4` and bundle SHA-256 `4a09e356ba1448971dacb2b708f1a99accbfb23ce3a5f6af4647e75d6a1f3d25`. |
+
+The first attempted temporary dependency link incorrectly resolved workspace packages into the central authority rather than the detached baseline and produced false missing-export diagnostics. Those diagnostics are superseded, not candidate failures. The final validation used package-level workspace shims that resolve `@workspace/constants` and `@workspace/db` to the detached baseline itself; an offline `pnpm install --ignore-scripts --offline` was attempted but stopped before any network request because `nanoid@3.3.12` was absent from the local store. No download was attempted.
+
+No remote Git action, configuration read/change, deployment, migration, database session, provider call, account/fixture action, browser/device action, or production business edit occurred. Generated build outputs were restored/removed before the detached candidate was left clean.
+
+## 8. Current required decision
+
+The initial dependency blocker is resolved for source isolation. The remaining next authorization is the exact publication request in [BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md](BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md). It is limited to collision checks and atomic creation of the named branch/tag at `046eb767326c6d87d9dc41b29572eb26c759b9a4`. Publication remains separate from Railway source selection, startup-writer disposition, deployment, rollback, and founder-controlled acceptance.

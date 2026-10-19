@@ -22,7 +22,7 @@ There is no separate Railway Web service for the `www` surface. The production *
 | Current known-successful baseline | Deployment `0add2499-0c78-4b41-abf2-f3ad70cc84e1`, source `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`, created 2026-10-18T02:01:12.278Z. |
 | Latest attempt | `c80f9175-f409-44a6-b20e-d5d0ad009924`, source `3720f1d23b2e3e3d64d3e3cafc15221fb57425fe`, **FAILED**. The service is Online with no staged production changes. |
 
-The BIZ-009 repair changes both of the coupled surfaces: five Web paths and two API-test paths plus the canonical API route and Admin policy/test paths, totaling the seven source paths committed by `897910cba14d720276b20bc1011232e68b0d16df`.
+The validated BIZ-009 candidate changes both coupled surfaces through exactly seven paths: three API route/policy/test paths and four Web Dashboard/Admin-editor/test paths. It is local detached commit `046eb767326c6d87d9dc41b29572eb26c759b9a4`, directly atop the successful production baseline `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`.
 
 ## 2. Publication containment decision
 
@@ -50,29 +50,26 @@ A proposed tag `refs/tags/biz009-owner-editor-897910cb` is currently available o
 
 **Result:** there is no safe direct immutable publication request for `897910cb…` itself. This is a release-containment stop condition, not a request to reopen or reimplement BIZ-009.
 
-### 2.3 Authorized isolation attempt — stopped at exact dependency boundary
+### 2.3 Initial authorized isolation attempt — stopped at exact dependency boundary
 
 The founder authorized the source-only candidate-isolation step. It used the freshly verified, non-failed remote baseline `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`; the final seven-path net patch was ANSI-free, exact in scope, and failed its clean apply check before any source was applied.
 
 That baseline lacks the Owner managed-profile PATCH route and Dashboard managed-access test seam that the final BIZ-009 delta modifies. The baseline dashboard still uses the claim-page detour, and two named focused regression paths are absent. The local prerequisite history is named in [BIZ009_SOURCE_ISOLATION_BLOCKER_2026-10-19.md](BIZ009_SOURCE_ISOLATION_BLOCKER_2026-10-19.md).
 
-No isolated candidate SHA, build, focused regression, no-emit result, or remote-ref proposal exists. The attempt stops here under the founder's exact-dependency rule. A future explicit decision must select either a named non-failed baseline that already contains the prerequisite Owner editor contract, or a fresh bounded prerequisite-expansion claim. Neither is implicit in this packet.
+That initial attempt correctly stopped under the founder's exact-dependency rule. The founder then authorized a fresh bounded prerequisite-expansion claim. Its completed result is recorded in §2.4; the historical failed clean-apply evidence is retained in the isolation report.
 
-## 3. Exact eventual immutable-publication approval shape
 
-After the prerequisite in §2.3 succeeds, the founder’s publication approval must state, without placeholders:
+### 2.4 Authorized prerequisite expansion — validated local candidate
 
-```text
-Repository:        Melaninmaps/melanin-maps-api
-Source commit:     <new isolated full 40-character SHA>
-Remote immutable ref: refs/tags/<approved unique immutable BIZ-009 release tag>
-Content proof:     tree diff is exactly the seven BIZ-009 source paths
-Publication action: create that one ref only; no force, merge, rebase, branch update,
-                    tag move, or unrelated ref operation
-Verification:      returned remote ref resolves to the approved full SHA
-```
+The bounded prerequisite expansion is complete. It reconstructed only the seven paths named in §2.1 against the same verified non-failed base `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`, creating detached local candidate `046eb767326c6d87d9dc41b29572eb26c759b9a4` with that base as its direct parent. Focused API contracts passed **2 files / 19 tests**, focused Web contracts passed **2 files / 11 tests**, API and Web no-emit both passed, and the coupled `pnpm --filter @workspace/api-server run build` passed. The post-commit build identity names `046eb767326c6d87d9dc41b29572eb26c759b9a4` and bundle SHA-256 `4a09e356ba1448971dacb2b708f1a99accbfb23ce3a5f6af4647e75d6a1f3d25`.
 
-The approval must also separately authorize how Railway selects the returned remote SHA. The current service follows a branch and is not commit-pinned; changing that source selection is a production configuration/deployment action and remains out of scope.
+No remote ref, tag, deployment, configuration, database, provider, browser/device, or business-edit action was performed. The exact pending remote action is [BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md](BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md).
+
+## 3. Exact remote-publication approval shape
+
+The validated candidate is ready only for the separately prepared, non-executed publication request: [BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md](BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md).
+
+That request fixes the exact source commit (`046eb767326c6d87d9dc41b29572eb26c759b9a4`), base, branch, commit-addressed tag, collision check, atomic push, post-push verification, and fail-closed stop conditions. The candidate SHA is the source identity; the tag must remain protected/no-force-move under repository policy. Its approval must separately authorize how Railway would select the returned remote SHA. The current service follows a branch and is not commit-pinned; changing that source selection is a production configuration/deployment action and remains out of scope.
 
 ## 4. API startup-writer disposition
 
@@ -109,31 +106,15 @@ The deployed migration runner has **535** named migration entries and excludes o
 - The relevant feature/worker values have not been read because the available metadata method would expose a service-wide variable set that includes secrets, and filtered deploy logs yielded no attested startup markers.
 - A deployment approval must either expressly approve this named startup effect inventory for the isolated candidate or be preceded by a separately authorized, non-secret, narrowly captured effective-mode/worker-state attestation. No broader configuration read is implied.
 
-## 5. Production schema inspection remains pending
+## 5. Production schema compatibility — PASS
 
-The exact schema query remains approved but unexecuted. It must wait for an active founder-controlled private Railway Console session:
+The founder-controlled private Railway Console executed the approved session-read-only `information_schema.columns` query once against the production Postgres service. Sanitized one-row result for `public.businesses.updated_at`:
 
-```sql
-BEGIN TRANSACTION READ ONLY;
+| data type | UDT | precision | nullable | default |
+|---|---|---:|---|---|
+| `timestamp with time zone` | `timestamptz` | 6 | `NO` | present |
 
-SELECT
-  table_schema,
-  table_name,
-  column_name,
-  data_type,
-  udt_name,
-  datetime_precision,
-  is_nullable,
-  (column_default IS NOT NULL) AS has_default
-FROM information_schema.columns
-WHERE table_schema = 'public'
-  AND table_name = 'businesses'
-  AND column_name = 'updated_at';
-
-COMMIT;
-```
-
-Do not use the existing public Postgres TCP proxy, create a proxy, expose a DSN, read business/account rows, or substitute another database connection method.
+`BEGIN` and `COMMIT` completed. No proxy, variable, connection string, business/account row, or other query was accessed. This satisfies BIZ-009's `updated_at` schema compatibility sub-gate; it does not authorize deployment or change the startup-writer gate.
 
 ## 6. Coordinated rollback procedure
 
@@ -156,12 +137,12 @@ The authorization must name the rollback operator and allow only the post-rollba
 
 Stop before publication or deployment if any of these remains unresolved:
 
-1. an isolated seven-path BIZ-009 candidate is absent or includes unrelated ancestry;
-2. the exact remote immutable SHA/ref is missing or does not tree-match the isolated candidate;
-3. the production `public.businesses.updated_at` catalog result is absent or incompatible;
+1. the isolated seven-path candidate `046eb767326c6d87d9dc41b29572eb26c759b9a4` is unavailable, no longer directly parented by `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`, or no longer tree-matches its seven-path proof;
+2. the exact remote branch/tag publication request is not separately approved, either proposed ref already exists, or post-publication refs do not resolve to the candidate SHA;
+3. the already-passed production `public.businesses.updated_at` compatibility result is contradicted; do not repeat its approved query without fresh authorization;
 4. any unapproved pre-traffic schema operation, worker, migration, recovery, seed, publication, Stripe effect, or configuration change would run;
 5. the target project/environment/service, rollback baseline, or public-domain binding differs from this packet;
 6. service health is not settled/Online, a pending configuration change exists, or an unexpected deployment failure occurs; or
 7. a later acceptance proposal lacks the exact account, controlled business, reversible description values, restoration plan, and founder-controlled Take Control scope.
 
-**Final decision:** BIZ-009 is not deployable yet. The next smallest safe milestone is founder authorization of the source-only seven-path candidate-isolation step—not direct publication of `897910cb…`, deployment, or production editing.
+**Final decision:** BIZ-009 is not deployable yet, but the source-only candidate-isolation milestone is complete. The next smallest safe milestone is explicit authorization of the exact publication sequence for `046eb767326c6d87d9dc41b29572eb26c759b9a4` in [BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md](BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md)—not deployment, Railway source selection, or production editing.
