@@ -72,6 +72,144 @@ Obtain a fresh, separately authorized, independently observable private-console 
 - Shared Plans persistence/invitations/routes/UI, calendar/OAuth, monitoring/notification/transport providers.
 - Paid business-plan charging and unapproved partner/concierge/creator/Enterprise offers.
 
+## Founder Experience Completion Board
+
+This is the authoritative parent-experience layer of the controlling checklist. Every permanent requirement maps to one parent below. A child commit, carrier, focused test, or source receipt is **not** proof of runtime, release, member-visible, or Founder Accepted completion.
+
+**Status vocabulary:** NOT STARTED · IN PROGRESS · SOURCE VALIDATED · RUNTIME PARTIALLY VERIFIED · RELEASE READY · FOUNDER ACCEPTED.
+
+### EXP-MWM-FREE-CORE-DIRECTORY-DISCOVERY-MAPS — IN PROGRESS
+- **Founder outcome:** Members safely discover public businesses, inspect accurate profiles and use free map/direction handoffs without paid barriers or invented data.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `CORE-001`, `DIR-001`, `DIR-002`, `DIR-003`, `DIR-004`, `MAP-001`, `MAP-002`, `KCONV-002`, `INT-MAPS-001`, `INT-TRANSPORT-001`
+- **Existing implementation:** Directory, governed discovery and free-map child receipts are linked.
+- **Missing/broken elements:** Protected-presence decisions, D9 parity and combined member journey are open.
+- **Current active repair:** No current child claim.
+- **Integrated source:** Linked local child commits only.
+- **Test evidence:** Focused source contracts only.
+- **External gates:** Maps/session, runtime and Web/iOS/Android acceptance.
+- **Next action:** Select only a documented critical bounded dependency.
+
+### EXP-KINFOLK-CONTINUITY-MEMORY-AND-EVERYDAY-ASSISTANCE — IN PROGRESS
+- **Founder outcome:** Members converse naturally with Kinfolk and control consented memory, preferences, correction and revocation.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `CORE-002`, `KMEM-001`, `KMEM-002`, `KMEM-003`, `KMEM-004`, `KMEM-005`
+- **Existing implementation:** Consent, purpose/owner gates and deletion child receipts are linked.
+- **Missing/broken elements:** Universal-memory/member-facing verticals and runtime assistant acceptance are missing.
+- **Current active repair:** No current child claim.
+- **Integrated source:** Linked local source receipts only.
+- **Test evidence:** Focused source contracts only.
+- **External gates:** Controlled provider/test-account and platform acceptance.
+- **Next action:** Trace one complete missing member vertical.
+
+### EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS — IN PROGRESS
+- **Founder outcome:** Eligible members participate in free community and complete private DM requests safely across surfaces.
+- **Lifecycle owner:** IIUhb1wR0gfLjzmdLmEovt (DM lifecycle); QJATRGk7nUgzDlccMCUcG6 (integration)
+- **Linked permanent requirements:** `COMM-001`
+- **Existing implementation:** Free event/post/group/Spotlight repairs plus DM guard/recovery child receipts are linked.
+- **Missing/broken elements:** DM notification, server lifecycle coverage, runtime delivery/persistence and cross-surface acceptance remain open.
+- **Current active repair:** `COMM-001-DM-PENDING-REQUEST-RECIPIENT-NOTIFICATION` (y); `COMM-001-DM-SERVER-AUTHORITATIVE-LIFECYCLE-CONTRACT` (IIU).
+- **Integrated source:** Guard `e3665ecab13f1cdc86a5fbeae1e31bea5f0e2fab`; recovery `7cc2e1deef831283d5199b81195aa7aecfdc95af`; other linked source receipts.
+- **Test evidence:** Child source contracts only.
+- **External gates:** Controlled accounts/data, notifications runtime, Web/iOS/Android and release acceptance.
+- **Next action:** Integrate active children, run cumulative lifecycle coverage, then identify only proven remaining gaps.
+
+### EXP-KINFOLK-CIRCLES-AND-SHARED-PLANS — IN PROGRESS
+- **Founder outcome:** Members create private Circles and share only explicitly authorized plans/availability.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `COMM-002`, `COMM-003`, `COMM-004`, `COMM-005`
+- **Existing implementation:** Private snapshots, preference exclusion, free Circle and pure free/busy child receipts are linked.
+- **Missing/broken elements:** Final baseline, named-recipient/revocation lifecycle, UI/runtime and Calendar integration are open.
+- **Current active repair:** No current child claim.
+- **Integrated source:** Linked local source receipts only.
+- **Test evidence:** Focused policy contracts only.
+- **External gates:** OAuth, test accounts, runtime and platform acceptance.
+- **Next action:** Claim one bounded vertical after policy and ownership review.
+
+### EXP-MWM-SAFETY-CRISIS-AND-HEALTH-GUIDANCE — SOURCE VALIDATED
+- **Founder outcome:** Members use free safety tools and receive evidence-bounded health/crisis guidance without dispatch, privacy exposure or invented claims.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `SAFE-001`, `SAFE-002`, `SAFE-003`, `CR-01`
+- **Existing implementation:** Free safety, negative-answer, qualified-care and city crisis source receipts are linked.
+- **Missing/broken elements:** Combined member journey, resource/runtime validation and legal/compliance remain open.
+- **Current active repair:** No current child claim.
+- **Integrated source:** All current children locally source-integrated.
+- **Test evidence:** Focused API contracts only.
+- **External gates:** Legal/compliance, resource verification and Web/iOS/Android runtime acceptance.
+- **Next action:** Prepare a separately authorized combined runtime protocol.
+
+### EXP-BUSINESS-OWNER-EDITOR-ANALYTICS-AND-PUBLICATION — IN PROGRESS
+- **Founder outcome:** Authorized owners/Admins safely edit controlled businesses with durable state, conflict recovery and protected public/discovery boundaries.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `BIZ-001`, `BIZ-003`, `BIZ-005`, `BIZ-006`, `BIZ-007`, `BIZ-008`, `BIZ-009`
+- **Existing implementation:** Profile navigation, lifecycle controls, specialty save, edit/fresh-read/stale-write and analytics child work are linked.
+- **Missing/broken elements:** Publication/deployment, staging auth, moderated pending state, public propagation/Kinfolk freshness and runtime acceptance are open.
+- **Current active repair:** No new source child; BIZ-009 release/acceptance path is separately controlled.
+- **Integrated source:** Local BIZ source/candidate receipts only.
+- **Test evidence:** Focused API/Web/mobile source checks only.
+- **External gates:** Remote publication, deploy/startup disposition, account/fixture, readback and platform acceptance.
+- **Next action:** Advance only a source prerequisite that moves the full editor journey.
+
+### EXP-ADMINISTRATION-DIRECTORY-GOVERNANCE — IN PROGRESS
+- **Founder outcome:** Founder/Admin users have auditable, role-safe directory/lifecycle and narrow QA controls.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `ADMIN-001`, `ADMIN-002`
+- **Existing implementation:** Role separation and audit/lifecycle source foundations are linked.
+- **Missing/broken elements:** Named-admin QA activation/reversal and runtime acceptance are missing.
+- **Current active repair:** No current child claim.
+- **Integrated source:** Linked local source work only.
+- **Test evidence:** Source contracts only.
+- **External gates:** Named QA account, controlled data, audit reread and platform acceptance.
+- **Next action:** Claim the narrow QA lifecycle only after non-overlap confirmation.
+
+### EXP-MEMBERSHIP-TRIAL-PAYMENT-AND-ENTITLEMENTS — IN PROGRESS
+- **Founder outcome:** Members/businesses receive correct free-core access and auditable independent grants; paid lifecycle is transparent if later authorized.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `KCONV-001`, `BIZ-002`, `BIZ-004`, `MEM-D1`, `MEM-D2`, `MEM-D3`, `MEM-D4`, `MEM-D5`, `MEM-D6`, `MEM-D7`, `MEM-D8`, `MEM-D9`, `MEM-D10`, `MEM-D11`, `INT-STRIPE-001`, `INT-APPLE-001`, `INT-GOOGLE-001`, `INT-REVENUECAT-001`
+- **Existing implementation:** Closed checkout, effective entitlement, free-core and no-auto-trial source leaves are linked.
+- **Missing/broken elements:** Final catalog, durable grants, rail lifecycle and billing acceptance are missing.
+- **Current active repair:** No current child claim.
+- **Integrated source:** Selected local child receipts only.
+- **Test evidence:** Focused source contracts only.
+- **External gates:** Founder commercial decisions, rails/accounts, legal/tax and staged acceptance.
+- **Next action:** Continue only decision-cleared source slices.
+
+### EXP-KINFOLK-FLIGHT-COORDINATION — IN PROGRESS
+- **Founder outcome:** Explicitly consenting owner and named recipient safely coordinate a fresh arrival, separate availability and an appropriate verified venue, with honest unavailable fallback.
+- **Lifecycle owner:** M7uJoQ8nKsaPvoHdWtU0E9 (flight lifecycle); QJATRGk7nUgzDlccMCUcG6 (integration)
+- **Linked permanent requirements:** `FLIGHT-001`, `FLIGHT-002`, `FLIGHT-003`
+- **Existing implementation:** NO-GO readiness, default-disabled status leaf and named-recipient sharing policy are integrated source children.
+- **Missing/broken elements:** Consent/revocation persistence, relationship/availability/venue integration, routes/clients/Kinfolk workflow, hard-cap terms and runtime acceptance are missing.
+- **Current active repair:** No active child after FLIGHT-003; M7 retains parent responsibility.
+- **Integrated source:** FLIGHT-002 `1ec062aceb93e170ced6ba754881cc78ab2b4bd7`; FLIGHT-003 `0f9a474210f4a3d824b9870eb5a9eec9b879157f`; local/default-disabled only.
+- **Test evidence:** FLIGHT-003: 2 files / 34 API tests and API no-emit; no member journey.
+- **External gates:** Provider hard-cap/account/call approval, consent design, runtime/deployment and platform acceptance.
+- **Next action:** Dispatch the next non-overlapping consent/persistence or journey-wiring source vertical.
+
+### EXP-KINFOLK-CALENDAR-AVAILABILITY-AND-MEETING-PLANNING — SOURCE VALIDATED
+- **Founder outcome:** Each consenting member shares bounded busy availability for a declared plan purpose without event-detail exposure or default provider activation.
+- **Lifecycle owner:** IIUhb1wR0gfLjzmdLmEovt (calendar lifecycle); QJATRGk7nUgzDlccMCUcG6 (integration)
+- **Linked permanent requirements:** `OAUTH-001`, `OAUTH-002`, `OAUTH-003`
+- **Existing implementation:** NO-GO packet, normalizers and state/PKCE pure leaves are linked.
+- **Missing/broken elements:** Consent scope decision, vault/persistence, UI, aggregate wiring, provider configuration and meeting journey are missing.
+- **Current active repair:** No current child claim.
+- **Integrated source:** All current children locally source-integrated only.
+- **Test evidence:** Focused pure contracts only.
+- **External gates:** Consent, OAuth configuration, security review, controlled pilot and platform acceptance.
+- **Next action:** Issue only a compatible default-disabled vertical.
+
+### EXP-MWM-RELEASE-RUNTIME-AND-CROSS-PLATFORM-ACCEPTANCE — IN PROGRESS
+- **Founder outcome:** Integrated source becomes a controlled deployable candidate with safe startup/database behavior and authentic Web/iOS/Android acceptance.
+- **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
+- **Linked permanent requirements:** `REL-001`, `REL-002`, `REL-003`, `INT-DB-001`, `INT-AUTH-001`, `INT-OPENAI-001`, `INT-OTHER-001`
+- **Existing implementation:** BIZ release packets and requirement source receipts are reusable inputs.
+- **Missing/broken elements:** Named integrated candidate, safe startup/writers, fixture/auth, builds and controlled acceptance are missing.
+- **Current active repair:** No active source child.
+- **Integrated source:** No unified candidate is published/deployed.
+- **Test evidence:** Local source checks only.
+- **External gates:** Publication, deployment, DB/fixture/auth, providers and Web/iOS/Android evidence.
+- **Next action:** Maintain per-experience release gates; do not conflate them with source status.
+
 ## Requirement register — founder-area view
 
 **Register-field key:** Each row preserves the object fields in compact form: **Founder/acceptance**, **evidence layers** (source; staging; Web; iOS; Android), **owner/blocker/next**, **approval/verified/prior evidence**. Full machine-readable values are in the companion JSON.

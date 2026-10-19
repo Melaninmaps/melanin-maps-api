@@ -2426,7 +2426,7 @@
     {
       "id": "FLIGHT-003-NAMED-RECIPIENT-ARRIVAL-SHARING-POLICY",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-003",
@@ -2462,7 +2462,22 @@
         "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
         "exact three-new-file scope; git diff --check; Prettier; static no-network/no-provider/no-persistence/no-route/no-ambient-clock scan"
       ],
-      "carrierDisposition": "Return uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates."
+      "carrierDisposition": "Return uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates.",
+      "sourceCommit": "0f9a474210f4a3d824b9870eb5a9eec9b879157f",
+      "closedAt": "2026-10-19",
+      "carrierReceipt": {
+        "handoffId": "hnd_3x0sR8ZLzE7tFz1zzKYRqrLN",
+        "archive": "FLIGHT003_NAMED_RECIPIENT_SHARING_POLICY_CARRIER_2026-10-19.tar.gz",
+        "outerSha256": "e8b85446b69f826ed6521cac3fc50056272c424fe2d3ec59bd4165122cd42d8b"
+      },
+      "centralValidation": {
+        "focusedVitest": "2 files / 34 tests passed",
+        "apiNoEmit": "passed",
+        "format": "Prettier passed",
+        "scope": "exact three all-new paths; git diff --check passed",
+        "boundary": "pure injected owner/recipient/purpose/field/revocation/expiry/freshness policy; no provider, network, configuration, route, client, storage or persistence"
+      },
+      "externalAcceptance": "NOT PERFORMED — parent Flight Coordination remains IN PROGRESS; no provider/data/runtime/deployment/member-visible evidence."
     },
     {
       "id": "COMM-001-DM-SERVER-AUTHORITATIVE-LIFECYCLE-CONTRACT",
