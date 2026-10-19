@@ -476,6 +476,61 @@
         "hygiene": ["archive checksum, patch checksum, manifest base, and all eight carrier result hashes verified", "independent semantic review completed", "exact eight-path scope verified", "sanitizer private-dependency boundary passed", "git diff --check passed", "temporary validation files removed"]
       },
       "externalAcceptance": "PENDING — no browser, physical device, authenticated API, server, database, schema/migration, provider, cache activation, staging/production, or deployment acceptance was performed."
+    },
+    {
+      "id": "D4-KNOWLEDGE-CANONICAL-ENTITLEMENT-ENFORCEMENT",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "c7111caf4335fee799270ab198c9c8845d10f874",
+      "sourceFinding": "GET /knowledge/articles/:id currently reconstructs premium access from stripeSubscriptionId, trialEndsAt, founding, and beta fields. That bypass omits the canonical approved-active-business membership grant and duplicates the resolver policy.",
+      "canonicalResolver": "getUserTier(userId) from artifacts/api-server/src/middleware/requireMembership.ts; it is the existing effective tier resolver for paid/trial/founding access, TESTING_MODE, and the approved, active, unrevoked business-owner grant.",
+      "requirement": "Replace only the direct premium-article entitlement branch with the existing canonical getUserTier resolver, retaining the anonymous/free preview response and every independent existing grant managed by that resolver.",
+      "paths": [
+        "artifacts/api-server/src/routes/knowledge.ts",
+        "artifacts/api-server/src/routes/__tests__/knowledge-effective-entitlement-contract.test.ts"
+      ],
+      "requiredBehavior": [
+        "Unauthenticated and canonical-free members retain the current locked, truncated article response; published free articles remain unchanged.",
+        "A non-free tier from the existing resolver unlocks a premium article, including an approved, active, unrevoked business-owner tier; no direct subscription, trial, founding, beta, or business SQL is added to knowledge.ts.",
+        "Do not change canonical tier semantics, authentication/approved-session policy, tester/staff policy, closed checkout behavior, analytics/view-count behavior, other independent grants, or unrelated knowledge routes."
+      ],
+      "validationPlan": [
+        "Add a focused knowledge-route contract proving the route delegates premium access to getUserTier, retains the preview branch, and does not retain the direct subscription/trial/founding/beta condition.",
+        "Exercise the existing resolver seam with paid, approved-active-business, and no-result/revoked-grant outcomes through controlled mocks; run focused API Vitest, source-aligned API no-emit, exact two-path scope, and git diff --check."
+      ],
+      "constraints": [
+        "No resolver implementation change, schema/migration, billing/checkout/provider, client, analytics mapping, database operation, browser/device, staging/deployment, or external acceptance.",
+        "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
+      ],
+      "externalAcceptance": "PENDING — no database/provider/browser/device/staging/deployment or authenticated-member acceptance is authorized or recorded."
+    },
+    {
+      "id": "D9-BUSINESS-DETAIL-DESTINATION-ONLY-MAPS-COPY",
+      "status": "CLAIMED_LOCAL_ONLY",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "baseline": "c7111caf4335fee799270ab198c9c8845d10f874",
+      "sourceFinding": "The existing free-core native Business Detail branch is already guarded by a non-online, truthy public latitude/longitude pin and opens a destination-only platform Maps URL, but presents English-only Open in Maps copy and discards openURL failure silently.",
+      "requirement": "Add only practical English/Spanish label and recovery copy to the existing native destination-only Open in Maps handoff for valid public pins.",
+      "paths": [
+        "artifacts/mobile/app/business/[id].tsx",
+        "artifacts/mobile/__tests__/business-discovery-contract.test.ts"
+      ],
+      "requiredBehavior": [
+        "Retain the existing platform-specific Maps URLs, valid-public-pin condition, online-only exclusion, destination coordinates, entitlement/auth state, and all Map/API/provider/location behavior.",
+        "Make the free-core Maps action label and failure recovery practical English/Spanish source text without claiming an opened application or changing the existing Navigator in-app directions branch.",
+        "The focused source contract must prove the bilingual free Maps label/recovery exists and that the action remains destination-only with the existing latitude/longitude guards."
+      ],
+      "validationPlan": [
+        "Run the focused business-discovery contract and a source-aligned mobile no-emit check, then provide an uncommitted two-file review carrier for central acceptance.",
+        "Verify exact two-path scope and git diff --check; no browser or device validation is claimed."
+      ],
+      "constraints": [
+        "No change to entitlement/auth, map destination validation, API/provider/location/origin/route behavior, membership, completed D9 behavior, web fallback, Maps SDK, or visual redesign.",
+        "The designated owner must verify the supplied c711 path-only base before editing and return only an uncommitted review carrier; the integration owner remains the sole acceptor.",
+        "Local source-only work: no fetch, push, remote verification, connector, provider, database, deployment, browser, or device action."
+      ],
+      "externalAcceptance": "PENDING — no authenticated member, browser, device, Maps application, staging/production, or deployment acceptance is authorized or recorded."
     }
   ]
 }
