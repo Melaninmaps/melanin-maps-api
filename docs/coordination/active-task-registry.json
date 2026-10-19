@@ -624,10 +624,10 @@
     {
       "id": "BUSINESS-ADMIN-002-KINFOLK-CURRENT-LIFECYCLE",
       "priority": "P1",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
-      "baseline": "0d4a278db031467759586bea76c8132bb9d2ebf4",
+      "baseline": "ca4f2420b5caa2928744a3220658b76e7ebdf82f",
       "sourceFinding": "The durable, audit-backed Kinfolk Catalog endpoint permits an administrator to upsert any non-duplicate canonical business and the shared Admin inventory has no row-level catalog action. The existing Kinfolk Current predicate is the canonical public-view plus diaspora-promotion constraint, excluding archived, duplicate, hidden, suspended, and demonstration records. Archive and permanent-delete workflows remain separate lifecycle controls.",
       "paths": [
         "artifacts/api-server/src/businesses/registerKinfolkCatalogAdminRoutes.ts",
@@ -652,6 +652,18 @@
         "Do not modify BA-001 beyond preserving its accepted canonical link, and do not modify D1–D11, SP, Community, UM, LA, D4, D9, entitlement, Maps, or the separate 1617 deterministic-recognizer claim.",
         "Task 44 may return only an uncommitted review carrier for these exact four paths; the unified local integration owner remains the sole acceptor."
       ],
+      "sourceReceipt": {
+        "carrier": "BA002_KINFOLK_CURRENT_LIFECYCLE_CARRIER_2026-10-19.tar.gz",
+        "carrierSha256": "4bcb3c02ea6781c66f13b96f16f287d52ea906163ae9343276b239229a323a3e",
+        "sourceCommit": "1ee0e51ce82e44e0b7d15402ac1824cac47c6b94",
+        "centralReview": "Carrier archive, nested checksums, base hashes, exact four-path scope, temporary non-mutating application, executable mutation isolation, and an independent semantic review all passed. The carrier test assertion for bilingual fallback was centrally corrected to inspect the page helper rather than the narrower row fragment; product behavior was unchanged.",
+        "sourceVerification": {
+          "apiTests": "2 files / 44 tests passed: full admin-business-inventory-controls and registerKinfolkCatalogAdminRoutes lifecycle contracts",
+          "apiTypecheck": "current-authority API TypeScript no-emit passed after the final contract correction",
+          "webTypecheck": "current-authority web TypeScript no-emit passed after carrier application",
+          "hygiene": "exact four-path scope, manifest result hashes, eligibility-before-upsert ordering, removal-only UPDATE, canonical profile anchor, bilingual recovery, executable lifecycle-mutation isolation, and git diff --check passed"
+        }
+      },
       "externalAcceptance": "PENDING — source-only local claim. No authenticated Admin action, database execution, browser/device, provider, staging/deployment, or feature activation is authorized or recorded."
     },
     {
