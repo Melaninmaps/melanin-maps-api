@@ -1149,7 +1149,20 @@
       },
       "publicationAuthorizationRequest": "docs/coordination/BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md",
       "remotePublicationStatus": "NOT AUTHORIZED \u2014 no remote collision check, ref creation, tag, push, fetch, or verification occurred after the candidate was formed.",
-      "nextAction": "Await separate founder approval of the exact publication request; do not deploy or change Railway source selection/configuration."
+      "nextAction": "Await separate founder approval of the exact publication request; do not deploy or change Railway source selection/configuration.",
+      "completionContract": {
+        "journey": "An authenticated approved owner or authorized Admin selects one controlled business, receives a canonical selected-business profile read, edits the approved ordinary fields, submits the loaded revision, receives a confirmed fresh canonical re-read before Saved, and sees a draft-preserving stale-write recovery instead of silent overwrite.",
+        "sourceCandidate": "Local-only seven-path candidate `046eb767326c6d87d9dc41b29572eb26c759b9a4` directly atop successful production baseline `8fd6989bea317f53dfa6f170c2c5054cf0de74a4`; focused API/Web contracts, API/Web no-emit, exact scope, diff check, and combined build passed.",
+        "acceptanceLayers": [
+          "Source: selected-business authorization, revision control, read-after-write receipt, and draft-preserving recovery are evidenced by the validated candidate.",
+          "Release: immutable remote publication, deployment target, writer disposition, rollback, and stop conditions remain separately authorized gates.",
+          "Member-visible: founder-approved reversible production description save, refresh/relogin, public profile/Directory/Map readback, and separately governed Kinfolk synchronization remain distinct acceptance evidence; no real record edit is authorized yet."
+        ],
+        "nonGoals": [
+          "This candidate does not alter verification, ownership, suspension, archive/publication lifecycle, general Directory/Map/Kinfolk semantics, specialty/images/service fields, membership/payment, database schema, startup configuration, or mobile source.",
+          "No source-only validation establishes production availability, save durability, approval timing, public propagation, or Kinfolk freshness."
+        ]
+      }
     },
     {
       "id": "SAFE-001-CORE-SAFETY-FREE-CORE-ROUTE-GATE-REMOVAL",
