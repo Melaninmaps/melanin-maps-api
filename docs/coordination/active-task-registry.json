@@ -156,9 +156,21 @@
     },
     {
       "id": "UM-002-PARENT-CONTEXT-SENSITIVE-CLASSIFICATION",
-      "status": "IMPLEMENTING",
+      "status": "SOURCE_INTEGRATED",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "baseline": "2878721ff6cbbea3d61aee9f16df81e6c81604f5",
+      "carrierBase": "b634974a8e502c446cb5e58c1d954227c3c1c9ed",
+      "sourceCommit": "f3f4ab156615659f6035d8362bb6a53b04218048",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "carrier": {
+          "archiveSha256": "5e37bc15cd4a60b7efedcb34e5a585544cb5e316ac6aa944dd47df7002a081a8",
+          "patchSha256": "8a44739a03235b662de4fd0a9712b98f950830321c997bc80c925682d6408159",
+          "manifestBaseAndTwoPathResultHashesVerified": true
+        },
+        "reviewConclusion": "The shared sensitiveMemoryTopic classifier is deliberately the existing enforcement seam for the explicit consent plan, direct private-memory create, direct correction, and restricted-sensitive relevance matching. Extending it for the four narrow first-person parent forms is required to route those previously unclassified inputs through existing separate consent, vault reauthentication, encryption, and restricted-use controls; no route, storage implementation, or retention/deletion behavior was modified.",
+        "centralTestStrengthening": "The mixed-clause consent-plan regression was tightened from an array-containing assertion to an exact ordinary-list assertion, proving the parent clause cannot also remain ordinary."
+      },
       "requirement": "Classify narrow first-person parent details in an explicit memory-save request as the existing children/family sensitive topic before consent selection, so the existing sensitive confirmation, vault reauthentication, encryption, and restricted-use path applies rather than ordinary-memory handling.",
       "paths": [
         "artifacts/api-server/src/kinfolk/sensitive-memory.ts",
@@ -177,7 +189,13 @@
         "No route, schema, migration, provider, database action, client/UI, browser/device, staging, or deployment work.",
         "This does not overlap blocked UM-001: do not alter DELETE, revoke, retention duration, permanent-clear wording, storage deletion, or memory manager semantics.",
         "The implementation owner may return only an uncommitted review carrier. Only the integration owner may accept, commit, and push a reviewed repair."
-      ]
+      ],
+      "sourceVerification": {
+        "apiTests": "3 files / 14 tests passed: explicit-memory-consent, continuity-memory-boundaries, and the existing bounded private-memory-encryption route harness",
+        "apiTypecheck": "passed",
+        "hygiene": ["carrier archive, patch, base, exact two-path scope, and manifest result hashes verified through a temporary Git index", "independent read-only review passed after source call-site reconciliation", "shared direct create/edit sensitive-enforcement seam verified", "narrow first-person matcher and generic-family regression verified", "git diff --check passed"]
+      },
+      "externalAcceptance": "PENDING — no database/DSN action, provider call, browser, device, authenticated member, staging/production, deployment, migration, or mobile build acceptance was performed."
     },
     {
       "id": "LA-001-LEGACY-LIFE-JOURNEY-FREE-TEXT-BOUNDARY",
