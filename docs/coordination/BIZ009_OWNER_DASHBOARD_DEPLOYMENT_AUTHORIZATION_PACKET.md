@@ -5,6 +5,8 @@
 **Controlling requirement:** `BIZ-009` in `MWM_KINFOLK_MASTER_COMPLETION_CHECKLIST.{md,json}`.
 **Related minimum editor acceptance:** `BIZ-006`; staging authentication checkpoint: `BIZ-008`.
 
+**Supplement:** [No-deployment release-binding addendum](BIZ009_NO_DEPLOYMENT_RELEASE_BINDING_ADDENDUM.md), prepared from local source and inherited evidence only.
+
 ## 1. Exact locally integrated source candidate
 
 Both bounded BIZ-009 source receipts are locally integrated into this one minimal local candidate:
