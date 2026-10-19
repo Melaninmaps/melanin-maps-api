@@ -169,9 +169,10 @@
     },
     {
       "id": "SP-003-CIRCLE-ITINERARY-ACCOUNT-PREFERENCE-CONSENT",
-      "status": "IMPLEMENTING_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "f6315536a3ac6fef5c2a026c0ab9f123719d3b90",
+      "sourceCommit": "f346a79d521ecf6f2c20785a1e0deb0337cf8ae2",
       "publicationBoundary": "Local source-only repair. Do not fetch, push, inspect connectors/staging, deploy, or perform release actions without separate founder authorization.",
       "dependencyClassification": {
         "SP-002-SHARED-PLAN-FREE-BUSY-AVAILABILITY-ENGINE": {
@@ -201,7 +202,17 @@
         "No database/schema/migration, UI/client, provider request, cache, notification, calendar/OAuth, availability, invitation, deployment, browser/device, staging, or release action.",
         "Do not modify SP-001, SP-002, Phase A access-policy, D1, Community, UM, LA, CI, MAP, or private-availability source paths.",
         "Only this local unified owner may edit the two claimed SP-003 paths; no additional worktree, competing carrier, or remote publication is authorized."
-      ]
+      ],
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "reviewConclusion": "Independent local review confirmed the itinerary handler retains authentication, membership, shared saves/dates, destination/date input, branch persistence shape, and existing provider-error behavior while removing the user_preferences join, account preference fields, preference object, and prompt personalization. It has no SP-002 interface dependency."
+      },
+      "sourceVerification": {
+        "apiTests": "4 files / 29 tests passed: Circle itinerary privacy, Circle plan preference policy, Shared Plan free/busy policy, and private availability-block policy",
+        "apiTypecheck": "repository API no-emit passed",
+        "hygiene": ["exact two-path source diff verified", "static handler check retained membership, Circle shared saves/dates, and branch persistence while excluding user_preferences, favorite_categories, dietary_notes, lifestyle_services, and memberProfiles", "provider-free source contract test only", "independent local semantic review passed", "git diff --check passed"]
+      },
+      "externalAcceptance": "PENDING — this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
     },
     {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
