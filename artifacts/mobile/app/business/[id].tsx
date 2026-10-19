@@ -138,6 +138,7 @@ export default function BusinessDetailScreen() {
   const router = useRouter();
   const { isSaved, toggleSave } = useFavorites();
   const { allows } = useSocialVideoPreferences();
+  const { user } = useAuth();
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [renderedAt] = useState(() => Date.now());
@@ -158,17 +159,6 @@ export default function BusinessDetailScreen() {
   const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
   const [suggestingCircleId, setSuggestingCircleId] = useState<number | null>(null);
-
-  // ── GPS Directions ─────────────────────────────────────────────────────────
-  const { user } = useAuth();
-  const isNavigator = new Set(["navigator", "trailblazer", "founding", "legacy_member", "community_builder"]).has((user as any)?.memberType ?? "");
-  const [directionsOpen, setDirectionsOpen] = useState(false);
-  const [directionsFetching, setDirectionsFetching] = useState(false);
-  const [directionsSummary, setDirectionsSummary] = useState<{ distance: string; duration: string } | null>(null);
-  const [directionsSteps, setDirectionsSteps] = useState<{ index: number; instruction: string; distance: string; maneuver: string | null }[]>([]);
-  const [travelMode, setTravelMode] = useState<"driving" | "walking">("driving");
-  const userCoordsRef = React.useRef<{ lat: number; lng: number } | null>(null);
-  const [modeChangedSinceLoad, setModeChangedSinceLoad] = useState(false);
 
   // ── Hidden Gem nomination ─────────────────────────────────────────────────
   const [gemStatus, setGemStatus] = useState<{
@@ -1416,89 +1406,30 @@ export default function BusinessDetailScreen() {
             </View>
           )}
 
-          {/* Get Directions row */}
+          {/* Free-core destination-only Maps handoff. */}
           {!isOnlineOnly && business.latitude && business.longitude && (
             <TouchableOpacity
-              style={[styles.directionsRow, { borderColor: colors.border, backgroundColor: colors.secondary }]}
+              style={[styles.mapHandoffRow, { borderColor: colors.border, backgroundColor: colors.secondary }]}
               activeOpacity={0.75}
-              onPress={async () => {
-                if (!isNavigator) {
-                  const lat = business.latitude!;
-                  const lng = business.longitude!;
-                  const mapsUrl = Platform.OS === "ios"
-                    ? `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
-                    : `https://maps.google.com/maps?daddr=${lat},${lng}`;
-                  Linking.openURL(mapsUrl).catch(() => {});
-                  return;
-                }
-                setDirectionsSteps([]);
-                setDirectionsSummary(null);
-                setModeChangedSinceLoad(false);
-                setDirectionsOpen(true);
-                setDirectionsFetching(true);
-                try {
-                  const token = Platform.OS !== "web" ? await (await import("expo-secure-store")).getItemAsync("auth_session_token") : null;
-
-                  let userLat = 0, userLng = 0, hasLoc = false;
-                  // Try to reuse cached coords from previous fetch first
-                  if (userCoordsRef.current) {
-                    userLat = userCoordsRef.current.lat;
-                    userLng = userCoordsRef.current.lng;
-                    hasLoc = true;
-                  } else {
-                    try {
-                      const Location = await import("expo-location");
-                      const { status } = await Location.requestForegroundPermissionsAsync();
-                      if (status === "granted") {
-                        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-                        userLat = pos.coords.latitude;
-                        userLng = pos.coords.longitude;
-                        userCoordsRef.current = { lat: userLat, lng: userLng };
-                        hasLoc = true;
-                      }
-                    } catch { /* location unavailable */ }
-                  }
-
-                  if (!hasLoc) {
-                    setDirectionsFetching(false);
-                    return;
-                  }
-
-                  const destLat = business.latitude!;
-                  const destLng = business.longitude!;
-                  const params = new URLSearchParams({
-                    lat: String(userLat), lng: String(userLng),
-                    destLat: String(destLat), destLng: String(destLng),
-                    destName: business.name ?? "", mode: travelMode,
-                  });
-
-                  const resp = await fetch(`${getApiBase()}/api/directions?${params.toString()}`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                  });
-                  if (resp.ok) {
-                    const data = await resp.json() as {
-                      totalDistance: string; totalDuration: string;
-                      steps: { index: number; instruction: string; distance: string; maneuver: string | null }[];
-                    };
-                    setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
-                    setDirectionsSteps(data.steps);
-                  }
-                } catch { /* ignore */ } finally {
-                  setDirectionsFetching(false);
-                }
+              onPress={() => {
+                const lat = business.latitude!;
+                const lng = business.longitude!;
+                const mapsUrl = Platform.OS === "ios"
+                  ? `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
+                  : `https://maps.google.com/maps?daddr=${lat},${lng}`;
+                void Linking.openURL(mapsUrl).catch(() => {
+                  Alert.alert(
+                    "Maps unavailable / Mapas no disponibles",
+                    "We couldn't open your Maps app. Try again or use another map app. / No pudimos abrir tu app de mapas. Inténtalo de nuevo o usa otra app de mapas.",
+                  );
+                });
               }}
             >
-              <Feather name="navigation" size={14} color={isNavigator ? colors.primary : colors.mutedForeground} />
-              <Text style={[styles.directionsRowText, { color: isNavigator ? colors.primary : colors.mutedForeground }]}>
-                {isNavigator ? "In-App Turn-by-Turn Directions" : "Open in Maps"}
+              <Feather name="navigation" size={14} color={colors.primary} />
+              <Text style={[styles.mapHandoffRowText, { color: colors.primary }]}>
+                Open in Maps / Abrir en Mapas
               </Text>
-              {isNavigator ? (
-                <Feather name="chevron-right" size={14} color={colors.primary} />
-              ) : (
-                <View style={styles.navigatorBadge}>
-                  <Text style={styles.navigatorBadgeText}>NAVIGATOR+</Text>
-                </View>
-              )}
+              <Feather name="external-link" size={14} color={colors.primary} />
             </TouchableOpacity>
           )}
 
@@ -1762,137 +1693,6 @@ export default function BusinessDetailScreen() {
           <Text style={[styles.primaryBtnText, { color: "#FFFFFF" }]}>Review</Text>
         </TouchableOpacity>
       </View>
-
-      {/* In-App Directions Modal (Navigator+) */}
-      <Modal
-        visible={directionsOpen}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setDirectionsOpen(false)}
-      >
-        <View style={[styles.directionsModal, { backgroundColor: colors.background }]}>
-          {/* Header */}
-          <View style={[styles.directionsHeader, { borderBottomColor: colors.border }]}>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Text style={[styles.directionsTitle, { color: colors.foreground }]}>Navigator</Text>
-                <View style={{ backgroundColor: colors.primary + "20", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
-                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: colors.primary }}>SAFETY-AWARE</Text>
-                </View>
-              </View>
-              {directionsSummary && (
-                <Text style={[styles.directionsSummary, { color: colors.mutedForeground }]}>
-                  {directionsSummary.distance} · {directionsSummary.duration}
-                </Text>
-              )}
-            </View>
-            <TouchableOpacity onPress={() => setDirectionsOpen(false)} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-              <Feather name="x" size={22} color={colors.foreground} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Mode toggle */}
-          <View style={{ flexDirection: "row", margin: 14, marginBottom: 0, gap: 8 }}>
-            {(["driving", "walking"] as const).map((m) => (
-              <TouchableOpacity
-                key={m}
-                style={{ flex: 1, paddingVertical: 7, borderRadius: 8, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 5, backgroundColor: travelMode === m ? colors.primary : colors.secondary, borderWidth: 1, borderColor: travelMode === m ? colors.primary : colors.border }}
-                onPress={() => { if (travelMode !== m) { setTravelMode(m); if (directionsSteps.length > 0) setModeChangedSinceLoad(true); } }}
-              >
-                <Feather name={m === "driving" ? "navigation" : "wind"} size={13} color={travelMode === m ? "#fff" : colors.mutedForeground} />
-                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: travelMode === m ? "#fff" : colors.mutedForeground }}>{m === "driving" ? "Driving" : "Walking"}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Recalculate banner */}
-          {modeChangedSinceLoad && !directionsFetching && (
-            <TouchableOpacity
-              style={{ margin: 14, marginBottom: 0, padding: 10, borderRadius: 8, backgroundColor: colors.primary, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}
-              onPress={async () => {
-                if (!userCoordsRef.current || !business.latitude || !business.longitude) return;
-                setModeChangedSinceLoad(false);
-                setDirectionsFetching(true);
-                try {
-                  const token = Platform.OS !== "web" ? await (await import("expo-secure-store")).getItemAsync("auth_session_token") : null;
-                  const { lat, lng } = userCoordsRef.current;
-                  const params = new URLSearchParams({
-                    lat: String(lat), lng: String(lng),
-                    destLat: String(business.latitude), destLng: String(business.longitude),
-                    destName: business.name ?? "", mode: travelMode,
-                  });
-                  const resp = await fetch(`${getApiBase()}/api/directions?${params.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-                  if (resp.ok) {
-                    const data = await resp.json() as {
-                      totalDistance: string; totalDuration: string;
-                      steps: { index: number; instruction: string; distance: string; maneuver: string | null }[];
-                    };
-                    setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
-                    setDirectionsSteps(data.steps);
-                  }
-                } catch { } finally { setDirectionsFetching(false); }
-              }}
-            >
-              <Feather name="refresh-cw" size={13} color="#fff" />
-              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" }}>Recalculate for {travelMode}</Text>
-            </TouchableOpacity>
-          )}
-
-          {directionsFetching ? (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
-              <Feather name="navigation" size={32} color={colors.primary} />
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>
-                Fetching directions…
-              </Text>
-            </View>
-          ) : directionsSteps.length === 0 ? (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
-              <Feather name="alert-circle" size={32} color={colors.mutedForeground} />
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>
-                Enable location access to get directions.
-              </Text>
-            </View>
-          ) : (
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-              {directionsSteps.map((step, idx) => (
-                <View
-                  key={step.index}
-                  style={[styles.directionsStep, { backgroundColor: colors.card, borderColor: colors.border }]}
-                >
-                  <View style={[styles.directionsStepNum, { backgroundColor: idx === 0 ? colors.primary : colors.primary + "20" }]}>
-                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: idx === 0 ? "#FFFFFF" : colors.primary }}>
-                      {step.index + 1}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.foreground }}>
-                      {step.instruction.replace(/<[^>]+>/g, "")}
-                    </Text>
-                    {step.distance ? (
-                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 3 }}>
-                        {step.distance}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {step.maneuver ? (
-                    <Feather
-                      name={step.maneuver.includes("left") ? "corner-up-left" : step.maneuver.includes("right") ? "corner-up-right" : "arrow-up"}
-                      size={16}
-                      color={colors.mutedForeground}
-                    />
-                  ) : null}
-                </View>
-              ))}
-              <View style={[styles.directionsStep, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
-                <Feather name="map-pin" size={16} color={colors.primary} />
-                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.primary, flex: 1 }}>
-                  {business.name}
-                </Text>
-              </View>
-            </ScrollView>
-          )}
-        </View>
-      </Modal>
 
       <WriteReviewModal
         visible={reviewModalOpen}
@@ -2397,7 +2197,7 @@ const styles = StyleSheet.create({
   tag: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   tagText: { fontFamily: "Inter_500Medium", fontSize: 12 },
   mapWrap: { borderRadius: 14, overflow: "hidden", borderWidth: 1 },
-  directionsRow: {
+  mapHandoffRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -2407,44 +2207,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 8,
   },
-  directionsRowText: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
-  navigatorBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: "#CA922B15",
-    borderWidth: 1,
-    borderColor: "#CA922B30",
-  },
-  navigatorBadgeText: { fontFamily: "Inter_700Bold", fontSize: 9, color: "#CA922B" },
-  directionsModal: { flex: 1 },
-  directionsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    paddingTop: 20,
-    borderBottomWidth: 1,
-    gap: 12,
-  },
-  directionsTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
-  directionsSummary: { fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 2 },
-  directionsStep: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginBottom: 6,
-  },
-  directionsStepNum: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
+  mapHandoffRowText: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
   safetyWarnRed: {
     padding: 12,
     borderRadius: 10,

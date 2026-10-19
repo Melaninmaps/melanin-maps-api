@@ -107,6 +107,47 @@ describe("business discovery data contract", () => {
     expect(locationShareSource).toContain('accessibilityLabel="Back"');
   });
 
+  it("keeps Business Detail Maps free-core, bilingual, and destination-only", () => {
+    const actionStart = detailSource.indexOf("{/* Free-core destination-only Maps handoff. */}");
+    const actionEnd = detailSource.indexOf("{/* Owner's Pinned Highlights */}", actionStart);
+    const mapHandoff = detailSource.slice(actionStart, actionEnd);
+
+    expect(actionStart).toBeGreaterThanOrEqual(0);
+    expect(actionEnd).toBeGreaterThan(actionStart);
+    expect(mapHandoff).toContain("!isOnlineOnly && business.latitude && business.longitude");
+    expect(mapHandoff).toContain("maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d");
+    expect(mapHandoff).toContain("https://maps.google.com/maps?daddr=${lat},${lng}");
+    expect(mapHandoff).toContain("Open in Maps / Abrir en Mapas");
+    expect(mapHandoff).toContain("Maps unavailable / Mapas no disponibles");
+    expect(mapHandoff).toContain("No pudimos abrir tu app de mapas");
+    expect(mapHandoff).toContain("Linking.openURL(mapsUrl).catch");
+
+    for (const retiredBehavior of [
+      "isNavigator",
+      "expo-location",
+      "/api/directions",
+      "fetch(",
+      "auth_session_token",
+      "directionsOpen",
+      "travelMode",
+    ]) {
+      expect(mapHandoff).not.toContain(retiredBehavior);
+    }
+
+    for (const retiredScreenArtifact of [
+      "const isNavigator =",
+      "In-App Directions Modal",
+      "directionsOpen",
+      "directionsFetching",
+      "directionsSteps",
+      "userCoordsRef",
+      "expo-location",
+      "/api/directions",
+    ]) {
+      expect(detailSource).not.toContain(retiredScreenArtifact);
+    }
+  });
+
   it("keeps an exact map match on the MWM business page, with directions as a separate action", () => {
     expect(mapSource).toContain('pathname: "/business/[id]"');
     expect(mapSource).toContain("params: { id: selectedBusiness.id }");
