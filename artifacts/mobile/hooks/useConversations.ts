@@ -13,6 +13,18 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
+function isAcceptedRequestResponse(payload: unknown, conversationId: number): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const conversation = (payload as { conversation?: unknown }).conversation;
+  if (!conversation || typeof conversation !== "object") return false;
+  const candidate = conversation as { id?: unknown; requestStatus?: unknown };
+  return candidate.id === conversationId && candidate.requestStatus === "accepted";
+}
+
+function isDeclinedRequestResponse(payload: unknown): boolean {
+  return !!payload && typeof payload === "object" && (payload as { ok?: unknown }).ok === true;
+}
+
 export interface ApiConversation {
   id: number;
   title: string;
@@ -115,6 +127,8 @@ export function useConversations() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return false;
+      const payload = await res.json() as unknown;
+      if (!isAcceptedRequestResponse(payload, convId)) return false;
       setConversations((prev) =>
         prev.map((c) => c.id === convId ? { ...c, requestStatus: "accepted" } : c)
       );
@@ -132,6 +146,8 @@ export function useConversations() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return false;
+      const payload = await res.json() as unknown;
+      if (!isDeclinedRequestResponse(payload)) return false;
       setConversations((prev) => prev.filter((c) => c.id !== convId));
       return true;
     } catch { return false; }
