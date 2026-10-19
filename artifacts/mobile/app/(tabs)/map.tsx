@@ -1,4 +1,5 @@
 import { FullMapView } from "@/components/FullMapView";
+import { sanitizeDirectoryPublicHandle } from "@/lib/mapDirectoryHandoff";
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
 
@@ -10,6 +11,7 @@ export default function MapScreen() {
     focusLng?: string;
     city?: string;
     state?: string;
+    directoryHandle?: string | string[];
   }>();
   return (
     <FullMapView
@@ -19,6 +21,7 @@ export default function MapScreen() {
       focusLng={params.focusLng}
       searchCity={params.city}
       searchState={params.state}
+      directoryHandle={sanitizeDirectoryPublicHandle(params.directoryHandle)}
     />
   );
 }

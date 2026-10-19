@@ -45,6 +45,7 @@ import {
   matchesExplicitMapLocality,
   resolveMapBusinessProximity,
 } from "@/lib/mapBusinessScope";
+import { sanitizeDirectoryPublicHandle } from "@/lib/mapDirectoryHandoff";
 import { useAuth } from "@/lib/auth";
 import {
   canLoadLocalCollections,
@@ -364,6 +365,8 @@ interface FullMapViewProps {
   /** Explicit city/state scope supplied by a search or deep link. */
   searchCity?: string;
   searchState?: string;
+  /** Sanitized member-entered public handle from the Directory only. */
+  directoryHandle?: string | null;
 }
 
 export function FullMapView({
@@ -373,6 +376,7 @@ export function FullMapView({
   focusLng,
   searchCity,
   searchState,
+  directoryHandle,
 }: FullMapViewProps = {}) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -475,6 +479,13 @@ export function FullMapView({
   // for a city.
   const [businessSearchInput, setBusinessSearchInput] = useState("");
   const [submittedBusinessSearch, setSubmittedBusinessSearch] = useState("");
+  const incomingDirectoryHandle = sanitizeDirectoryPublicHandle(directoryHandle);
+  const [activeDirectoryHandle, setActiveDirectoryHandle] = useState(
+    incomingDirectoryHandle,
+  );
+  useEffect(() => {
+    setActiveDirectoryHandle(incomingDirectoryHandle);
+  }, [incomingDirectoryHandle]);
   // Reversible local grouping for the map's actual loaded records. It never
   // persists assumptions about a member or suppresses records from search.
   const [mapDiscoveryFocus, setMapDiscoveryFocus] = useState<MapDiscoveryFocus>("all");
@@ -582,11 +593,12 @@ export function FullMapView({
   });
   const hasLocalCollectionScope = canLoadLocalCollections(mapLocality);
   const localityScopeKey = mapLocalityKey(mapLocality, exploringAllAreas);
+  const businessRequestScopeKey = `${localityScopeKey}:${activeDirectoryHandle ?? ""}`;
   const collectionScopeQuery = mapCollectionScopeQuery(mapLocality, exploringAllAreas);
   const collectionScopeSuffix = collectionScopeQuery ? `?${collectionScopeQuery}` : "";
   const deliberateMapNameSearch = isDeliberateMapBusinessNameSearch(
     submittedBusinessSearch,
-  );
+  ) && !activeDirectoryHandle;
 
   // GPS remains on-device. Confirmed device coordinates are proximity-ranked;
   // a profile home locality is a city/state fallback. No ordinary map request
@@ -598,15 +610,16 @@ export function FullMapView({
     searchScope: businessSearchScope,
   } = useBusinesses({
     search: submittedBusinessSearch,
-    latitude: deliberateMapNameSearch ? null : proximityMapLocation?.latitude ?? null,
-    longitude: deliberateMapNameSearch ? null : proximityMapLocation?.longitude ?? null,
-    city: deliberateMapNameSearch ? "" : mapLocality?.city,
-    state: deliberateMapNameSearch ? "" : mapLocality?.state,
+    latitude: deliberateMapNameSearch || activeDirectoryHandle ? null : proximityMapLocation?.latitude ?? null,
+    longitude: deliberateMapNameSearch || activeDirectoryHandle ? null : proximityMapLocation?.longitude ?? null,
+    city: deliberateMapNameSearch || activeDirectoryHandle ? "" : mapLocality?.city,
+    state: deliberateMapNameSearch || activeDirectoryHandle ? "" : mapLocality?.state,
     radiusMiles: mapDiscoveryRadius,
     designations: designationIds,
     supportScope: undefined,
     directName: deliberateMapNameSearch,
-    enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null,
+    handle: activeDirectoryHandle,
+    enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null || activeDirectoryHandle !== null,
   });
   // This is the same small, canonical MWM marker feed that keeps the website
   // populated. It is intentionally separate from locality search: a location
@@ -708,6 +721,9 @@ export function FullMapView({
     // A result without coordinates still never fabricates a pin.
     if (directMatchHasCoordinates && directMatch) return [directMatch];
     if (directMatch) return [];
+    // A member-entered public handle is an exact Map criterion. Do not layer
+    // unrelated canonical local pins beneath its public-directory result.
+    if (activeDirectoryHandle) return focusedMappedBusinesses;
     // A submitted service or keyword search is also a deliberate map request.
     // Do not leave the ordinary nearby fallback pins layered over its results:
     // that hid the matching markers (for example, four hair stores beneath
@@ -721,7 +737,7 @@ export function FullMapView({
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
+  }, [activeDirectoryHandle, directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -732,11 +748,14 @@ export function FullMapView({
       ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
       : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
+  const hasActiveBusinessCriterion = hasSubmittedBusinessSearch || activeDirectoryHandle !== null;
+  const hasVisibleSubmittedMapResults = hasSubmittedBusinessSearch && !suppressSafetyContextBusinessResults;
+  const hasVisibleDirectoryHandleResults = activeDirectoryHandle !== null && !suppressSafetyContextBusinessResults;
   const submittedMappedBusinessResults = useMemo(
-    () => hasSubmittedBusinessSearch && !suppressSafetyContextBusinessResults
+    () => hasVisibleSubmittedMapResults || hasVisibleDirectoryHandleResults
       ? focusedMappedBusinesses.slice(0, 5)
       : [],
-    [focusedMappedBusinesses, hasSubmittedBusinessSearch, suppressSafetyContextBusinessResults],
+    [focusedMappedBusinesses, hasVisibleDirectoryHandleResults, hasVisibleSubmittedMapResults],
   );
   const focusDirectBusinessOnMap = useCallback((business: Business) => {
     setSelectedBusiness(business);
@@ -959,7 +978,7 @@ export function FullMapView({
   // fit a country- or world-sized result set; only explicit exploration may.
   useEffect(() => {
     hasFitToBusinessesRef.current = false;
-  }, [localityScopeKey, mapDiscoveryFocus, mapDiscoveryRadius, submittedBusinessSearch]);
+  }, [businessRequestScopeKey, mapDiscoveryFocus, mapDiscoveryRadius, submittedBusinessSearch]);
 
   useEffect(() => {
     if (directMatch) return;
@@ -969,7 +988,9 @@ export function FullMapView({
     // a 50-mile choice on a blank map.
     const pinsToFit = submittedBusinessSearch.trim()
       ? focusedMappedBusinesses
-      : focusedMappedBusinesses.length > 0
+      : activeDirectoryHandle
+        ? focusedMappedBusinesses
+        : focusedMappedBusinesses.length > 0
         ? focusedMappedBusinesses
         : nearbyCanonicalMapPins;
     if (!mapReady || pinsToFit.length === 0 || hasFitToBusinessesRef.current)
@@ -981,7 +1002,7 @@ export function FullMapView({
     if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
     scheduleMapAction(() => safelyFitToCoordinates(coordinates), 600);
-  }, [directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
+  }, [activeDirectoryHandle, businessRequestScopeKey, directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -1823,12 +1844,13 @@ export function FullMapView({
           >
             <Feather name="chevron-down" size={18} color="#F5EBD8" />
           </TouchableOpacity>
-          {(businessSearchInput.length > 0 || searchedLocality || routeSearchLocality) && (
+          {(businessSearchInput.length > 0 || searchedLocality || routeSearchLocality || activeDirectoryHandle) && (
             <TouchableOpacity
               onPress={() => {
                 setBusinessSearchInput("");
                 setSubmittedBusinessSearch("");
                 setSearchedLocality(null);
+                setActiveDirectoryHandle(null);
                 setSelectedBusiness(null);
               }}
               accessibilityLabel="Clear map search and return to my local map"
@@ -1860,10 +1882,18 @@ export function FullMapView({
             </TouchableOpacity>
           </View>
         )}
-        {hasSubmittedBusinessSearch && (
+        {hasActiveBusinessCriterion && (
           <View style={[s.businessSearchStatus, wideMapOverlayStyle]}>
             <Text style={s.businessSearchStatusText}>
-              {isBusinessSearchLoading
+              {activeDirectoryHandle
+                ? isBusinessSearchLoading
+                  ? `Finding public listings for @${activeDirectoryHandle} / Buscando resultados públicos para @${activeDirectoryHandle}`
+                  : businessSearchError
+                    ? `Couldn’t find public listings for @${activeDirectoryHandle}. Try again. / No se pudieron encontrar resultados públicos para @${activeDirectoryHandle}. Inténtalo de nuevo.`
+                    : mapped.length > 0
+                      ? `${mapped.length} mapped public ${mapped.length === 1 ? "listing" : "listings"} for @${activeDirectoryHandle} / ${mapped.length} ${mapped.length === 1 ? "resultado público ubicado" : "resultados públicos ubicados"} para @${activeDirectoryHandle}`
+                      : `No mapped public listings for @${activeDirectoryHandle} / No hay resultados públicos ubicables para @${activeDirectoryHandle}`
+                : isBusinessSearchLoading
                 ? deliberateMapNameSearch
                   ? "Finding the business you named…"
                   : "Searching local listings…"
@@ -1912,7 +1942,7 @@ export function FullMapView({
             </View>
           )}
 
-        {hasSubmittedBusinessSearch &&
+        {hasActiveBusinessCriterion &&
           !isBusinessSearchLoading &&
           !businessSearchError &&
           !directMatch &&
@@ -1957,6 +1987,7 @@ export function FullMapView({
           )}
 
         {mapLocality && !hasSubmittedBusinessSearch && (
+          activeDirectoryHandle ? null : (
           <View
             accessibilityLabel="Around you map discovery"
             style={[s.mapDiscoveryCard, wideMapOverlayStyle]}
@@ -2124,6 +2155,7 @@ export function FullMapView({
               ) : null}
             </View>
           </View>
+          )
         )}
 
         {!mapLocality && !exploringAllAreas && (

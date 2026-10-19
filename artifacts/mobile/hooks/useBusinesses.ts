@@ -8,6 +8,7 @@ import {
 } from "@workspace/constants";
 import { buildBusinessesRequestUrl } from "./support-lens-request";
 import { getApiBase } from "@/lib/api";
+import { sanitizeDirectoryPublicHandle } from "../lib/mapDirectoryHandoff";
 export { buildBusinessesRequestUrl } from "./support-lens-request";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
@@ -26,6 +27,8 @@ interface UseBusinessesOptions {
   supportScope?: "all_businesses" | "strict_documented_designations";
   /** A server-validated explicit public business-name lookup. */
   directName?: boolean;
+  /** An explicitly member-entered public social-handle Map criterion. */
+  handle?: string | null;
   /** Prevent an unscoped request while a map surface awaits a locality. */
   enabled?: boolean;
 }
@@ -135,12 +138,16 @@ export function useBusinesses(
     longitude = null,
     radiusMiles = 25,
     designations = [],
-    supportScope,
+    supportScope: requestedSupportScope,
     directName = false,
+    handle = null,
     enabled = true,
   } = options;
   const designationKey =
     normalizeOwnershipDesignationFilterIds(designations).join(",");
+  const publicHandle = sanitizeDirectoryPublicHandle(handle);
+  const requestedDesignations = publicHandle ? [] : designations;
+  const supportScope = publicHandle ? undefined : requestedSupportScope;
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,13 +181,14 @@ export function useBusinesses(
       const url = buildBusinessesRequestUrl(apiBase, {
         search,
         category,
-        city: directName ? "" : city,
-        state: directName ? "" : state,
-        designations: directName ? [] : designations,
+        city: directName || publicHandle ? "" : city,
+        state: directName || publicHandle ? "" : state,
+        designations: directName ? [] : requestedDesignations,
         supportScope: directName ? undefined : supportScope,
         directName,
+        handle: publicHandle,
       });
-      const urlWithGeo = !directName && Number.isFinite(latitude) && Number.isFinite(longitude)
+      const urlWithGeo = !directName && !publicHandle && Number.isFinite(latitude) && Number.isFinite(longitude)
         ? `${url}${url.includes("?") ? "&" : "?"}lat=${latitude}&lng=${longitude}&radius=${Math.min(100, Math.max(1, radiusMiles))}`
         : url;
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
@@ -227,7 +235,7 @@ export function useBusinesses(
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope, directName]);
+  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope, directName, publicHandle]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);

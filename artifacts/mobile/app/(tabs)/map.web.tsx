@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Platform,
@@ -15,6 +15,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { sanitizeDirectoryPublicHandle } from "@/lib/mapDirectoryHandoff";
 
 export default function MapScreen() {
   const colors = useColors();
@@ -22,13 +23,24 @@ export default function MapScreen() {
   const router = useRouter();
   const { isSaved, toggleSave } = useFavorites();
   const [search, setSearch] = useState("");
+  const params = useLocalSearchParams<{ directoryHandle?: string | string[] }>();
+  const incomingDirectoryHandle = sanitizeDirectoryPublicHandle(params.directoryHandle);
+  const [activeDirectoryHandle, setActiveDirectoryHandle] = useState(incomingDirectoryHandle);
+
+  useEffect(() => {
+    setActiveDirectoryHandle(incomingDirectoryHandle);
+  }, [incomingDirectoryHandle]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   // Keep category records available through typed search without a crowded
   // row of shortcut tabs on the map surface.
-  const { businesses } = useBusinesses({ search, category: "All" });
+  const { businesses } = useBusinesses({
+    search,
+    category: "All",
+    handle: activeDirectoryHandle,
+  });
   const filtered = businesses.filter((_b) => {
     return true;
   });
@@ -45,6 +57,18 @@ export default function MapScreen() {
       <View style={styles.searchRow}>
         <SearchBar value={search} onChangeText={setSearch} />
       </View>
+      {activeDirectoryHandle && (
+        <View style={[styles.activeHandle, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
+          <Text style={[styles.activeHandleText, { color: colors.foreground }]}>Showing public listings for @{activeDirectoryHandle} / Mostrando resultados públicos para @{activeDirectoryHandle}</Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Clear public handle filter / Borrar filtro de usuario público"
+            onPress={() => setActiveDirectoryHandle(null)}
+          >
+            <Text style={[styles.activeHandleClear, { color: colors.primary }]}>Clear / Borrar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <FlatList
         data={filtered}
         keyExtractor={(b) => b.id}
@@ -82,6 +106,19 @@ const styles = StyleSheet.create({
   },
   mapNoticeText: { fontFamily: "Inter_500Medium", fontSize: 12 },
   searchRow: { paddingHorizontal: 16, paddingVertical: 10 },
+  activeHandle: {
+    alignItems: "center",
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  activeHandleText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 12 },
+  activeHandleClear: { fontFamily: "Inter_700Bold", fontSize: 12 },
   catRow: { flexShrink: 0 },
   catList: { paddingHorizontal: 16, gap: 8, paddingBottom: 10 },
   list: { paddingHorizontal: 16, paddingTop: 12 },

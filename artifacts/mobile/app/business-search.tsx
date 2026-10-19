@@ -22,6 +22,7 @@ import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORIES } from "@/constants/data";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
+import { sanitizeDirectoryPublicHandle } from "@/lib/mapDirectoryHandoff";
 import { getBusinessExperiencePolicy } from "@workspace/constants";
 
 const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c !== "All");
@@ -207,6 +208,8 @@ export default function BusinessSearchScreen() {
   }, [name, city, state, handle, category, inviteContact]);
 
   const hasQuery = name.trim() || city.trim() || state.trim() || handle.trim() || category || ownership;
+  // Public Directory handle Map handoff: this is the member-entered field only.
+  const publicDirectoryHandle = sanitizeDirectoryPublicHandle(handle);
   const primaryGold = "#CA922B";
 
   const renderBusiness = ({ item }: { item: Business }) => {
@@ -500,6 +503,22 @@ export default function BusinessSearchScreen() {
                 <Text style={[styles.clarificationText, { color: primaryGold }]}>{searchClarification.prompt}</Text>
               </TouchableOpacity>
             )}
+            {/* Member-entered public-handle Map handoff. */}
+            {publicDirectoryHandle && (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={[styles.handleMapAction, { borderColor: primaryGold, backgroundColor: primaryGold + "12" }]}
+                accessibilityRole="button"
+                accessibilityLabel={`Open public handle @${publicDirectoryHandle} on Map / Abrir usuario público @${publicDirectoryHandle} en el mapa`}
+                onPress={() => router.push({
+                  pathname: "/(tabs)/map",
+                  params: { directoryHandle: publicDirectoryHandle },
+                })}
+              >
+                <Feather name="map-pin" size={15} color={primaryGold} />
+                <Text style={[styles.handleMapActionText, { color: primaryGold }]}>Open this public handle on Map / Abrir este usuario público en el mapa</Text>
+              </TouchableOpacity>
+            )}
             {results.map((item) => (
               <React.Fragment key={item.id}>{renderBusiness({ item })}</React.Fragment>
             ))}
@@ -766,6 +785,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   clarificationText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  handleMapAction: {
+    alignItems: "center",
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  handleMapActionText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 12 },
   card: {
     flexDirection: "row",
     alignItems: "center",

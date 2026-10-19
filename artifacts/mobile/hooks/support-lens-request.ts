@@ -1,4 +1,5 @@
 import { normalizeOwnershipDesignationFilterIds } from "@workspace/constants";
+import { sanitizeDirectoryPublicHandle } from "../lib/mapDirectoryHandoff";
 
 const MAP_DIRECT_NAME_GENERIC_TERMS = new Set([
   "a", "an", "and", "attorney", "bar", "bars", "bookstore", "business",
@@ -36,6 +37,8 @@ export function buildBusinessesRequestUrl(
     supportScope?: "all_businesses" | "strict_documented_designations";
     /** Validated direct-name lookup: public listing discovery, never promotion. */
     directName?: boolean;
+    /** An explicitly member-entered public social-handle Map criterion. */
+    handle?: string | null;
   },
 ): string {
   const params = new URLSearchParams();
@@ -47,6 +50,8 @@ export function buildBusinessesRequestUrl(
   const designationKey = normalizeOwnershipDesignationFilterIds(options.designations ?? []).join(",");
   if (designationKey) params.set("designations", designationKey);
   if (options.supportScope) params.set("supportScope", options.supportScope);
+  const publicHandle = sanitizeDirectoryPublicHandle(options.handle);
+  if (publicHandle) params.set("handle", publicHandle);
   const query = params.toString();
   return `${apiBase}/api/businesses${query ? `?${query}` : ""}`;
 }
