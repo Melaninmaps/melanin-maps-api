@@ -2812,6 +2812,69 @@
         "sha256": "ded67ed4969f0f285a07d870f1c07062707a7dcec113bf4c7ef0d7fb13b93e88",
         "expires_at": "2026-10-20T22:50:13.957Z"
       }
+    },
+    {
+      "id": "OAUTH-003-IN-MEMORY-VAULT-REDACTION-CONTRACT",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "OAUTH-003",
+      "baseline": "b10234732011f3d57537f61081babae91efb6601",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/calendar-availability/vault-contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/in-memory-vault.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/in-memory-vault.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/state-pkce.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/normalizers.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-KINFOLK-CALENDAR-AVAILABILITY-AND-MEETING-PLANNING / OAUTH-003: a consenting member may later share only normalized busy availability for shared planning, not calendar event data.",
+        "founderOutcome": "A future consented member can safely connect, revoke, and delete a provider credential record without exposing raw token, provider payload, calendar identifier, account identifier, or event details; aggregate planning receives only approved normalized intervals.",
+        "participantPerspectives": [
+          "Calendar-owning member: retains owner/provider/purpose isolation and a complete future disconnect/revocation path.",
+          "Co-planning member: never sees credentials, raw events, provider/account/calendar identity, or data beyond separately authorized aggregate availability."
+        ],
+        "interactionChain": "Future explicit consent -> default-disabled state/PKCE evaluation -> future opaque credential handoff -> owner/provider/purpose vault boundary -> normalizer strips hostile provider DTO -> aggregate receives only purpose/window/busy intervals -> disconnect/revocation deletes owner-bound material -> safe unavailable fallback. This slice implements only a deterministic in-memory contract for the vault/redaction/revocation boundary.",
+        "notificationsAndCommunications": "No notifications, email, provider callback, OAuth redirect, client UI, or connection status communication is implemented or implied.",
+        "privacyAndPermissions": "Strict per-owner/provider/purpose isolation; opaque handles only; no raw token/event/payload/account/calendar ID or secret appears in return values, errors, logs, tests, routes, configuration, or aggregate inputs. Feature stays constant-false/default-disabled.",
+        "integrationOwnership": "Q will combine this leaf only with already integrated fake normalizer/state-PKCE leaves and later separately authorized consent/client/network/persistence work. No worker may mark a real connection or parent experience complete.",
+        "completionBoundary": "Worker returns a source-only carrier. No OAuth client/scope/consent request, token exchange, real provider connection, storage, database/schema, route/client configuration, staging/deployment, browser/device, or member acceptance is allowed."
+      },
+      "requiredBehavior": [
+        "Create only pure types/functions and an in-memory fake store; the public API uses opaque owner-bound handles/references and never returns or logs raw secret/token material.",
+        "Reject malformed input and cross-owner/provider/purpose access; default to the existing generic unavailable result when feature gate/attempt validation fails.",
+        "Deterministically revoke/disconnect by deleting exactly the owner/provider/purpose-scoped in-memory record; subsequent reads fail closed without leaking existence or secret-derived detail.",
+        "No route, network, OAuth client/callback/redirect, scope/consent interaction, persistence, configuration, logging, random global, wall clock, or background worker."
+      ],
+      "constraints": [
+        "Exactly three new paths only. No existing source change or barrel registration.",
+        "No real tokens or credential values, provider literal/URL/request, DB/schema/migration, client/mobile/Web, routes, configuration, remote Git, deployment/staging, browser/device, or feature activation.",
+        "Preserve OAUTH-001 documentation NO-GO and OAUTH-002/OAUTH-003 all-new default-disabled leaves."
+      ],
+      "validationPlan": [
+        "cd artifacts/api-server && pnpm exec vitest run src/kinfolk/calendar-availability/__tests__/in-memory-vault.test.ts src/kinfolk/calendar-availability/__tests__/normalizers.test.ts src/kinfolk/calendar-availability/__tests__/state-pkce.test.ts --reporter=dot",
+        "cd artifacts/api-server && pnpm exec tsc -p tsconfig.json --noEmit",
+        "exact three-new-path scope; git diff --check; static scan proves no network/client/route/provider/config/DB/logging or raw secret return"
+      ],
+      "carrierDisposition": "Return an uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "b10234732011f3d57537f61081babae91efb6601",
+        "dependencyHashes": {
+          "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts": "8cf8863c35aa3baa8bcf8e2ba9788bcbc28b308c80550baf4f01999d0dc324b5",
+          "artifacts/api-server/src/kinfolk/calendar-availability/state-pkce.ts": "7865ccffa9b2893fed1c3a7797e09a0401454a93782cac8b6cab72d892745a7f",
+          "artifacts/api-server/src/kinfolk/calendar-availability/normalizers.ts": "1e52ea3684a4c1d34914298b2f90f6adc58c593aaf10526f9cf5ced68bcf7434"
+        },
+        "newPaths": [
+          "artifacts/api-server/src/kinfolk/calendar-availability/vault-contracts.ts",
+          "artifacts/api-server/src/kinfolk/calendar-availability/in-memory-vault.ts",
+          "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/in-memory-vault.test.ts"
+        ]
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 fake in-memory source contract only."
     }
   ],
   "globalDirectiveDelivery": [
