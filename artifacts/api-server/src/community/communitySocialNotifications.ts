@@ -13,7 +13,7 @@ export type CommunitySocialNotification = {
   actorId: string;
   title: string;
   body: string;
-  entityType: "community_post" | "member_profile";
+  entityType: "community_post" | "member_profile" | "conversation_request";
   entityId: string;
   data: Record<string, unknown>;
 };

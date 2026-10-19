@@ -3,6 +3,7 @@ import { db, conversations as conversationsTable, messages as messagesTable, use
 import { scanForFamily } from "../lib/familyFilter";
 import { eq, and, asc, desc, sql, or, ilike } from "drizzle-orm";
 import { filterBlockedRelationships, usersAreBlocked } from "../social/profileRelationshipAccess";
+import { deliverCommunitySocialNotification } from "../community/communitySocialNotifications";
 
 const router: IRouter = Router();
 
@@ -125,6 +126,17 @@ router.post("/conversations", async (req: Request, res: Response) => {
           requestedBy: req.user.id,
         })
         .returning();
+      if (requestStatus === "pending") {
+        void deliverCommunitySocialNotification({
+          recipientId: recipient.id,
+          actorId: req.user.id,
+          title: "Messages",
+          body: "You have a new item in Messages.",
+          entityType: "conversation_request",
+          entityId: String(conv.id),
+          data: { conversationId: conv.id },
+        }).catch(() => {});
+      }
       return void res.status(201).json({ conversation: conv });
     }
 
