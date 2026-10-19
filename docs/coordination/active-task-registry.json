@@ -3212,7 +3212,7 @@
     {
       "id": "BIZ-003-SKIP-FEEDBACK-OWNER-PROJECTION-PRIVACY",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "BIZ-003",
@@ -3263,12 +3263,26 @@
           "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts": "76008a0d9440f54c6dcf05231343d42751d3d95f07d369decb2769351dd8b4ba"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only internal projection repair.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 no authenticated member-to-owner, DB/runtime, device/staging/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_jwDfKeqO8xvd0xpDUeA7QEc1",
         "file": "BIZ003_SKIP_FEEDBACK_OWNER_PROJECTION_BASE_2026-10-19.tar.gz",
         "sha256": "0260fffe4fcf7f254bed0e4e9259d0ae152b690374bc35ce4a3900f6e40198ef",
         "expires_at": "2026-10-20T23:14:37.529Z"
+      },
+      "sourceCommit": "f100d7694db1b829196ea6af26a5c6d2502b68e6",
+      "carrier": {
+        "handoff_id": "hnd_cjC0bGRx5WkDRKZXDiqUBTvE",
+        "file": "BIZ003_SKIP_FEEDBACK_OWNER_PROJECTION_PRIVACY_CARRIER_2026-10-19.tar.gz",
+        "sha256": "156daffc7eb5ef410e46e7197bce329305ec0f36649e9f57e2785ef1a845e61c",
+        "patch_sha256": "094e83b30235caeaa2031c87c46f4b26b5876ca1d9dd0ad41584e2a83675f4b7"
+      },
+      "centralValidation": {
+        "api_vitest": "1 file / 4 tests PASS",
+        "mobile_vitest": "2 files / 6 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "canonical owner GET explicitly selects id/message/createdAt only; POST retains submittedById/wasFiltered internal audit write; auth/owner/404/500 envelopes retained",
+        "scope": "exact two API paths; git diff --check PASS"
       }
     },
     {
