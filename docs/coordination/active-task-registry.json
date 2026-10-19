@@ -2610,7 +2610,7 @@
     {
       "id": "COMM-001-DM-NOTIFICATION-INBOX-NAVIGATION",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -2666,6 +2666,22 @@
         "file": "COMM001_DM_NOTIFICATION_INBOX_NAVIGATION_BASE_2026-10-19.tar.gz",
         "sha256": "9593235c20e1b46aeed04dc734b6adcddfb56b0fa28d687b8f85f7a11f0dff36",
         "expires_at": "2026-10-20T22:40:08.508Z"
+      },
+      "sourceCommit": "bfe0f50d4a96931c270b5bc6e7cfdabf38b18ced",
+      "carrier": {
+        "handoff_id": "hnd_pglW_FiyWyKSN8cSy9uk4KMK",
+        "file": "COMM001_DM_NOTIFICATION_INBOX_NAVIGATION_REVIEW_CARRIER_a3f7898c.tar.gz",
+        "sha256": "9d0456205d11b82642623636c310121b8d7bf289eb83518b8354fd53c25e1e0d",
+        "patch_sha256": "a64d31e9790a9379e790f28cefb706760e7c83d636ee825ece6e7ff7d778d6d1"
+      },
+      "centralValidation": {
+        "mobile_vitest": "1 file / 4 tests PASS",
+        "web_vitest": "1 file / 4 tests PASS",
+        "api_vitest": "2 files / 8 tests PASS",
+        "mobile_tsc": "PASS",
+        "web_tsc": "PASS",
+        "semantic": "opaque positive safe ID only; generic payload retained; recipient-owned read mutation only; no accept/decline/request-status mutation; encoded pending-capable routes only",
+        "scope": "exact four paths; git diff --check PASS"
       }
     },
     {
