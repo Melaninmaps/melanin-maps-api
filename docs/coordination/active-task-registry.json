@@ -3,10 +3,11 @@
   "authority": {
     "repository": "Melaninmaps/melanin-maps-api",
     "branch": "staging/kinfolk-full-candidate-20261014",
-    "verifiedHead": "f818056c93840794ad08c9bb90b68f2500635a25",
+    "historicalRegistryBase": "f818056c93840794ad08c9bb90b68f2500635a25",
+    "lastVerifiedRemoteBeforeCurrentRegistryUpdate": "d90719d781e5550f900afdd7af0315a65bba10c8",
     "verifiedAgainst": "origin/staging/kinfolk-full-candidate-20261014",
     "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
-    "integrationRule": "Only the integration owner may push accepted work to this branch. Every push must fetch origin and pass a clean, fast-forward authority check first."
+    "integrationRule": "Only the integration owner may push accepted work to this branch. Every task must fetch and verify the branch head before work; every acceptance push must pass a clean, fast-forward authority check first."
   },
   "claimProtocol": {
     "dispatcher": "QJATRGk7nUgzDlccMCUcG6",
@@ -20,16 +21,21 @@
   "claims": [
     {
       "id": "D1-CLOSED-CHECKOUT-CUSTOMER-RECONCILIATION",
-      "status": "BLOCKED",
+      "status": "IMPLEMENTING",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
-      "requirement": "Retire obsolete checkout enrollment across API, web, and native surfaces while preserving provider-owned purchase access and existing members.",
+      "requirement": "Semantically rebuild closed-checkout customer remediation against the verified authority. All obsolete checkout initiators must return the same authenticated no-side-effect 409 before body, user, database, key, provider, session, or entitlement reads, while preserving verified provider webhook/portal and existing member/family management paths.",
+      "inspectionBaseline": "f818056c93840794ad08c9bb90b68f2500635a25",
+      "implementationBaseline": "d90719d781e5550f900afdd7af0315a65bba10c8",
       "localEvidence": {
         "branch": "staging/kinfolk-full-candidate-20261014",
         "reportedBase": "7ce24646dfe5b0049ff1236afa0f10a01fda5579",
         "reportedLocalCommit": "a724a97f15eeb1356ccafb80aead494cb44d9379",
-        "state": "Local-only commit plus ten uncommitted customer-facing paths; neither reference is currently verified on GitHub authority."
+        "state": "Local-only commit plus ten uncommitted customer-facing paths; neither reference is currently verified on GitHub authority.",
+        "semanticReview": "The local closure is not an authority ancestor and is not byte-equivalent. The verified baseline still exposes three inline checkout initiators and must be rebuilt semantically rather than cherry-picked."
       },
       "paths": [
+        "artifacts/api-server/src/routes/billing.ts",
+        "artifacts/api-server/src/routes/membership-family.ts",
         "artifacts/api-server/src/__tests__/membership-price-integrity.test.ts",
         "artifacts/api-server/src/routes/__tests__/stripe-checkout-retirement.test.ts",
         "artifacts/api-server/src/routes/stripe.ts",
@@ -47,8 +53,20 @@
         "native": "4 payment-handoff/family lifecycle tests passed",
         "staticChecks": ["API, web, and native no-emit passed", "git diff --check passed"]
       },
-      "blocker": "The local closure is non-ancestral and non-equivalent to the verified GitHub authority, so it requires semantic/path-level reconciliation rather than an automatic merge.",
-      "nextAction": "The D1 owner reviews the privately transferred manifest-and-patch provenance against the verified authority, maps only compatible changes, and returns an exact target-path and focused-test plan before any integration."
+      "requiredBehavior": [
+        "Return identical authenticated 409 closed-enrollment responses at /billing/checkout, /membership/family/add-seat, and /stripe/checkout before any body, user, database, provider, session, entitlement, or secret read.",
+        "Retain 401 and existing 403 boundaries, verified webhook and portal behavior, existing member access, family-seat/invite management, free Community access, and free business listing.",
+        "Reject client priceId/trial entitlement writes; label approved price values as catalog references only; provide truthful bilingual enrollment-unavailable and return-page copy."
+      ],
+      "validationPlan": [
+        "Focused API checkout-retirement and membership-price-integrity tests, web family-plan checkout test, and native payment-handoff/family-lifecycle tests.",
+        "API, web, and native no-emit checks plus git diff --check.",
+        "No provider, checkout, database, browser, device, staging, migration, deployment, or production acceptance claim."
+      ],
+      "constraints": [
+        "No cherry-pick, raw patch application, commit, push, reset, rebase, or deletion by the implementation owner.",
+        "Only the integration owner may accept a reviewed semantic rebuild onto the authority branch."
+      ]
     },
     {
       "id": "SP-001-CIRCLE-PLAN-PREFERENCE-CONSENT",
@@ -128,7 +146,7 @@
     },
     {
       "id": "CI-001-CULTURAL-EXPLORER-SOURCE-ATTRIBUTION",
-      "status": "IMPLEMENTING",
+      "status": "CLAIMED",
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirement": "Pass the public cultural-site verifiedSource label through the Explorer API adapter to the already-rendered mobile source row.",
       "baseline": "03fe94219fa36a5eb6d55b51fc9d0628995af0cb",
@@ -140,7 +158,8 @@
       ],
       "constraints": [
         "Pass through only the existing public verifiedSource label; do not infer, alter, or promote an external URL as evidentiary provenance.",
-        "No database/schema, migration, route activation, provider, external call, or mobile visual redesign is authorized."
+        "No database/schema, migration, route activation, provider, external call, or mobile visual redesign is authorized.",
+        "Queued behind the higher-priority D1 source rebuild; no adapter source change has been made."
       ]
     }
   ]
