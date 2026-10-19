@@ -715,9 +715,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
           .where(and(eq(communityPostsTable.authorId, req.user.id), gte(communityPostsTable.createdAt, startOfMonth)));
         if (count >= 5) {
           res.status(403).json({
-            error: "Community Members can post up to 5 times per month. Upgrade to Explorer+ for unlimited posts.",
+            error: "You can publish up to 5 community posts per calendar month.",
             code: "TIER_LIMIT_REACHED",
-            upgradeUrl: "/membership",
           });
           return;
         }

@@ -390,6 +390,28 @@ describe("Community comments and count reconciliation", () => {
     expect(feedRoute).not.toContain("communityFeedDisplay");
     expect(queryFor("foryou").values).toEqual([injectedViewerId, 100]);
   });
+
+  it("keeps the ordinary free-post cap finite and neutral without changing the business promotion gate", () => {
+    const createPostRoute = communityRouteSource.slice(
+      communityRouteSource.indexOf('// POST /community/posts'),
+      communityRouteSource.indexOf('// ── Business mention stance validation'),
+    );
+    const businessGateStart = createPostRoute.indexOf('if (postType === "business")');
+    const ordinaryCapStart = createPostRoute.indexOf('} else {', businessGateStart);
+    const businessPromotionGate = createPostRoute.slice(businessGateStart, ordinaryCapStart);
+    const ordinaryFreeCap = createPostRoute.slice(ordinaryCapStart);
+
+    expect(businessGateStart).toBeGreaterThan(-1);
+    expect(ordinaryCapStart).toBeGreaterThan(businessGateStart);
+    expect(businessPromotionGate).toContain('Business posts require an Explorer+ membership. Upgrade to promote your business in the feed.');
+    expect(businessPromotionGate).toContain('upgradeUrl: "/membership"');
+
+    expect(ordinaryFreeCap).toContain('if (tier === "free")');
+    expect(ordinaryFreeCap).toContain('if (count >= 5)');
+    expect(ordinaryFreeCap).toContain('error: "You can publish up to 5 community posts per calendar month."');
+    expect(ordinaryFreeCap).toContain('code: "TIER_LIMIT_REACHED"');
+    expect(ordinaryFreeCap).not.toMatch(/upgradeUrl|Upgrade to|Explorer\+/);
+  });
 });
 
 describe("Community additive migration and quarantine", () => {
