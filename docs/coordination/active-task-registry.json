@@ -2533,7 +2533,7 @@
     {
       "id": "COMM-001-DM-PENDING-REQUEST-RECIPIENT-NOTIFICATION",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -2575,7 +2575,22 @@
         "file": "COMM001_DM_PRIVATE_REQUEST_NOTIFICATION_BASE_2026-10-19.tar.gz",
         "sha256": "868d6b2a00d16289dc2e5249b95ebee800c06922cd5132503275ac5307b53d1f",
         "expires_at": "2026-10-20T22:21:26.323Z"
-      }
+      },
+      "sourceCommit": "dfe4b9c3a8d7708c21fdd52b0e3f07139136b793",
+      "closedAt": "2026-10-19",
+      "carrierReceipt": {
+        "handoffId": "hnd_wqBAq5vg548S8ZAaUHyo6qTW",
+        "archive": "COMM001_DM_PRIVATE_REQUEST_NOTIFICATION_REVIEW_CARRIER_2f35a600.tar.gz",
+        "outerSha256": "26db7bec5260b2eb5b28c83c9141349ab0a1058505e2af1e49804d52d33ceeae",
+        "patchSha256": "6f2a988ffef6ebc3f9b165714d23648699e031aacef90387edb6b673cb807315"
+      },
+      "centralValidation": {
+        "focusedVitest": "3 files / 10 tests passed",
+        "apiNoEmit": "passed",
+        "scope": "exact three paths; git diff --check passed",
+        "boundary": "private-pending only; generic payload; existing self/block/recipient-opt-in helper; non-critical notification/push failure"
+      },
+      "externalAcceptance": "NOT PERFORMED — no runtime data, notification delivery, staging, browser/device, or member-visible validation."
     }
   ],
   "globalDirectiveDelivery": [
