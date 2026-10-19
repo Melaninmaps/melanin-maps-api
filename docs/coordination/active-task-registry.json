@@ -744,10 +744,21 @@
     {
       "id": "BUSINESS-OWNER-001-STRUCTURED-SPECIALTY-SAVE",
       "priority": "P0",
-      "status": "CLAIMED_LOCAL_ONLY",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "c9cd32c4b84282c7db4cdf0d07eaadba8390d2be",
+      "carrierBase": "106b809405166bd1d6a24d1a101b8ac0c5202d75",
+      "sourceCommit": "ddf73c4374a4231151a29eb4236585adca11202e",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "carrier": {
+          "archiveSha256": "69efdeab3c18b98362dc2e1c482aa460742425ea7c0a42bea984889e6c236f79",
+          "patchSha256": "59c44f56c799383da477cb278cb557e5b5b6f8c6ea2ed3572a6f7d50e4cf0888",
+          "baseAndTwoPathResultHashesVerified": true
+        },
+        "reviewConclusion": "Independent semantic review found no material correctness or regression issue. The carrier applied cleanly to a temporary index and then to byte-identical authority paths; its preliminary authorization read is redundant but does not weaken the required in-transaction selected-business and approved-owner-link recheck."
+      },
       "sourceFinding": "The explicit, multi-business owner profile PATCH is correctly limited to ordinary canonical business fields and uses approvedOwnerPredicate, but it has no owner-scoped write seam for the existing structured public business_specialties relation consumed by governed Kinfolk discovery. The table and its existing slug grammar already exist; this slice must reuse them rather than create schema, taxonomy, or publication policy.",
       "paths": [
         "artifacts/api-server/src/routes/businesses.ts",
@@ -770,6 +781,12 @@
         "S9 is the sole implementation owner for exactly these two paths and returns only an uncommitted carrier. The unified local integration owner is the sole acceptor.",
         "Runtime propagation measurement across public profile, Directory API, and governed Kinfolk retrieval remains a separately authorized acceptance gate; this source-only slice must not claim it."
       ],
+      "sourceVerification": {
+        "apiTests": "1 file / 5 tests passed: business-owner-multi-business-contract",
+        "apiTypecheck": "repository API TypeScript no-emit passed",
+        "hygiene": ["archive and patch SHA-256 values verified", "temporary-index application changed exactly the two claimed paths", "carrier result hashes matched after authority application", "static route boundary confirmed input validation before pool connection, selected approved-owner recheck and FOR UPDATE lock, relation-only delete/insert, lexical readback, and protected-field absence", "git diff --check passed"],
+        "independentReview": "Passed with no required correction."
+      },
       "externalAcceptance": "PENDING — no authenticated owner, database write, runtime propagation timing, browser/device, provider, staging/production, or deployment validation is authorized or recorded."
     },
     {
