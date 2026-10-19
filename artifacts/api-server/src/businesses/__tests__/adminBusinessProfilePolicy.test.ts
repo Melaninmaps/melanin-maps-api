@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, adminProfileUpdateSqlBinding, directAdminCreationUnsafeFields, normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
+import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, adminProfileUpdateSqlBinding, directAdminCreationUnsafeFields, normalizeAdminBusinessDescription, normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
 
 const existing = {
   name: "Community Books", description: "Independent community bookstore.", address: "123 Main Street", city: "Philadelphia", state: "PA",
@@ -32,6 +32,42 @@ describe("audited administrator business profile policy", () => {
     const priceChange = validateAdminBusinessProfilePatch(patch({ priceRange: "$$", sourceReceipts: [receipt("price_range")] }), existing);
     expect(priceChange.requiredReceiptFields).toEqual(["price_range"]);
     expect(priceChange.receiptObservedValues).toEqual({ price_range: { fields: { price_range: "$$" }, identityMatch: { asserted: false, signal: null } } });
+  });
+  it("normalizes harmless website and spreadsheet description formatting while preserving paragraphs and international text", () => {
+    const websiteImport = "1000 Words Inc. is a Black-owned nonprofit art space.\r\n\r\nOpen Tuesday–Saturday.\u00A0All are welcome.";
+    const spreadsheetImport = "\uFEFF1000 Words Inc.\tfeatures art, classes, and events.\rMeet us\u202Fin Indianapolis.\u2028Café — कला — مرحبا 👩‍🎨";
+
+    expect(normalizeAdminBusinessDescription(websiteImport)).toBe(
+      "1000 Words Inc. is a Black-owned nonprofit art space.\n\nOpen Tuesday–Saturday. All are welcome.",
+    );
+    expect(normalizeAdminBusinessDescription(spreadsheetImport)).toBe(
+      "1000 Words Inc. features art, classes, and events.\nMeet us in Indianapolis.\nCafé — कला — مرحبا 👩‍🎨",
+    );
+  });
+  it("saves a normalized multiline description through the isolated canonical profile-update workflow", () => {
+    const rawImportedDescription = "\uFEFF1000 Words Inc.\r\n\r\nHosts free public art events\tand Black/Brown artist programs.\u00A0";
+    const validated = validateAdminBusinessProfilePatch(patch({ description: rawImportedDescription }), existing);
+    const updateEntries = Object.entries(validated.patch)
+      .filter(([column]) => validated.changedColumns.includes(column))
+      .map(([column, value]) => [column, adminProfileUpdateSqlBinding(column, value)] as const);
+
+    expect(validated.changedColumns).toEqual(["description"]);
+    expect(updateEntries).toEqual([[
+      "description",
+      { value: "1000 Words Inc.\n\nHosts free public art events and Black/Brown artist programs.", jsonb: false },
+    ]]);
+    const source = routeSource();
+    expect(source).toContain("validateAdminBusinessProfilePatch(req.body");
+    expect(source).toContain("Object.entries(validated.patch).filter(([column]) => validated.changedColumns.includes(column))");
+    expect(source).toContain("adminProfileUpdateSqlBinding(key, value)");
+  });
+  it("continues to reject unsafe C0 and C1 description controls instead of silently deleting content", () => {
+    for (const unsafe of ["\u0000", "\u000B", "\u000C", "\u001B", "\u007F", "\u0085", "\u009F"]) {
+      for (const description of [`Safe text${unsafe}unsafe text`, `${unsafe}Safe text`, `Safe text${unsafe}`, unsafe]) {
+        expect(() => validateAdminBusinessProfilePatch(patch({ description }), existing))
+          .toThrow("description contains invalid control characters");
+      }
+    }
   });
   it("audits only Instagram when a full editor form changes only Instagram", () => {
     const fullEditorSubmission = {

@@ -77,6 +77,41 @@ function cleanText(value: unknown, field: string, max: number, allowNull = true)
   if ([...trimmed].some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) throw new Error(`${field} contains invalid control characters`);
   return trimmed;
 }
+
+/**
+ * Spreadsheet and website imports commonly carry platform-specific line endings,
+ * tabs, non-breaking spaces, or a leading UTF-8 BOM into otherwise ordinary
+ * profile prose. Normalize only those presentation artifacts for the multiline
+ * description field. Do not ASCII-fold, strip international characters, or
+ * collapse paragraph boundaries.
+ */
+export function normalizeAdminBusinessDescription(value: string): string {
+  return value
+    .replace(/^\uFEFF/u, "")
+    .replace(/\r\n?|\u2028|\u2029/gu, "\n")
+    .replace(/\t/gu, " ")
+    .replace(/[\u00A0\u2007\u202F]/gu, " ")
+    .trim();
+}
+
+function hasUnsafeDescriptionControlCharacter(value: string): boolean {
+  return /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/u.test(value);
+}
+
+function cleanDescription(value: unknown): string | null {
+  if (value === null) return null;
+  if (typeof value !== "string") throw new Error("description must be text");
+  // Validate the original value first: String#trim treats some unsafe controls
+  // (including vertical tab and form feed) as whitespace, which would otherwise
+  // turn an invalid boundary control into an invisible deletion.
+  if (hasUnsafeDescriptionControlCharacter(value)) throw new Error("description contains invalid control characters");
+  const normalized = normalizeAdminBusinessDescription(value);
+  if (!normalized) return null;
+  if (normalized.length > OPTIONAL_TEXT_FIELDS.description.max) throw new Error("description must be 5000 characters or fewer");
+  if (hasUnsafeDescriptionControlCharacter(normalized)) throw new Error("description contains invalid control characters");
+  return normalized;
+}
+
 function isPrivateHostname(hostname: string): boolean {
   const host = hostname.toLowerCase(); if (host === "localhost" || host.endsWith(".localhost") || host === "::1" || host.startsWith("127.") || host.startsWith("10.") || host.startsWith("192.168.")) return true;
   const match = host.match(/^172\.(\d{1,3})\./); return Boolean(match && Number(match[1]) >= 16 && Number(match[1]) <= 31);
@@ -170,6 +205,8 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
     if (!own(raw, field)) continue;
     patch[config.column] = ["instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"].includes(field)
       ? cleanSocial(raw[field], field)
+      : field === "description"
+        ? cleanDescription(raw[field])
       : cleanText(raw[field], field, config.max);
   }
   if (own(raw, "priceRange") && patch.price_range && !["$", "$$", "$$$", "$$$$"].includes(String(patch.price_range))) throw new Error("priceRange must be one of $, $$, $$$, or $$$$");
