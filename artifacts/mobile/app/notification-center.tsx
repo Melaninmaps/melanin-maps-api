@@ -31,7 +31,7 @@ interface Notif {
   read: boolean;
   group: "Today" | "This Week" | "Earlier" | "Private alerts";
   entityType?: string | null;
-  data?: { type?: string; screen?: string; checkinId?: string | number; postId?: string; commentId?: string; userId?: string; action?: string };
+  data?: { type?: string; screen?: string; checkinId?: string | number; postId?: string; commentId?: string; userId?: string; action?: string; conversationId?: unknown };
 }
 
 const TABS: { id: NotifType; label: string }[] = [
@@ -67,6 +67,17 @@ function getRelativeTime(createdAt: string): string {
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
   return new Date(createdAt).toLocaleDateString();
+}
+
+function pendingConversationId(notif: Notif): string | null {
+  if (notif.entityType !== "conversation_request") return null;
+  const raw = notif.data?.conversationId;
+  const id = typeof raw === "number"
+    ? raw
+    : typeof raw === "string" && /^[1-9]\d*$/.test(raw)
+      ? Number(raw)
+      : NaN;
+  return Number.isSafeInteger(id) && id > 0 ? String(id) : null;
 }
 
 function mapApiRow(row: Record<string, unknown>): Notif {
@@ -164,6 +175,11 @@ export default function NotificationCenterScreen() {
 
   const openNotification = async (notif: Notif) => {
     await markRead(notif.id);
+    const conversationId = pendingConversationId(notif);
+    if (conversationId) {
+      router.push(`/chat/${encodeURIComponent(conversationId)}` as never);
+      return;
+    }
     if (
       notif.entityType === "safety_checkin"
       && notif.data?.type === "safety_checkin_overdue"

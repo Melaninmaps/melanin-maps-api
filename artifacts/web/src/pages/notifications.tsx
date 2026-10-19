@@ -14,7 +14,7 @@ interface Notification {
   read: boolean;
   createdAt: string;
   entityType?: string | null;
-  data?: { type?: string; officialUrl?: string; disclaimer?: string };
+  data?: { type?: string; officialUrl?: string; disclaimer?: string; conversationId?: unknown };
 }
 
 type OptionalOfficialAlertPreferences = {
@@ -38,6 +38,17 @@ function timeAgo(dateStr: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+function pendingConversationId(notification: Notification): string | null {
+  if (notification.entityType !== "conversation_request") return null;
+  const raw = notification.data?.conversationId;
+  const id = typeof raw === "number"
+    ? raw
+    : typeof raw === "string" && /^[1-9]\d*$/.test(raw)
+      ? Number(raw)
+      : NaN;
+  return Number.isSafeInteger(id) && id > 0 ? String(id) : null;
 }
 
 export default function Notifications() {
@@ -114,6 +125,11 @@ export default function Notifications() {
 
   async function openNotification(notification: Notification) {
     if (!notification.read) await markRead(notification.id);
+    const conversationId = pendingConversationId(notification);
+    if (conversationId) {
+      navigate(`/messages?conversation=${encodeURIComponent(conversationId)}`);
+      return;
+    }
     if (notification.entityType === "safety_checkin" && notification.data?.type === "safety_checkin_overdue") {
       navigate(`/safety/checkins/received/${encodeURIComponent(notification.id)}`);
     }

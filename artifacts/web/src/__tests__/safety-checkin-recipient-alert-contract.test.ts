@@ -33,4 +33,16 @@ describe("web Safety Check-In recipient alerts", () => {
     expect(alert).not.toContain("new Date(");
     expect(notifications).toContain("!isPrivateCheckinAlert && (");
   });
+
+  it("routes only a syntactically valid pending conversation-request notification to authenticated Messages", () => {
+    expect(notifications).toContain('if (notification.entityType !== "conversation_request") return null;');
+    expect(notifications).toContain('typeof raw === "string" && /^[1-9]\\d*$/.test(raw)');
+    expect(notifications).toContain("Number.isSafeInteger(id) && id > 0 ? String(id) : null");
+    expect(notifications).toContain("const conversationId = pendingConversationId(notification);");
+    expect(notifications).toContain("navigate(`/messages?conversation=${encodeURIComponent(conversationId)}`);");
+    expect(notifications).toContain("if (!notification.read) await markRead(notification.id);");
+    expect(notifications).not.toContain('"/accept"');
+    expect(notifications).not.toContain('"/decline"');
+    expect(notifications).not.toContain("requestStatus");
+  });
 });
