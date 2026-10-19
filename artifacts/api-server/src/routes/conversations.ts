@@ -65,7 +65,12 @@ router.get("/conversations", async (req: Request, res: Response) => {
       .where(sql`${conversationsTable.participantIds}::jsonb @> ${JSON.stringify([req.user.id])}::jsonb`)
       .orderBy(desc(conversationsTable.lastMessageAt))
       .limit(50);
-    res.json({ conversations: convs });
+    const visibleConversations = convs.map((conversation) =>
+      conversation.type === "dm" && conversation.requestStatus === "pending"
+        ? { ...conversation, lastMessageAt: null, lastMessagePreview: null }
+        : conversation,
+    );
+    res.json({ conversations: visibleConversations });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch conversations");
     res.status(500).json({ error: "Failed to fetch conversations" });
@@ -234,7 +239,12 @@ router.get("/conversations/:id/messages", async (req: Request, res: Response) =>
     const convId = parseInt(req.params["id"] as string, 10);
     if (isNaN(convId)) return void res.status(400).json({ error: "Invalid conversation ID" });
     const [conv] = await db
-      .select({ id: conversationsTable.id, type: conversationsTable.type, participantIds: conversationsTable.participantIds })
+      .select({
+        id: conversationsTable.id,
+        type: conversationsTable.type,
+        participantIds: conversationsTable.participantIds,
+        requestStatus: conversationsTable.requestStatus,
+      })
       .from(conversationsTable)
       .where(eq(conversationsTable.id, convId))
       .limit(1);
@@ -242,6 +252,9 @@ router.get("/conversations/:id/messages", async (req: Request, res: Response) =>
     if (!conversationHasParticipant(conv, req.user.id)) return void res.status(403).json({ error: "Forbidden" });
     if (await dmConversationIsBlocked(conv, req.user.id)) {
       return void res.status(403).json({ error: "This conversation is unavailable" });
+    }
+    if (conv.type === "dm" && conv.requestStatus === "pending") {
+      return void res.status(403).json({ error: "Message request not yet accepted", code: "REQUEST_PENDING" });
     }
     const msgs = await db
       .select()
