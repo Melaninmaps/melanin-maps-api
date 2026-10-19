@@ -3055,7 +3055,7 @@
     {
       "id": "COMM-001-DM-PENDING-MESSAGE-READ-GUARD",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "COMM-001",
@@ -3105,13 +3105,90 @@
           "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts": "6ffd17373e426b9a81152ec2665b0762a4f2b14b7dfc9580473c5579c39eaaac"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only pending-DM privacy repair.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only privacy repair; no runtime DB/delivery/account-switch/browser/device/member/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_2axWoL1gaKUsePXcZthDQEeY",
         "file": "COMM001_DM_PENDING_MESSAGE_READ_GUARD_BASE_2026-10-19.tar.gz",
         "sha256": "466de67a83c82ce662ec3c4bc1b43541b0142f4b3d65dc6ba5feccb9941d64db",
         "expires_at": "2026-10-20T23:05:42.929Z"
+      },
+      "sourceCommit": "c3e293e88e8f0a046567bbbd662300f5ccc42438",
+      "carrier": {
+        "handoff_id": "hnd_C52g8i8Kyl6uxNbjayLL_Mal",
+        "file": "COMM001_DM_PENDING_MESSAGE_READ_GUARD_CARRIER_2026-10-19.tar.gz",
+        "sha256": "a9e8691b63afef196971a973cdfec79d93b278ec3fb154e04655e711e82865c9",
+        "patch_sha256": "dfaf54da8286a81ca6d3b275406f3c5a5f6316900311f77dcbf6e0eab11200f7"
+      },
+      "centralValidation": {
+        "api_vitest": "2 files / 8 tests PASS",
+        "api_tsc": "PASS",
+        "semantic": "pending direct-message list keeps generic visibility while response-redacting preview/timestamp; pending history fails 403 REQUEST_PENDING before any message query; accepted read/list and decline absence are retained",
+        "scope": "exact two paths; git diff --check PASS"
       }
+    },
+    {
+      "id": "FLIGHT-005-SIMULATED-ARRIVAL-MEETING-TIME-LIFECYCLE",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-001",
+      "baseline": "c3e293e88e8f0a046567bbbd662300f5ccc42438",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/flight-status/contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/normalizers.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/gate.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-policy.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-policy.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/normalizers.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-KINFOLK-FLIGHT-COORDINATION / FLIGHT-001.",
+        "founderOutcome": "Using injected fakes only, Sean may explicitly share a fresh arrival with Mia; Mia separately grants bounded reciprocal coordination intent; only separately permitted busy-only snapshots may produce a canonical candidate meeting time.",
+        "participantPerspectives": [
+          "Sean owns an exact, revocable named-recipient arrival and availability permission.",
+          "Mia owns a distinct reciprocal intent and distinct availability permission; neither is inferred from relationship/DM/Circle.",
+          "Any third party, swapped pair, stale/unavailable input, or revoked permission receives the same generic unavailable result."
+        ],
+        "interactionChain": "existing owner->named-recipient fresh sharing -> existing reciprocal intent/fresh arrival eligibility -> two exact pair-bound availability permission envelopes containing existing normalized known/unknown results only -> earliest common safe slot at/after selected arrival -> canonical start/end or generic unavailable.",
+        "privacyAndPermissions": "No raw flight/arrival/status/identity/grant/intent/window/busy/provider/calendar diagnostic appears in result. Inputs are frozen; no cross-pair reuse.",
+        "completionBoundary": "Fixture-only source policy. It is not provider, Calendar connection, route/client/venue/notification/persistence/runtime/member/founder acceptance."
+      },
+      "requiredBehavior": [
+        "Compose existing resolveFlightArrivalSharing before resolveArrivalCoordinationEligibility; do not duplicate their validation.",
+        "Require two independent versioned/revocable/time-bounded pair-bound availability permissions holding only normalized CalendarAvailabilityResult-shaped values for the exact coordination window.",
+        "With injected positive fakes, select the earliest overlap-free slot at/after fresh arrival under injected positive duration, returning only canonical startAt/endAt.",
+        "All malformed/missing/revoked/expired/future/stale/wrong-purpose/pair/window/availability/no-slot/duration/clock/hostile-access exceptions return one frozen generic unavailable; never reuse a prior slot.",
+        "Test third-party/swapped/self/mixed pair, revocation each permission/sharing/intent, hostile input/no leak, frozen input and no global fetch."
+      ],
+      "constraints": [
+        "Exactly three new paths only; no change to existing Flight/Calendar leaves or registry paths.",
+        "No provider/network/credential/env/DB/storage/route/client/Calendar implementation/notification/venue/commerce/deployment/browser/device/activation.",
+        "No provider/runtime/account ownership/consent persistence/delivery/member/founder completion claim."
+      ],
+      "validationPlan": [
+        "pnpm --dir artifacts/api-server exec vitest run src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts src/kinfolk/flight-status/__tests__/sharing-policy.test.ts src/kinfolk/flight-status/__tests__/arrival-coordination-policy.test.ts src/kinfolk/calendar-availability/__tests__/normalizers.test.ts --reporter=dot",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit",
+        "exact three-new-path scope, git diff --check, static no external capability/leakage guard."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified three-new-file carrier only; central owner alone integrates.",
+      "sourceBase": {
+        "authority": "c3e293e88e8f0a046567bbbd662300f5ccc42438",
+        "newPaths": [
+          "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle-contracts.ts",
+          "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle.ts",
+          "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts"
+        ]
+      },
+      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic injected-fake source lifecycle only."
     }
   ],
   "globalDirectiveDelivery": [
