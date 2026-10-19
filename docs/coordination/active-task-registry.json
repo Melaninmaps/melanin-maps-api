@@ -3431,6 +3431,96 @@
         "semantic": "accept validates parsed matching conversation id and accepted requestStatus before local mutation; decline validates parsed ok:true before removal; malformed/mismatched 2xx retains pending local state and returns false",
         "scope": "exact hook plus new test; git diff --check PASS"
       }
+    },
+    {
+      "id": "FLIGHT-006-NORMALIZED-AVAILABILITY-WINDOW-BOUNDARY",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "FLIGHT-001",
+      "baseline": "c455d97e4299754d59ff28d2cfdcc5c78568e9a2",
+      "paths": [
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-lifecycle-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/sharing-policy.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-contracts.ts",
+        "artifacts/api-server/src/kinfolk/flight-status/arrival-coordination-policy.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/contracts.ts",
+        "artifacts/api-server/src/kinfolk/calendar-availability/normalizers.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-KINFOLK-FLIGHT-COORDINATION / injected-fake simulated arrival meeting lifecycle.",
+        "founderOutcome": "A meeting candidate cannot arise from a reciprocal \u201cknown\u201d availability permission whose coordination window exceeds the source\u2019s established 31-day normalized-availability maximum.",
+        "interactionChain": "injected pair-bound flight share -> eligibility -> reciprocal intent/availability validation -> local 31-day window boundary -> slot selection or existing generic frozen unavailable result.",
+        "completionBoundary": "Pure fake-input source validation. No provider/Calendar/OAuth/consent persistence/route/client/venue/delivery/runtime/member/release/founder evidence."
+      },
+      "evidence": "A read-only reproduction supplied paired 32-day known availability permissions and got a meeting slot, whereas the existing normalizer returns invalid-window for the identical range. The lifecycle private window validator admitted every positive length.",
+      "requiredBehavior": [
+        "Reject coordination windows greater than 31 days using a local literal invariant; do not import/change Calendar code.",
+        "Keep exact 31-day windows admissible.",
+        "Oversized coordination window or known availability carrying it returns existing frozen ARRIVAL_COORDINATION_LIFECYCLE_UNAVAILABLE before slot selection."
+      ],
+      "constraints": [
+        "Exactly lifecycle implementation/test; no Calendar/provider/OAuth/persistence/DB/route/client/venue/delivery/runtime/network/config/browser/device/staging/deploy/activation."
+      ],
+      "validationPlan": [
+        "pnpm --dir artifacts/api-server exec vitest run src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts src/kinfolk/flight-status/__tests__/sharing-policy.test.ts src/kinfolk/flight-status/__tests__/arrival-coordination-policy.test.ts src/kinfolk/calendar-availability/__tests__/normalizers.test.ts --reporter=dot",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope; git diff --check."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only fake input boundary."
+    },
+    {
+      "id": "BIZ-003-APPROVED-OWNER-SKIP-FEEDBACK-READ-ISOLATION",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "BIZ-003",
+      "baseline": "c455d97e4299754d59ff28d2cfdcc5c78568e9a2",
+      "paths": [
+        "artifacts/api-server/src/routes/skip-feedback.ts",
+        "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts"
+      ],
+      "readOnlyDependencies": [
+        "lib/db/src/schema/business-owner-links.ts",
+        "artifacts/api-server/src/routes/claims.ts",
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/mobile/app/business-dashboard.tsx",
+        "artifacts/mobile/app/business-owner/index.tsx",
+        "artifacts/mobile/__tests__/business-dashboard-skip-feedback-canonical.test.ts",
+        "artifacts/mobile/__tests__/business-owner-skip-feedback-canonical.test.ts"
+      ],
+      "founderLifecycleContext": {
+        "parentExperience": "EXP-BUSINESS-OWNER-EDITOR-ANALYTICS-AND-PUBLICATION / BIZ-003 member-to-owner feedback insight journey.",
+        "founderOutcome": "The current active approved listing owner\u2014not a legacy submitter\u2014can read the exact private feedback projection, while unmanaged legacy listings retain only their existing submitted-by fallback.",
+        "interactionChain": "owner GET -> 401 pre-query -> active approved unrevoke owner-link authority takes precedence -> safe id/message/createdAt projection -> no-link legacy submittedBy fallback -> 404 before feedback query.",
+        "privacyAndPermissions": "Prior submitter loses canonical reader access if active approved owner link exists; no feedback identity/internal field leak, no claims mutation.",
+        "completionBoundary": "Source-only server authorization repair; no BIZ-009/release/runtime/member/founder acceptance."
+      },
+      "evidence": "The claims approval path creates active approved business_owner_links but does not update businesses.submitted_by_id, while canonical feedback GET resolves only submitted_by_id. An active owner of a community/imported or re-assigned listing therefore 404s while a legacy submitter can retain read access.",
+      "requiredBehavior": [
+        "Authorize a matching active approved unrevoke owner link for the business before legacy fallback.",
+        "Use submittedById fallback only where no active approved owner link exists; deny a former/different submitter when a link exists.",
+        "Retain exact id/message/createdAt projection, 401 before query, 404 before feedback query, 500, POST/filtering/opt-in and client contracts."
+      ],
+      "constraints": [
+        "Exactly route/test. No client, claims approval, DB/schema/migration, feedback POST/filtering, analytics/entitlement/payment/catalog, BIZ-009, runtime/browser/device/staging/deploy/provider/activation."
+      ],
+      "validationPlan": [
+        "pnpm --dir artifacts/api-server exec vitest run src/routes/__tests__/skip-feedback-owner-contract.test.ts --reporter=dot",
+        "pnpm --dir artifacts/mobile exec vitest run __tests__/business-dashboard-skip-feedback-canonical.test.ts __tests__/business-owner-skip-feedback-canonical.test.ts --reporter=dot",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit",
+        "exact two-path scope; git diff --check."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 no real claim approval/owner relationship/DB/runtime/member/release/founder evidence."
     }
   ],
   "globalDirectiveDelivery": [

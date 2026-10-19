@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | Registered P0 FLIGHT-006 31-day boundary and P0 BIZ approved-owner feedback-reader isolation at `c455d97e4299754d59ff28d2cfdcc5c78568e9a2` after concrete source traces; Calendar has no legitimate source-only successor under OAUTH-001. Expanded COMM mobile matrix **4 files / 18** plus no-emit PASS. |
 | 2026-10-19 | Accepted COMM-001 mobile inbox malformed-2xx response validation at `0b96b8cd7be62e5036d20e98fe7184ba46329ade`: mobile **2 files / 10**, no-emit, exact two-path scope PASS. This is source-only; persistence, delivery/read, timeout/account-switch, device/staging/member/founder gates remain open. |
 | 2026-10-19 | Accepted canonical OAUTH-003 default-disabled injected Calendar admission at `806eb915d6a2eed952789bbb7d7de8759192d6fa`: API **4 files / 26**, no-emit, exact two new paths PASS. The carrier’s historical OAUTH-004 label is metadata only; OAUTH-001 remains NO-GO. |
 | 2026-10-19 | Accepted BIZ-003 explicit owner skip-feedback projection at `f100d7694db1b829196ea6af26a5c6d2502b68e6`: API **1 / 4**, mobile consumer contracts **2 / 6**, API no-emit and exact two-path scope PASS. The parent owner journey and BIZ-009 release gates remain open. |
