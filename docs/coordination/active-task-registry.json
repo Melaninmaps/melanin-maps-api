@@ -1597,7 +1597,16 @@
         "Exact three-path scope, git diff --check, static response/access/depth boundary review, and hash-verified carrier/apply reconstruction."
       ],
       "carrierDisposition": "Return an uncommitted, hash-verified three-path review carrier only; central owner alone may integrate, validate, commit, or update requirement status.",
-      "externalAcceptance": "PENDING \u2014 local source-only carrier/integration does not prove account, grant, payment, device, staging, production, or member-visible behavior."
+      "externalAcceptance": "PENDING \u2014 local source-only carrier/integration does not prove account, grant, payment, device, staging, production, or member-visible behavior.",
+      "sourceBaseTransfer": {
+        "handoffId": "hnd_68ZXQBMSe4xEsW4QVqtsCC_j",
+        "archive": "BIZ003_ANALYTICS_EFFECTIVE_ENTITLEMENT_BASE_2026-10-19.tar.gz",
+        "archiveSha256": "39b601b1207aacd02edb4ebf59a952c3ee9a337b2bc0024d8739cd100dd9c632",
+        "expiresAt": "2026-10-20T20:49:51.150Z",
+        "disposition": "Private compact path-only base transferred to the exclusive owner; carrier-only return required.",
+        "claimBaseline": "a4c055167e02ea56ccc01ff704ec0e8322f55418",
+        "sourceBaseAuthority": "ed7b73de61ef658097bb9b6e038727b374f587cf"
+      }
     }
   ]
 }
