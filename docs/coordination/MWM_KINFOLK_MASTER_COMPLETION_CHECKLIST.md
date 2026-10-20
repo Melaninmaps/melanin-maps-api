@@ -572,3 +572,5 @@ This baseline explicitly retains **D1–D11** as `MEM-D1` through `MEM-D11`; **S
 | 2026-10-20 | P0 `BIZ-003-POST-SKIP-FEEDBACK-ACTIVE-OWNER-INBOX-DELIVERY` claimed for 44XX: opted-in feedback conversation delivery must prefer an active approved owner and realign stale legacy recipients. |
 
 | 2026-10-20 | `BIZ-009-MOBILE-FEATURED-VIDEO-MANAGED-LIST-ENTRY-GUARD` source-integrated locally at `e5b1e3e590e65b6a088650f09898ba7fd6e5ce90`: mobile focused recovery/social suite 31/31 and no-emit PASS; exact-one context guard only, with server/media/runtime acceptance still separate. |
+
+| 2026-10-20 | `BIZ-009-WEB-SELECTED-EXPERIENCE-DRAFT-ISOLATION` source-integrated locally at `5dc7e7c0c33d8ea57cb38ec95babeecdc15cfc83`: unmodified Web social baseline 13/13; applied suite 14/14 + Web no-emit; selected-profile/multi-business API 11/11 + no-emit. The stale-overlay CommunityVibes failure was not reproduced on authority. Runtime/member acceptance remains separate. |

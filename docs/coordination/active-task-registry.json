@@ -4737,7 +4737,7 @@
       "exclusions": "No business-dashboard.tsx or managed-access test (separately active); no API/route/schema/DB, owner link, entitlement, Directory/Kinfolk, browser/device/staging/deploy/remote action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "b94ad4a790f461e4cfcb6ea7fa06b108f6c35405",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_WEB_SELECTED_EXPERIENCE_DRAFT_ISOLATION_BASE_2026-10-20.tar.gz",
@@ -4746,8 +4746,17 @@
         "expires_at": "2026-10-21T03:26:27.221Z",
         "size_bytes": 4397
       },
-      "workerStart": "ACKNOWLEDGED: b94ad4a7 base confirmed; exact two-path source work resumed.",
-      "source_boundary": "Source-only Web selected-context draft isolation; no runtime/member/release/founder acceptance."
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "source_boundary": "Source-only Web selected-context draft isolation; no runtime/member/release/founder acceptance.",
+      "sourceReceipt": {
+        "authority_commit": "5dc7e7c0c33d8ea57cb38ec95babeecdc15cfc83",
+        "carrier_handoff": "hnd_2HDwJHv94fziM7afxviseqjf",
+        "carrier_sha256": "0deb9e68ce412b08d041a3145955329326bd5169d17d6d082b0d47e31dd15075",
+        "source_validation": "Authoritative Web social UI: 1 file / 14 tests PASS; Web tsc --noEmit PASS. Server selected-profile + multi-business authority: 2 files / 11 tests PASS; API tsc --noEmit PASS. Exact two-path scope/diff PASS.",
+        "baseline_disposition": "Unmodified current-authority social UI contract passed 13/13 before application. The worker-overlay CommunityVibes assertion failure was reproduced only in a stale compact reference and is not a current-authority regression.",
+        "semantic_validation": "business.id transition resets/withholds draft; captured saveBusinessId targets the owner-tags request; message/error/saving completions apply only when the rendered business ID still matches the captured target.",
+        "boundary": "No browser/device, DB/runtime, staging/deploy, Directory/Kinfolk runtime, member/release/founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-FEATURED-VIDEO-SELECTED-OWNER-ROUTE-ISOLATION",
