@@ -105,7 +105,7 @@ function storageKey(bizId: string) {
 }
 
 // ── Phase state ───────────────────────────────────────────────────────────────
-type Phase = "loading" | "kinfolk_intro" | "return_choice" | "ready";
+type Phase = "loading" | "load_error" | "kinfolk_intro" | "return_choice" | "ready";
 
 const URL_RE = /^https?:\/\/.+\..+/i;
 const SUPPORTED = ["YouTube", "TikTok", "Instagram", "Facebook", "Twitch", "Snapchat", "Vimeo"];
@@ -152,58 +152,71 @@ export default function FeaturedVideoScreen() {
       const res = await fetch(`${getApiBase()}/api/businesses/mine`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (res.ok) {
-        const data = await res.json() as {
-          business?: {
-            id: string;
-            featuredVideoUrl?: string | null;
-            featuredVideoTitle?: string | null;
-            featuredVideoPurpose?: string | null;
-          }
-        };
-        const biz = data.business;
-        if (biz) {
-          setBusinessId(biz.id);
-          const url = biz.featuredVideoUrl ?? "";
-          if (url && isHostedUrl(url)) {
-            setHostedUrl(url);
-            setVideoMode("upload");
-          } else {
-            setVideoUrl(url);
-            setVideoMode(url ? "link" : "upload");
-          }
-          setVideoTitle(biz.featuredVideoTitle ?? "");
-          setVideoPurpose((biz.featuredVideoPurpose as VideoPurpose) ?? "");
+      if (!res.ok) {
+        setPhase("load_error");
+        return;
+      }
+      const data = await res.json() as {
+        business?: {
+          id: string;
+          featuredVideoUrl?: string | null;
+          featuredVideoTitle?: string | null;
+          featuredVideoPurpose?: string | null;
+        }
+      };
+      const biz = data.business;
+      const resolvedBusinessId = typeof biz?.id === "string" ? biz.id.trim() : "";
+      if (!biz || !resolvedBusinessId) {
+        setPhase("load_error");
+        return;
+      }
+      setBusinessId(resolvedBusinessId);
+      const url = biz.featuredVideoUrl ?? "";
+      if (url && isHostedUrl(url)) {
+        setHostedUrl(url);
+        setVideoMode("upload");
+      } else {
+        setVideoUrl(url);
+        setVideoMode(url ? "link" : "upload");
+      }
+      setVideoTitle(biz.featuredVideoTitle ?? "");
+      setVideoPurpose((biz.featuredVideoPurpose as VideoPurpose) ?? "");
 
-          // If they already have a video, skip straight to ready
-          if (url) {
-            setPhase("ready");
+      // If they already have a video, skip straight to ready
+      if (url) {
+        setPhase("ready");
+        return;
+      }
+
+      // Check for stored prompts
+      const stored = await AsyncStorage.getItem(storageKey(resolvedBusinessId));
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as string[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setActivePrompts(parsed);
+            setPhase("return_choice");
             return;
           }
-
-          // Check for stored prompts
-          const stored = await AsyncStorage.getItem(storageKey(biz.id));
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored) as string[];
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                setActivePrompts(parsed);
-                setPhase("return_choice");
-                return;
-              }
-            } catch { /* bad JSON, fall through */ }
-          }
-
-          // First visit — generate fresh prompts
-          const prompts = pickNewPrompts();
-          setActivePrompts(prompts);
-          setPhase("kinfolk_intro");
-        }
+        } catch { /* bad JSON, fall through */ }
       }
-    } catch { }
+
+      // First visit — generate fresh prompts
+      const prompts = pickNewPrompts();
+      setActivePrompts(prompts);
+      setPhase("kinfolk_intro");
+    } catch {
+      setPhase("load_error");
+    }
   }, []);
 
   useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
+
+  const retryLoad = () => {
+    setBusinessId(null);
+    setPhase("loading");
+    void load();
+  };
 
   // ── Prompt actions ────────────────────────────────────────────────────────────
   const savePromptsAndExit = async () => {
@@ -358,6 +371,18 @@ export default function FeaturedVideoScreen() {
       {/* ── Loading ── */}
       {phase === "loading" && (
         <View style={s.center}><ActivityIndicator size="large" color={colors.primary} /></View>
+      )}
+
+      {phase === "load_error" && (
+        <View style={[s.center, { paddingHorizontal: 24, gap: 12 }]}>
+          <Feather name="alert-circle" size={28} color={colors.mutedForeground} />
+          <Text style={[s.kinfolkHeadline, { color: colors.foreground, textAlign: "center" }]}>We couldn&apos;t load your video settings</Text>
+          <Text style={[s.kinfolkBody, { color: colors.mutedForeground, textAlign: "center" }]}>Please check your connection and try again.</Text>
+          <TouchableOpacity style={[s.primaryBtn, { backgroundColor: colors.primary }]} activeOpacity={0.85} onPress={retryLoad}>
+            <Feather name="refresh-cw" size={16} color="#FFF" />
+            <Text style={s.primaryBtnText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* ── KinfolkAI Intro (first visit or new prompts) ── */}
