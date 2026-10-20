@@ -4482,7 +4482,7 @@
       "exclusions": "No businesses/server/schema/ownership/media/schedule/video mutation path, BIZ-009 release, browser/device/mobile build, DB/runtime/staging/deploy action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
       "baseArchive": {
         "handoff": "hnd_UngqSBoysizxEDRbDkVIqElq",
@@ -4490,7 +4490,15 @@
         "expires_at": "2026-10-21T02:21:58.509Z",
         "size_bytes": 343164
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:22-02:24Z"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "63170c37f0f5f51438cabc093781c56fe3ceeacc",
+        "carrier_handoff": "hnd_pbgfPU34XRemZQEzXVhO7RP1",
+        "carrier_sha256": "58c46f4205390b725a2f4960a2afc67bcd6980b8ffd052c58d8fd38ebc207e4d",
+        "source_validation": "Native selected-editor contract 1 file/3 tests PASS; mobile tsc --noEmit --ignoreDeprecations 6.0 with external temporary build metadata PASS; server managed-business stale-write/owner contract 1 file/6 tests PASS; API tsc --noEmit PASS; exact two-path scope/diff PASS.",
+        "semantic_validation": "Selected managed GET retains updatedAt; selected managed PATCH sends expectedUpdatedAt only when a managedBusinessId exists; non-OK response precedes profileSaved, setOriginal, success haptic/alert/navigation, retaining draft recovery. Existing server contract proves authorized revision read, atomic predicate update, 409 BUSINESS_PROFILE_STALE_WRITE, and cross-business 404.",
+        "boundary": "No mobile build/device, browser, DB/runtime, staging/deploy, provider, member-visible, release, or founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-MOBILE-DASHBOARD-MANAGED-BUSINESS-SELECTION",
