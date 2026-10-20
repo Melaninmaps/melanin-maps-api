@@ -3,7 +3,7 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -70,8 +70,14 @@ export default function EditBusinessProfile() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { businessId: selectedBusinessId } = useLocalSearchParams<{ businessId?: string }>();
-  const managedBusinessId = typeof selectedBusinessId === "string" && selectedBusinessId.trim()
+  const { businessId: selectedBusinessId } = useLocalSearchParams<{ businessId?: string | string[] }>();
+  const isSelectedBusinessMode = selectedBusinessId !== undefined;
+  const hasMalformedSelectedBusinessId = isSelectedBusinessMode && (
+    Array.isArray(selectedBusinessId)
+    || typeof selectedBusinessId !== "string"
+    || !selectedBusinessId.trim()
+  );
+  const managedBusinessId = typeof selectedBusinessId === "string" && !hasMalformedSelectedBusinessId && selectedBusinessId.trim()
     ? selectedBusinessId.trim()
     : null;
   const photoPath = managedBusinessId
@@ -105,11 +111,54 @@ export default function EditBusinessProfile() {
   const [weeklySchedule, setWeeklySchedule] = useState<Record<string, DaySchedule>>({});
   const [showAvailability, setShowAvailability] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const [selectedContextError, setSelectedContextError] = useState<string | null>(null);
+  const requestEpoch = useRef(0);
+  const activeManagedBusinessId = useRef<string | null>(managedBusinessId);
+  activeManagedBusinessId.current = managedBusinessId;
 
   const update = (key: keyof FormState) => (val: string) =>
     setForm(prev => ({ ...prev, [key]: val }));
 
+  const clearSelectedBusinessContext = useCallback(() => {
+    setForm(EMPTY_FORM);
+    setOriginal(null);
+    setBusinessId(null);
+    setExpectedUpdatedAt(null);
+    setPhotos([]);
+    setPendingPhotos([]);
+    setCoverUrl(null);
+    setVideos([]);
+    setAddLinkVisible(false);
+    setAddLinkText("");
+    setIntroVideoUrl(null);
+    setHasFeaturedVideo(false);
+    setWeeklySchedule({});
+    setShowAvailability(false);
+    setSaving(false);
+    setUploadingPhoto(false);
+    setAddingLink(false);
+    setUploadingIntroVideo(false);
+    setSavingSchedule(false);
+  }, []);
+
+  const invalidateSelectedBusinessContext = useCallback((message: string) => {
+    requestEpoch.current += 1;
+    clearSelectedBusinessContext();
+    setSelectedContextError(message);
+    setLoading(false);
+  }, [clearSelectedBusinessContext]);
+
   const load = useCallback(async () => {
+    const epoch = ++requestEpoch.current;
+    if (isSelectedBusinessMode) {
+      clearSelectedBusinessContext();
+      setSelectedContextError(null);
+      setLoading(true);
+      if (hasMalformedSelectedBusinessId || !managedBusinessId) {
+        invalidateSelectedBusinessContext("Choose a business in Business Admin before editing its profile.");
+        return;
+      }
+    }
     try {
       const token = await getToken();
       const headers: Record<string, string> = {};
@@ -118,40 +167,79 @@ export default function EditBusinessProfile() {
         ? `/api/businesses/mine/managed/${encodeURIComponent(managedBusinessId)}`
         : "/api/businesses/mine";
       const res = await fetch(`${getApiBase()}${selectedPath}`, { headers });
-      if (res.ok) {
-        const data = await res.json() as { business: (FormState & { id: string; updatedAt?: string | null; imageUrl?: string; photos?: string[]; videos?: string[]; introVideoUrl?: string | null; weeklySchedule?: Record<string, { open: string; close: string } | null> | null; showAvailability?: boolean }) | null };
-        if (data.business) {
-          const b = data.business;
-          const f: FormState = {
-            name: b.name ?? "", category: b.category ?? "", subcategory: b.subcategory ?? "",
-            description: b.description ?? "", phone: b.phone ?? "", website: b.website ?? "", hours: b.hours ?? "",
-            instagram: b.instagram ?? "", tiktok: b.tiktok ?? "", facebook: b.facebook ?? "",
-            twitter: b.twitter ?? "", youtube: b.youtube ?? "",
-            pinterest: (b as any).pinterest ?? "", primarySocialPlatform: (b as any).primarySocialPlatform ?? "",
-            address: (b as any).address ?? "", city: (b as any).city ?? "",
-            state: (b as any).state ?? "", zip: (b as any).zip ?? "",
-            businessTagline: (b as any).businessTagline ?? "", ownerName: (b as any).ownerName ?? "",
-            ownerBio: (b as any).ownerBio ?? "", ownerStory: (b as any).ownerStory ?? "",
-          };
-          setForm(f);
-          setOriginal(f);
-          setBusinessId(b.id);
-          setExpectedUpdatedAt(managedBusinessId ? b.updatedAt ?? null : null);
-          setPhotos(b.photos ?? []);
-          setPendingPhotos((b as any).pendingPhotos ?? []);
-          setCoverUrl(b.imageUrl ?? null);
-          setVideos(b.videos ?? []);
-          setIntroVideoUrl(b.introVideoUrl ?? null);
-          setHasFeaturedVideo(!!(b as any).featuredVideoUrl);
-          setWeeklySchedule((b.weeklySchedule as Record<string, { open: string; close: string } | null>) ?? {});
-          setShowAvailability(b.showAvailability ?? false);
-        }
+      if (!res.ok) throw new Error("Selected business could not be loaded.");
+      const data = await res.json() as { business: (FormState & { id: string; updatedAt?: string | null; imageUrl?: string; photos?: string[]; videos?: string[]; introVideoUrl?: string | null; weeklySchedule?: Record<string, { open: string; close: string } | null> | null; showAvailability?: boolean }) | null };
+      const b = data.business;
+      if (!b || typeof b.id !== "string" || (managedBusinessId && b.id !== managedBusinessId)) {
+        throw new Error("Selected business could not be loaded.");
       }
-    } catch { }
-    finally { setLoading(false); }
-  }, []);
+      if (epoch !== requestEpoch.current || activeManagedBusinessId.current !== managedBusinessId) return;
+      const f: FormState = {
+        name: b.name ?? "", category: b.category ?? "", subcategory: b.subcategory ?? "",
+        description: b.description ?? "", phone: b.phone ?? "", website: b.website ?? "", hours: b.hours ?? "",
+        instagram: b.instagram ?? "", tiktok: b.tiktok ?? "", facebook: b.facebook ?? "",
+        twitter: b.twitter ?? "", youtube: b.youtube ?? "",
+        pinterest: (b as any).pinterest ?? "", primarySocialPlatform: (b as any).primarySocialPlatform ?? "",
+        address: (b as any).address ?? "", city: (b as any).city ?? "",
+        state: (b as any).state ?? "", zip: (b as any).zip ?? "",
+        businessTagline: (b as any).businessTagline ?? "", ownerName: (b as any).ownerName ?? "",
+        ownerBio: (b as any).ownerBio ?? "", ownerStory: (b as any).ownerStory ?? "",
+      };
+      setForm(f);
+      setOriginal(f);
+      setBusinessId(b.id);
+      setExpectedUpdatedAt(managedBusinessId ? b.updatedAt ?? null : null);
+      setPhotos(b.photos ?? []);
+      setPendingPhotos((b as any).pendingPhotos ?? []);
+      setCoverUrl(b.imageUrl ?? null);
+      setVideos(b.videos ?? []);
+      setIntroVideoUrl(b.introVideoUrl ?? null);
+      setHasFeaturedVideo(!!(b as any).featuredVideoUrl);
+      setWeeklySchedule((b.weeklySchedule as Record<string, { open: string; close: string } | null>) ?? {});
+      setShowAvailability(b.showAvailability ?? false);
+    } catch {
+      if (epoch !== requestEpoch.current || activeManagedBusinessId.current !== managedBusinessId) return;
+      if (isSelectedBusinessMode) {
+        invalidateSelectedBusinessContext("We couldn't load the selected business. Check your connection and try again.");
+      }
+    } finally {
+      if (epoch === requestEpoch.current && activeManagedBusinessId.current === managedBusinessId) {
+        setLoading(false);
+      }
+    }
+  }, [clearSelectedBusinessContext, hasMalformedSelectedBusinessId, invalidateSelectedBusinessContext, isSelectedBusinessMode, managedBusinessId]);
 
-  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
+  useEffect(() => {
+    queueMicrotask(() => { void load(); });
+    return () => { requestEpoch.current += 1; };
+  }, [load]);
+
+  const selectedAuxiliaryBusinessId = (): string | null | undefined => {
+    if (!isSelectedBusinessMode) return null;
+    if (
+      !managedBusinessId
+      || selectedContextError
+      || businessId !== managedBusinessId
+      || activeManagedBusinessId.current !== managedBusinessId
+    ) {
+      Alert.alert("Business selection required", "Return to Business Admin and select the business you want to edit.");
+      return undefined;
+    }
+    return managedBusinessId;
+  };
+
+  const selectedAuxiliaryPath = (selectedId: string | null, suffix: string, legacyPath: string) =>
+    selectedId
+      ? `/api/businesses/mine/managed/${encodeURIComponent(selectedId)}/${suffix}`
+      : legacyPath;
+
+  const selectedAuxiliaryRequestIsCurrent = (selectedId: string | null, epoch: number) =>
+    !selectedId || (
+      epoch === requestEpoch.current
+      && activeManagedBusinessId.current === selectedId
+      && businessId === selectedId
+      && !selectedContextError
+    );
 
   const isDirty = original !== null && JSON.stringify(form) !== JSON.stringify(original);
 
@@ -251,60 +339,103 @@ export default function EditBusinessProfile() {
 
   // ── Intro video ────────────────────────────────────────────────────────────
   const handleUploadIntroVideo = async () => {
+    const selectedId = selectedAuxiliaryBusinessId();
+    if (selectedId === undefined) return;
+    const epoch = requestEpoch.current;
     if ((Platform.OS as string) === "web") { Alert.alert("Not supported", "Video upload is available on the mobile app."); return; }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your media library to upload a video."); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"], allowsEditing: false, videoMaxDuration: 120 });
     if (result.canceled || !result.assets.length) return;
+    if (!selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) return;
     const asset = result.assets[0];
     setUploadingIntroVideo(true);
     try {
       const token = await getToken();
       const formData = new FormData();
       formData.append("video", { uri: asset.uri, type: asset.mimeType ?? "video/mp4", name: "intro.mp4" } as unknown as Blob);
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/intro-video`, {
+      const res = await fetch(`${getApiBase()}${selectedAuxiliaryPath(selectedId, "intro-video", "/api/businesses/mine/intro-video")}`, {
         method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: formData,
       });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json() as { introVideoUrl: string };
+      if (typeof data.introVideoUrl !== "string") {
+        if (selectedId) throw new Error("Upload failed");
+        return;
+      }
+      if (selectedId && !data.introVideoUrl.trim()) throw new Error("Upload failed");
+      if (!selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) return;
       setIntroVideoUrl(data.introVideoUrl);
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Intro video uploaded!", "Visitors will now see a 'Watch Owner Intro' button on your listing.");
-    } catch { Alert.alert("Upload failed", "Please try again."); }
-    finally { setUploadingIntroVideo(false); }
+    } catch {
+      if (selectedId) invalidateSelectedBusinessContext("We couldn't confirm the selected business. Return to Business Admin and try again.");
+      Alert.alert("Upload failed", "Please try again.");
+    } finally {
+      if (selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) setUploadingIntroVideo(false);
+    }
   };
 
   const handleDeleteIntroVideo = () => {
     Alert.alert("Remove intro video?", "This will remove your hosted owner intro video.", [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: async () => {
+        const selectedId = selectedAuxiliaryBusinessId();
+        if (selectedId === undefined) return;
+        const epoch = requestEpoch.current;
         try {
           const token = await getToken();
-          await fetch(`${getApiBase()}/api/businesses/mine/intro-video`, {
+          const res = await fetch(`${getApiBase()}${selectedAuxiliaryPath(selectedId, "intro-video", "/api/businesses/mine/intro-video")}`, {
             method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
+          if (!res.ok && selectedId) throw new Error("Delete failed");
+          if (selectedId) {
+            const data = await res.json() as { ok?: unknown };
+            if (data.ok !== true) throw new Error("Delete failed");
+          }
+          if (!selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) return;
           setIntroVideoUrl(null);
-        } catch { Alert.alert("Error", "Failed to remove intro video."); }
+        } catch {
+          if (selectedId) invalidateSelectedBusinessContext("We couldn't confirm the selected business. Return to Business Admin and try again.");
+          Alert.alert("Error", "Failed to remove intro video.");
+        }
       }},
     ]);
   };
 
   // ── Weekly schedule ─────────────────────────────────────────────────────────
   const handleSaveSchedule = async () => {
+    const selectedId = selectedAuxiliaryBusinessId();
+    if (selectedId === undefined) return;
+    const epoch = requestEpoch.current;
     setSavingSchedule(true);
     try {
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/weekly-schedule`, {
+      const res = await fetch(`${getApiBase()}${selectedAuxiliaryPath(selectedId, "weekly-schedule", "/api/businesses/mine/weekly-schedule")}`, {
         method: "PATCH", headers,
         body: JSON.stringify({ weeklySchedule, showAvailability }),
       });
       if (!res.ok) throw new Error("Save failed");
+      if (selectedId) {
+        const data = await res.json() as { weeklySchedule?: unknown; showAvailability?: unknown };
+        if (
+          !data.weeklySchedule || typeof data.weeklySchedule !== "object" || Array.isArray(data.weeklySchedule)
+          || data.showAvailability !== showAvailability
+        ) {
+          throw new Error("Save failed");
+        }
+      }
+      if (!selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) return;
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Schedule saved!", "Your availability is now visible on your listing.");
-    } catch { Alert.alert("Save failed", "Please try again."); }
-    finally { setSavingSchedule(false); }
+    } catch {
+      if (selectedId) invalidateSelectedBusinessContext("We couldn't confirm the selected business. Return to Business Admin and try again.");
+      Alert.alert("Save failed", "Please try again.");
+    } finally {
+      if (selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) setSavingSchedule(false);
+    }
   };
 
   const toggleDay = (day: string) => {
@@ -385,24 +516,30 @@ export default function EditBusinessProfile() {
   const handleAddVideoLink = async () => {
     const url = addLinkText.trim();
     if (!url) return;
+    const selectedId = selectedAuxiliaryBusinessId();
+    if (selectedId === undefined) return;
+    const epoch = requestEpoch.current;
     setAddingLink(true);
     const token = await getToken();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = `Bearer ${token}`;
     try {
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/videos/link`, {
+      const res = await fetch(`${getApiBase()}${selectedAuxiliaryPath(selectedId, "videos/link", "/api/businesses/mine/videos/link")}`, {
         method: "POST", headers, body: JSON.stringify({ url }),
       });
       if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Failed"); }
       const data = await res.json() as { videos: string[] };
+      if (!Array.isArray(data.videos) || (selectedId && !data.videos.includes(url))) throw new Error("Failed");
+      if (!selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) return;
       setVideos(data.videos);
       setAddLinkText("");
       setAddLinkVisible(false);
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
+      if (selectedId) invalidateSelectedBusinessContext("We couldn't confirm the selected business. Return to Business Admin and try again.");
       Alert.alert("Error", err instanceof Error ? err.message : "Could not add link.");
     } finally {
-      setAddingLink(false);
+      if (selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) setAddingLink(false);
     }
   };
 
@@ -410,17 +547,55 @@ export default function EditBusinessProfile() {
     Alert.alert("Remove video", "Remove this video from your profile?", [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: async () => {
+        const selectedId = selectedAuxiliaryBusinessId();
+        if (selectedId === undefined) return;
+        const epoch = requestEpoch.current;
+        if (!selectedId) {
+          const token = await getToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+          const res = await fetch(`${getApiBase()}${selectedAuxiliaryPath(selectedId, "videos", "/api/businesses/mine/videos")}`, { method: "DELETE", headers, body: JSON.stringify({ url }) });
+          if (res.ok) {
+            const data = await res.json() as { videos: string[] };
+            if (Array.isArray(data.videos) && selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) setVideos(data.videos);
+          }
+          return;
+        }
         const token = await getToken();
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`${getApiBase()}/api/businesses/mine/videos`, { method: "DELETE", headers, body: JSON.stringify({ url }) });
-        if (res.ok) { const d = await res.json() as { videos: string[] }; setVideos(d.videos); }
+        try {
+          const res = await fetch(`${getApiBase()}${selectedAuxiliaryPath(selectedId, "videos", "/api/businesses/mine/videos")}`, { method: "DELETE", headers, body: JSON.stringify({ url }) });
+          if (!res.ok) throw new Error("Delete failed");
+          const data = await res.json() as { videos: string[] };
+          if (!Array.isArray(data.videos) || data.videos.includes(url)) throw new Error("Delete failed");
+          if (selectedAuxiliaryRequestIsCurrent(selectedId, epoch)) setVideos(data.videos);
+        } catch {
+          invalidateSelectedBusinessContext("We couldn't confirm the selected business. Return to Business Admin and try again.");
+          Alert.alert("Error", "Failed to remove video.");
+        }
       }},
     ]);
   };
 
   if (loading) {
     return <View style={[styles.root, { backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }]}><ActivityIndicator color={colors.primary} /></View>;
+  }
+
+  if (isSelectedBusinessMode && selectedContextError) {
+    return (
+      <View style={[styles.root, { backgroundColor: colors.background, alignItems: "center", justifyContent: "center", padding: 24, gap: 14 }]}>
+        <Feather name="briefcase" size={30} color={colors.primary} />
+        <Text style={[styles.headerTitle, { color: colors.foreground, textAlign: "center" }]}>Selected business unavailable</Text>
+        <Text style={[styles.groupHelper, { color: colors.mutedForeground, textAlign: "center" }]}>{selectedContextError}</Text>
+        <TouchableOpacity testID="business-owner-edit-profile-context-retry" onPress={() => { void load(); }} style={[styles.saveFooterBtn, { backgroundColor: colors.primary }]} activeOpacity={0.85}>
+          <Text style={[styles.saveFooterTxt, { color: "#FFF" }]}>Try again</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="business-owner-edit-profile-context-back" onPress={() => router.replace("/business-owner" as never)} activeOpacity={0.85}>
+          <Text style={[styles.groupHelper, { color: colors.primary }]}>Back to Business Admin</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (

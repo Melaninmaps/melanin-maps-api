@@ -2922,6 +2922,146 @@ router.delete("/businesses/mine/videos", async (req: any, res: Response) => {
   }
 });
 
+router.post("/businesses/mine/managed/:businessId/videos/link", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!businessId) {
+    res.status(404).json({ error: "Managed business not found." });
+    return;
+  }
+
+  const { url } = req.body as { url?: string };
+  if (!url?.trim()) {
+    res.status(400).json({ error: "url is required" });
+    return;
+  }
+
+  const ALLOWED_HOSTS = [
+    "youtube.com",
+    "youtu.be",
+    "tiktok.com",
+    "instagram.com",
+    "facebook.com",
+    "fb.watch",
+    "vimeo.com",
+  ];
+  try {
+    const hostname = new URL(url).hostname.replace("www.", "");
+    if (!ALLOWED_HOSTS.some((host) => hostname.includes(host))) {
+      res.status(400).json({
+        error:
+          "Only YouTube, TikTok, Instagram, Facebook, and Vimeo links are accepted",
+      });
+      return;
+    }
+  } catch {
+    res.status(400).json({ error: "Invalid URL" });
+    return;
+  }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, videos: businessesTable.videos })
+      .from(businessesTable)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .limit(1);
+    if (!business) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    const currentVideos = (business.videos as string[]) ?? [];
+    if (currentVideos.length >= 5) {
+      res.status(400).json({ error: "Maximum of 5 videos allowed" });
+      return;
+    }
+    if (currentVideos.includes(url.trim())) {
+      res.status(409).json({ error: "This link is already added" });
+      return;
+    }
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ videos: [...currentVideos, url.trim()], updatedAt: new Date() })
+      .where(and(
+        eq(businessesTable.id, business.id),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    res.status(201).json({ url: url.trim(), videos: updated.videos });
+  } catch (err) {
+    req.log.error({ err }, "Failed to add selected business video link");
+    res.status(500).json({ error: "Failed to add link" });
+  }
+});
+
+router.delete("/businesses/mine/managed/:businessId/videos", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!businessId) {
+    res.status(404).json({ error: "Managed business not found." });
+    return;
+  }
+
+  const { url } = req.body as { url?: string };
+  if (!url) {
+    res.status(400).json({ error: "url is required" });
+    return;
+  }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, videos: businessesTable.videos })
+      .from(businessesTable)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .limit(1);
+    if (!business) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    const updatedVideos = ((business.videos as string[]) ?? []).filter(
+      (video) => video !== url,
+    );
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ videos: updatedVideos, updatedAt: new Date() })
+      .where(and(
+        eq(businessesTable.id, business.id),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    res.json({ videos: updated.videos });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete selected business video");
+    res.status(500).json({ error: "Failed to delete video" });
+  }
+});
+
 // ─── POST /businesses/mine/intro-video — upload hosted owner intro (≤2 min) ──
 const introVideoUpload = multer({
   storage: multer.memoryStorage(),
@@ -3032,6 +3172,158 @@ router.delete(
       res.json({ ok: true });
     } catch (err) {
       req.log.error({ err }, "Failed to delete intro video");
+      res.status(500).json({ error: "Failed to delete intro video" });
+    }
+  },
+);
+
+router.post(
+  "/businesses/mine/managed/:businessId/intro-video",
+  introVideoUpload.single("video"),
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: "Video file is required" });
+      return;
+    }
+
+    try {
+      const [business] = await db
+        .select({ id: businessesTable.id })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .limit(1);
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      if (!bucketId) {
+        res.status(500).json({ error: "Object storage not configured" });
+        return;
+      }
+
+      const ext = (
+        req.file.originalname.split(".").pop() ?? "mp4"
+      ).toLowerCase();
+      const safeExt = /^[a-z0-9]{1,10}$/.test(ext) ? ext : "mp4";
+      const objectKey = `businesses/${business.id}/intro-video-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}.${safeExt}`;
+      const file = objectStorageClient.bucket(bucketId).file(objectKey);
+      await file.save(req.file.buffer, {
+        contentType: req.file.mimetype,
+        resumable: false,
+      });
+
+      try {
+        const introVideoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+        const [updated] = await db
+          .update(businessesTable)
+          .set({ introVideoUrl, updatedAt: new Date() })
+          .where(and(
+            eq(businessesTable.id, business.id),
+            approvedOwnerPredicate(String(userId)),
+          ))
+          .returning();
+        if (!updated) {
+          void file.delete().catch(() => {});
+          res.status(404).json({ error: "Managed business not found." });
+          return;
+        }
+
+        res.json({ introVideoUrl: updated.introVideoUrl });
+      } catch (err) {
+        void file.delete().catch(() => {});
+        throw err;
+      }
+    } catch (err) {
+      req.log.error({ err }, "Failed to upload selected intro video");
+      res.status(500).json({ error: "Failed to upload intro video" });
+    }
+  },
+);
+
+router.delete(
+  "/businesses/mine/managed/:businessId/intro-video",
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    try {
+      const [business] = await db
+        .select({
+          id: businessesTable.id,
+          introVideoUrl: businessesTable.introVideoUrl,
+        })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .limit(1);
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      const storageUrlPrefix = bucketId
+        ? `https://storage.googleapis.com/${bucketId}/`
+        : null;
+      const selectedIntroVideoPrefix = `businesses/${business.id}/intro-video-`;
+      const legacySelectedIntroVideoPrefix = `businesses/${business.id}/intro-video.`;
+      const objectKey = (
+        storageUrlPrefix &&
+        typeof business.introVideoUrl === "string" &&
+        (business.introVideoUrl.startsWith(`${storageUrlPrefix}${selectedIntroVideoPrefix}`) ||
+          business.introVideoUrl.startsWith(`${storageUrlPrefix}${legacySelectedIntroVideoPrefix}`))
+      )
+        ? business.introVideoUrl.slice(storageUrlPrefix.length)
+        : undefined;
+      const [updated] = await db
+        .update(businessesTable)
+        .set({ introVideoUrl: null, updatedAt: new Date() })
+        .where(and(
+          eq(businessesTable.id, business.id),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .returning({ id: businessesTable.id });
+      if (!updated) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      if (bucketId && objectKey) {
+        objectStorageClient
+          .bucket(bucketId)
+          .file(objectKey)
+          .delete()
+          .catch(() => {});
+      }
+
+      res.json({ ok: true });
+    } catch (err) {
+      req.log.error({ err }, "Failed to delete selected intro video");
       res.status(500).json({ error: "Failed to delete intro video" });
     }
   },
@@ -3343,6 +3635,69 @@ router.patch(
       });
     } catch (err) {
       req.log.error({ err }, "Failed to update weekly schedule");
+      res.status(500).json({ error: "Failed to update schedule" });
+    }
+  },
+);
+
+router.patch(
+  "/businesses/mine/managed/:businessId/weekly-schedule",
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    const { weeklySchedule, showAvailability } = req.body as {
+      weeklySchedule?: Record<string, { open: string; close: string } | null>;
+      showAvailability?: boolean;
+    };
+
+    try {
+      const [business] = await db
+        .select({ id: businessesTable.id })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .limit(1);
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const updates: Record<string, unknown> = { updatedAt: new Date() };
+      if (weeklySchedule !== undefined) updates.weeklySchedule = weeklySchedule;
+      if (showAvailability !== undefined) {
+        updates.showAvailability = showAvailability;
+      }
+
+      const [updated] = await db
+        .update(businessesTable)
+        .set(updates)
+        .where(and(
+          eq(businessesTable.id, business.id),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .returning();
+      if (!updated) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      res.json({
+        weeklySchedule: updated.weeklySchedule,
+        showAvailability: updated.showAvailability,
+      });
+    } catch (err) {
+      req.log.error({ err }, "Failed to update selected business weekly schedule");
       res.status(500).json({ error: "Failed to update schedule" });
     }
   },
