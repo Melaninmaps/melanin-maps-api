@@ -4729,7 +4729,7 @@
       "exclusions": "No business-dashboard.tsx or managed-access test (separately active); no API/route/schema/DB, owner link, entitlement, Directory/Kinfolk, browser/device/staging/deploy/remote action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "authorityBase": "b94ad4a790f461e4cfcb6ea7fa06b108f6c35405",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_WEB_SELECTED_EXPERIENCE_DRAFT_ISOLATION_BASE_2026-10-20.tar.gz",
@@ -4738,7 +4738,7 @@
         "expires_at": "2026-10-21T03:26:27.221Z",
         "size_bytes": 4397
       },
-      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
+      "workerStart": "BASE CLARIFIED: record/manifest base b94ad4a790f461e4cfcb6ea7fa06b108f6c35405 confirmed; exact source bytes unchanged at current authority; resume requested.",
       "source_boundary": "Source-only Web selected-context draft isolation; no runtime/member/release/founder acceptance."
     },
     {
@@ -4758,11 +4758,12 @@
       "authorityBase": "cb69609d4569a5e8e8bbece776a7f5a6074130d3",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_FEATURED_VIDEO_SELECTED_OWNER_ROUTE_BASE_2026-10-20.tar.gz",
-        "sha256": "PENDING_LOCAL_PACKAGE",
-        "handoff": "PENDING",
-        "expires_at": "PENDING"
+        "sha256": "9cf0991a42a8a2347a23e43eb63bc4a612d4298af0e7726ab3ccf9e11081c86d",
+        "handoff": "hnd_UTAsgNcrLNUMdtF_lCv1OEwY",
+        "expires_at": "2026-10-21T03:28:30.154Z",
+        "size_bytes": 48978
       },
-      "workerStart": "DISPATCH_PENDING",
+      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "source_boundary": "Source-only deterministic server authorization/isolation repair; runtime/storage/member/release/founder acceptance open."
     }
   ],
