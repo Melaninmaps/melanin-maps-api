@@ -4925,7 +4925,7 @@
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
       "paths": [
         "artifacts/mobile/app/business-owner/index.tsx",
@@ -4936,12 +4936,20 @@
       "acceptance": "Allow an optional entry businessId only after the Cultural Teaching screen verifies exact membership in the managed list; retain exact-one fallback only when the list has exactly one valid item. For zero, malformed, unowned, or multiple-without-explicit-selection contexts, clear title/text/confirmation/saved state and render the existing safe approved-owner-access recovery without GET/PUT/DELETE to a guessed business. Update Owner Home navigation only to forward an existing explicit selected context; never invent a first business. Preserve the per-business server endpoints, 90-word/voluntary-confirmation policy, member opt-in card, and no Kinfolk/provider/notification behavior. Extend the existing native cultural contract; run it plus mobile no-emit with --ignoreDeprecations 6.0, exact three-path scope and diff check.",
       "exclusions": "No server/API/route, owner-link/schema/DB, cultural policy/card/detail, provider/AI/notification, Directory/Kinfolk/publication, browser/device/staging/deploy/remote Git/mobile-build action.",
       "source_boundary": "Source-only native managed-context repair; no runtime/member/release/founder acceptance.",
-      "workerStart": "ACKNOWLEDGED_STARTED",
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
       "baseTransfer": {
         "handoff_id": "hnd_QANkmjfn8cXXoJQKvYy1Y2iF",
         "file": "BIZ009_CULTURAL_TEACHING_MANAGED_ENTRY_CONTEXT_BASE_2026-10-20.tar.gz",
         "sha256": "0104252e767a20e68db7b0c9629775e840dde0ad020fe53bcbf52da6f573448f",
         "expires_at": "2026-10-21T03:54:24.515Z"
+      },
+      "sourceReceipt": {
+        "authority_commit": "258f1fd802928fa05fb75105a31d2244c55ec3b2",
+        "carrier_handoff": "hnd_LjQDRQKxM3M7MoxHJTTA3A3Q",
+        "carrier_sha256": "e2ab79b87dc8b58f0ae02d35b0af2e14e3e220b1245b493866f0d25ac1a455d0",
+        "source_validation": "Current authority native BIZ matrix: 6 files / 38 tests PASS; mobile tsc --noEmit --ignoreDeprecations 6.0 PASS; exact three-path scope/diff and output hashes PASS. The worker’s isolated missing-card limitation is resolved on full authority.",
+        "semantic_validation": "Owner Home forwards only explicit selected IDs. Cultural Teaching resolves the managed list, accepts a URL entry only on exact membership, permits implicit fallback only for exactly one valid business, clears context on invalid/error paths, epoch-fences stale loads, and binds GET/PUT/DELETE to the resolved selected ID.",
+        "boundary": "Source-only native state/context evidence. No API route/server/storage/DB/runtime/browser/device/staging/deploy/member/release/founder acceptance."
       }
     }
   ],
