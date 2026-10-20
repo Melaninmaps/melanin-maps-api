@@ -403,6 +403,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | Registered three exact P0 BIZ-009 parent-journey source repairs: photo-delete owner isolation, native selected-editor revision propagation, and native dashboard managed-business selection. All are source-only, path-exclusive, and do not constitute runtime or founder acceptance. |
 | 2026-10-20 | Issued BIZ-009 Business Voice readiness R3 compatibility overlay. Its historical route snapshot is non-writable and compilation-only; central must retain the current `revoked_at IS NULL` owner guard and re-run authority tests. The four writable paths are unchanged. |
 | 2026-10-20 | BIZ-002 Marketplace Checkout closed-rail API/Web guard SOURCE_INTEGRATED_LOCAL_ONLY at `e4dff1de126d65cc4b31f21cbf78040f3c8acc6c` after API 12/12, Web 2/2, API/Web no-emit, and exact four-path scope; commercial rails remain closed and no provider/payment/release/member/founder acceptance is implied. |
 | 2026-10-20 | Issued BIZ-009 Business Voice readiness compact base R2 after a read-only route dependency mismatch; its four writable paths are unchanged, scope is not widened, and no external schema action is authorized. |

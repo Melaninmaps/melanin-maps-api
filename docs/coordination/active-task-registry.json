@@ -4429,6 +4429,69 @@
         }
       ],
       "validationLimit": "Worker compatibility-overlay evidence is not current-authority route evidence; central must preserve the newer revoked-at owner guard and run full current-authority regression before integration."
+    },
+    {
+      "id": "BIZ-009-BUSINESS-PHOTO-DELETE-OWNER-ISOLATION",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "ownerTaskName": "Build Unmerged Community-Frequented Alternatives + Scorecard V1 Candidate",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/api-server/src/routes/__tests__/business-photo-delete-owner-isolation.test.ts"
+      ],
+      "purpose": "Bind owner photo deletion to the selected authorized business photo list before deriving an object key or calling shared object storage.",
+      "acceptance": "Deterministic route contract proves a caller cannot issue storage deletion for another business URL; current authorized own-photo removal retains response/storage/row behavior; invalid/nonmember URLs fail before object-key/delete. No actual bucket access.",
+      "exclusions": "No object-storage credentials/IAM/bucket action, DB/data mutation, image publication workflow redesign, client/UI, schema, BIZ-002 commercial rail, remote/staging/deploy/browser/device action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
+      "baseArchive": {
+        "handoff": "PENDING",
+        "sha256": "PENDING"
+      },
+      "workerStart": "NOT_DISPATCHED"
+    },
+    {
+      "id": "BIZ-009-MOBILE-SELECTED-EDITOR-REVISION-PROPAGATION",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "ownerTaskName": "Review uploaded content",
+      "paths": [
+        "artifacts/mobile/app/business-owner/edit-profile.tsx",
+        "artifacts/mobile/__tests__/business-owner-edit-profile-revision.test.ts"
+      ],
+      "purpose": "Propagate the selected managed business updatedAt revision through the native profile PATCH so current stale-write protection permits valid saves and preserves recovery.",
+      "acceptance": "Focused mobile contract proves selected GET revision is retained, PATCH includes expectedUpdatedAt only on selected managed path, valid success remains, and BUSINESS_PROFILE_STALE_WRITE leaves draft/recovery behavior fail-closed for refresh. No server route changes.",
+      "exclusions": "No businesses/server/schema/ownership/media/schedule/video mutation path, BIZ-009 release, browser/device/mobile build, DB/runtime/staging/deploy action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
+      "baseArchive": {
+        "handoff": "PENDING",
+        "sha256": "PENDING"
+      },
+      "workerStart": "NOT_DISPATCHED"
+    },
+    {
+      "id": "BIZ-009-MOBILE-DASHBOARD-MANAGED-BUSINESS-SELECTION",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "ownerTaskName": "Review uploaded pasted content",
+      "paths": [
+        "artifacts/mobile/app/business-dashboard.tsx",
+        "artifacts/mobile/__tests__/business-dashboard-managed-selection.test.ts"
+      ],
+      "purpose": "Replace the native dashboard legacy singular business read with managed-list selection so it never presents an arbitrary authorized business in multi-business context.",
+      "acceptance": "Focused mobile contract proves use of /api/businesses/mine/managed, direct single-managed display only, multi-business route to existing selector, no legacy /api/businesses/mine read, and preserved dashboard recovery/Business Intelligence navigation. No server/API schema change.",
+      "exclusions": "No owner-link/server/client Web edit, BIZ-009 release, browser/device/mobile build, DB/runtime/staging/deploy action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
+      "baseArchive": {
+        "handoff": "PENDING",
+        "sha256": "PENDING"
+      },
+      "workerStart": "NOT_DISPATCHED"
     }
   ],
   "globalDirectiveDelivery": [
