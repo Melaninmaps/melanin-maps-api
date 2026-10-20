@@ -4833,7 +4833,13 @@
       "acceptance": "Retain exact-one managed-list admission and all current failure/retry/context-clear behavior. Use the returned selected ID only after the exact-one managed-list + selected-read checks. Selected hosted upload/delete must call /api/businesses/mine/managed/:businessId/featured-video/{upload|hosted}; selected external-link mutations must retain the existing active-approved owner-authorized selected endpoint. On non-OK or malformed responses, retain no false hosted/link success. Focused recovery contract plus an added single/selected-route/zero-multiple/retry/late-response assertion, mobile no-emit with --ignoreDeprecations 6.0, exact two-path scope and diff check.",
       "exclusions": "No server/API/route/schema/DB/storage/IAM/provider/configuration/Directory/Kinfolk/publication/runtime/browser/device/staging/deploy/remote Git/mobile-build action. Do not modify Business Owner index or selected-route server authority.",
       "source_boundary": "Source-only mocked client repair; no storage/database/runtime/member/release/founder acceptance.",
-      "workerStart": "BASE_TRANSFER_PENDING"
+      "workerStart": "DISPATCH_PENDING",
+      "baseTransfer": {
+        "handoff_id": "hnd_yVCwXkpCmVa32HTnMdTIyasJ",
+        "file": "BIZ009_FEATURED_VIDEO_SELECTED_ROUTE_PROPAGATION_BASE_2026-10-20.tar.gz",
+        "sha256": "3bf929230640b97b3cd2d73a8ac34ddc99f64d20d4f42cd44526284dd73727fa",
+        "expires_at": "2026-10-21T03:54:23.587Z"
+      }
     },
     {
       "id": "BIZ-009-WEB-BUSINESS-VOICE-PROP-CHANGE-ISOLATION",
@@ -4851,7 +4857,13 @@
       "acceptance": "On each businessId transition, reset profile, confirmations, ordinary and draft messages, editable draft, and loading state before the new request. Bind load, save, and draft completions to the captured current ID so late A work cannot alter B. Preserve current per-ID authenticated endpoints, ownerConfirmed, editable/review-only drafting, no-post/send/reply policy, and useful same-ID success/error behavior. Add deterministic A→B and late-A completion assertions to the existing contract; run the focused Web contract, Web no-emit, exact two-path scope and diff check.",
       "exclusions": "No dashboard, API/route, ownership/schema/DB, token/provider/AI activation, Kinfolk behavior, Directory/publication, browser/device/staging/deploy/remote Git action.",
       "source_boundary": "Source-only Web state-isolation repair; no runtime/member/release/founder acceptance.",
-      "workerStart": "BASE_TRANSFER_PENDING"
+      "workerStart": "DISPATCH_PENDING",
+      "baseTransfer": {
+        "handoff_id": "hnd_QAV6J2B4MxomptLPyXZny99d",
+        "file": "BIZ009_WEB_VOICE_PROP_CHANGE_ISOLATION_BASE_2026-10-20.tar.gz",
+        "sha256": "fa7ae231f75b7297c72c24eb8dcacba715ea4e801a54c89a5418bc336702a318",
+        "expires_at": "2026-10-21T03:54:23.986Z"
+      }
     },
     {
       "id": "BIZ-009-SELECTED-PHOTO-GALLERY-ROUTE-ISOLATION",
@@ -4871,7 +4883,13 @@
       "acceptance": "Add narrowly selected managed photo upload, cover, and delete endpoints only if they require the same active approved unrevoked target-owner check before object key, storage, or DB activity. Keep legacy photo endpoints and exact-one behavior intact. Native selected editor must use selected routes only when managedBusinessId exists; non-selected legacy branch remains unchanged. Preserve gallery membership fence, 10-photo limit, pending/cover behavior, DB-row-before-best-effort-delete ordering, and failure-safe local state. Add deterministic selected-own/cross/revoked/multi/no-side-effect and native selected-route/no-false-success assertions. Run targeted API and mobile contracts, API/mobile no-emit (mobile --ignoreDeprecations 6.0), exact four-path scope and diff check.",
       "exclusions": "No storage/IAM/bucket/live object/DB/schema/migration/configuration/public listing/Directory/Kinfolk/provider/browser/device/staging/deploy/remote Git/mobile-build action. Do not modify unrelated video, profile, schedule, or feature activation surfaces.",
       "source_boundary": "Source-only mocked route/client repair; no real storage/database/runtime/member/release/founder acceptance.",
-      "workerStart": "BASE_TRANSFER_PENDING"
+      "workerStart": "DISPATCH_PENDING",
+      "baseTransfer": {
+        "handoff_id": "hnd_JdKkW4EGjO6mtzcqFunT2laQ",
+        "file": "BIZ009_SELECTED_PHOTO_GALLERY_ROUTE_ISOLATION_BASE_2026-10-20.tar.gz",
+        "sha256": "bd49b78401944531c117343ce0636cd4587f105dadb87251c0e08ef129b35039",
+        "expires_at": "2026-10-21T03:54:24.274Z"
+      }
     },
     {
       "id": "BIZ-009-MOBILE-CULTURAL-TEACHING-MANAGED-ENTRY-CONTEXT",
@@ -4890,7 +4908,13 @@
       "acceptance": "Allow an optional entry businessId only after the Cultural Teaching screen verifies exact membership in the managed list; retain exact-one fallback only when the list has exactly one valid item. For zero, malformed, unowned, or multiple-without-explicit-selection contexts, clear title/text/confirmation/saved state and render the existing safe approved-owner-access recovery without GET/PUT/DELETE to a guessed business. Update Owner Home navigation only to forward an existing explicit selected context; never invent a first business. Preserve the per-business server endpoints, 90-word/voluntary-confirmation policy, member opt-in card, and no Kinfolk/provider/notification behavior. Extend the existing native cultural contract; run it plus mobile no-emit with --ignoreDeprecations 6.0, exact three-path scope and diff check.",
       "exclusions": "No server/API/route, owner-link/schema/DB, cultural policy/card/detail, provider/AI/notification, Directory/Kinfolk/publication, browser/device/staging/deploy/remote Git/mobile-build action.",
       "source_boundary": "Source-only native managed-context repair; no runtime/member/release/founder acceptance.",
-      "workerStart": "BASE_TRANSFER_PENDING"
+      "workerStart": "DISPATCH_PENDING",
+      "baseTransfer": {
+        "handoff_id": "hnd_QANkmjfn8cXXoJQKvYy1Y2iF",
+        "file": "BIZ009_CULTURAL_TEACHING_MANAGED_ENTRY_CONTEXT_BASE_2026-10-20.tar.gz",
+        "sha256": "0104252e767a20e68db7b0c9629775e840dde0ad020fe53bcbf52da6f573448f",
+        "expires_at": "2026-10-21T03:54:24.515Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
