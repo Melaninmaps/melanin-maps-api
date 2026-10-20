@@ -4980,7 +4980,7 @@
       "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "REVIEW_PENDING",
       "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
       "workerStart": "DISPATCHED",
       "baseTransfer": {
@@ -4988,6 +4988,12 @@
         "file": "BIZ009_SELECTED_DASHBOARD_INSIGHTS_BASE_E03B9104.tar.gz",
         "sha256": "11499202f83678721337b2822bec40102e865daeb96f07b1b8b2cd6c591561f0",
         "expires_at": "2026-10-21T11:36:55.627Z"
+      },
+      "carrier": {
+        "handoff_id": "hnd_ZeLqiK3fivExEicygxGHtaj9",
+        "file": "BIZ009_SELECTED_DASHBOARD_INSIGHTS_ISOLATION_CARRIER_2026-10-20.tar.gz",
+        "outer_sha256": "6237efc83d8d5253231e58ca2fa0a77a60e89b22e38e2969489b1f89490c156f",
+        "patch_sha256": "9ad548ee46e73f09af92d3c843459e6fcb8ad5615c6e988ce1d1c4167836a1d1"
       }
     },
     {
@@ -5032,14 +5038,26 @@
       "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
-      "workerStart": "DISPATCHED",
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
       "baseTransfer": {
         "handoff_id": "hnd_cen7dI30uyuTAkTLzXszt3Dg",
         "file": "BIZ009_SELECTED_BROADCASTS_BASE_E03B9104.tar.gz",
         "sha256": "4376c573029ec00074d5dedbf1a29c142b4b5645ec349e971901a804b8da417c",
         "expires_at": "2026-10-21T11:36:56.123Z"
+      },
+      "carrier": {
+        "handoff_id": "hnd_-3-9SteRmtMrg7xNNe6-zhPR",
+        "file": "BIZ009_SELECTED_BROADCASTS_REVIEW_CARRIER_2026-10-20.tar.gz",
+        "outer_sha256": "778f666c969ae0cdc004eb20c8eab656e0a4c7c0ae6bd8a28d2e095d4a4642e2",
+        "patch_sha256": "7311068719e1fcccbc2c0e917223b40c7f9f0dac567af564189fef45a52ff31f"
+      },
+      "source_integration": {
+        "commit": "095d1384bbabb9e6560c7bb5e7be162272eb5e69",
+        "integrity": "outer/inner hashes, base identities, four-path scope, and portable patch verified",
+        "tests": "API 3 files/36 tests PASS; native 3 files/29 tests PASS; API/mobile no-emit PASS; diff/whitespace PASS",
+        "limits": "No push, AI, database, staging, browser/device, provider dispatch, or member-visible action occurred. Selected POST persists delivered:0; provider-backed routes were not invoked."
       }
     },
     {
@@ -5058,7 +5076,7 @@
       "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "REVIEW_PENDING",
       "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
       "workerStart": "DISPATCHED",
       "baseTransfer": {
@@ -5066,6 +5084,12 @@
         "file": "BIZ009_SELECTED_IDENTITY_BASE_E03B9104.tar.gz",
         "sha256": "300475c5d5c9d5dd97cbbf9db2b34235c06a79b9577694975fd07ead85670349",
         "expires_at": "2026-10-21T11:36:56.829Z"
+      },
+      "carrier": {
+        "handoff_id": "hnd_4orGTLVjSkzblpoaxIB9Q3HX",
+        "file": "BIZ009_SELECTED_IDENTITY_CARRIER_2026-10-20.tar.gz",
+        "outer_sha256": "c76d2305b8417c284e09ee69c85c8d921f84ee2df4b619e7a0a6e7a3071d2a78",
+        "patch_sha256": "d87f46347353ec0b2844c7d4f5b7ea2d0417d5fcfc1b7914e55538fee9cb234b"
       }
     },
     {
@@ -5092,6 +5116,24 @@
         "sha256": "9a330d0eb6385bfe5b18a773e01974c6de1c38685afd132816eb37188117ad95",
         "expires_at": "2026-10-21T11:44:21.390Z"
       }
+    },
+    {
+      "id": "BIZ-009-ADMIN-INVENTORY-CANONICAL-PUBLIC-PROFILE-LINK",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "n3V26eXux1YUjv25Jvn8Bm",
+      "ownerTaskName": "Differentiate Website Preview and App Onboarding",
+      "authorityBase": "095d1384bbabb9e6560c7bb5e7be162272eb5e69",
+      "workerStart": "DISPATCH_PENDING_BASE",
+      "paths": [
+        "artifacts/web/src/pages/admin.tsx",
+        "artifacts/web/src/__tests__/admin-inventory-public-profile-link.test.ts"
+      ],
+      "purpose": "Make each eligible rendered Admin inventory business name an accessible canonical internal public MWM profile link without changing the existing separate edit action.",
+      "acceptance": "Render a valid eligible business name as a semantic internal link to exact existing `/businesses/:id`; retain truthful unavailable/unpublished status without inventing a destination; no arbitrary/stale ID or route. Add one focused Web contract for exact URL and accessible link semantics.",
+      "exclusions": "No owner Dashboard/Owner Home/edit-profile/businesses/shared context/schema/staging/browser/provider/payment/deploy/remote Git change. Browser validation remains central and later only after staging candidate deployment using Take Control.",
+      "source_boundary": "Uncommitted/unstaged source-only carrier; current central source base only."
     }
   ],
   "globalDirectiveDelivery": [
