@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -37,6 +37,11 @@ type BusinessVoiceProfile = {
   signaturePhrases: string[];
 };
 
+type ManagedBusiness = {
+  id: string;
+  name?: string | null;
+};
+
 const EMPTY_PROFILE: BusinessVoiceProfile = {
   tones: [],
   languagePreference: null,
@@ -69,6 +74,7 @@ export default function BusinessVoiceProfileScreen() {
 
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
+  const [managedBusinesses, setManagedBusinesses] = useState<ManagedBusiness[]>([]);
   const [profile, setProfile] = useState<BusinessVoiceProfile>(EMPTY_PROFILE);
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -79,27 +85,27 @@ export default function BusinessVoiceProfileScreen() {
   const [drafting, setDrafting] = useState(false);
   const [editableDraft, setEditableDraft] = useState("");
   const [draftMessage, setDraftMessage] = useState<string | null>(null);
+  const requestEpoch = useRef(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setMessage(null);
-    try {
-      const base = getApiBase();
-      const headers = await getMemberApiHeaders();
-      const mineResponse = await fetch(`${base}/api/businesses/mine`, { headers });
-      const mine = (await mineResponse.json().catch(() => ({}))) as {
-        business?: { id?: string; name?: string } | null;
-        error?: string;
-      };
-      if (!mineResponse.ok || !mine.business?.id) {
-        throw new Error(mine.error ?? "An approved business owner link is required.");
-      }
+  const clearSelectedBusinessContext = useCallback(() => {
+    setBusinessId(null);
+    setBusinessName(null);
+    setProfile(EMPTY_PROFILE);
+    setConfirmed(false);
+    setEditableDraft("");
+    setDraftRequest("");
+    setDraftMessage(null);
+  }, []);
 
-      const resolvedBusinessId = mine.business.id;
-      setBusinessId(resolvedBusinessId);
-      setBusinessName(mine.business.name?.trim() || null);
+  const loadVoiceProfile = useCallback(
+    async (
+      selectedBusiness: ManagedBusiness,
+      base: string,
+      headers: Record<string, string>,
+      epoch: number,
+    ) => {
       const response = await fetch(
-        `${base}/api/businesses/${encodeURIComponent(resolvedBusinessId)}/kinfolk-voice-profile`,
+        `${base}/api/businesses/${encodeURIComponent(selectedBusiness.id)}/kinfolk-voice-profile`,
         { headers },
       );
       const payload = (await response.json().catch(() => ({}))) as {
@@ -109,18 +115,85 @@ export default function BusinessVoiceProfileScreen() {
       if (!response.ok) {
         throw new Error(payload.error ?? "Could not load Business Voice Profile.");
       }
+      if (epoch !== requestEpoch.current) return;
+      setBusinessId(selectedBusiness.id);
+      setBusinessName(selectedBusiness.name?.trim() || null);
       setProfile({ ...EMPTY_PROFILE, ...(payload.profile ?? {}) });
+    },
+    [],
+  );
+
+  const load = useCallback(async () => {
+    const epoch = ++requestEpoch.current;
+    setLoading(true);
+    setMessage(null);
+    setManagedBusinesses([]);
+    clearSelectedBusinessContext();
+    try {
+      const base = getApiBase();
+      const headers = await getMemberApiHeaders();
+      const managedResponse = await fetch(`${base}/api/businesses/mine/managed`, {
+        headers,
+      });
+      const managed = (await managedResponse.json().catch(() => ({}))) as {
+        businesses?: ManagedBusiness[];
+        error?: string;
+      };
+      if (!managedResponse.ok) {
+        throw new Error(managed.error ?? "An approved business owner link is required.");
+      }
+      if (epoch !== requestEpoch.current) return;
+      const businesses = (managed.businesses ?? []).filter(
+        (business): business is ManagedBusiness => Boolean(business?.id),
+      );
+      if (businesses.length === 0) {
+        setMessage("An approved business owner link is required.");
+        return;
+      }
+      if (businesses.length > 1) {
+        setManagedBusinesses(businesses);
+        setMessage("Choose a business before opening Business Voice Profile.");
+        return;
+      }
+      await loadVoiceProfile(businesses[0], base, headers, epoch);
     } catch (error) {
-      setBusinessId(null);
+      if (epoch !== requestEpoch.current) return;
+      clearSelectedBusinessContext();
+      setManagedBusinesses([]);
       setMessage(
         error instanceof Error
           ? error.message
           : "Could not load Business Voice Profile.",
       );
     } finally {
-      setLoading(false);
+      if (epoch === requestEpoch.current) setLoading(false);
     }
-  }, []);
+  }, [clearSelectedBusinessContext, loadVoiceProfile]);
+
+  const selectManagedBusiness = useCallback(
+    async (selectedBusiness: ManagedBusiness) => {
+      const epoch = ++requestEpoch.current;
+      setLoading(true);
+      setMessage(null);
+      clearSelectedBusinessContext();
+      try {
+        const base = getApiBase();
+        const headers = await getMemberApiHeaders();
+        await loadVoiceProfile(selectedBusiness, base, headers, epoch);
+      } catch (error) {
+        if (epoch !== requestEpoch.current) return;
+        clearSelectedBusinessContext();
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Could not load Business Voice Profile.",
+        );
+      } finally {
+        if (epoch === requestEpoch.current) setLoading(false);
+      }
+    },
+    [clearSelectedBusinessContext, loadVoiceProfile],
+  );
 
   useEffect(() => {
     void load();
@@ -274,14 +347,45 @@ export default function BusinessVoiceProfileScreen() {
         ) : null}
 
         {!businessId ? (
-          <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="lock" size={24} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Approved owner access required</Text>
-            <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Business Voice Profiles are available only to the approved owner of a business listing.</Text>
-            <TouchableOpacity activeOpacity={0.85} onPress={() => void load()} style={[styles.retryButton, { backgroundColor: colors.primary }]}>
-              <Text style={styles.retryText}>Try again</Text>
-            </TouchableOpacity>
-          </View>
+          managedBusinesses.length > 1 ? (
+            <View
+              style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}
+              testID="business-voice-managed-business-selector"
+            >
+              <Feather name="briefcase" size={24} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Choose a business</Text>
+              <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Select the business whose Voice Profile and editable drafts you want to manage.</Text>
+              <View style={styles.businessSelector}>
+                {managedBusinesses.map((business) => {
+                  const name = business.name?.trim() || "Unnamed business";
+                  return (
+                    <TouchableOpacity
+                      accessibilityLabel={`Select ${name} for Business Voice Profile`}
+                      activeOpacity={0.85}
+                      key={business.id}
+                      onPress={() => void selectManagedBusiness(business)}
+                      style={[styles.businessOption, { borderColor: colors.border }]}
+                    >
+                      <Text style={[styles.businessOptionText, { color: colors.foreground }]}>{name}</Text>
+                      <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => void load()} style={[styles.retryButton, { backgroundColor: colors.primary }]}>
+                <Text style={styles.retryText}>Reload businesses</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="lock" size={24} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Approved owner access required</Text>
+              <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Business Voice Profiles are available only to the approved owner of a business listing.</Text>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => void load()} style={[styles.retryButton, { backgroundColor: colors.primary }]}>
+                <Text style={styles.retryText}>Try again</Text>
+              </TouchableOpacity>
+            </View>
+          )
         ) : (
           <>
             <View style={styles.group}>
@@ -490,6 +594,9 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", gap: 10, borderRadius: 16, borderWidth: 1, padding: 24 },
   emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 16, textAlign: "center" },
   emptyCopy: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", lineHeight: 19 },
+  businessSelector: { width: "100%", gap: 8 },
+  businessOption: { minHeight: 48, alignItems: "center", borderWidth: 1, borderRadius: 12, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 13 },
+  businessOptionText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 14, marginRight: 10 },
   retryButton: { borderRadius: 11, paddingVertical: 11, paddingHorizontal: 18, marginTop: 4 },
   retryText: { color: "#FFF", fontFamily: "Inter_700Bold", fontSize: 13 },
 });
