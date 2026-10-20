@@ -4805,9 +4805,9 @@
       "exclusions": "No canonical/legacy GET changes, mobile/Dashboard/Owner Home, conversations.ts, schema/data, entitlement/BIZ-009 release, provider/runtime/browser/device/staging/deploy/remote action. Mocks only.",
       "requirementId": "BIZ-003",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "b72b7abee1b6299333dfb19c6a529ec97eeed3ee",
-      "workerStart": "REPAIR_DISPATCH_PENDING",
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
       "source_boundary": "Source-only deterministic inbox-recipient isolation repair; no actual notification/member/runtime acceptance.",
       "reviewDisposition": "RETURNED_FOR_POLICY_REPAIR: rejected carrier 8761308402efe008196a725632030565b5af41e35b16dfae0c8de3ed49879136 was hash-valid and scope-valid but its businesses.submittedById recipient fallback violates the founder direction not to infer private-feedback recipient permission from submission alone; its limit(1) active-link lookup is nondeterministic for multiple active owners. No candidate source applied or integrated.",
       "baseArchive": {
@@ -4817,6 +4817,16 @@
         "expires_at": "2026-10-21T03:58:41.926Z",
         "size_bytes": 5281,
         "reason": "replacement same-scope base after policy return; all product source remains current authority"
+      },
+      "sourceReceipt": {
+        "authority_commit": "e175db92686f48dcd877f2bccf2e40d6f6d092ba",
+        "carrier_handoff": "hnd_NPZYN7UEPzRBG3qx94K37hca",
+        "carrier_sha256": "9c19dd96829ff955c25930a7d1fffa4e292ba126b3c9bfae68c94e4ce73107e7",
+        "source_validation": "Authority API owner/feedback/media/Voice/startup matrix: 7 files / 47 tests PASS; API tsc --noEmit PASS; exact two-path scope and diff checks PASS.",
+        "semantic_validation": "POST persists safeguarded feedback before recipient resolution; selects up to two same-business owner/approved/unrevoked links and calls inbox delivery only when exactly one nonempty userId is returned. submittedById is preserved only as feedback provenance. Zero/revoked/malformed/multiple results have no conversation/message mutation; existing private conversations reset participantIds to the sole current owner before append.",
+        "central_reconciliation": "Worker route result was retained except one final logger.info message changed from a false delivery assertion to exact-one-owner evaluation. Reconciled route SHA-256: 0abee129a03d7000e1d2328778b74b1636b9ae8e70fecd7c83d458f8089a8cc2.",
+        "carrier_integrity_note": "Outer archive, manifest, patch, editable base/result, read-only canonical contract dependency, and portable apply checks passed. Package member hashes passed; its stated self-entry issue did not apply to any content-bearing member.",
+        "boundary": "Source-only mocked deterministic evidence. No private-inbox/database/runtime/provider/browser/device/staging/deploy/member/release/founder acceptance."
       }
     },
     {
