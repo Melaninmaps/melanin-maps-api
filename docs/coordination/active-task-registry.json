@@ -4258,6 +4258,28 @@
         "validation": "Outer hash/manifest, five packaged source hashes, bounded coordination-only base drift, patch reconstruction, full static-boundary review, exact one-path scope, and whitespace PASS.",
         "external_acceptance": "NOT PERFORMED"
       }
+    },
+    {
+      "id": "BIZ-003-LEGACY-SKIP-FEEDBACK-OWNER-ISOLATION",
+      "requirementId": "BIZ-003",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "ownerTaskName": "Review uploaded content",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "f10e00a969c56dc2b129496cad3e5ffb90652cc9",
+      "paths": [
+        "artifacts/api-server/src/routes/kinfolk.ts",
+        "artifacts/api-server/src/routes/__tests__/legacy-skip-feedback-owner-isolation.test.ts"
+      ],
+      "baseArchive": {
+        "file": "BIZ003_LEGACY_SKIP_FEEDBACK_OWNER_ISOLATION_BASE_2026-10-20.tar.gz",
+        "sha256": "68f5698bb951acf976e5206bbf7f3b2eeb28ccdea7b95c5368bd1cf8e3174407",
+        "handoff": "PENDING"
+      },
+      "purpose": "Repair confirmed owner-isolation bypass in the still-registered legacy GET /kinfolk/skip-feedback route by aligning it with canonical active-approved-owner precedence and former-submitter denial.",
+      "acceptance": "Legacy read preserves 401/tier/error/response sanitization; it grants active approved/unrevoked owner link first; only then falls back to submittedById if no active link exists; a former submitter whose business has an active approved owner link is denied before feedback selection. New real-route regression covers these boundaries.",
+      "exclusions": "No client/canonical skip-feedback route/schema/migration/account/data/config/payment/provider/BIZ-009/deploy/browser/device/activation change. No runtime/member acceptance claim.",
+      "workerStart": "PENDING_DIRECT_DISPATCH"
     }
   ],
   "globalDirectiveDelivery": [
