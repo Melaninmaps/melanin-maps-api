@@ -3911,9 +3911,10 @@
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
       "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
       "baseTransfer": {
-        "state": "PENDING_HANDOFF",
+        "handoff_id": "hnd_QTGXT7yQRXwu2mBOk7QRgdCI",
         "file": "DIR003_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "5b4a3a62923f91fd573334af36cedb18260f1f52502093ee53423befa527af13",
+        "expires_at": "2026-10-21T01:19:45.018Z",
         "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
       }
     },
@@ -3950,9 +3951,10 @@
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
       "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
       "baseTransfer": {
-        "state": "PENDING_HANDOFF",
+        "handoff_id": "hnd_fAlbaF_6GoV8aEkIXBFhXnPk",
         "file": "BIZ002_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "ee6f6b1a895558a2cd48e78b04de21af40e1ab00113365658128a8e708e79333",
+        "expires_at": "2026-10-21T01:19:45.238Z",
         "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
       }
     },
@@ -3989,9 +3991,10 @@
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
       "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
       "baseTransfer": {
-        "state": "PENDING_HANDOFF",
+        "handoff_id": "hnd_rfB0stl7dUB81XSk_petfaCr",
         "file": "ADMIN001_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "ce6d12b211124564d06cd8ebb4d216fffaae6ccaa719c7b05bc07bd4df10f4a2",
+        "expires_at": "2026-10-21T01:19:45.459Z",
         "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
       }
     },
@@ -4028,9 +4031,10 @@
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
       "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
       "baseTransfer": {
-        "state": "PENDING_HANDOFF",
+        "handoff_id": "hnd_MaiKlCzO062CUG28PN9f2zDu",
         "file": "MEMD5_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "bef61c9f13ff042cd34ba47d5c2dd2d6c6fbd97676d6f534be31a8c0a1e12c04",
+        "expires_at": "2026-10-21T01:19:45.677Z",
         "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
       }
     },
@@ -4067,9 +4071,10 @@
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
       "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
       "baseTransfer": {
-        "state": "PENDING_HANDOFF",
+        "handoff_id": "hnd_ck633KHSftlp-H-l2D0fERc_",
         "file": "INTAUTH001_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "d3ba0b65f7ce85103309054717d5b9e02c2ec88fe1eea86f51f926d7d90a9dad",
+        "expires_at": "2026-10-21T01:19:45.879Z",
         "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
       }
     }
