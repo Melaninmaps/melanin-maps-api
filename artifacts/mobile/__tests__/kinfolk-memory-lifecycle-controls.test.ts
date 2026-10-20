@@ -28,6 +28,24 @@ describe("native generic private-memory lifecycle controls", () => {
     expect(memory).not.toContain("Delete this memory permanently");
   });
 
+  it("fails closed with a sign-in error before a revoke request or local removal when authentication is unavailable", () => {
+    const revokeMemory = memory.slice(
+      memory.indexOf("const revokeMemory = async"),
+      memory.indexOf("const saveEdit = async"),
+    );
+    const missingTokenError = 'if (!token) throw new Error("Please sign in again before revoking memory.");';
+    const deleteRequest = "method: \"DELETE\"";
+    const localRemoval = "setPrivateMemories((items) => items.filter((item) => item.id !== id))";
+
+    expect(revokeMemory).toContain("try {");
+    expect(revokeMemory).toContain(missingTokenError);
+    expect(revokeMemory).toContain("} catch (cause) { setMemoryError(");
+    expect(revokeMemory).not.toContain("if (!token) return");
+    expect(revokeMemory.indexOf(missingTokenError)).toBeLessThan(revokeMemory.indexOf(deleteRequest));
+    expect(revokeMemory.indexOf(missingTokenError)).toBeLessThan(revokeMemory.indexOf(localRemoval));
+    expect(revokeMemory.indexOf("if (!response.ok)")).toBeLessThan(revokeMemory.indexOf(localRemoval));
+  });
+
   it("labels saved hard requirements so a member can distinguish them from preferences", () => {
     expect(memory).toContain('memory.purpose === "requirement_context"');
     expect(memory).toContain("saved requirement · not silently relaxed");

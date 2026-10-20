@@ -240,9 +240,9 @@ export default function KinfolkMemoryScreen() {
 
   const revokeMemory = async (id: string) => {
     setMemoryError("");
-    const token = await getToken();
-    if (!token) return;
     try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again before revoking memory.");
       const response = await fetch(`${getApiBase()}/api/kinfolk/memories/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) throw new Error("Could not revoke use of that memory.");
       setPrivateMemories((items) => items.filter((item) => item.id !== id));
