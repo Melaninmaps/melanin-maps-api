@@ -5081,9 +5081,9 @@
       "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "REVIEW_PENDING",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
-      "workerStart": "DISPATCHED",
+      "workerStart": "ACCEPTED_AND_FROZEN",
       "baseTransfer": {
         "handoff_id": "hnd_kbQG8VxUBFlH-VgkzKVHdUal",
         "file": "BIZ009_SELECTED_IDENTITY_BASE_E03B9104.tar.gz",
@@ -5095,6 +5095,13 @@
         "file": "BIZ009_SELECTED_IDENTITY_CARRIER_2026-10-20.tar.gz",
         "outer_sha256": "c76d2305b8417c284e09ee69c85c8d921f84ee2df4b619e7a0a6e7a3071d2a78",
         "patch_sha256": "d87f46347353ec0b2844c7d4f5b7ea2d0417d5fcfc1b7914e55538fee9cb234b"
+      },
+      "sourceIntegration": {
+        "commit": "65e708f43be1a3fbdd471007bc53678b2f7f56ae",
+        "carrier_outer_sha256": "c76d2305b8417c284e09ee69c85c8d921f84ee2df4b619e7a0a6e7a3071d2a78",
+        "carrier_patch_sha256": "d87f46347353ec0b2844c7d4f5b7ea2d0417d5fcfc1b7914e55538fee9cb234b",
+        "validation": "API selected Identity + owner-multi-business: 2 files/16 tests PASS; native selected Identity: 1 file/3 tests PASS; API/mobile no-emit PASS; exact four-path scope and diff hygiene PASS.",
+        "boundary": "Local deterministic source only. No real identity record/provider/OAuth/verification/schema/data/browser/device/staging/deployment/mobile-build/member/release/founder acceptance."
       }
     },
     {
