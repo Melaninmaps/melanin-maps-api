@@ -1286,7 +1286,7 @@
       "dependencies_or_blockers": "Validated local candidate `046eb767326c6d87d9dc41b29572eb26c759b9a4` is not published. Its proposed remote branch/tag availability is intentionally unverified because no remote publication/read was performed in this step; publication requires the exact separate authorization request. Production `public.businesses.updated_at` compatibility is PASS. Deployment remains separately blocked on remote publication, Railway source-selection authorization, explicit startup-writer disposition/configuration approval, target/rollback confirmation, and founder-controlled reversible acceptance. BIZ-008 remains failed and is separate.",
       "next_action": "Await explicit approval of the exact collision-check and atomic remote publication sequence in `docs/coordination/BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md` for `046eb767326c6d87d9dc41b29572eb26c759b9a4`. Do not publish/deploy or repeat the completed schema query. If publication is approved and verified, seek a separate named Web/API deployment/startup-writer/rollback authorization before any founder-controlled reversible edit acceptance.",
       "founder_approval_needed": "No for the bounded local source carrier. Yes for any fixture/create/reset, production field edit, authenticated browser save/readback, database action, deployment, provider-backed Kinfolk check, or release assertion.",
-      "last_verified_date": "2026-10-19",
+      "last_verified_date": "2026-10-20",
       "prior_evidence_refs": [
         "Central source-only save-chain trace at f47a092b9259a38b4d2cfb5c33ea872d68024b33",
         "BUSINESS_OWNER_DASHBOARD_ACCEPTANCE_PREFLIGHT_2026-10-19.md",
@@ -2120,6 +2120,10 @@
     {
       "date": "2026-10-20",
       "event": "y and IIU directly acknowledged and started the exclusive BIZ-002 marketplace closed-rail and INT-REVENUECAT-001 default-disabled server enforcement repairs. Both remain source-only, uncommitted review work until central validation."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Founder P0 directive: Q assumed direct parent ownership for Business Dashboard/Profile Editing lifecycle. Recorded required source-candidate assembly, 15-field execution report, and protected staging/production/browser/device/provider boundaries. No deployment, login retry, data action, or BIZ-009 reopening."
     }
   ],
   "evidence_gaps": [
@@ -2414,7 +2418,7 @@
       {
         "experience_id": "EXP-BUSINESS-OWNER-EDITOR-ANALYTICS-AND-PUBLICATION",
         "founder_outcome": "Authorized owners/Admins safely edit controlled businesses with durable state, conflict recovery and protected public/discovery boundaries.",
-        "lifecycle_owner": "QJATRGk7nUgzDlccMCUcG6",
+        "lifecycle_owner": "QJATRGk7nUgzDlccMCUcG6 (sole accountable parent Business Dashboard/Profile acceptance coordinator; source repair delegation remains exclusive)",
         "linked_requirement_ids": [
           "BIZ-001",
           "BIZ-003",
@@ -2426,12 +2430,12 @@
         ],
         "existing_implementation": "Profile navigation, lifecycle controls, specialty save, edit/fresh-read/stale-write and analytics child work are linked.",
         "missing_broken_elements": "Confirmed source FAIL: legacy GET /kinfolk/skip-feedback authorizes via submittedById without canonical approved-owner isolation. Active repair is limited to that route/test; all real claim/feedback/runtime/platform/release gates remain external.",
-        "current_active_repair": "P0 BIZ-003-LEGACY-SKIP-FEEDBACK-OWNER-ISOLATION: active, exclusive two-path repair for confirmed former-submitter legacy-reader bypass.",
+        "current_active_repair": "P0 BIZ-003 legacy feedback reader isolation is active. Parent candidate trace for BIZ-009/BA-002/Directory/Kinfolk/Voice Profile is centrally underway; no BIZ-009 implementation path is reopened without a demonstrated distinct defect.",
         "integrated_source": "Local BIZ source/candidate receipts only. Canonical owner skip-insights read `476d3017ed9fcda9a13d2837aa664ee8281f3d24` is source-integrated locally (API 2/2, mobile 3/3, no-emit). Owner Home canonical skip-insights `6e244c6676a1f0725b4aac2348540dff783b91bd` (mobile 3/3, API 2/2, mobile no-emit). BIZ-003 explicit owner skip-feedback private projection `f100d7694db1b829196ea6af26a5c6d2502b68e6`. BIZ approved-owner skip-feedback read isolation `78d55d511500d35ba37858cf80437193267f9abd`.",
         "test_evidence": "Focused API/Web/mobile source checks only. Owner Home current-authority: mobile 3/3, owner API 2/2, mobile no-emit PASS. Projection: API 1 file/4, mobile consumer contracts 2/6, API no-emit PASS. Approved-owner feedback read isolation: API 1 file/7, mobile 2 files/6, API no-emit PASS. Cumulative BIZ owner-feedback source matrix: API 1 file/7, mobile 2 files/6, API no-emit PASS.",
         "external_gates": "Remote publication, deploy/startup disposition, account/fixture, readback and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Finish and centrally validate active BIZ-003 legacy-reader repair; then rerun owner-feedback source matrix. Preserve BIZ-009 release gates and all runtime/member gates.",
+        "next_action": "Assemble and test the local unified candidate across the named source components; dispatch only demonstrated source repairs. Then produce one 15-field execution report and, if still required, one minimal external staging-authorization request.",
         "independent_acceptance_matrix": {
           "trace_date": "2026-10-20",
           "evidence_scope": "Independent local authoritative-source/board trace; source tests are never credited as runtime, member, release, or founder acceptance.",
@@ -2492,6 +2496,34 @@
             }
           ],
           "next_disposition": "Finish and centrally validate active BIZ-003 legacy-reader repair; then rerun owner-feedback source matrix. Preserve BIZ-009 release gates and all runtime/member gates."
+        },
+        "parent_directive_2026_10_20": {
+          "status": "OPEN \u2014 full controlled acceptance required; source controls/visible controls are not completion.",
+          "required_outcome": "Authorized owner selects only authorized business, saves profile/specialties/services/experience authoritatively, refreshes persistent state, manages controlled fixture images, sees approved public-listing/Kinfolk-card effect without protected-data/map/duplicate harm, uses/recover Business Voice Profile, and retains BA-002/lifecycle/account-switch/owner-isolation protections.",
+          "known_read_only_evidence": [
+            "Production initial dashboard render observed under prior Take Control at successful API deployment 8fd6989; not edit/save/persistence acceptance.",
+            "Business Voice Profile visibly returned generic service failure in prior production observation; no retry or provider action authorized.",
+            "Owner staging login is blocked by AUTH_LOGIN_USER_NOT_FOUND/401; no credential retry, provisioning, reset, query, or deployment allowed.",
+            "Existing preflight identifies no confirmed staging image storage or controlled owner/fixture readiness; full lifecycle tests NOT RUN."
+          ],
+          "execution_report_fields": [
+            "authoritative candidate SHA",
+            "rollback target",
+            "BIZ-009 source/editor evidence",
+            "owner-selection/permission evidence",
+            "save/refresh/persistence evidence",
+            "fixture-image readiness",
+            "public-listing propagation",
+            "directory/Kinfolk card propagation",
+            "Business Voice Profile source status",
+            "BA-002/account-switch/owner-isolation status",
+            "Web source/static coverage",
+            "iOS source/static coverage",
+            "Android source/static coverage",
+            "external staging authorization need",
+            "overall PASS/FAIL/PARTIAL/NOT TESTED/EXTERNALLY BLOCKED disposition"
+          ],
+          "external_boundary": "No production deployment/write, credential copy/retry, staging account/data/schema/image action, browser/device test, provider-backed Kinfolk prompt, paid activation, or mobile build absent a separate exact founder approval."
         }
       },
       {

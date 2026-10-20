@@ -138,6 +138,10 @@ This is the authoritative parent-experience layer of the controlling checklist. 
 - **External gates:** Legal/compliance, resource verification and Web/iOS/Android runtime acceptance.
 - **Next action:** Prepare a separately authorized combined runtime protocol.
 
+### Founder P0 directive — Business Dashboard/Profile parent lifecycle (2026-10-20)
+
+Q is the sole parent-lifecycle coordinator. The required outcome remains open through authorized-business selection, server-authoritative edit/save/refresh persistence, controlled fixture-image lifecycle, correct public-listing and Kinfolk-card propagation without duplicate/map/protected-data harm, Business Voice Profile recovery, and BA-002/account-switch/owner-isolation protection. Current production/staging observations are evidence only, not authorization to retry authentication, alter accounts/data/schema/images, deploy, use providers, or perform browser/device/mobile-build acceptance. A local unified source candidate and the founder-required 15-field report are in progress; any external action will require one later exact staging authorization request.
+
 ### EXP-BUSINESS-OWNER-EDITOR-ANALYTICS-AND-PUBLICATION — IN PROGRESS
 - **Founder outcome:** Authorized owners/Admins safely edit controlled businesses with durable state, conflict recovery and protected public/discovery boundaries.
 - **Lifecycle owner:** QJATRGk7nUgzDlccMCUcG6
