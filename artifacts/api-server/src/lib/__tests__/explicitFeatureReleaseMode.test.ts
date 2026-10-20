@@ -26,4 +26,24 @@ describe("explicit production feature-release mode", () => {
     expect(index).toContain("runStartupMigrations(logger)");
     expect(index).toContain("startLatinxLehighValleyPublication");
   });
+
+  it("runs the Business Voice Profile table gate before traffic in normal and explicit release modes", () => {
+    const index = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../../index.ts"),
+      "utf8",
+    );
+    const ownerLinkGate = index.indexOf("await ensureBusinessOwnerLinkLifecycleSchema(logger)");
+    const voiceProfileGate = index.indexOf(
+      "await ensureBusinessKinfolkVoiceProfileSchema(logger)",
+    );
+    const releaseModeBranch = index.indexOf("if (explicitFeatureReleaseMode)");
+    const listener = index.indexOf("app.listen");
+
+    expect(index).toContain("ensureBusinessKinfolkVoiceProfileSchema,");
+    expect(ownerLinkGate).toBeGreaterThan(-1);
+    expect(voiceProfileGate).toBeGreaterThan(ownerLinkGate);
+    expect(releaseModeBranch).toBeGreaterThan(voiceProfileGate);
+    expect(listener).toBeGreaterThan(voiceProfileGate);
+    expect(index).toContain("runStartupMigrations(logger)");
+  });
 });

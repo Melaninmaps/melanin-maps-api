@@ -7841,6 +7841,45 @@ export async function ensureBusinessOwnerLinkLifecycleSchema(logger?: Logger): P
 }
 
 /**
+ * Business Voice Profile GET, PUT, and owner-requested draft routes rely on
+ * this single additive table. Explicit feature-release mode intentionally
+ * bypasses the broad migration runner, so ensure the request-path structure
+ * exists before the server accepts traffic.
+ *
+ * This gate never seeds, backfills, or changes a business, owner link, or
+ * existing voice profile. A DDL or structural-probe failure propagates to the
+ * caller's pre-traffic boundary and prevents a misleading route-level 500.
+ */
+const BUSINESS_KINFOLK_VOICE_PROFILE_SCHEMA_MIGRATIONS = new Set([
+  "business_kinfolk_voice_profiles_v1",
+]);
+
+export async function ensureBusinessKinfolkVoiceProfileSchema(
+  logger?: Logger,
+): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[business-kinfolk-voice-profile-schema] ${msg}`);
+  const migrations = MIGRATIONS.filter((migration) =>
+    BUSINESS_KINFOLK_VOICE_PROFILE_SCHEMA_MIGRATIONS.has(migration.name),
+  );
+
+  if (migrations.length !== BUSINESS_KINFOLK_VOICE_PROFILE_SCHEMA_MIGRATIONS.size) {
+    throw new Error("Business Kinfolk Voice Profile schema migration definition is missing.");
+  }
+
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
+  }
+
+  // This no-row read verifies every column used by the owner profile GET/PUT
+  // and drafting request paths. It cannot inspect or mutate profile data.
+  await pool.query(
+    "SELECT id, business_id, owner_user_id, tones, language_preference, audience_guidance, words_to_use, words_to_avoid, signature_phrases, owner_confirmed_at, created_at, updated_at FROM business_kinfolk_voice_profiles LIMIT 0",
+  );
+  log("Business Kinfolk Voice Profile schema is ready before traffic acceptance");
+}
+
+/**
  * Public business detail reads use the canonical duplicate-resolution relation
  * to expose supersession context. In explicit feature-release mode the broad
  * visibility hardening writer is skipped, so establish this empty additive

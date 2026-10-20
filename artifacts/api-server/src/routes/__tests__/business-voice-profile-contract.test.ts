@@ -1,6 +1,18 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const poolQuery = vi.hoisted(() => vi.fn());
+
+vi.mock("@workspace/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@workspace/db")>();
+  return {
+    ...actual,
+    pool: { query: poolQuery },
+  };
+});
+
+import { ensureBusinessKinfolkVoiceProfileSchema } from "../../lib/startup-migrations";
 
 const route = readFileSync(
   fileURLToPath(new URL("../business-voice-profile.ts", import.meta.url)),
@@ -14,13 +26,22 @@ const routerIndex = readFileSync(
   fileURLToPath(new URL("../index.ts", import.meta.url)),
   "utf8",
 );
+const serverIndex = readFileSync(
+  fileURLToPath(new URL("../../index.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("Business Voice Profile ownership boundary", () => {
   it("allows profile writes only for approved owners and does not use member content", () => {
     expect(route).toContain("business_owner_links bol");
+    expect(route).toContain("bol.business_id = b.id");
+    expect(route).toContain("bol.user_id = $2");
     expect(route).toContain("bol.role = 'owner'");
     expect(route).toContain("bol.status = 'approved'");
     expect(route).toContain("bol.revoked_at IS NULL");
+    expect(route).toContain("[businessId, req.user.id]");
+    expect(route).toContain('"/businesses/:businessId/kinfolk-voice-profile"');
+    expect(route).toContain("FROM business_kinfolk_voice_profiles");
     expect(route).toContain("ownerConfirmed");
     expect(route).not.toMatch(/FROM\s+(?:community_posts|reviews)/i);
     expect(route).not.toMatch(/JOIN\s+(?:community_posts|reviews)/i);
@@ -49,5 +70,76 @@ describe("Business Voice Profile ownership boundary", () => {
     expect(draftRoute).not.toMatch(/(?:INSERT INTO|UPDATE|DELETE FROM)\s+businesses/i);
     expect(draftRoute).not.toMatch(/(?:community_posts|reviews|directory)/i);
     expect(draftRoute).not.toMatch(/\.post\(|\.send\(|\.reply\(/i);
+  });
+});
+
+describe("Business Voice Profile pre-traffic schema readiness", () => {
+  const logger = { info: vi.fn() } as never;
+
+  beforeEach(() => {
+    poolQuery.mockReset();
+  });
+
+  it("uses only the named idempotent table migration and a complete no-row structural probe on every boot", async () => {
+    poolQuery.mockResolvedValue({ rows: [] });
+
+    await ensureBusinessKinfolkVoiceProfileSchema(logger);
+    await ensureBusinessKinfolkVoiceProfileSchema(logger);
+
+    expect(poolQuery).toHaveBeenCalledTimes(4);
+    const [firstDdl, firstProbe, repeatedDdl, repeatedProbe] = poolQuery.mock.calls.map(
+      ([sql]) => sql as string,
+    );
+    expect(firstDdl).toContain("CREATE TABLE IF NOT EXISTS business_kinfolk_voice_profiles");
+    expect(firstDdl).toContain("CREATE INDEX IF NOT EXISTS business_kinfolk_voice_profiles_owner_updated_idx");
+    expect(firstProbe).toContain(
+      "SELECT id, business_id, owner_user_id, tones, language_preference, audience_guidance, words_to_use, words_to_avoid, signature_phrases, owner_confirmed_at, created_at, updated_at FROM business_kinfolk_voice_profiles LIMIT 0",
+    );
+    expect(repeatedDdl).toBe(firstDdl);
+    expect(repeatedProbe).toBe(firstProbe);
+    expect(migration).toContain(
+      'const BUSINESS_KINFOLK_VOICE_PROFILE_SCHEMA_MIGRATIONS = new Set([',
+    );
+    expect(migration).toContain('"business_kinfolk_voice_profiles_v1",');
+    expect(migration).toContain(
+      "if (migrations.length !== BUSINESS_KINFOLK_VOICE_PROFILE_SCHEMA_MIGRATIONS.size)",
+    );
+    expect(migration).toContain(
+      'throw new Error("Business Kinfolk Voice Profile schema migration definition is missing.")',
+    );
+  });
+
+  it("propagates a table-creation failure before a structural read or route traffic", async () => {
+    poolQuery.mockRejectedValueOnce(new Error("permission denied"));
+
+    await expect(ensureBusinessKinfolkVoiceProfileSchema(logger)).rejects.toThrow(
+      "permission denied",
+    );
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it("propagates a malformed-table structural failure after idempotent DDL", async () => {
+    poolQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockRejectedValueOnce(new Error('column "signature_phrases" does not exist'));
+
+    await expect(ensureBusinessKinfolkVoiceProfileSchema(logger)).rejects.toThrow(
+      'column "signature_phrases" does not exist',
+    );
+    expect(poolQuery).toHaveBeenCalledTimes(2);
+  });
+
+  it("runs owner-profile readiness after owner-link safety and before either release mode can accept traffic", () => {
+    const lifecycleGate = serverIndex.indexOf("await ensureBusinessOwnerLinkLifecycleSchema(logger)");
+    const voiceGate = serverIndex.indexOf("await ensureBusinessKinfolkVoiceProfileSchema(logger)");
+    const releaseModeBranch = serverIndex.indexOf("if (explicitFeatureReleaseMode)");
+    const listener = serverIndex.indexOf("app.listen");
+
+    expect(serverIndex).toContain("ensureBusinessKinfolkVoiceProfileSchema");
+    expect(lifecycleGate).toBeGreaterThan(-1);
+    expect(voiceGate).toBeGreaterThan(lifecycleGate);
+    expect(releaseModeBranch).toBeGreaterThan(voiceGate);
+    expect(listener).toBeGreaterThan(voiceGate);
+    expect(serverIndex).toContain("runStartupMigrations(logger)");
   });
 });

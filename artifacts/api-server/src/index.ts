@@ -9,6 +9,7 @@ import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
   ensureAdminBusinessProfileReceiptsAndCatalogSchema,
   ensureBusinessOwnerLinkLifecycleSchema,
+  ensureBusinessKinfolkVoiceProfileSchema,
   ensureBusinessPublicDetailSchema,
   ensureBusinessWebsiteCleanupAuditSchema,
   ensureCommunityMediaSchemaOnly,
@@ -167,6 +168,10 @@ try {
   logger.info("Member activation invitation schema ready before traffic acceptance");
   await ensureBusinessOwnerLinkLifecycleSchema(logger);
   logger.info("Business owner-link lifecycle schema ready before traffic acceptance");
+  // Keep this exact additive table gate outside the broad runner so normal and
+  // explicit feature-release starts fail before traffic, not on an owner save.
+  await ensureBusinessKinfolkVoiceProfileSchema(logger);
+  logger.info("Business Kinfolk Voice Profile schema ready before traffic acceptance");
   await ensureBusinessPublicDetailSchema(logger);
   logger.info("Business public-detail schema ready before traffic acceptance");
   if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
