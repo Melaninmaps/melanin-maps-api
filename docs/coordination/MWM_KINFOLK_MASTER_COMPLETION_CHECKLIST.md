@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | Registered P0 `KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED` to 44XX at `b7a411e2…`: the mobile revoke action must surface missing authentication rather than silently no-op. Two exclusive mobile paths only; no source integration yet. |
 | 2026-10-20 | KMEM-004 selected-item consent/continuity separation accepted as local source integration at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`. Authority matrix: API **4 files / 20**, Web **1 / 5**, mobile **1 / 7**, plus API/Web/mobile no-emit PASS; all runtime/platform/member gates remain external. |
 | 2026-10-20 | MEM-D3 bounded entitlement trace: **NO_LEGITIMATE_SOURCE_CLAIM**. Durable grant ledger, precedence/historic treatment, migration, and effective-tier enforcement require reviewed design and separate authorization; checkout, trials, tester, and business-owner access remain unchanged. |
 | 2026-10-20 | COMM-004 bounded Shared Plans trace: **NO_LEGITIMATE_SOURCE_CLAIM**. Recipient eligibility, public-reference snapshot fields, pending/revocation/deactivation lifecycle, and audit/cache/retention rules require reviewed design; frozen SP-002/SP-003 and private itinerary boundaries remain unchanged. |

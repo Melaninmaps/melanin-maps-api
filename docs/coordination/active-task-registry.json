@@ -3821,6 +3821,48 @@
         "behavior": "Selected explicit items save encrypted and owner-bound but no longer mutate kinfolkMemoryEnabled, kinfolkContinuityEnabled, or continuity disclosure fields. Existing sensitive reauth, transaction/capacity/duplicate/rollback, correction/revoke, owner/purpose/relevance/pause/revoke/expiry gates remain.",
         "limitations": "Synthetic local source evidence only; no database/runtime/real member data/provider/voice/browser/device/staging/deployment/member/release/founder acceptance."
       }
+    },
+    {
+      "id": "KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "KMEM-004",
+      "baseline": "b7a411e2ff323dafea3884283cd257d8d5bf274c",
+      "paths": [
+        "artifacts/mobile/app/kinfolk-memory.tsx",
+        "artifacts/mobile/__tests__/kinfolk-memory-lifecycle-controls.test.ts"
+      ],
+      "writablePathHashAtClaim": {
+        "artifacts/mobile/app/kinfolk-memory.tsx": "534bb9dc3bd858d70ac284161bab9e9372e19054471fcd03eb87c0a1a8aac91d",
+        "artifacts/mobile/__tests__/kinfolk-memory-lifecycle-controls.test.ts": "eca8adb9e20acb975b7074e9733c51b0f7cc8f3ee1777aed71a3fe564c207049"
+      },
+      "dependsOn": [
+        "KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION@242b58a6c5f04f116c76fe7cfd54174c96b0363d"
+      ],
+      "evidence": "Mobile `revokeMemory` clears memoryError and silently returns when the session token is absent. Adjacent pause/edit actions throw a sign-in error that reaches the same catch/setMemoryError path. This leaves the member-facing revoke action as an unreported no-op.",
+      "requiredBehavior": [
+        "Within revokeMemory only, missing token must take a member-facing catch-routed sign-in failure path; it must not call DELETE or locally remove the item.",
+        "With a token, preserve exact owner-scoped DELETE endpoint, local removal only after successful response, non-OK catch recovery, and all server-side revocation semantics."
+      ],
+      "constraints": [
+        "No changes to other kinfolk-memory actions, inline consent, continuity, reset, preferred name, server route/selector/crypto/tests, permanent deletion/retention semantics, or frozen KMEM source paths.",
+        "No DB/schema/data/provider/LLM/browser/device/staging/deploy/remote/activation or member/runtime acceptance."
+      ],
+      "validationPlan": [
+        "Add deterministic lifecycle static-contract coverage proving missing-token revoke is catch-routed to memoryError and ordered before fetch/local filtering.",
+        "Retain exact ID DELETE/non-OK/success source contract.",
+        "Run mobile lifecycle contract and mobile tsc --noEmit; exact two-path scope and diff check."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-manifested two-path review carrier only; central full-authority validation required.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only local evidence; no runtime/device/member/release/founder claim.",
+      "baseTransfer": {
+        "state": "PENDING_HANDOFF",
+        "file": "KMEM004_MOBILE_REVOKE_AUTH_FAIL_CLOSED_BASE_2026-10-19.tar.gz",
+        "sha256": "d1164558e231a9a74a8b92f6a708f141c6abfbf1840330a43f608d7725e13da6",
+        "authority_base": "b7a411e2ff323dafea3884283cd257d8d5bf274c"
+      }
     }
   ],
   "globalDirectiveDelivery": [

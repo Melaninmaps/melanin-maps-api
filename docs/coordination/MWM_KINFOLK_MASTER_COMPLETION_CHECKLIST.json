@@ -301,14 +301,14 @@
       "founder_requirement": "Universal Memory/Connected Intelligence completion requires member-facing verticals, not a helper/test.",
       "acceptance_criteria": "Evidence proves later relevant use, purpose separation, correction/deletion propagation, A/B isolation and equivalent server semantics on Web/iOS/Android/voice.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Universal Memory \u00a7\u00a769\u2013120: Slices 1\u20133 are not completion; feature matrix remains not verified. Active P0 claim `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` registered against f15e5986\u2026 for the demonstrated selected-item-consent/continuity-setting separation defect; no source integration yet. `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` source-integrated locally at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`: selected-item consent no longer infers general continuity/disclosure acceptance. Authority matrix PASS: API 4 files/20, Web 1/5, mobile 1/7, API/Web/mobile no-emit; exact three-path semantic/scope checks PASS.",
+      "source_evidence": "Universal Memory \u00a7\u00a769\u2013120: Slices 1\u20133 are not completion; feature matrix remains not verified. Active P0 claim `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` registered against f15e5986\u2026 for the demonstrated selected-item-consent/continuity-setting separation defect; no source integration yet. `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` source-integrated locally at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`: selected-item consent no longer infers general continuity/disclosure acceptance. Authority matrix PASS: API 4 files/20, Web 1/5, mobile 1/7, API/Web/mobile no-emit; exact three-path semantic/scope checks PASS. Active P0 claim `KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED` registered against b7a411e2\u2026 for the demonstrated silent local no-token revoke failure; no source integration yet.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "44XXTVLrtPEqRlFbDRQx9y (exclusive source carrier); QJATRGk7nUgzDlccMCUcG6 (central validation)",
       "dependencies_or_blockers": "This source vertical is local-only. Still missing: authorized runtime and real-data validation; Web/iOS/Android/voice member journey evidence; provider/test-account/staging/deployment/member/release/founder acceptance.",
-      "next_action": "Keep this vertical frozen. A later separately claimed KMEM-004 member-facing vertical must not reopen continuity/settings separation; runtime/real-data/Web/iOS/Android/voice acceptance remains separately authorized.",
+      "next_action": "Await only the uncommitted two-path mobile revocation carrier; central validate exact safe-failure and preserved owner-scoped DELETE behavior.",
       "founder_approval_needed": "Yes for external activation packets/new runtime scope.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -2052,6 +2052,10 @@
     {
       "date": "2026-10-20",
       "event": "KMEM-004 carrier `hnd_J--w-JNtmX-Uo1ps-uxEeBa8` source-integrated locally at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`: explicit item consent no longer writes general continuity/disclosure settings. Authority matrix PASS: API 4 files/20, Web 1/5, mobile 1/7, API/Web/mobile no-emit, exact scope/semantic/diff gates. External acceptance remains unperformed."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Registered P0 `KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED` to 44XX at b7a411e2\u2026: mobile revoke silently returns without a token while adjacent controls surface a sign-in failure. Two exclusive mobile paths only; no source integration yet."
     }
   ],
   "evidence_gaps": [
@@ -2140,12 +2144,12 @@
         ],
         "existing_implementation": "Consent, purpose/owner gates and deletion child receipts are linked.",
         "missing_broken_elements": "This source vertical is covered locally. Still missing: controlled runtime/data, Web/iOS/Android/voice member journey evidence, deployment/release/member/founder acceptance; no retention/deletion schedule is inferred.",
-        "current_active_repair": "No active KMEM source claim after accepted explicit-item consent/continuity separation.",
+        "current_active_repair": "`KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED` (44XX): mobile revoke must surface missing authentication instead of silently no-op; exactly two exclusive mobile source/test paths.",
         "integrated_source": "Linked local source receipts only. KMEM-004 selected-item consent/continuity separation source receipt: `242b58a6\u2026`.",
         "test_evidence": "Focused source contracts only. KMEM-004 authority matrix: API 4 files/20; Web 1/5; mobile 1/7; API/Web/mobile no-emit PASS.",
         "external_gates": "Controlled provider/test-account and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Do not reopen the integrated three paths. Trace another complete vertical only after demonstrating a concrete non-overlapping source defect or obtain separate runtime/platform authorization."
+        "next_action": "Receive and validate the bounded revoke safe-failure carrier. Do not reopen explicit consent/continuity separation or infer runtime/device acceptance."
       },
       {
         "experience_id": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS",
