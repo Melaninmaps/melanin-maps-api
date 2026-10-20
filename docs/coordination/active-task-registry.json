@@ -4329,7 +4329,7 @@
         "expires_at": "2026-10-21T01:59:40.270Z",
         "size_bytes": 167025
       },
-      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:00:40Z"
     },
     {
       "id": "INT-REVENUECAT-001-DEFAULT-DISABLED-SERVER-GUARD",
@@ -4352,7 +4352,7 @@
         "expires_at": "2026-10-21T01:59:40.618Z",
         "size_bytes": 234485
       },
-      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:00:29Z"
     }
   ],
   "globalDirectiveDelivery": [
