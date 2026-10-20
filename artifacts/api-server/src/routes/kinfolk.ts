@@ -60,6 +60,7 @@ import {
   founderProductKnowledgeAuditTable,
   savedPlacesTable,
   businessesTable,
+  businessOwnerLinksTable,
   businessIdentityTable,
   businessSkipFeedbackTable,
   lifeJourneysTable,
@@ -15784,16 +15785,44 @@ router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
       .json({ error: "Trailblazer membership required" });
   }
   try {
-    const [ownerBiz] = await db
-      .select({ id: businessesTable.id })
-      .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(req.user.id)))
+    const [approvedOwnerLink] = await db
+      .select({ businessId: businessOwnerLinksTable.businessId })
+      .from(businessOwnerLinksTable)
+      .where(and(
+        eq(businessOwnerLinksTable.userId, String(req.user.id)),
+        eq(businessOwnerLinksTable.role, "owner"),
+        eq(businessOwnerLinksTable.status, "approved"),
+        isNull(businessOwnerLinksTable.revokedAt),
+      ))
       .limit(1);
-    if (!ownerBiz) return void res.json({ messages: [], total: 0 });
+
+    let businessId = approvedOwnerLink?.businessId;
+    if (!businessId) {
+      const [legacyBusiness] = await db
+        .select({ id: businessesTable.id })
+        .from(businessesTable)
+        .where(eq(businessesTable.submittedById, String(req.user.id)))
+        .limit(1);
+      if (!legacyBusiness) return void res.json({ messages: [], total: 0 });
+
+      const [activeOwnerLink] = await db
+        .select({ id: businessOwnerLinksTable.id })
+        .from(businessOwnerLinksTable)
+        .where(and(
+          eq(businessOwnerLinksTable.businessId, legacyBusiness.id),
+          eq(businessOwnerLinksTable.role, "owner"),
+          eq(businessOwnerLinksTable.status, "approved"),
+          isNull(businessOwnerLinksTable.revokedAt),
+        ))
+        .limit(1);
+      if (activeOwnerLink) return void res.json({ messages: [], total: 0 });
+      businessId = legacyBusiness.id;
+    }
+
     const rows = await db
       .select({ message: businessSkipFeedbackTable.message })
       .from(businessSkipFeedbackTable)
-      .where(eq(businessSkipFeedbackTable.businessId, ownerBiz.id))
+      .where(eq(businessSkipFeedbackTable.businessId, businessId))
       .orderBy(desc(businessSkipFeedbackTable.createdAt))
       .limit(25);
     const messages = rows
