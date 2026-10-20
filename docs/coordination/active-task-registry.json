@@ -5264,7 +5264,7 @@
       "id": "BIZ-009-DASHBOARD-TRUST-PROFILE-SELECTED-IDENTITY-ISOLATION",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "authorityBase": "5fbb80f3b91b71cfe61199115c47d2887c9e789b",
@@ -5277,7 +5277,7 @@
       "acceptance": "Dashboard must capture the already managed-list-validated business.id for Trust Profile read and PATCH; use only /api/businesses/mine/managed/:businessId/identity; verify activeBusinessIdRef matches the captured ID before any Trust Profile load state, success/error result, collapse, or saving-state completion. Preserve legacy Identity routes for other callers, Dashboard selection/no-business behavior, identity payload/labels and non-Trust-Profile behavior. Add one additive focused static/native contract for selected route, exact ID, A→B stale response/result fencing, non-OK/malformed fail-closed behavior, and no Dashboard legacy identity URL.",
       "validation": "Focused new Dashboard Trust Profile contract plus business-dashboard-managed-selection and business-dashboard-selected-context; existing business-identity-selected-owner API contract read-only regression; mobile no-emit with --ignoreDeprecations 6.0 and temporary external build info; exact two-path diff/whitespace and fresh-base reconstruction.",
       "exclusions": "No API/server/business-identity route/schema/DB/data/storage/provider/OAuth/payment/push/AI action; no browser/device/mobile build/staging/deploy/remote Git/production action; no Dashboard feature redesign or changes outside Trust Profile identity read/save context.",
-      "source_boundary": "Return an uncommitted/unstaged hash-manifested carrier only. Source tests do not establish runtime, staging, device, member-visible, release, or founder acceptance.",
+      "source_boundary": "SOURCE_INTEGRATED_LOCAL_ONLY. No API route/schema/data/storage/provider/OAuth/runtime/browser/device/staging/deploy/mobile-build/member/release/founder acceptance occurred.",
       "baseTransfer": {
         "handoff_id": "hnd_77pc7_QfbXv6VvxcpHXyPAFg",
         "file": "BIZ009_DASHBOARD_TRUST_PROFILE_SELECTED_IDENTITY_BASE_5FBB80F3_R2.tar.gz",
@@ -5290,6 +5290,21 @@
           "expires_at": "2026-10-21T12:33:18.210Z"
         },
         "reason": "R2 corrects only the prior archive checksum ordering: SHA256SUMS now validates the final manifest and deliberately excludes itself. Source/dependency blobs and declared authority base are unchanged."
+      },
+      "sourceIntegrationCommit": "5e5c2156c34c00a15a89fd3a5079137397b0e69a",
+      "carrier": {
+        "handoff_id": "hnd_-afafQNC3X5v97NGlgw3rRfy",
+        "outer_sha256": "b6be47196a91a1505550acf2594267fee83b825cf79f202486c25cf0fc6e0e82",
+        "authority_base": "5fbb80f3b91b71cfe61199115c47d2887c9e789b",
+        "r2_base_receipt": "c4ddd8007c0eaa10f512ddcaee29edd2206b4fdf",
+        "note": "R2 only corrected archive checksum ordering; source/dependency content was unchanged. Central verified outer and all inner checksums, declared base maps, result files, and current portable application."
+      },
+      "centralValidation": {
+        "native": "Trust Profile + Dashboard selected-context + Pinned selected-context: 3 files / 17 tests PASS",
+        "api": "selected Identity owner authority: 1 file / 10 tests PASS",
+        "typecheck": "mobile no-emit PASS with --ignoreDeprecations 6.0 and temporary build info removed",
+        "scope": "exact two paths and diff/whitespace PASS",
+        "separate_dependency": "The older managed-selection static test is independently claimed in BIZ-009-DASHBOARD-MANAGED-SELECTION-CONTRACT-ALIGNMENT; it was not weakened or altered by this carrier."
       }
     },
     {
