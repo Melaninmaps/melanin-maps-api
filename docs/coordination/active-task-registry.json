@@ -3646,7 +3646,7 @@
     {
       "id": "FLIGHT-008-THREE-PARTICIPANT-INJECTED-ARRIVAL-VENUE-COMPOSITION",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "FLIGHT-001",
@@ -3736,6 +3736,17 @@
         "at": "2026-10-19T23:55:00Z",
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged same-path repair from updated base, limited to role-bound allowed uses, triad availability envelope, and pair-clock equality."
+      },
+      "sourceIntegration": {
+        "source_commit": "19151dd025ce7010e58e16e429f199da8987bc83",
+        "repair_carrier": "hnd_lpcRu4YdFHjtqAam3OKrW7dn",
+        "outer_sha256": "4c9ae318e5f401a622b79655afe82d686d40b8fdbb25f954dfdd92534548260b",
+        "authority_validation": "API Vitest 6 files / 120 tests PASS; API tsc --noEmit PASS; semantic order/output projection, exact three-path scope, and diff check PASS.",
+        "limitations": "Source-level injected fixtures only; no real consent, venue fact, provider/Calendar/OAuth, durable persistence, route/UI, runtime, browser/device, staging, deployment, member, release, or founder evidence."
+      },
+      "repairResolution": {
+        "review_failure_receipt": "82e80ac1fee8cb404181a5a957293fc0557e06ee",
+        "outcome": "Repaired carrier addressed exact role-bound allowed uses, triad coordinator availability envelope, and pair/outer clock binding before integration."
       }
     }
   ],

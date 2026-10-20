@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-19 | FLIGHT-008 repaired carrier accepted as source-integrated local-only at `19151dd025ce7010e58e16e429f199da8987bc83`: exact role uses, triad-bound coordinator availability, pair/outer clock equality, and fixture-only output. Cumulative source matrix **6 files / 120 tests** plus API no-emit PASS; external gates remain open. |
 | 2026-10-19 | BIZ-003 bounded owner-feedback trace: **NO_LEGITIMATE_SOURCE_CLAIM**. Projection, approved-owner precedence, former-submitter denial, canonical consumers, API/mobile contracts, and no-emit hold; BIZ-009/runtime work was not invented. |
 | 2026-10-19 | FLIGHT-008 carrier was rejected before source integration: its type lacked role-specific allowed uses, coordinator availability was not a triad-bound permission, and outer/pair injected clocks were not bound. S9 retains the same exclusive all-new three-path repair claim. |
 | 2026-10-19 | Cumulative BIZ owner-feedback source matrix PASS: API **1 file / 7**, mobile canonical consumers **2 files / 6**, and API no-emit. Source-only evidence; BIZ-009 release gates are unchanged. |
