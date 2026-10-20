@@ -5149,7 +5149,7 @@
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "authorityBase": "63d33a5f7788fb890b5623a2444b981a3e543497",
-      "workerStart": "DISPATCH_PENDING_BASE",
+      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "paths": [
         "artifacts/api-server/src/routes/businesses.ts",
         "artifacts/mobile/app/business-owner/edit-profile.tsx",
@@ -5159,7 +5159,13 @@
       "purpose": "Bind legacy selected editor auxiliary video, intro-video, and weekly-schedule actions to the explicitly selected managed business rather than an arbitrary /mine record.",
       "acceptance": "Add only selected managed-business route variants needed for editor intro-video upload/delete, external video add/delete, and weekly-schedule save. Server routes must authorize exact current approved/unrevoked owner target before storage/DB effects; native selected branch must use those routes and preserve legacy no-selected-ID behavior. Preserve Feature Video/photo/profile routes and success-only local state. Add deterministic server/native selected, cross-owner, revoked, malformed/non-OK, and stale/account-switch assertions.",
       "exclusions": "No real storage/schema/data/provider/browser/device/staging/deploy/remote Git/mobile build/publication action; do not modify Feature Video/photo/profile/identity/broadcast behavior.",
-      "source_boundary": "Uncommitted/unstaged source-only replacement carrier. It does not recover, alter, or make any claim about the blocked S9 workspace."
+      "source_boundary": "Uncommitted/unstaged source-only replacement carrier. It does not recover, alter, or make any claim about the blocked S9 workspace.",
+      "baseTransfer": {
+        "handoff_id": "hnd_QD6JapBJsKplOLFFHJ1r_ZDb",
+        "file": "BIZ009_SELECTED_EDITOR_AUXILIARY_MEDIA_SCHEDULE_R2_BASE_63D33A5F.tar.gz",
+        "sha256": "e7a3203f6290f119229e8e668346f3927d337980ad56dfa2ce8c5783783c3bce",
+        "expires_at": "2026-10-21T12:00:21.543Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
