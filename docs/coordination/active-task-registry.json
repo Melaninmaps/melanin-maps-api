@@ -5350,11 +5350,11 @@
       "id": "BIZ-009-BUSINESS-INTELLIGENCE-SELECTED-CONTEXT",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "authorityBase": "e80946423a8c86702fdbc99884227596c5aeb0df",
-      "workerStart": "BASE_TRANSFERRED",
+      "workerStart": "CARRIER_ACCEPTED",
       "paths": [
         "artifacts/mobile/app/business-dashboard.tsx",
         "artifacts/mobile/app/business-intelligence.tsx",
@@ -5376,6 +5376,28 @@
         "expires_at": "2026-10-21T12:57:52.980Z",
         "source_authority_base": "e80946423a8c86702fdbc99884227596c5aeb0df",
         "claim_record_commit": "82f100f82b3c6dc167dd572103c99319c05037c9"
+      },
+      "sourceCommit": "01639b14eef6c1e7539dd075b6ee711dcbfb387f",
+      "completionStatus": "SOURCE COMPLETE",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "01639b14eef6c1e7539dd075b6ee711dcbfb387f",
+        "carrier": {
+          "handoff_id": "hnd_s_BnZqRVu-r9YuGvxit0Y_v2",
+          "archiveSha256": "19171ca3a46fc9ceffaa48e1556634c8a00ab4e3f1c9f52f2ce12045aa9fe70c",
+          "manifestSha256": "d46d6207d2335348716e86643517c5600819186317f2831ce7a2c46fc8583962",
+          "patchSha256": "9b62d0e8a40ff6e88b20c106594bfcd9cd8b8e1c4f92ffeae498332084bc80dc",
+          "validationResultsSha256": "162ff092b2d5be3c735ac8de31b5dfae9d3fd2de6ca74f3d7382753f9048e175",
+          "currentBaseAndFreshReconstructionVerified": true
+        },
+        "reviewDisposition": "Accepted. Central review confirmed selected growth response uses activePromotions, selected analytics preserves the native contract, requested managed-ID membership is exact, and only public reviews use the selected encoded business ID.",
+        "authorityValidation": {
+          "native": "5 files / 25 tests passed: Business Intelligence selected context, Dashboard managed selection, Dashboard selected context, Dashboard Trust Profile selected identity, and selected Identity context.",
+          "api": "3 files / 30 tests passed: selected Dashboard context, selected profile authority, and selected Identity owner authority.",
+          "mobileNoEmit": "passed with Node heap 8192 MB, TypeScript 6 compatibility flag, and a temporary external build-info file removed after completion.",
+          "hygiene": "exact three-path source commit and git diff --check passed."
+        },
+        "externalAcceptance": "PENDING — local deterministic source evidence only; no staging, database/storage, browser/device, member-visible, deployment/release, or founder acceptance occurred."
       }
     }
   ],
