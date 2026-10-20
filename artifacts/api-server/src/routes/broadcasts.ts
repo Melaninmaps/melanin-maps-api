@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessBroadcastsTable, businessNotificationPrefsTable, savedPlacesTable, pushTokensTable, BROADCAST_QUOTA, BROADCAST_TYPES, type BroadcastType } from "@workspace/db";
+import { db, pool, businessesTable, businessBroadcastsTable, businessNotificationPrefsTable, savedPlacesTable, pushTokensTable, BROADCAST_QUOTA, BROADCAST_TYPES, type BroadcastType } from "@workspace/db";
 import { eq, and, gte, count, inArray } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -51,6 +51,74 @@ async function getQuotaInfo(businessId: string, tier: string, isEmergency: boole
 
   const limit = BROADCAST_QUOTA[tier] ?? BROADCAST_QUOTA.free;
   return { used: Number(used), limit, remaining: Math.max(0, limit - Number(used)) };
+}
+
+type SelectedBroadcastBusiness = {
+  id: string;
+  name: string;
+  marketplaceTier: string | null;
+  verified: boolean;
+};
+
+async function requireApprovedUnrevokedBroadcastOwner(
+  req: Request,
+  res: Response,
+): Promise<SelectedBroadcastBusiness | null> {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return null;
+  }
+
+  const businessId = String(req.params.businessId ?? "").trim();
+  if (!businessId) {
+    res.status(400).json({ error: "A business ID is required" });
+    return null;
+  }
+
+  const result = await pool.query<SelectedBroadcastBusiness>(
+    `SELECT b.id, b.name, b.marketplace_tier AS "marketplaceTier", b.verified
+       FROM businesses b
+      WHERE b.id = $1
+        AND EXISTS (
+          SELECT 1
+            FROM business_owner_links bol
+           WHERE bol.business_id = b.id
+             AND bol.user_id = $2
+             AND bol.role = 'owner'
+             AND bol.status = 'approved'
+             AND bol.revoked_at IS NULL
+        )
+      LIMIT 1`,
+    [businessId, req.user.id],
+  );
+  const business = result.rows[0] ?? null;
+  if (!business) {
+    res.status(403).json({ error: "An approved business owner link is required" });
+    return null;
+  }
+  if (!business.verified) {
+    res.status(403).json({ error: "Broadcasts are only available to verified businesses.", code: "unverified" });
+    return null;
+  }
+  return business;
+}
+
+async function getSelectedBroadcastQuota(
+  businessId: string,
+  tier: string,
+  isEmergency: boolean,
+) {
+  if (isEmergency) return { used: 0, limit: Infinity, remaining: Infinity };
+  const result = await pool.query<{ used: number | string }>(
+    `SELECT COUNT(*)::int AS used
+       FROM business_broadcasts
+      WHERE business_id = $1
+        AND created_at >= DATE_TRUNC('month', NOW())`,
+    [businessId],
+  );
+  const used = Number(result.rows[0]?.used ?? 0);
+  const limit = BROADCAST_QUOTA[tier] ?? BROADCAST_QUOTA.free;
+  return { used, limit, remaining: Math.max(0, limit - used) };
 }
 
 // ─── GET /api/businesses/mine/broadcast-quota ─────────────────────────────────
@@ -211,6 +279,80 @@ router.post("/businesses/mine/broadcasts", async (req: Request, res: Response) =
 
   req.log.info({ businessId: biz.id, type, recipientCount: eligibleUserIds.length, deliveredCount }, "Broadcast sent");
   res.json({ broadcast, delivered: deliveredCount, recipients: eligibleUserIds.length });
+});
+
+// ─── GET /api/businesses/:businessId/broadcasts ───────────────────────────────
+router.get("/businesses/:businessId/broadcasts", async (req: Request, res: Response) => {
+  const business = await requireApprovedUnrevokedBroadcastOwner(req, res);
+  if (!business) return;
+
+  const broadcastsResult = await pool.query(
+    `SELECT id, type, title, body,
+            recipient_count AS "recipientCount", delivered_count AS "deliveredCount",
+            view_count AS "viewCount", created_at AS "createdAt"
+       FROM business_broadcasts
+      WHERE business_id = $1
+      ORDER BY created_at DESC
+      LIMIT 50`,
+    [business.id],
+  );
+  const quota = await getSelectedBroadcastQuota(
+    business.id,
+    business.marketplaceTier ?? "free",
+    false,
+  );
+  res.json({
+    broadcasts: broadcastsResult.rows,
+    quota,
+    tier: business.marketplaceTier ?? "free",
+  });
+});
+
+// ─── POST /api/businesses/:businessId/broadcasts ──────────────────────────────
+// Selected-business writes intentionally save only a broadcast record. This route
+// does not invoke the legacy push-provider helper or initiate real delivery.
+router.post("/businesses/:businessId/broadcasts", async (req: Request, res: Response) => {
+  const { type, title, body } = req.body as { type?: string; title?: string; body?: string };
+
+  if (!type || !BROADCAST_TYPES.includes(type as BroadcastType)) {
+    res.status(400).json({ error: `type must be one of: ${BROADCAST_TYPES.join(", ")}` }); return;
+  }
+  if (!title?.trim()) { res.status(400).json({ error: "title required" }); return; }
+  if (!body?.trim()) { res.status(400).json({ error: "body required" }); return; }
+  if (title.length > 200) { res.status(400).json({ error: "title max 200 chars" }); return; }
+  if (body.length > 1000) { res.status(400).json({ error: "body max 1000 chars" }); return; }
+
+  const business = await requireApprovedUnrevokedBroadcastOwner(req, res);
+  if (!business) return;
+
+  const isEmergency = type === "emergency";
+  const quota = await getSelectedBroadcastQuota(
+    business.id,
+    business.marketplaceTier ?? "free",
+    isEmergency,
+  );
+  if (!isEmergency && quota.remaining === 0) {
+    res.status(429).json({
+      error: "Monthly broadcast limit reached",
+      quota: { used: quota.used, limit: quota.limit, remaining: 0 },
+    });
+    return;
+  }
+
+  const result = await pool.query(
+    `INSERT INTO business_broadcasts (
+       business_id, business_name, type, title, body, recipient_count, delivered_count
+     ) VALUES ($1, $2, $3, $4, $5, 0, 0)
+     RETURNING id, type, title, body,
+               recipient_count AS "recipientCount", delivered_count AS "deliveredCount",
+               view_count AS "viewCount", created_at AS "createdAt"`,
+    [business.id, business.name, type as BroadcastType, title.trim(), body.trim()],
+  );
+  res.json({
+    broadcast: result.rows[0],
+    delivered: 0,
+    message: "Broadcast saved.",
+  });
 });
 
 // ─── GET /api/businesses/:id/notification-prefs ────────────────────────────────

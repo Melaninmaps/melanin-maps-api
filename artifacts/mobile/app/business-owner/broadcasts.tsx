@@ -1,8 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,17 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
-async function getToken(): Promise<string | null> {
-  try {
-    if (Platform.OS === "web") return null;
-    return await SecureStore.getItemAsync("auth_session_token");
-  } catch { return null; }
-}
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
 const BROADCAST_TYPES = [
   { id: "event", emoji: "🎉", label: "Event", hint: "Live music, grand opening, networking…" },
@@ -51,6 +40,7 @@ type Broadcast = {
 };
 
 type Quota = { used: number; limit: number; remaining: number; tier: string };
+type ManagedBusiness = { id: string; name?: string | null };
 
 const TIER_LABELS: Record<string, string> = {
   free: "Community Business",
@@ -59,17 +49,47 @@ const TIER_LABELS: Record<string, string> = {
   enterprise: "Enterprise Partner",
 };
 
+function parseManagedBusinesses(payload: unknown): ManagedBusiness[] | null {
+  if (!payload || typeof payload !== "object" || !Array.isArray((payload as { businesses?: unknown }).businesses)) {
+    return null;
+  }
+  const businesses = (payload as { businesses: unknown[] }).businesses;
+  if (!businesses.every((business) => (
+    business
+    && typeof business === "object"
+    && typeof (business as { id?: unknown }).id === "string"
+    && (business as { id: string }).id.trim().length > 0
+  ))) {
+    return null;
+  }
+  return businesses.map((business) => ({
+    id: (business as { id: string }).id.trim(),
+    name: typeof (business as { name?: unknown }).name === "string"
+      ? (business as { name: string }).name.trim()
+      : null,
+  }));
+}
+
 export default function BroadcastsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ businessId?: string | string[] }>();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+  const routeBusinessId = params.businessId;
+  const requestedBusinessId = typeof routeBusinessId === "string" && routeBusinessId.trim()
+    ? routeBusinessId.trim()
+    : null;
+  const hasMalformedRequestedBusinessId = routeBusinessId !== undefined && !requestedBusinessId;
 
   const [tab, setTab] = useState<"compose" | "history">("compose");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [unverified, setUnverified] = useState(false);
+  const [businessId, setBusinessId] = useState<string | null>(null);
+  const [contextMessage, setContextMessage] = useState<string | null>(null);
+  const requestEpoch = useRef(0);
 
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [quota, setQuota] = useState<Quota | null>(null);
@@ -79,29 +99,87 @@ export default function BroadcastsScreen() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
+  const clearSelectedBusinessContext = useCallback(() => {
+    setBusinessId(null);
+    setBroadcasts([]);
+    setQuota(null);
+    setTitle("");
+    setBody("");
+    setTab("compose");
+  }, []);
+
   const loadData = useCallback(async () => {
+    const epoch = ++requestEpoch.current;
+    setLoading(true);
+    setUnverified(false);
+    setContextMessage(null);
+    clearSelectedBusinessContext();
     try {
-      const token = await getToken();
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/broadcasts`, { headers });
+      if (hasMalformedRequestedBusinessId) {
+        throw new Error("Choose a business in Business Admin before using Broadcasts.");
+      }
+      const base = getApiBase();
+      const headers = await getMemberApiHeaders();
+      if (epoch !== requestEpoch.current) return;
+      const managedResponse = await fetch(`${base}/api/businesses/mine/managed`, { headers });
+      const managedPayload = await managedResponse.json().catch(() => ({}));
+      if (!managedResponse.ok) {
+        throw new Error("Could not confirm your approved business owner access.");
+      }
+      const managedBusinesses = parseManagedBusinesses(managedPayload);
+      if (!managedBusinesses) {
+        throw new Error("Could not confirm your approved business owner access.");
+      }
+      const selectedBusiness = requestedBusinessId
+        ? managedBusinesses.find((business) => business.id === requestedBusinessId) ?? null
+        : null;
+      if (!selectedBusiness) {
+        throw new Error(
+          requestedBusinessId
+            ? "This business is no longer an approved owner context."
+            : "Choose a business in Business Admin before using Broadcasts.",
+        );
+      }
+      if (epoch !== requestEpoch.current) return;
+      const res = await fetch(
+        `${base}/api/businesses/${encodeURIComponent(selectedBusiness.id)}/broadcasts`,
+        { headers },
+      );
+      if (epoch !== requestEpoch.current) return;
       if (res.status === 403) {
-        setUnverified(true);
-        return;
+        const denied = (await res.json().catch(() => ({}))) as { code?: string; error?: string };
+        if (denied.code === "unverified") {
+          setBusinessId(selectedBusiness.id);
+          setUnverified(true);
+          setContextMessage("Approved owner access and a verified business are required for Broadcasts.");
+          return;
+        }
+        throw new Error(denied.error ?? "An approved business owner link is required.");
       }
       if (res.ok) {
         const data = await res.json() as { broadcasts: Broadcast[]; quota: Quota };
+        if (epoch !== requestEpoch.current) return;
+        setBusinessId(selectedBusiness.id);
         setBroadcasts(data.broadcasts);
         setQuota(data.quota);
+        return;
       }
-    } catch { /* silent */ } finally {
-      setLoading(false);
+      throw new Error("Could not load Broadcasts.");
+    } catch (error) {
+      if (epoch !== requestEpoch.current) return;
+      clearSelectedBusinessContext();
+      setContextMessage(error instanceof Error ? error.message : "Could not load Broadcasts.");
+    } finally {
+      if (epoch === requestEpoch.current) setLoading(false);
     }
-  }, []);
+  }, [clearSelectedBusinessContext, hasMalformedRequestedBusinessId, requestedBusinessId]);
 
   useEffect(() => { queueMicrotask(() => { loadData(); }); }, [loadData]);
 
   const handleSend = async () => {
+    const selectedBusinessId = businessId;
+    const epoch = requestEpoch.current;
+    if (!selectedBusinessId) return;
     if (!title.trim()) { Alert.alert("Add a title", "Give your broadcast a short, clear headline."); return; }
     if (!body.trim()) { Alert.alert("Add a message", "Write what you want your community to know."); return; }
     if (selectedType !== "emergency" && quota && quota.remaining === 0) {
@@ -116,15 +194,15 @@ export default function BroadcastsScreen() {
     setSending(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const token = await getToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/broadcasts`, {
+      const headers = await getMemberApiHeaders();
+      if (epoch !== requestEpoch.current || selectedBusinessId !== businessId) return;
+      const res = await fetch(`${getApiBase()}/api/businesses/${encodeURIComponent(selectedBusinessId)}/broadcasts`, {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ type: selectedType, title: title.trim(), body: body.trim() }),
       });
       const data = await res.json() as { broadcast?: Broadcast; delivered?: number; recipients?: number; error?: string };
+      if (epoch !== requestEpoch.current || selectedBusinessId !== businessId) return;
       if (res.ok && data.broadcast) {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert(
@@ -169,16 +247,17 @@ export default function BroadcastsScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      {/* Tab bar */}
-      <View style={[styles.tabs, { borderBottomColor: colors.border }]}>
-        {(["compose", "history"] as const).map(t => (
-          <TouchableOpacity activeOpacity={0.85} key={t} style={[styles.tab, tab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]} onPress={() => setTab(t)}>
-            <Text style={[styles.tabTxt, { color: tab === t ? colors.primary : colors.mutedForeground }]}>
-              {t === "compose" ? "Compose" : "History"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {businessId ? (
+        <View style={[styles.tabs, { borderBottomColor: colors.border }]}>
+          {(["compose", "history"] as const).map(t => (
+            <TouchableOpacity activeOpacity={0.85} key={t} style={[styles.tab, tab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]} onPress={() => setTab(t)}>
+              <Text style={[styles.tabTxt, { color: tab === t ? colors.primary : colors.mutedForeground }]}>
+                {t === "compose" ? "Compose" : "History"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : null}
 
       <ScrollView
         keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
@@ -200,10 +279,34 @@ export default function BroadcastsScreen() {
             </View>
             <TouchableOpacity activeOpacity={0.85}
               style={[styles.gateBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.push("/business-owner/identity" as never)}
+              onPress={() => router.push({
+                pathname: "/business-owner/identity",
+                params: businessId ? { businessId } : {},
+              } as never)}
             >
               <Feather name="user-check" size={16} color="#FFF" />
               <Text style={styles.gateBtnTxt}>Complete Business Identity</Text>
+            </TouchableOpacity>
+          </View>
+        ) : !businessId ? (
+          <View style={styles.gateCard} testID="business-broadcasts-context-recovery">
+            <Feather name="lock" size={28} color={colors.mutedForeground} />
+            <Text style={[styles.gateTitle, { color: colors.foreground }]}>Approved owner access required</Text>
+            <Text accessibilityRole="alert" style={[styles.gateSub, { color: colors.mutedForeground }]}>
+              {contextMessage ?? "Choose an approved business before using Broadcasts."}
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => void loadData()}
+              style={[styles.gateBtn, { backgroundColor: colors.primary }]}
+            >
+              <Text style={styles.gateBtnTxt}>Try again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.replace("/business-owner" as never)}
+            >
+              <Text style={[styles.gateSub, { color: colors.primary }]}>Back to Business Admin</Text>
             </TouchableOpacity>
           </View>
         ) : tab === "compose" ? (
