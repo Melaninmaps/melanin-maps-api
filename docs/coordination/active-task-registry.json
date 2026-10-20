@@ -3825,7 +3825,7 @@
     {
       "id": "KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "KMEM-004",
@@ -3863,6 +3863,11 @@
         "sha256": "d1164558e231a9a74a8b92f6a708f141c6abfbf1840330a43f608d7725e13da6",
         "expires_at": "2026-10-21T00:27:25.482Z",
         "authority_base": "b7a411e2ff323dafea3884283cd257d8d5bf274c"
+      },
+      "ownerStartAcknowledgement": {
+        "at": "2026-10-20T00:28:19Z",
+        "channel": "manus-tasks direct reply",
+        "statement": "Owner acknowledged compact-base verification, exclusive two-path scope, exact missing-token validation, uncommitted carrier, and all source-only boundaries."
       }
     }
   ],
