@@ -3802,9 +3802,10 @@
       "carrierDisposition": "Uncommitted, unstaged, hash-manifested three-path review carrier only. Central owner must validate full authority before source integration.",
       "externalAcceptance": "NOT AUTHORIZED \u2014 source-only synthetic evidence; no runtime, real account/data, browser/device, staging/deploy, member/release/founder claim.",
       "baseTransfer": {
-        "state": "PENDING_HANDOFF",
+        "handoff_id": "hnd_W2QnNWaarSdsZ63DRaqW22f5",
         "file": "KMEM004_EXPLICIT_ITEM_CONSENT_CONTINUITY_SEPARATION_BASE_2026-10-19.tar.gz",
         "sha256": "0c73b8d0598d12f4a99e4aa1dd0a114d145f5f81e997f0d12618c14570ff79ba",
+        "expires_at": "2026-10-21T00:02:14.946Z",
         "authority_base": "f15e59867135baae2518dca44cf7bfef4bd55eda"
       }
     }
