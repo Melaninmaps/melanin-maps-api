@@ -5130,7 +5130,7 @@
       "ownerTaskId": "n3V26eXux1YUjv25Jvn8Bm",
       "ownerTaskName": "Differentiate Website Preview and App Onboarding",
       "authorityBase": "095d1384bbabb9e6560c7bb5e7be162272eb5e69",
-      "workerStart": "DISPATCH_PENDING_BASE",
+      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "paths": [
         "artifacts/web/src/pages/admin.tsx",
         "artifacts/web/src/__tests__/admin-inventory-public-profile-link.test.ts"
@@ -5138,7 +5138,13 @@
       "purpose": "Make each eligible rendered Admin inventory business name an accessible canonical internal public MWM profile link without changing the existing separate edit action.",
       "acceptance": "Render a valid eligible business name as a semantic internal link to exact existing `/businesses/:id`; retain truthful unavailable/unpublished status without inventing a destination; no arbitrary/stale ID or route. Add one focused Web contract for exact URL and accessible link semantics.",
       "exclusions": "No owner Dashboard/Owner Home/edit-profile/businesses/shared context/schema/staging/browser/provider/payment/deploy/remote Git change. Browser validation remains central and later only after staging candidate deployment using Take Control.",
-      "source_boundary": "Uncommitted/unstaged source-only carrier; current central source base only."
+      "source_boundary": "Uncommitted/unstaged source-only carrier; current central source base only.",
+      "baseTransfer": {
+        "handoff_id": "hnd_7K156KNEwqgVOefeicb5tL7h",
+        "file": "BIZ009_ADMIN_INVENTORY_CANONICAL_PUBLIC_LINK_BASE_095D1384.tar.gz",
+        "sha256": "33ef935c011a3fcfd735b76766edac624a35e2482a2938a91f7d56b53dceb081",
+        "expires_at": "2026-10-21T12:01:22.756Z"
+      }
     },
     {
       "id": "BIZ-009-SELECTED-EDITOR-AUXILIARY-MEDIA-SCHEDULE-ISOLATION-R2",
