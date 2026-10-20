@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -107,6 +107,14 @@ function storageKey(bizId: string) {
 // ── Phase state ───────────────────────────────────────────────────────────────
 type Phase = "loading" | "load_error" | "kinfolk_intro" | "return_choice" | "ready";
 
+type ManagedBusiness = { id?: unknown };
+type FeaturedVideoBusiness = {
+  id?: unknown;
+  featuredVideoUrl?: unknown;
+  featuredVideoTitle?: unknown;
+  featuredVideoPurpose?: unknown;
+};
+
 const URL_RE = /^https?:\/\/.+\..+/i;
 const SUPPORTED = ["YouTube", "TikTok", "Instagram", "Facebook", "Twitch", "Snapchat", "Vimeo"];
 
@@ -132,6 +140,7 @@ export default function FeaturedVideoScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const requestEpoch = useRef(0);
 
   const [fadeAnim] = useState(() => new Animated.Value(0));
   useEffect(() => {
@@ -145,51 +154,88 @@ export default function FeaturedVideoScreen() {
     ? platform.charAt(0).toUpperCase() + platform.slice(1) : null;
   const urlValid = !videoUrl.trim() || (URL_RE.test(videoUrl.trim()) && platform !== "unknown");
 
+  const clearBusinessContext = useCallback(() => {
+    setBusinessId(null);
+    setActivePrompts([]);
+    setShowPromptsReminder(false);
+    setVideoMode("upload");
+    setHostedUrl(null);
+    setUploading(false);
+    setVideoUrl("");
+    setVideoTitle("");
+    setVideoPurpose("");
+    setSaving(false);
+    setError("");
+    setSaved(false);
+  }, []);
+
   // ── Load ─────────────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
+    const epoch = ++requestEpoch.current;
+    clearBusinessContext();
+    setPhase("loading");
+
     try {
       const token = await getToken();
-      const res = await fetch(`${getApiBase()}/api/businesses/mine`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) {
-        setPhase("load_error");
-        return;
-      }
-      const data = await res.json() as {
-        business?: {
-          id: string;
-          featuredVideoUrl?: string | null;
-          featuredVideoTitle?: string | null;
-          featuredVideoPurpose?: string | null;
-        }
+      if (epoch !== requestEpoch.current) return;
+      const headers: Record<string, string> = token
+        ? { Authorization: `Bearer ${token}` }
+        : {};
+      const base = getApiBase();
+      const managedResponse = await fetch(`${base}/api/businesses/mine/managed`, { headers });
+      const managed = (await managedResponse.json().catch(() => ({}))) as {
+        businesses?: unknown;
       };
-      const biz = data.business;
-      const resolvedBusinessId = typeof biz?.id === "string" ? biz.id.trim() : "";
-      if (!biz || !resolvedBusinessId) {
-        setPhase("load_error");
-        return;
+      if (epoch !== requestEpoch.current) return;
+      if (!managedResponse.ok || !Array.isArray(managed.businesses) || managed.businesses.length !== 1) {
+        throw new Error("A single approved business owner link is required.");
       }
+
+      const selected = managed.businesses[0] as ManagedBusiness | null;
+      const selectedBusinessId = typeof selected?.id === "string" ? selected.id.trim() : "";
+      if (!selectedBusinessId) {
+        throw new Error("A single approved business owner link is required.");
+      }
+
+      const response = await fetch(
+        `${base}/api/businesses/${encodeURIComponent(selectedBusinessId)}`,
+        { headers },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        business?: FeaturedVideoBusiness;
+      };
+      if (epoch !== requestEpoch.current) return;
+
+      const business = data.business;
+      const resolvedBusinessId = typeof business?.id === "string" ? business.id.trim() : "";
+      if (!response.ok || !business || resolvedBusinessId !== selectedBusinessId) {
+        throw new Error("Could not load your video settings.");
+      }
+
+      const url = typeof business.featuredVideoUrl === "string" ? business.featuredVideoUrl : "";
+      const title = typeof business.featuredVideoTitle === "string" ? business.featuredVideoTitle : "";
+      const purpose = typeof business.featuredVideoPurpose === "string"
+        ? business.featuredVideoPurpose as VideoPurpose
+        : "";
       setBusinessId(resolvedBusinessId);
-      const url = biz.featuredVideoUrl ?? "";
       if (url && isHostedUrl(url)) {
         setHostedUrl(url);
-        setVideoMode("upload");
       } else {
         setVideoUrl(url);
         setVideoMode(url ? "link" : "upload");
       }
-      setVideoTitle(biz.featuredVideoTitle ?? "");
-      setVideoPurpose((biz.featuredVideoPurpose as VideoPurpose) ?? "");
+      setVideoTitle(title);
+      setVideoPurpose(purpose);
 
-      // If they already have a video, skip straight to ready
+      // If they already have a video, skip straight to ready.
       if (url) {
         setPhase("ready");
         return;
       }
 
-      // Check for stored prompts
+      // Check for stored prompts.
       const stored = await AsyncStorage.getItem(storageKey(resolvedBusinessId));
+      if (epoch !== requestEpoch.current) return;
       if (stored) {
         try {
           const parsed = JSON.parse(stored) as string[];
@@ -201,21 +247,25 @@ export default function FeaturedVideoScreen() {
         } catch { /* bad JSON, fall through */ }
       }
 
-      // First visit — generate fresh prompts
+      // First visit — generate fresh prompts.
       const prompts = pickNewPrompts();
       setActivePrompts(prompts);
       setPhase("kinfolk_intro");
     } catch {
+      if (epoch !== requestEpoch.current) return;
+      clearBusinessContext();
       setPhase("load_error");
     }
-  }, []);
+  }, [clearBusinessContext]);
 
   useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
-  const retryLoad = () => {
-    setBusinessId(null);
-    setPhase("loading");
-    void load();
+  const retryLoad = () => { void load(); };
+
+  const returnToBusinessOwner = () => {
+    ++requestEpoch.current;
+    clearBusinessContext();
+    router.canGoBack() ? router.back() : router.replace("/business-owner" as never);
   };
 
   // ── Prompt actions ────────────────────────────────────────────────────────────
@@ -361,7 +411,7 @@ export default function FeaturedVideoScreen() {
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
         <TouchableOpacity activeOpacity={0.85} style={s.backBtn}
-          onPress={() => phase === "kinfolk_intro" ? savePromptsAndExit() : (router.canGoBack() ? router.back() : router.replace("/business-owner" as never))}>
+          onPress={() => phase === "kinfolk_intro" ? savePromptsAndExit() : returnToBusinessOwner()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]}>Featured Video</Text>
@@ -381,6 +431,10 @@ export default function FeaturedVideoScreen() {
           <TouchableOpacity style={[s.primaryBtn, { backgroundColor: colors.primary }]} activeOpacity={0.85} onPress={retryLoad}>
             <Feather name="refresh-cw" size={16} color="#FFF" />
             <Text style={s.primaryBtnText}>Try again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.ghostBtn} activeOpacity={0.75} onPress={returnToBusinessOwner}>
+            <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
+            <Text style={[s.ghostBtnText, { color: colors.mutedForeground }]}>Back to Business Admin</Text>
           </TouchableOpacity>
         </View>
       )}

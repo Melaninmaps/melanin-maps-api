@@ -7,9 +7,11 @@ const runtime = vi.hoisted(() => {
   const callbackDependencies: Array<readonly unknown[] | undefined> = [];
   const effectDependencies: Array<readonly unknown[] | undefined> = [];
   const pendingEffects: Array<() => void | (() => void)> = [];
+  const refs: Array<{ current: unknown }> = [];
   let stateCursor = 0;
   let callbackCursor = 0;
   let effectCursor = 0;
+  let refCursor = 0;
 
   const dependenciesMatch = (left: readonly unknown[] | undefined, right: readonly unknown[] | undefined) =>
     left?.length === right?.length && left?.every((value, index) => Object.is(value, right[index]));
@@ -25,6 +27,7 @@ const runtime = vi.hoisted(() => {
       stateCursor = 0;
       callbackCursor = 0;
       effectCursor = 0;
+      refCursor = 0;
     },
     reset() {
       state.length = 0;
@@ -33,9 +36,11 @@ const runtime = vi.hoisted(() => {
       callbackDependencies.length = 0;
       effectDependencies.length = 0;
       pendingEffects.length = 0;
+      refs.length = 0;
       stateCursor = 0;
       callbackCursor = 0;
       effectCursor = 0;
+      refCursor = 0;
     },
     flushEffects() {
       const effects = pendingEffects.splice(0);
@@ -70,6 +75,11 @@ const runtime = vi.hoisted(() => {
         pendingEffects.push(effect);
       }
     },
+    useRef<T>(initial: T) {
+      const index = refCursor++;
+      if (!refs[index]) refs[index] = { current: initial };
+      return refs[index] as { current: T };
+    },
   };
 });
 
@@ -87,6 +97,7 @@ vi.mock("react", () => ({
   default: { createElement: runtime.createElement },
   useCallback: runtime.useCallback,
   useEffect: runtime.useEffect,
+  useRef: runtime.useRef,
   useState: runtime.useState,
 }));
 
@@ -216,8 +227,16 @@ async function settle(): Promise<void> {
   await Promise.resolve();
 }
 
-function response(business: unknown, ok = true) {
-  return { ok, json: vi.fn().mockResolvedValue({ business }) };
+function response(body: Record<string, unknown>, ok = true) {
+  return { ok, json: vi.fn().mockResolvedValue(body) };
+}
+
+function managedResponse(businesses: unknown, ok = true) {
+  return response({ businesses }, ok);
+}
+
+function selectedResponse(business: unknown, ok = true) {
+  return response({ business }, ok);
 }
 
 function assertNoVideoControls(tree: Node) {
@@ -232,7 +251,15 @@ describe("native Business Owner Featured Video load recovery", () => {
   beforeEach(() => {
     runtime.reset();
     mocks.fetch.mockReset();
-    mocks.fetch.mockImplementation(() => Promise.resolve(response({ id: "owner-business" })));
+    mocks.fetch.mockImplementation((input: string) => {
+      if (input.endsWith("/api/businesses/mine/managed")) {
+        return Promise.resolve(managedResponse([{ id: "owner-business" }]));
+      }
+      if (input.endsWith("/api/businesses/owner-business")) {
+        return Promise.resolve(selectedResponse({ id: "owner-business" }));
+      }
+      return Promise.reject(new Error(`Unexpected request: ${input}`));
+    });
     mocks.getToken.mockReset();
     mocks.getToken.mockResolvedValue("owner-token");
     mocks.getStoredPrompts.mockReset();
@@ -245,11 +272,18 @@ describe("native Business Owner Featured Video load recovery", () => {
   });
 
   it.each([
-    ["a non-OK response", () => mocks.fetch.mockResolvedValueOnce(response(undefined, false))],
-    ["a rejected fetch", () => mocks.fetch.mockRejectedValueOnce(new Error("offline"))],
-    ["a rejected response parse", () => mocks.fetch.mockResolvedValueOnce({ ok: true, json: vi.fn().mockRejectedValue(new Error("bad json")) })],
+    ["a non-OK managed-list response", () => mocks.fetch.mockResolvedValueOnce(managedResponse([], false))],
+    ["a rejected managed-list fetch", () => mocks.fetch.mockRejectedValueOnce(new Error("offline"))],
+    ["a rejected managed-list parse", () => mocks.fetch.mockResolvedValueOnce({ ok: true, json: vi.fn().mockRejectedValue(new Error("bad json")) })],
+    ["a non-OK selected-business read", () => {
+      mocks.fetch
+        .mockResolvedValueOnce(managedResponse([{ id: "owner-business" }]))
+        .mockResolvedValueOnce(selectedResponse(undefined, false));
+    }],
     ["a rejected prompt-storage read", () => {
-      mocks.fetch.mockResolvedValueOnce(response({ id: "owner-business" }));
+      mocks.fetch
+        .mockResolvedValueOnce(managedResponse([{ id: "owner-business" }]))
+        .mockResolvedValueOnce(selectedResponse({ id: "owner-business" }));
       mocks.getStoredPrompts.mockRejectedValueOnce(new Error("storage unavailable"));
     }],
   ])("shows generic retryable recovery for %s", async (_scenario, arrange) => {
@@ -264,16 +298,20 @@ describe("native Business Owner Featured Video load recovery", () => {
     expect(textContent(errored)).toContain("Please check your connection and try again.");
     assertNoVideoControls(errored);
     expect(findPressableByText(errored, "Try again")).toEqual(expect.any(Function));
+    expect(findPressableByText(errored, "Back to Business Admin")).toEqual(expect.any(Function));
   });
 
   it.each([
-    ["a missing business record", null],
-    ["a null business ID", { id: null }],
-    ["a missing business ID", {}],
-    ["a non-string business ID", { id: 42 }],
-    ["a whitespace-only business ID", { id: "   " }],
-  ])("does not expose controls when resolution returns %s", async (_scenario, business) => {
-    mocks.fetch.mockResolvedValueOnce(response(business));
+    ["zero managed businesses", []],
+    ["multiple managed businesses", [{ id: "owner-business" }, { id: "other-business" }]],
+    ["a missing managed list", undefined],
+    ["a non-array managed list", { id: "owner-business" }],
+    ["a null managed business ID", [{ id: null }]],
+    ["a missing managed business ID", [{}]],
+    ["a non-string managed business ID", [{ id: 42 }]],
+    ["a whitespace-only managed business ID", [{ id: "   " }]],
+  ])("does not expose controls or make a selected read for %s", async (_scenario, businesses) => {
+    mocks.fetch.mockResolvedValueOnce(managedResponse(businesses));
     const loading = renderScreen();
     assertNoVideoControls(loading);
 
@@ -281,21 +319,49 @@ describe("native Business Owner Featured Video load recovery", () => {
     const errored = renderScreen();
     expect(textContent(errored)).toContain("We couldn't load your video settings");
     assertNoVideoControls(errored);
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it("clears an unresolved prior business ID, reuses the resolver, and shows the success path only after retry resolves", async () => {
-    let resolveRetry!: (value: ReturnType<typeof response>) => void;
-    const retryResponse = new Promise<ReturnType<typeof response>>((resolve) => { resolveRetry = resolve; });
+  it.each([
+    ["a missing selected business record", null],
+    ["a null selected business ID", { id: null }],
+    ["a mismatched selected business ID", { id: "other-business" }],
+  ])("does not expose controls when the owner-authorized selected read returns %s", async (_scenario, business) => {
     mocks.fetch
-      .mockResolvedValueOnce(response({ id: "previous-owner-business" }))
-      .mockReturnValueOnce(retryResponse);
+      .mockResolvedValueOnce(managedResponse([{ id: "owner-business" }]))
+      .mockResolvedValueOnce(selectedResponse(business));
+
+    renderScreen();
+    await settle();
+    const errored = renderScreen();
+    expect(textContent(errored)).toContain("We couldn't load your video settings");
+    assertNoVideoControls(errored);
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears prior business, video, and prompt context before retry and reaches success only after the exact-one managed context resolves", async () => {
+    let resolveRetry!: (value: ReturnType<typeof managedResponse>) => void;
+    const retryResponse = new Promise<ReturnType<typeof managedResponse>>((resolve) => { resolveRetry = resolve; });
+    mocks.fetch
+      .mockResolvedValueOnce(managedResponse([{ id: "previous-owner-business" }]))
+      .mockResolvedValueOnce(selectedResponse({
+        id: "previous-owner-business",
+        featuredVideoUrl: "",
+        featuredVideoTitle: "Previous video",
+      }))
+      .mockReturnValueOnce(retryResponse)
+      .mockResolvedValueOnce(selectedResponse({ id: "resolved-owner-business", featuredVideoUrl: "" }));
     mocks.getStoredPrompts.mockRejectedValueOnce(new Error("temporary storage error"));
 
     renderScreen();
     await settle();
     const errored = renderScreen();
     expect(textContent(errored)).toContain("We couldn't load your video settings");
-    expect(runtime.state[1]).toBe("previous-owner-business");
+    expect(runtime.state[1]).toBeNull();
+    expect(runtime.state[2]).toEqual([]);
+    expect(runtime.state[5]).toBeNull();
+    expect(runtime.state[7]).toBe("");
+    assertNoVideoControls(errored);
 
     const retry = findPressableByText(errored, "Try again");
     expect(retry).toEqual(expect.any(Function));
@@ -305,24 +371,50 @@ describe("native Business Owner Featured Video load recovery", () => {
     assertNoVideoControls(loading);
 
     await settle();
-    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    expect(mocks.fetch).toHaveBeenCalledTimes(3);
     expect(mocks.fetch).toHaveBeenLastCalledWith(
-      "/api/businesses/mine",
+      "/api/businesses/mine/managed",
       { headers: { Authorization: "Bearer owner-token" } },
     );
 
-    resolveRetry(response({ id: "resolved-owner-business", featuredVideoUrl: "" }));
+    resolveRetry(managedResponse([{ id: "resolved-owner-business" }]));
     await settle();
     const resolved = renderScreen();
     expect(textContent(resolved)).toContain("Need some inspiration?");
     expect(textContent(resolved)).not.toContain("We couldn't load your video settings");
+    expect(mocks.fetch).toHaveBeenLastCalledWith(
+      "/api/businesses/resolved-owner-business",
+      { headers: { Authorization: "Bearer owner-token" } },
+    );
   });
 
-  it("preserves the resolved linked-video controls and Back behavior", async () => {
-    mocks.fetch.mockResolvedValueOnce(response({
-      id: "owner-business",
-      featuredVideoUrl: "https://youtube.com/watch?v=owned-video",
-    }));
+  it("does not revive media controls from a stale managed-list response after returning to Business Admin", async () => {
+    let resolveManaged!: (value: ReturnType<typeof managedResponse>) => void;
+    const delayedManaged = new Promise<ReturnType<typeof managedResponse>>((resolve) => { resolveManaged = resolve; });
+    mocks.fetch.mockReturnValueOnce(delayedManaged);
+
+    const loading = renderScreen();
+    await settle();
+    const back = findPressableByIcon(loading, "arrow-left");
+    expect(back).toEqual(expect.any(Function));
+    back?.();
+    expect(mocks.back).toHaveBeenCalledTimes(1);
+
+    resolveManaged(managedResponse([{ id: "late-owner-business" }]));
+    await settle();
+    const stale = renderScreen();
+    expect(runtime.state[1]).toBeNull();
+    assertNoVideoControls(stale);
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves the resolved linked-video controls, back behavior, and exact-one owner headers", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(managedResponse([{ id: "owner-business" }]))
+      .mockResolvedValueOnce(selectedResponse({
+        id: "owner-business",
+        featuredVideoUrl: "https://youtube.com/watch?v=owned-video",
+      }));
     renderScreen();
     await settle();
     const resolved = renderScreen();
@@ -334,5 +426,15 @@ describe("native Business Owner Featured Video load recovery", () => {
     expect(back).toEqual(expect.any(Function));
     back?.();
     expect(mocks.back).toHaveBeenCalledTimes(1);
+    expect(mocks.fetch).toHaveBeenNthCalledWith(
+      1,
+      "/api/businesses/mine/managed",
+      { headers: { Authorization: "Bearer owner-token" } },
+    );
+    expect(mocks.fetch).toHaveBeenNthCalledWith(
+      2,
+      "/api/businesses/owner-business",
+      { headers: { Authorization: "Bearer owner-token" } },
+    );
   });
 });
