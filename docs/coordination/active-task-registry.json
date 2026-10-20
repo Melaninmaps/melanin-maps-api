@@ -4550,9 +4550,11 @@
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_WEB_SUBMISSION_CONTEXT_SELECTION_BASE_2026-10-20.tar.gz",
         "sha256": "862bbf31d2f4b60c1a501ba263e99224bc852c88932ea5ab924c5e62056f67b2",
-        "handoff": "PENDING"
+        "handoff": "hnd_lzC6ELwl5mAuig6HnnbLDk0x",
+        "expires_at": "2026-10-21T02:50:18.371Z",
+        "size_bytes": 13817
       },
-      "workerStart": "PENDING_DIRECT_DISPATCH"
+      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
     },
     {
       "id": "BIZ-009-MOBILE-FEATURED-VIDEO-LOAD-RECOVERY",
@@ -4572,9 +4574,11 @@
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_FEATURED_VIDEO_RECOVERY_BASE_2026-10-20.tar.gz",
         "sha256": "a59e6e24c4d73f73f7a7c3ad85175bcb057e78557e34c54503d38e270c60ac9f",
-        "handoff": "PENDING"
+        "handoff": "hnd_6KBAaw82cLNabS1vmqds4KeA",
+        "expires_at": "2026-10-21T02:50:18.723Z",
+        "size_bytes": 10113
       },
-      "workerStart": "PENDING_DIRECT_DISPATCH"
+      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
     },
     {
       "id": "BIZ-009-MOBILE-BUSINESS-VOICE-SELECTED-BUSINESS-CONTEXT",
@@ -4594,9 +4598,11 @@
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_VOICE_MANAGED_CONTEXT_BASE_2026-10-20.tar.gz",
         "sha256": "5fc5d9bf77a1399212103e8b700324f9bc94bbeef258dcea1ea2087cb2a16969",
-        "handoff": "PENDING"
+        "handoff": "hnd_1XbTl9m8SBb9vo_HxYxV73R1",
+        "expires_at": "2026-10-21T02:50:19.011Z",
+        "size_bytes": 51364
       },
-      "workerStart": "PENDING_DIRECT_DISPATCH"
+      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
     },
     {
       "id": "BIZ-009-SELECTED-PROFILE-AUTHORITY-ROUTE-CONTRACT",
@@ -4615,9 +4621,11 @@
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_SELECTED_PROFILE_ROUTE_AUTHORITY_CONTRACT_BASE_2026-10-20.tar.gz",
         "sha256": "1628f36f0418244680f110c860c5c72d46202894538344ce2345a0a8060df4d5",
-        "handoff": "PENDING"
+        "handoff": "hnd_ZmLg-FR7ZWguKIdm2M8GLaZz",
+        "expires_at": "2026-10-21T02:50:19.868Z",
+        "size_bytes": 46324
       },
-      "workerStart": "PENDING_DIRECT_DISPATCH"
+      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
     }
   ],
   "globalDirectiveDelivery": [
