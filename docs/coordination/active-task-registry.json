@@ -4324,10 +4324,12 @@
       "acceptance": "POST /connect/listings/:id/checkout returns one generic 409 COMMERCIAL_RAIL_CLOSED response before body/DB/Stripe/env use; Web makes no checkout request or redirect and renders only honest unavailable recovery while retaining non-commerce listing presentation. Real-route and Web source contracts prove no checkout session/fetch/redirect; focused API/Web tests and API/Web no-emit pass.",
       "exclusions": "No Stripe/provider call/configuration/account/catalog/listing/price/order/payment/portal/entitlement/schema/deploy/browser/device action; no BIZ-009; no ordinary listing removal; no external acceptance.",
       "baseArchive": {
-        "handoff": "PENDING",
-        "sha256": "PENDING"
+        "handoff": "hnd_7yf_Ik27Hb_qZD95Ux_gLHsL",
+        "sha256": "90fbc7794dddc3cf68b1ae68be2f813234ca5e1400015244f3a37d6d45206ca7",
+        "expires_at": "2026-10-21T01:59:40.270Z",
+        "size_bytes": 167025
       },
-      "workerStart": "NOT_DISPATCHED"
+      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
     },
     {
       "id": "INT-REVENUECAT-001-DEFAULT-DISABLED-SERVER-GUARD",
@@ -4345,10 +4347,12 @@
       "acceptance": "Both POST /revenuecat/sync and POST /revenuecat/webhook return the same generic 409 REVENUECAT_DISABLED response before auth/body/env/fetch/pool/logging of member identifiers; deterministic real-router test proves no provider fetch, no pool query, no shared member_type/subscription write. API test/no-emit and exact scope pass.",
       "exclusions": "No provider call/credential/configuration/mobile/client/index/schema/migration/account/data action; no entitlement design, provider activation, purchase/restore, remote Git, staging/deploy/browser/device work or external acceptance.",
       "baseArchive": {
-        "handoff": "PENDING",
-        "sha256": "PENDING"
+        "handoff": "hnd_KIk8qgCtk9MS6XVr3h7EQJMB",
+        "sha256": "7d36576e71a6efc33e63b3b5b12cd6915756dd501369889e78f082f2f25570e3",
+        "expires_at": "2026-10-21T01:59:40.618Z",
+        "size_bytes": 234485
       },
-      "workerStart": "NOT_DISPATCHED"
+      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
     }
   ],
   "globalDirectiveDelivery": [
