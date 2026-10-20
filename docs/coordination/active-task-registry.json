@@ -4577,7 +4577,7 @@
       "exclusions": "No server/API, storage/bucket, schema/DB/runtime, video provider, browser/device, staging/deploy, public listing, remote action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_FEATURED_VIDEO_RECOVERY_BASE_2026-10-20.tar.gz",
@@ -4586,7 +4586,15 @@
         "expires_at": "2026-10-21T02:50:18.723Z",
         "size_bytes": 10113
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:37Z"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "6b7fd5cb5f42d7c345fc0741703b41bedb5d68c3",
+        "carrier_handoff": "hnd_7IVWXDxRm5o6TWW7Y2NQ_QBG",
+        "carrier_sha256": "af11c9f5fdb39d440827f8246bf3c8c622b4878d1a6b0a8a9cfb84e636239fb7",
+        "source_validation": "Featured-video recovery + existing business-experience social UI: 2 files / 23 tests PASS; mobile tsc --noEmit --ignoreDeprecations 6.0 PASS; exact two-path scope/diff PASS.",
+        "semantic_validation": "Non-OK, invalid/missing business, JSON/fetch/storage failure enter load_error; retry clears prior business ID, restores loading, and reuses resolver. Error/loading shows no authoring/destructive control.",
+        "boundary": "No server/storage/DB/runtime/provider/browser/device/staging/deploy/member/release/founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-MOBILE-BUSINESS-VOICE-SELECTED-BUSINESS-CONTEXT",
