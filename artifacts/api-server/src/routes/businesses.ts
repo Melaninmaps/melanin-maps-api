@@ -2804,18 +2804,19 @@ router.post(
     }
 
     try {
-      const [business] = await db
-        .select({
-          id: businessesTable.id,
-          featuredVideoTitle: businessesTable.featuredVideoTitle,
-          featuredVideoPurpose: businessesTable.featuredVideoPurpose,
-        })
-        .from(businessesTable)
-        .where(approvedOwnerPredicate(String(userId)));
-      if (!business) {
+      const selection = await resolveLegacySingleManagedBusiness(String(userId));
+      if (selection.kind === "multiple") {
+        res.status(409).json({
+          error: "Select a business before managing its featured video.",
+          code: "BUSINESS_SELECTION_REQUIRED",
+        });
+        return;
+      }
+      if (selection.kind === "none") {
         res.status(404).json({ error: "Business not found" });
         return;
       }
+      const business = selection.business;
 
       const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
       if (!bucketId) {
@@ -2859,17 +2860,19 @@ router.delete(
     }
 
     try {
-      const [business] = await db
-        .select({
-          id: businessesTable.id,
-          featuredVideoUrl: businessesTable.featuredVideoUrl,
-        })
-        .from(businessesTable)
-        .where(approvedOwnerPredicate(String(userId)));
-      if (!business) {
+      const selection = await resolveLegacySingleManagedBusiness(String(userId));
+      if (selection.kind === "multiple") {
+        res.status(409).json({
+          error: "Select a business before managing its featured video.",
+          code: "BUSINESS_SELECTION_REQUIRED",
+        });
+        return;
+      }
+      if (selection.kind === "none") {
         res.status(404).json({ error: "Business not found" });
         return;
       }
+      const business = selection.business;
 
       const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
       if (
@@ -2896,6 +2899,147 @@ router.delete(
       res.json({ ok: true });
     } catch (err) {
       req.log.error({ err }, "Failed to delete hosted featured video");
+      res.status(500).json({ error: "Failed to delete hosted featured video" });
+    }
+  },
+);
+
+router.post(
+  "/businesses/mine/managed/:businessId/featured-video/upload",
+  featuredVideoUpload.single("video"),
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: "Video file is required" });
+      return;
+    }
+
+    try {
+      const [business] = await db
+        .select({ id: businessesTable.id })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .limit(1);
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      if (!bucketId) {
+        res.status(500).json({ error: "Object storage not configured" });
+        return;
+      }
+
+      const ext = (
+        req.file.originalname.split(".").pop() ?? "mp4"
+      ).toLowerCase();
+      const objectKey = `businesses/${business.id}/featured-video.${ext}`;
+      const gcsFile = objectStorageClient.bucket(bucketId).file(objectKey);
+      await gcsFile.save(req.file.buffer, {
+        contentType: req.file.mimetype,
+        resumable: false,
+      });
+
+      const featuredVideoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+      const [updated] = await db
+        .update(businessesTable)
+        .set({ featuredVideoUrl, updatedAt: new Date() })
+        .where(and(
+          eq(businessesTable.id, business.id),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .returning();
+      if (!updated) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      res.json({ featuredVideoUrl: updated.featuredVideoUrl });
+    } catch (err) {
+      req.log.error({ err }, "Failed to upload selected featured video");
+      res.status(500).json({ error: "Failed to upload featured video" });
+    }
+  },
+);
+
+router.delete(
+  "/businesses/mine/managed/:businessId/featured-video/hosted",
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    try {
+      const [business] = await db
+        .select({
+          id: businessesTable.id,
+          featuredVideoUrl: businessesTable.featuredVideoUrl,
+        })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .limit(1);
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      const objectKey = (
+        bucketId &&
+        business.featuredVideoUrl?.includes(
+          `storage.googleapis.com/${bucketId}/`,
+        )
+      )
+        ? business.featuredVideoUrl.split(`storage.googleapis.com/${bucketId}/`)[1]
+        : undefined;
+
+      const [updated] = await db
+        .update(businessesTable)
+        .set({ featuredVideoUrl: null, updatedAt: new Date() })
+        .where(and(
+          eq(businessesTable.id, business.id),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .returning();
+      if (!updated) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      if (bucketId && objectKey) {
+        objectStorageClient
+          .bucket(bucketId)
+          .file(objectKey)
+          .delete()
+          .catch(() => {});
+      }
+
+      res.json({ ok: true });
+    } catch (err) {
+      req.log.error({ err }, "Failed to delete selected hosted featured video");
       res.status(500).json({ error: "Failed to delete hosted featured video" });
     }
   },
