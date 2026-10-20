@@ -5117,11 +5117,11 @@
       "id": "BIZ-009-SELECTED-VIBE-TAGS-PREVIEW-CONTEXT",
       "requirementId": "BIZ-009",
       "priority": "P1",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "DE1476JIcWVhWygmP75HGL",
       "ownerTaskName": "Hispanic Source Reconciliation Handoff",
       "authorityBase": "2a85af630052a7b77154922e81b60fc6f883b4bf",
-      "workerStart": "DISPATCHED",
+      "workerStart": "CARRIER_ACCEPTED",
       "paths": [
         "artifacts/mobile/app/business-owner/vibe-tags.tsx",
         "artifacts/mobile/app/business-owner/preview.tsx",
@@ -5136,6 +5136,30 @@
         "file": "BIZ009_SELECTED_VIBE_PREVIEW_BASE_2A85AF63.tar.gz",
         "sha256": "9a330d0eb6385bfe5b18a773e01974c6de1c38685afd132816eb37188117ad95",
         "expires_at": "2026-10-21T11:44:21.390Z"
+      },
+      "sourceCommit": "58b5ba376aa1eaac52c3dbe745a2f4f08e0d3839",
+      "completionStatus": "SOURCE COMPLETE",
+      "centralIntegration": {
+        "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+        "sourceCommit": "58b5ba376aa1eaac52c3dbe745a2f4f08e0d3839",
+        "carrier": {
+          "handoff_id": "hnd_YC0gVFSDVN3pnL3C-2YwIkw3",
+          "archiveSha256": "a35c8fbbf390982d05b78ea713f9547209997c86abd84102048640894f872880",
+          "manifestResultFileHashesVerified": true,
+          "manifestPatchSha256": "dc4a659153025eaf1eec5b0e247be0c97ef19a091a2a73b06ead6fa08ebf8e28",
+          "declaredBaseHashesVerified": true,
+          "freshReconstructionAndCurrentApplicabilityVerified": true,
+          "packagingException": "Archive did not include the redundant SHA256SUMS file described by the worker. No claim relies on it: outer handoff SHA and manifest-declared source/patch/base identities were independently verified."
+        },
+        "reviewDisposition": "Accepted. Central review verified selected managed-list admission, exact requested-ID membership, one-item-only fallback, selected-profile read, existing owner-tag authority dependency, account-context fencing, and Preview redirect only after a current resolved ID.",
+        "authorityValidation": {
+          "unifiedApi": "10 files / 95 tests passed.",
+          "unifiedNative": "13 files / 81 tests passed.",
+          "unifiedWeb": "3 files / 21 tests passed.",
+          "typechecks": "API, mobile (Node heap 8192 MB and TypeScript compatibility flag), and Web no-emit passed; temporary mobile build-info file was removed.",
+          "hygiene": "exact three-path source commit and git diff --check passed."
+        },
+        "externalAcceptance": "PENDING — local deterministic source evidence only; no staging, database/storage, browser/device, member-visible, deployment/release, or founder acceptance occurred."
       }
     },
     {
