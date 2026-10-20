@@ -4281,7 +4281,7 @@
       "purpose": "Repair confirmed owner-isolation bypass in the still-registered legacy GET /kinfolk/skip-feedback route by aligning it with canonical active-approved-owner precedence and former-submitter denial.",
       "acceptance": "Legacy read preserves 401/tier/error/response sanitization; it grants active approved/unrevoked owner link first; only then falls back to submittedById if no active link exists; a former submitter whose business has an active approved owner link is denied before feedback selection. New real-route regression covers these boundaries.",
       "exclusions": "No client/canonical skip-feedback route/schema/migration/account/data/config/payment/provider/BIZ-009/deploy/browser/device/activation change. No runtime/member acceptance claim.",
-      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T01:49:35Z"
     }
   ],
   "globalDirectiveDelivery": [
