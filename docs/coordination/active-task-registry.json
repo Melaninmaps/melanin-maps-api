@@ -3752,7 +3752,7 @@
     {
       "id": "KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "KMEM-004",
@@ -3812,6 +3812,14 @@
         "at": "2026-10-20T00:03:07Z",
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged exact base/hash verification, the sole post-selection settings block, and two named tests; uncommitted three-path carrier only."
+      },
+      "sourceIntegration": {
+        "source_commit": "242b58a6c5f04f116c76fe7cfd54174c96b0363d",
+        "carrier": "hnd_J--w-JNtmX-Uo1ps-uxEeBa8",
+        "outer_sha256": "15e2be489cfdb2a44d5423082664e81757b74a6ef1915dfb266732f661dc155e",
+        "authority_validation": "API Vitest 4 files / 20 tests PASS; Web lifecycle 1 file / 5 tests PASS; mobile lifecycle 1 file / 7 tests PASS; API/Web/mobile tsc --noEmit PASS; exact three-path scope, semantic boundary proof, and diff check PASS.",
+        "behavior": "Selected explicit items save encrypted and owner-bound but no longer mutate kinfolkMemoryEnabled, kinfolkContinuityEnabled, or continuity disclosure fields. Existing sensitive reauth, transaction/capacity/duplicate/rollback, correction/revoke, owner/purpose/relevance/pause/revoke/expiry gates remain.",
+        "limitations": "Synthetic local source evidence only; no database/runtime/real member data/provider/voice/browser/device/staging/deployment/member/release/founder acceptance."
       }
     }
   ],

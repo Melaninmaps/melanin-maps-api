@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | KMEM-004 selected-item consent/continuity separation accepted as local source integration at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`. Authority matrix: API **4 files / 20**, Web **1 / 5**, mobile **1 / 7**, plus API/Web/mobile no-emit PASS; all runtime/platform/member gates remain external. |
 | 2026-10-20 | MEM-D3 bounded entitlement trace: **NO_LEGITIMATE_SOURCE_CLAIM**. Durable grant ledger, precedence/historic treatment, migration, and effective-tier enforcement require reviewed design and separate authorization; checkout, trials, tester, and business-owner access remain unchanged. |
 | 2026-10-20 | COMM-004 bounded Shared Plans trace: **NO_LEGITIMATE_SOURCE_CLAIM**. Recipient eligibility, public-reference snapshot fields, pending/revocation/deactivation lifecycle, and audit/cache/retention rules require reviewed design; frozen SP-002/SP-003 and private itinerary boundaries remain unchanged. |
 | 2026-10-19 | Registered P0 `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` to 44XX at `f15e5986…`: explicit selected-item consent must not infer general continuity acceptance. Three exclusive API route/test paths only; no source integration yet. |

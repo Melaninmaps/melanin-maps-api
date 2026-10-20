@@ -301,14 +301,14 @@
       "founder_requirement": "Universal Memory/Connected Intelligence completion requires member-facing verticals, not a helper/test.",
       "acceptance_criteria": "Evidence proves later relevant use, purpose separation, correction/deletion propagation, A/B isolation and equivalent server semantics on Web/iOS/Android/voice.",
       "status": "IN DEVELOPMENT",
-      "source_evidence": "Universal Memory \u00a7\u00a769\u2013120: Slices 1\u20133 are not completion; feature matrix remains not verified. Active P0 claim `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` registered against f15e5986\u2026 for the demonstrated selected-item-consent/continuity-setting separation defect; no source integration yet.",
+      "source_evidence": "Universal Memory \u00a7\u00a769\u2013120: Slices 1\u20133 are not completion; feature matrix remains not verified. Active P0 claim `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` registered against f15e5986\u2026 for the demonstrated selected-item-consent/continuity-setting separation defect; no source integration yet. `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` source-integrated locally at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`: selected-item consent no longer infers general continuity/disclosure acceptance. Authority matrix PASS: API 4 files/20, Web 1/5, mobile 1/7, API/Web/mobile no-emit; exact three-path semantic/scope checks PASS.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "44XXTVLrtPEqRlFbDRQx9y (exclusive source carrier); QJATRGk7nUgzDlccMCUcG6 (central validation)",
-      "dependencies_or_blockers": "No active path conflict. Shared kinfolk.ts must remain limited to POST /kinfolk/memory-consent settings block; all runtime/real-data/platform gates remain external.",
-      "next_action": "Await only the uncommitted three-path carrier; central validate the full deterministic source journey before recording any local integration.",
+      "dependencies_or_blockers": "This source vertical is local-only. Still missing: authorized runtime and real-data validation; Web/iOS/Android/voice member journey evidence; provider/test-account/staging/deployment/member/release/founder acceptance.",
+      "next_action": "Keep this vertical frozen. A later separately claimed KMEM-004 member-facing vertical must not reopen continuity/settings separation; runtime/real-data/Web/iOS/Android/voice acceptance remains separately authorized.",
       "founder_approval_needed": "Yes for external activation packets/new runtime scope.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -2048,6 +2048,10 @@
     {
       "date": "2026-10-20",
       "event": "Bounded MEM-D3 entitlement trace found NO_LEGITIMATE_SOURCE_CLAIM. A real D3 journey requires an additive durable ledger, precedence/historic treatment, migration and broad membership enforcement changes; unresolved 9b1e72 Stripe-only candidate is not locally resolvable. Existing access, checkout closure, trials, tester and business-owner logic remain untouched."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "KMEM-004 carrier `hnd_J--w-JNtmX-Uo1ps-uxEeBa8` source-integrated locally at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`: explicit item consent no longer writes general continuity/disclosure settings. Authority matrix PASS: API 4 files/20, Web 1/5, mobile 1/7, API/Web/mobile no-emit, exact scope/semantic/diff gates. External acceptance remains unperformed."
     }
   ],
   "evidence_gaps": [
@@ -2135,13 +2139,13 @@
           "KMEM-005"
         ],
         "existing_implementation": "Consent, purpose/owner gates and deletion child receipts are linked.",
-        "missing_broken_elements": "Universal-memory/member-facing verticals and runtime assistant acceptance are missing.",
-        "current_active_repair": "`KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` (44XX): selected-item save must not infer general continuity consent; exactly three exclusive API route/test paths.",
-        "integrated_source": "Linked local source receipts only.",
-        "test_evidence": "Focused source contracts only.",
+        "missing_broken_elements": "This source vertical is covered locally. Still missing: controlled runtime/data, Web/iOS/Android/voice member journey evidence, deployment/release/member/founder acceptance; no retention/deletion schedule is inferred.",
+        "current_active_repair": "No active KMEM source claim after accepted explicit-item consent/continuity separation.",
+        "integrated_source": "Linked local source receipts only. KMEM-004 selected-item consent/continuity separation source receipt: `242b58a6\u2026`.",
+        "test_evidence": "Focused source contracts only. KMEM-004 authority matrix: API 4 files/20; Web 1/5; mobile 1/7; API/Web/mobile no-emit PASS.",
         "external_gates": "Controlled provider/test-account and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Receive the bounded carrier; validate explicit item consent \u2192 encrypted owner-isolated relevant use \u2192 correction/revoke boundaries without enabling continuity or changing retention/deletion semantics."
+        "next_action": "Do not reopen the integrated three paths. Trace another complete vertical only after demonstrating a concrete non-overlapping source defect or obtain separate runtime/platform authorization."
       },
       {
         "experience_id": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS",
