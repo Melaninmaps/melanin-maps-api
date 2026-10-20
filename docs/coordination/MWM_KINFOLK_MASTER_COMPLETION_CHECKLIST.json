@@ -2227,6 +2227,10 @@
     {
       "date": "2026-10-20",
       "event": "BIZ-009 selected Pinned Highlights route-isolation claim recorded at e008e2b8400a0904334ca171e2166a0d9490ea68 after direct source proof: mobile uses implicit /api/business/pinned and server derives its target from businesses.submittedById. Four exclusive paths, no source change; exact selected-owner/multi-business repair dispatched only after base transfer."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "BIZ-009 selected Pinned Highlights source base transferred: hnd_ucGq5JgbxlpdNiYLPXo_2Reu, outer SHA-256 8a7a60fc6463b4fb627dafa2223021326624d9acb5166b761cfd6f8d696fe64a, authority base e008e2b8400a0904334ca171e2166a0d9490ea68. Four exclusive paths; no source integration or external action."
     }
   ],
   "evidence_gaps": [
