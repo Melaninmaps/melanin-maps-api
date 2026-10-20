@@ -543,7 +543,7 @@
       "founder_requirement": "Do not sell Growth/Premium until exact working profile/analytics/promotion/events/leads/support deliverables, price mapping, ranking disclosure and service boundaries are validated.",
       "acceptance_criteria": "One-to-one vocabulary/fulfillment table; authorized prices match targets; included vs add-on promotion, events/leads/support and transparent placement are proven before charge.",
       "status": "BLOCKED",
-      "source_evidence": "Membership audit A/B/D3/E/F/H/I/J10/K2; D10 partial. Documentation-only preparation claim `BIZ-002-D10-CLOSED-RAIL-ACCEPTANCE-READINESS` registered at 48d794e0\u2026; no approval or source integration yet. Documentation-only packet `docs/coordination/BIZ002_D10_CLOSED_RAIL_ACCEPTANCE_READINESS_CHECKLIST_2026-10-20.md` SOURCE_INTEGRATED_LOCAL_ONLY at `8f084b41d05286a0301569be515425f6d243804e`. Closed-rail D10 readiness checklist integrated locally; no charge, payment provider, checkout, staging journey, deployment, commercial term, price, or benefit is approved.",
+      "source_evidence": "Membership audit A/B/D3/E/F/H/I/J10/K2; D10 partial. Documentation-only preparation claim `BIZ-002-D10-CLOSED-RAIL-ACCEPTANCE-READINESS` registered at 48d794e0\u2026; no approval or source integration yet. Documentation-only packet `docs/coordination/BIZ002_D10_CLOSED_RAIL_ACCEPTANCE_READINESS_CHECKLIST_2026-10-20.md` SOURCE_INTEGRATED_LOCAL_ONLY at `8f084b41d05286a0301569be515425f6d243804e`. Closed-rail D10 readiness checklist integrated locally; no charge, payment provider, checkout, staging journey, deployment, commercial term, price, or benefit is approved. Active P0 local source enforcement claim guards the separately present marketplace Checkout seam under closed-rail policy; it does not approve commerce.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
@@ -1141,7 +1141,7 @@
       "founder_requirement": "Keep RevenueCat disabled; future cross-provider work cannot mutate shared member_type/subscription fields or overwrite independent grants.",
       "acceptance_criteria": "Provider receipt/entitlement rows integrate with additive ledger; cancellation only affects provider row; native rail stays disabled until enabled.",
       "status": "BLOCKED",
-      "source_evidence": "Audit A/F/H2 and D3/D8 reconciliation identify disabled client and mutable-field conflict.",
+      "source_evidence": "Audit A/F/H2 and D3/D8 reconciliation identify disabled client and mutable-field conflict. Active P0 local source enforcement claim guards mounted server RevenueCat routes that otherwise could call a provider and mutate shared membership fields despite default-disabled policy.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
@@ -1150,7 +1150,7 @@
       "dependencies_or_blockers": "MISSING EVIDENCE \u2014 ledger, verification, lifecycle/device receipts.",
       "next_action": "Do not enable/restore/purchase; compare source only after D3 design.",
       "founder_approval_needed": "Yes \u2014 future provider/release authorization.",
-      "last_verified_date": "2026-10-19",
+      "last_verified_date": "2026-10-20",
       "prior_evidence_refs": [
         "MWM_MASTER_MEMBERSHIP_PRICING_BENEFITS_ENTITLEMENT_AUDIT_2026-10-17.md",
         "MWM_ORIGINAL_11_DEPENDENCIES_RECONCILIATION_2026-10-19.md"
@@ -2108,6 +2108,10 @@
     {
       "date": "2026-10-20",
       "event": "Applied founder-mandated independent parent acceptance trace to existing Experience Completion Board. Added explicit cumulative matrices for COMM-001 (0/15 PASS), FLIGHT-001 (1/12 source-document PASS only), OAUTH-001 (5/11 default-disabled source PASS), BIZ-003 (1 current source FAIL; active repair), and KMEM-004 (0/7 full lifecycle PASS). No parent marked complete; all source receipts remain distinct from runtime/member/release/founder acceptance."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Registered two evidence-backed P0 source-only policy-enforcement claims after independent acceptance trace: BIZ-002 marketplace Checkout closed-rail guard and INT-REVENUECAT-001 server default-disabled guard. Both prevent source capability from silently contradicting closed-rail/default-disabled policy; neither authorizes commercial/provider action."
     }
   ],
   "evidence_gaps": [

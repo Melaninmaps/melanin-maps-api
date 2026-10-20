@@ -4305,6 +4305,50 @@
         "validation": "14-row acceptance matrix plus 14-row field register, exact unavailable-artifact inventory, closed-rail/static-boundary checks, one-path scope, and whitespace PASS.",
         "external_acceptance": "NOT PERFORMED"
       }
+    },
+    {
+      "id": "BIZ-002-MARKETPLACE-CHECKOUT-CLOSED-RAIL-GUARD",
+      "requirementId": "BIZ-002",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "ownerTaskName": "Build Unmerged Community-Frequented Alternatives + Scorecard V1 Candidate",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "cf9a71c1c377c4e24c44949b26063f692deaa8f7",
+      "paths": [
+        "artifacts/api-server/src/routes/connect.ts",
+        "artifacts/api-server/src/routes/__tests__/marketplace-checkout-closed-rail.test.ts",
+        "artifacts/web/src/pages/business-detail.tsx",
+        "artifacts/web/src/__tests__/business-detail-marketplace-closed-rail.test.ts"
+      ],
+      "purpose": "Enforce the existing no-charge/no-provider closed-rail policy on the currently reachable marketplace Checkout API/client source seam.",
+      "acceptance": "POST /connect/listings/:id/checkout returns one generic 409 COMMERCIAL_RAIL_CLOSED response before body/DB/Stripe/env use; Web makes no checkout request or redirect and renders only honest unavailable recovery while retaining non-commerce listing presentation. Real-route and Web source contracts prove no checkout session/fetch/redirect; focused API/Web tests and API/Web no-emit pass.",
+      "exclusions": "No Stripe/provider call/configuration/account/catalog/listing/price/order/payment/portal/entitlement/schema/deploy/browser/device action; no BIZ-009; no ordinary listing removal; no external acceptance.",
+      "baseArchive": {
+        "handoff": "PENDING",
+        "sha256": "PENDING"
+      },
+      "workerStart": "NOT_DISPATCHED"
+    },
+    {
+      "id": "INT-REVENUECAT-001-DEFAULT-DISABLED-SERVER-GUARD",
+      "requirementId": "INT-REVENUECAT-001",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "ownerTaskName": "Review uploaded pasted content",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "cf9a71c1c377c4e24c44949b26063f692deaa8f7",
+      "paths": [
+        "artifacts/api-server/src/routes/revenuecat.ts",
+        "artifacts/api-server/src/routes/__tests__/revenuecat-disabled-rail.test.ts"
+      ],
+      "purpose": "Enforce the current default-disabled RevenueCat policy at the mounted server router before any provider/network/shared-membership mutation path.",
+      "acceptance": "Both POST /revenuecat/sync and POST /revenuecat/webhook return the same generic 409 REVENUECAT_DISABLED response before auth/body/env/fetch/pool/logging of member identifiers; deterministic real-router test proves no provider fetch, no pool query, no shared member_type/subscription write. API test/no-emit and exact scope pass.",
+      "exclusions": "No provider call/credential/configuration/mobile/client/index/schema/migration/account/data action; no entitlement design, provider activation, purchase/restore, remote Git, staging/deploy/browser/device work or external acceptance.",
+      "baseArchive": {
+        "handoff": "PENDING",
+        "sha256": "PENDING"
+      },
+      "workerStart": "NOT_DISPATCHED"
     }
   ],
   "globalDirectiveDelivery": [
