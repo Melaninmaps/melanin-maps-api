@@ -219,8 +219,6 @@ type BusinessShopListing = {
 function BusinessShop({ businessId, focusedListingId }: { businessId: string; focusedListingId: string | null }) {
   const [listings, setListings] = useState<BusinessShopListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [checkoutId, setCheckoutId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -240,45 +238,24 @@ function BusinessShop({ businessId, focusedListingId }: { businessId: string; fo
     }
   }, [focusedListingId, listings]);
 
-  async function startWebsiteCheckout(listing: BusinessShopListing) {
-    setCheckoutId(listing.id);
-    setError(null);
-    try {
-      const response = await fetch(`${base}/api/connect/listings/${listing.id}/checkout`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity: 1 }),
-      });
-      const data = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
-      if (!response.ok || !data.url) throw new Error(data.error ?? "Could not open secure checkout.");
-      window.location.assign(data.url);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not open secure checkout.");
-    } finally {
-      setCheckoutId(null);
-    }
-  }
-
   if (loading || listings.length === 0) return null;
 
   return (
     <section ref={sectionRef} data-testid="business-shop" className="rounded-2xl border border-[#CA922B]/25 bg-[#1E1510] p-5">
       <div className="mb-4 flex items-start gap-3">
         <div className="rounded-xl bg-[#CA922B]/15 p-2"><ShoppingBag className="h-5 w-5 text-[#CA922B]" /></div>
-        <div><h3 className="font-serif text-xl font-bold text-white">Shop</h3><p className="mt-1 text-sm text-white/65">Purchase directly from this independent business through secure website checkout.</p></div>
+        <div><h3 className="font-serif text-xl font-bold text-white">Business listings</h3><p className="mt-1 text-sm text-white/65">Listing details from this independent business.</p></div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {listings.map((listing) => {
           const highlighted = listing.id === focusedListingId;
-          const price = new Intl.NumberFormat("en-US", { style: "currency", currency: listing.currency.toUpperCase() }).format(listing.priceInCents / 100);
           return <article key={listing.id} className={`overflow-hidden rounded-xl border ${highlighted ? "border-[#CA922B] ring-1 ring-[#CA922B]/40" : "border-white/10"}`}>
             {listing.imageUrl ? <img src={listing.imageUrl} alt="" className="h-36 w-full object-cover" /> : null}
-            <div className="p-4"><p className="text-xs font-semibold uppercase tracking-wider text-[#CA922B]">{listing.category ?? listing.listingType ?? "Listing"}</p><h4 className="mt-1 font-semibold text-white">{listing.name}</h4>{listing.description ? <p className="mt-1 line-clamp-2 text-sm text-white/65">{listing.description}</p> : null}<div className="mt-4 flex items-center justify-between gap-3"><p className="font-semibold text-[#F5EBD8]">{price}</p><Button onClick={() => void startWebsiteCheckout(listing)} disabled={checkoutId === listing.id} className="rounded-full bg-[#CA922B] text-white hover:bg-[#B38024]">{checkoutId === listing.id ? "Opening…" : "Buy securely"}</Button></div></div>
+            <div className="p-4"><p className="text-xs font-semibold uppercase tracking-wider text-[#CA922B]">{listing.category ?? listing.listingType ?? "Listing"}</p><h4 className="mt-1 font-semibold text-white">{listing.name}</h4>{listing.description ? <p className="mt-1 line-clamp-2 text-sm text-white/65">{listing.description}</p> : null}</div>
           </article>;
         })}
       </div>
-      {error ? <p role="alert" className="mt-3 text-sm text-red-300">{error}</p> : null}
+      <p data-testid="marketplace-checkout-unavailable" role="status" className="mt-4 text-sm text-white/65">Marketplace checkout is temporarily unavailable. Listing details remain available.</p>
     </section>
   );
 }

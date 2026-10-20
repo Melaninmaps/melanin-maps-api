@@ -333,58 +333,13 @@ router.delete("/connect/listings/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/connect/listings/:id/checkout", async (req: Request, res: Response) => {
-  const id = String(req.params.id);
-  const { quantity = 1, successUrl, cancelUrl } = req.body as { quantity?: number; successUrl?: string; cancelUrl?: string };
+const COMMERCIAL_RAIL_CLOSED = {
+  error: "Marketplace checkout is temporarily unavailable.",
+  code: "COMMERCIAL_RAIL_CLOSED",
+};
 
-  const [listing] = await db.select().from(businessListingsTable).where(eq(businessListingsTable.id, id)).limit(1);
-  if (!listing || !listing.active) { res.status(404).json({ error: "Listing not found" }); return; }
-  if (!listing.stripePriceId) { res.status(400).json({ error: "Listing has no price configured" }); return; }
-
-  const [biz] = await db
-    .select({
-      stripeConnectAccountId: businessesTable.stripeConnectAccountId,
-      name: businessesTable.name,
-      marketplaceTier: businessesTable.marketplaceTier,
-      foundingBusiness: businessesTable.foundingBusiness,
-      foundingGrantedAt: businessesTable.foundingGrantedAt,
-    })
-    .from(businessesTable)
-    .where(eq(businessesTable.id, listing.businessId))
-    .limit(1);
-
-  if (!biz?.stripeConnectAccountId) {
-    res.status(400).json({ error: "Business is not set up to receive payments" });
-    return;
-  }
-
-  try {
-    const stripe = await getUncachableStripeClient();
-    const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
-    const applicationFeeAmount = platformFee(
-      listing.priceInCents * quantity,
-      biz.marketplaceTier ?? "free",
-      biz.foundingBusiness ?? false,
-      biz.foundingGrantedAt,
-    );
-
-    const session = await stripe.checkout.sessions.create(
-      {
-        mode: "payment",
-        line_items: [{ price: listing.stripePriceId, quantity }],
-        payment_intent_data: { application_fee_amount: applicationFeeAmount },
-        success_url: successUrl ?? `${baseUrl}/checkout/success`,
-        cancel_url: cancelUrl ?? `${baseUrl}/checkout/cancel`,
-        metadata: { listingId: id, businessId: listing.businessId },
-      },
-      { stripeAccount: biz.stripeConnectAccountId },
-    );
-
-    res.json({ url: session.url, sessionId: session.id });
-  } catch (err) {
-    req.log.error({ err }, "Failed to create checkout session");
-    res.status(500).json({ error: "Failed to create checkout session" });
-  }
+router.post("/connect/listings/:id/checkout", (_req: Request, res: Response) => {
+  res.status(409).json(COMMERCIAL_RAIL_CLOSED);
 });
 
 export default router;
