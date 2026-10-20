@@ -4398,13 +4398,13 @@
       "acceptance": "Helper covers missing/existing/repeated calls, uses only the existing business_kinfolk_voice_profiles definition, structurally verifies required table shape, and fails before traffic if creation/verification fails. Startup wiring precedes listener traffic in normal and explicit modes without running broad migrations. Existing approved-owner profile read remains allowed only after readiness; cross-owner denial remains; malformed table/unprepared route case fails safely. Focused API/startup/neighboring dashboard regressions plus API no-emit pass.",
       "exclusions": "No broad runStartupMigrations invocation, competing migration system, business/profile/owner/entitlement/publication mutation, real schema execution, DB/data/account action, provider/drafting activation, remote Git, staging/deploy/browser/device or production action. Source helper is not evidence that any deployed schema is ready.",
       "baseArchive": {
-        "handoff": "hnd_btHoB6oZMmUGzvh2NrJ1_Oa0",
-        "sha256": "62482d59a57cd872bc4a820104e445d728607c1d11fecea4880ac11f7ce5f2f2",
-        "expires_at": "2026-10-21T02:15:04.086Z",
-        "size_bytes": 1466089,
-        "revision": "R2"
+        "handoff": "hnd_SmxYRekfNvB6OJZPJgM0K0ZS",
+        "sha256": "b7a8155869a9e0ef5e2a496507c6fe9df72bb72a88c88509e80e405fcaccd506",
+        "expires_at": "2026-10-21T02:19:17.645Z",
+        "size_bytes": 1466330,
+        "revision": "R3_COMPAT"
       },
-      "workerStart": "R2_HANDOFF_SENT_AWAITING_ACK",
+      "workerStart": "R3_HANDOFF_SENT_AWAITING_ACK",
       "baseAmendments": [
         {
           "revision": "R2",
@@ -4414,8 +4414,21 @@
           "expires_at": "2026-10-21T02:15:04.086Z",
           "authority_base": "383384a8bd7e698942f1976a5af7eb93e6386fb0",
           "business_voice_route_sha256": "a23054d6aa286502afb832f7044c44e706381625fa5478b454d527f39a88246f"
+        },
+        {
+          "revision": "R3_COMPAT",
+          "reason": "Authoritative local history proves worker workspaces match `business-voice-profile.ts` at 8fd6989 (SHA 6ecf...); central current authority has only a newer `revoked_at IS NULL` approved-owner guard. R3 is a compile/test overlay only and does not permit route modification.",
+          "handoff": "hnd_SmxYRekfNvB6OJZPJgM0K0ZS",
+          "sha256": "b7a8155869a9e0ef5e2a496507c6fe9df72bb72a88c88509e80e405fcaccd506",
+          "expires_at": "2026-10-21T02:19:17.645Z",
+          "central_authority_base": "efce7557b81f0faa588b7e0e1494252974b80d8b",
+          "compatible_route_snapshot_commit": "8fd6989bea317f53dfa6f170c2c5054cf0de74a4",
+          "compatible_route_sha256": "6ecf384f87fad4deb6c29c31b72a4d8394cf71f290e986798b1ae7c7fc924742",
+          "central_route_sha256": "a23054d6aa286502afb832f7044c44e706381625fa5478b454d527f39a88246f",
+          "central_requirement": "Central application must preserve `AND bol.revoked_at IS NULL` and re-run current-authority tests."
         }
-      ]
+      ],
+      "validationLimit": "Worker compatibility-overlay evidence is not current-authority route evidence; central must preserve the newer revoked-at owner guard and run full current-authority regression before integration."
     }
   ],
   "globalDirectiveDelivery": [

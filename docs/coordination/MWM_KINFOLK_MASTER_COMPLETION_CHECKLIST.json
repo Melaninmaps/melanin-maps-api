@@ -2148,6 +2148,10 @@
     {
       "date": "2026-10-20",
       "event": "BIZ-002 Marketplace Checkout closed-rail guard SOURCE_INTEGRATED_LOCAL_ONLY at e4dff1de126d65cc4b31f21cbf78040f3c8acc6c after API 12/12, Web 2/2, API/Web no-emit, exact four-path scope. Commercial rails remain closed; no provider/payment/release/member/founder acceptance."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Issued BIZ-009 Business Voice readiness R3 compatibility overlay: worker-compatible read-only route from 8fd6989 is compile/test-only; central retains newer revoked_at owner guard and must re-run current-authority tests. Four writable paths remain unchanged."
     }
   ],
   "evidence_gaps": [
