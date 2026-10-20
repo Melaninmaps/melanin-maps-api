@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -28,6 +28,35 @@ interface ReviewRow {
   authorFirstName?: string | null; authorLastName?: string | null;
 }
 interface GrowthTool { id: string; type: string; status: string; impressionCount: number; clickCount: number; }
+interface ManagedBusiness { id: string; name: string; }
+interface GrowthToolsResponse { activePromotions?: GrowthTool[]; }
+
+function parseManagedBusinesses(value: unknown): ManagedBusiness[] | null {
+  if (!value || typeof value !== "object") return null;
+  const businesses = (value as { businesses?: unknown }).businesses;
+  if (!Array.isArray(businesses)) return null;
+
+  const seenIds = new Set<string>();
+  const parsed: ManagedBusiness[] = [];
+  for (const item of businesses) {
+    if (!item || typeof item !== "object") return null;
+    const candidate = item as { id?: unknown; name?: unknown };
+    if (
+      typeof candidate.id !== "string" ||
+      !candidate.id.trim() ||
+      candidate.id.trim() !== candidate.id ||
+      typeof candidate.name !== "string" ||
+      !candidate.name.trim() ||
+      candidate.name.trim() !== candidate.name ||
+      seenIds.has(candidate.id)
+    ) {
+      return null;
+    }
+    seenIds.add(candidate.id);
+    parsed.push({ id: candidate.id, name: candidate.name });
+  }
+  return parsed;
+}
 
 function computeSentiment(reviews: ReviewRow[]) {
   let positive = 0, neutral = 0, negative = 0;
@@ -114,6 +143,16 @@ export default function BusinessIntelligenceScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const routeParams = useLocalSearchParams<{ businessId?: string | string[] }>();
+  const rawRequestedBusinessId = routeParams.businessId;
+  const requestedBusinessId =
+    typeof rawRequestedBusinessId === "string" &&
+    rawRequestedBusinessId.trim() === rawRequestedBusinessId &&
+    rawRequestedBusinessId.length > 0
+      ? rawRequestedBusinessId
+      : null;
+  const hasMalformedRequestedBusinessId =
+    rawRequestedBusinessId !== undefined && requestedBusinessId === null;
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -123,46 +162,116 @@ export default function BusinessIntelligenceScreen() {
   const [businessName, setBusinessName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [paywalled, setPaywalled] = useState(false);
+  const [requiresManagedBusinessSelection, setRequiresManagedBusinessSelection] = useState(false);
+  const activeBusinessIdRef = useRef<string | null>(null);
+  const requestGenerationRef = useRef(0);
+
+  const resetBusinessContext = useCallback(() => {
+    activeBusinessIdRef.current = null;
+    setBusinessId(null);
+    setBusinessName(null);
+    setAnalytics(null);
+    setReviews([]);
+    setGrowth([]);
+    setPaywalled(false);
+  }, []);
+
+  const recoverToBusinessSelection = useCallback(() => {
+    resetBusinessContext();
+    setRequiresManagedBusinessSelection(true);
+    setLoading(false);
+  }, [resetBusinessContext]);
 
   const load = useCallback(async () => {
+    const generation = ++requestGenerationRef.current;
+    const isCurrent = () => requestGenerationRef.current === generation;
+
+    resetBusinessContext();
+    setRequiresManagedBusinessSelection(false);
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      if (!token) { setLoading(false); return; }
       const base = getApiBase();
+      if (!isCurrent()) return;
+      if (!token || !base) {
+        recoverToBusinessSelection();
+        return;
+      }
       const h = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
-      const bizRes = await fetch(`${base}/api/businesses/mine`, { headers: h });
-      if (!bizRes.ok) { setLoading(false); return; }
-      const bizData = await bizRes.json() as { business?: { id: string; name: string } };
-      const bid = bizData.business?.id;
-      const bname = bizData.business?.name ?? null;
-      if (!bid) { setLoading(false); return; }
-      setBusinessId(bid);
-      setBusinessName(bname);
+      const managedRes = await fetch(`${base}/api/businesses/mine/managed`, { headers: h });
+      if (!isCurrent()) return;
+      if (!managedRes.ok) {
+        recoverToBusinessSelection();
+        return;
+      }
+      const managedBusinesses = parseManagedBusinesses(await managedRes.json());
+      if (!isCurrent()) return;
+      if (!managedBusinesses || hasMalformedRequestedBusinessId) {
+        recoverToBusinessSelection();
+        return;
+      }
+
+      const selectedBusiness = requestedBusinessId
+        ? managedBusinesses.find((candidate) => candidate.id === requestedBusinessId) ?? null
+        : managedBusinesses.length === 1
+          ? managedBusinesses[0] ?? null
+          : null;
+      if (!selectedBusiness) {
+        recoverToBusinessSelection();
+        return;
+      }
+
+      const selectedBusinessId = selectedBusiness.id;
+      activeBusinessIdRef.current = selectedBusinessId;
+      setBusinessId(selectedBusinessId);
+      setBusinessName(selectedBusiness.name);
 
       const [analyticsRes, reviewsRes, growthRes] = await Promise.allSettled([
-        fetch(`${base}/api/businesses/mine/analytics`, { headers: h }),
-        fetch(`${base}/api/reviews?businessId=${bid}&limit=50`, { headers: h }),
-        fetch(`${base}/api/businesses/mine/growth-tools`, { headers: h }),
+        fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/analytics`, { headers: h }),
+        fetch(`${base}/api/reviews?businessId=${encodeURIComponent(selectedBusinessId)}&limit=50`, { headers: h }),
+        fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/growth-tools`, { headers: h }),
       ]);
 
+      if (!isCurrent() || activeBusinessIdRef.current !== selectedBusinessId) return;
       if (analyticsRes.status === "fulfilled") {
-        if (analyticsRes.value.status === 403) { setPaywalled(true); }
-        else if (analyticsRes.value.ok) setAnalytics(await analyticsRes.value.json() as AnalyticsData);
+        if (analyticsRes.value.status === 403) {
+          if (isCurrent() && activeBusinessIdRef.current === selectedBusinessId) setPaywalled(true);
+        } else if (analyticsRes.value.ok) {
+          const nextAnalytics = await analyticsRes.value.json() as AnalyticsData;
+          if (isCurrent() && activeBusinessIdRef.current === selectedBusinessId) setAnalytics(nextAnalytics);
+        }
       }
       if (reviewsRes.status === "fulfilled" && reviewsRes.value.ok) {
         const d = await reviewsRes.value.json() as { reviews?: ReviewRow[] };
-        setReviews(d.reviews ?? []);
+        if (isCurrent() && activeBusinessIdRef.current === selectedBusinessId) setReviews(d.reviews ?? []);
       }
       if (growthRes.status === "fulfilled" && growthRes.value.ok) {
-        const d = await growthRes.value.json() as { promotions?: GrowthTool[] };
-        setGrowth((d.promotions ?? []).filter((p) => p.status === "active"));
+        const d = await growthRes.value.json() as GrowthToolsResponse;
+        if (isCurrent() && activeBusinessIdRef.current === selectedBusinessId) {
+          setGrowth((d.activePromotions ?? []).filter((p) => p.status === "active"));
+        }
       }
-    } catch { /* silent */ } finally { setLoading(false); }
-  }, []);
+    } catch {
+      if (isCurrent()) recoverToBusinessSelection();
+    } finally {
+      if (isCurrent()) setLoading(false);
+    }
+  }, [hasMalformedRequestedBusinessId, recoverToBusinessSelection, requestedBusinessId, resetBusinessContext]);
 
   useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
+
+  useEffect(() => {
+    if (requiresManagedBusinessSelection) router.replace("/business-owner" as never);
+  }, [requiresManagedBusinessSelection, router]);
+
+  const returnToDashboard = useCallback(() => {
+    if (!businessId) {
+      router.replace("/business-owner" as never);
+      return;
+    }
+    router.push({ pathname: "/business-dashboard", params: { businessId } } as never);
+  }, [businessId, router]);
 
   const sentiment = computeSentiment(reviews);
   const totalReviews = sentiment.positive + sentiment.neutral + sentiment.negative;
@@ -175,7 +284,7 @@ export default function BusinessIntelligenceScreen() {
     return (
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <View style={[s.header, { paddingTop: topPad + 6, backgroundColor: "#CA922B", borderBottomColor: "#CA922B" }]}>
-          <TouchableOpacity onPress={() => router.back()} style={s.backBtn} activeOpacity={0.7}>
+          <TouchableOpacity onPress={returnToDashboard} style={s.backBtn} activeOpacity={0.7}>
             <Feather name="arrow-left" size={22} color="#fff" />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: "#fff" }]}>Business Intelligence</Text>
@@ -188,7 +297,7 @@ export default function BusinessIntelligenceScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: topPad + 6, backgroundColor: "#CA922B", borderBottomColor: "#CA922B" }]}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={returnToDashboard} style={s.backBtn} activeOpacity={0.7}>
           <Feather name="arrow-left" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -264,7 +373,7 @@ export default function BusinessIntelligenceScreen() {
               <Text style={{ fontSize: 32, marginBottom: 10 }}>📣</Text>
               <Text style={[s.emptyTitle, { color: colors.foreground }]}>No active promotions</Text>
               <Text style={[s.emptySub, { color: colors.mutedForeground }]}>Boost visibility with sponsored placements in search, map, and discovery feeds.</Text>
-              <TouchableOpacity style={[s.emptyBtn, { backgroundColor: "#CA922B" }]} onPress={() => router.push("/business-dashboard" as never)} activeOpacity={0.8}>
+              <TouchableOpacity style={[s.emptyBtn, { backgroundColor: "#CA922B" }]} onPress={returnToDashboard} activeOpacity={0.8}>
                 <Text style={s.emptyBtnTxt}>Go to Grow Tab</Text>
               </TouchableOpacity>
             </View>
@@ -317,7 +426,7 @@ export default function BusinessIntelligenceScreen() {
         {/* Back to Dashboard */}
         <TouchableOpacity
           style={[s.dashBtn, { borderColor: colors.border }]}
-          onPress={() => router.push("/business-dashboard" as never)}
+          onPress={returnToDashboard}
           activeOpacity={0.8}
         >
           <Feather name="arrow-left" size={14} color={colors.mutedForeground} />

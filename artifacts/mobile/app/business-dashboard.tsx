@@ -2446,7 +2446,10 @@ export default function BusinessDashboardScreen() {
                   {/* Full Intelligence Report link */}
                   <TouchableOpacity
                     style={[styles.intelligenceBtn, { backgroundColor: "#CA922B", marginHorizontal: 20, marginBottom: 16, borderRadius: 14 }]}
-                    onPress={() => router.push("/business-intelligence" as never)}
+                    onPress={() => router.push({
+                      pathname: "/business-intelligence",
+                      params: { businessId: business.id },
+                    } as never)}
                     activeOpacity={0.85}
                   >
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
