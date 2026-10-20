@@ -409,14 +409,14 @@
       "founder_requirement": "Future Shared Plans uses named authenticated recipients, explicit acceptance, seven-day pending expiry and revocation/block/deletion end-of-access; first content is authorized public business/event references only.",
       "acceptance_criteria": "Reviewed design covers recipient eligibility, field snapshot, audit/retention, cache invalidation, deletion/deactivation; routes/schema/UI/mobile then prove it.",
       "status": "NOT STARTED",
-      "source_evidence": "Shared Plans \u00a7\u00a713\u201331 and 69\u201377 say reachable member sharing not started.",
+      "source_evidence": "Shared Plans \u00a7\u00a713\u201331 and 69\u201377 say reachable member sharing not started. Bounded current-authority trace: NO_LEGITIMATE_SOURCE_CLAIM. Existing Shared Plans is frozen aggregate-only free/busy; nearest itinerary is owner-only private; legacy bearer links are excluded and not a named-recipient model.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "Future Shared Plans owner; central integration owner",
-      "dependencies_or_blockers": "MISSING EVIDENCE \u2014 design, source slice, route/schema/UI and platform/member proof.",
-      "next_action": "Submit one bounded recipient/content slice; do not create general sharing app.",
+      "dependencies_or_blockers": "REQUIRES DESIGN DECISION \u2014 named authenticated recipient eligibility; immutable public business/event reference field allowlist and snapshot semantics; seven-day pending/accept/revoke/block/deletion/deactivation lifecycle; audit/retention/cache-invalidation rules. SP-002/SP-003 and private itinerary paths remain frozen.",
+      "next_action": "No source claim. Obtain the required reviewed design before any new recipient/content policy, route, persistence, or UI path is proposed.",
       "founder_approval_needed": "Yes \u2014 fields/content/audit/retention/external scope decisions.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -2040,6 +2040,10 @@
     {
       "date": "2026-10-19",
       "event": "Registered P0 `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` to 44XX at f15e5986\u2026: selected-item consent currently infers general continuity acceptance. Only three route/test paths are owned; no source integration or external acceptance claimed."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Bounded COMM-004 Shared Plans trace found NO_LEGITIMATE_SOURCE_CLAIM. Aggregate-only SP-002, Circle consent SP-003, private owner itinerary, and legacy bearer-link flows cannot be extended without unapproved named-recipient/content/audit/retention design. No source was changed."
     }
   ],
   "evidence_gaps": [
@@ -2162,13 +2166,13 @@
           "COMM-005"
         ],
         "existing_implementation": "Private snapshots, preference exclusion, free Circle and pure free/busy child receipts are linked.",
-        "missing_broken_elements": "Final baseline, named-recipient/revocation lifecycle, UI/runtime and Calendar integration are open.",
-        "current_active_repair": "No current child claim.",
+        "missing_broken_elements": "Named authenticated recipient model, approved public-reference field snapshot, pending/accept/revoke/block/deletion/deactivation, audit/cache/retention design, then separately authorized source/runtime surfaces are absent.",
+        "current_active_repair": "No current child claim. Bounded COMM-004 trace found no legitimate source slice without inventing recipient/content/audit/retention semantics.",
         "integrated_source": "Linked local source receipts only.",
         "test_evidence": "Focused policy contracts only.",
         "external_gates": "OAuth, test accounts, runtime and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Claim one bounded vertical after policy and ownership review."
+        "next_action": "Retain SP-002 aggregate-only and SP-003 frozen. Require an explicit reviewed COMM-004 design before assigning any source work."
       },
       {
         "experience_id": "EXP-MWM-SAFETY-CRISIS-AND-HEALTH-GUIDANCE",
