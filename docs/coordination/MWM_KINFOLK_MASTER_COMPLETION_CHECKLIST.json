@@ -650,15 +650,15 @@
       "platform": "API/Admin",
       "founder_requirement": "Admin/founder roles remain separate from commercial subscription data and independent grants remain auditable.",
       "acceptance_criteria": "No admin/founder role is paid plan; manual/tester/beta/founder/business grants record source/scope/start/end/authority/audit.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Membership audit A/H2 and D3\u2013D5 reconciliation. Five-lane claim trace: no permitted non-enforcement roles/grants repair exists without an approved historic ledger/audit/authority contract. Exact one-file static D3/D4 source-comparison claim recorded; no account/data audit, role/grant decision, or enforcement change has occurred.",
+      "status": "BLOCKED",
+      "source_evidence": "Membership audit A/H2 and D3\u2013D5 reconciliation. Five-lane claim trace: no permitted non-enforcement roles/grants repair exists without an approved historic ledger/audit/authority contract. Exact one-file static D3/D4 source-comparison claim recorded; no account/data audit, role/grant decision, or enforcement change has occurred. Static D3/D4 comparison source-integrated locally at fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917 (`ADMIN002_D3_D4_ROLE_GRANT_SOURCE_COMPARISON_2026-10-20.md`); it reports packaged static seams only and makes no role/grant/audit/enforcement decision.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "Entitlement/admin owner",
       "dependencies_or_blockers": "MISSING EVIDENCE \u2014 general grant ledger/audit/current-authority enforcement.",
-      "next_action": "Central-review the returned static comparison only; a general approved roles/grants ledger/audit/authority contract remains required before audit or enforcement work.",
+      "next_action": "Founder and designated entitlement owners must approve a general roles/grants ledger, audit, authority, historic-treatment, and effective-tier contract before any audit/enforcement work.",
       "founder_approval_needed": "Founder approval for historic treatment; not source inventory.",
       "last_verified_date": "2026-10-20",
       "prior_evidence_refs": [
@@ -694,15 +694,15 @@
       "platform": "Catalog/Web/iOS/Android",
       "founder_requirement": "D2 approve one final benefit, allowance, vocabulary and copy matrix while preserving free core/historical objects.",
       "acceptance_criteria": "Matrix names free core; exact Navigator/Trailblazer benefits/allowances/exclusions and maps Growth/Premium and partner/legacy/creator/Enterprise labels.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Founder-approved prices/cohorts exist; exact benefits/business mapping not approved. Exact one-file unresolved-only founder decision worksheet claim recorded; no D2 benefit/allowance/vocabulary decision or checkout action has occurred.",
+      "status": "BLOCKED",
+      "source_evidence": "Founder-approved prices/cohorts exist; exact benefits/business mapping not approved. Exact one-file unresolved-only founder decision worksheet claim recorded; no D2 benefit/allowance/vocabulary decision or checkout action has occurred. Unresolved-only benefit/vocabulary worksheet source-integrated locally at fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917 (`MEMD2_FOUNDER_BENEFIT_VOCABULARY_DECISION_WORKSHEET_2026-10-20.md`); every substantive cell remains NOT APPROVED and D1 checkout remains closed.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "Founder; membership/business product owner",
       "dependencies_or_blockers": "MISSING EVIDENCE \u2014 signed benefit/vocabulary matrix.",
-      "next_action": "Central-review the returned worksheet only; founder must separately complete and approve the D2 matrix before any implementation or commercial action.",
+      "next_action": "Founder and membership/business product owner must sign and version the final D2 benefit/allowance/vocabulary/copy matrix; no implementation or commercial action follows from this worksheet.",
       "founder_approval_needed": "Yes \u2014 expressly required.",
       "last_verified_date": "2026-10-20",
       "prior_evidence_refs": [
@@ -892,15 +892,15 @@
       "platform": "Legal/Stripe/support",
       "founder_requirement": "D11 completes merchant/MoR, tax, policy, cancellation/refund/dispute, support and policy-version readiness before paid launch.",
       "acceptance_criteria": "Approved note names merchant/MoR, tax owner, support/refund/dispute operator/contact, current Terms/Privacy versions/corrections and trial/cancellation disclosures.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "Terms/Privacy URLs 200; legal verification identifies privacy/version/processor/cancellation-refund gaps; D11 blocked. Exact one-file unresolved-only founder/legal closed-rail decision-record claim recorded; no legal/commercial determination or checkout action has occurred.",
+      "status": "BLOCKED",
+      "source_evidence": "Terms/Privacy URLs 200; legal verification identifies privacy/version/processor/cancellation-refund gaps; D11 blocked. Exact one-file unresolved-only founder/legal closed-rail decision-record claim recorded; no legal/commercial determination or checkout action has occurred. Unsigned founder/legal closed-rail decision template source-integrated locally at fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917 (`MEMD11_FOUNDER_LEGAL_CLOSED_RAIL_DECISION_NOTE_2026-10-20.md`); every legal/commercial field remains unresolved and checkout remains closed.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
       "responsible_owner_or_task": "Founder/legal/operations owner",
       "dependencies_or_blockers": "MISSING EVIDENCE \u2014 approvals, policy corrections/version control and paid lifecycle acceptance.",
-      "next_action": "Central-review the returned decision-record template only; founder/legal owners must separately make and version all actual D11 decisions before any rail-opening request.",
+      "next_action": "Founder/legal/operations owners must separately resolve, approve, version, and evidence the D11 fields before any rail-opening request; this template confers no execution authority.",
       "founder_approval_needed": "Yes \u2014 expressly required.",
       "last_verified_date": "2026-10-20",
       "prior_evidence_refs": [
@@ -2080,6 +2080,10 @@
     {
       "date": "2026-10-20",
       "event": "Five-lane clean-authority trace: registered exclusive documentation-only claims for MEM-D2 founder benefit/vocabulary worksheet, MEM-D11 founder/legal closed-rail decision note, and ADMIN-002 D3/D4 static role/grant source comparison. INT-TRANSPORT-001 and INT-STRIPE-001 received evidence-backed NO_LEGITIMATE_SOURCE_CLAIM dispositions; no disconnected helper, duplicate D1 test, or external action was created."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Accepted three exact one-file documentation carriers at fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917: MEM-D2 unresolved benefit/vocabulary worksheet, MEM-D11 unsigned closed-rail founder/legal decision note, and ADMIN-002 static D3/D4 source comparison. All carrier hashes/scopes/reconstructions and document-boundary reviews passed. Each parent remains BLOCKED; no benefit, legal/commercial, role/grant, account/data, payment/provider, staging, deployment, browser/device, release, or founder acceptance was created."
     }
   ],
   "evidence_gaps": [
@@ -2093,14 +2097,14 @@
   ],
   "dashboard_counts": {
     "label": 0,
-    "unique_requirement_ids": 0,
+    "unique_requirement_ids": 65,
     "by_primary_status": 0,
     "by_founder_area": 0,
     "unavailable_evidence_classes": 0,
     "SOURCE INTEGRATED": 23,
-    "BLOCKED": 21,
-    "IN DEVELOPMENT": 10,
-    "NOT STARTED": 10,
+    "BLOCKED": 26,
+    "IN DEVELOPMENT": 8,
+    "NOT STARTED": 7,
     "FAILED": 1
   },
   "feature_area_counts": {

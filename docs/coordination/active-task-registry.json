@@ -4169,7 +4169,7 @@
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "ownerTaskName": "Build Unmerged Community-Frequented Alternatives + Scorecard V1 Candidate",
       "priority": "P1",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "5e24a16e858053392259a3f66bff144e79d5754e",
       "paths": [
         "docs/coordination/MEMD2_FOUNDER_BENEFIT_VOCABULARY_DECISION_WORKSHEET_2026-10-20.md"
@@ -4186,7 +4186,14 @@
       "purpose": "One unresolved-only founder decision worksheet for MEM-D2 benefit/allowance/vocabulary/copy decisions while D1 checkout remains closed.",
       "acceptance": "Exactly one uncommitted new Markdown file. All benefits, allowances, cohorts, prices, label mappings, member copy, legal terms, fulfillment, and approvals remain explicitly NOT APPROVED/blank decision cells. No existing file/source/external action.",
       "exclusions": "No checkout/payment/catalog/entitlement/provider/DB/schema/config/account/data/browser/device/staging/deploy/remote Git/activation action; no invented benefit, price, mapping, cohort, or approval.",
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20",
+      "centralSourceReceipt": {
+        "commit": "fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917",
+        "document": "docs/coordination/MEMD2_FOUNDER_BENEFIT_VOCABULARY_DECISION_WORKSHEET_2026-10-20.md",
+        "carrier_handoff": "hnd_eutc4FX7Yt6VhcntY6puTmzE",
+        "validation": "Outer hash/manifest, compact-base hash, patch reconstruction, explicit blank-field/closed-rail semantic review, exact one-path scope, and whitespace PASS.",
+        "external_acceptance": "NOT PERFORMED"
+      }
     },
     {
       "id": "MEM-D11-FOUNDER-LEGAL-CLOSED-RAIL-DECISION-NOTE",
@@ -4194,7 +4201,7 @@
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "ownerTaskName": "Review uploaded content",
       "priority": "P1",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "5e24a16e858053392259a3f66bff144e79d5754e",
       "paths": [
         "docs/coordination/MEMD11_FOUNDER_LEGAL_CLOSED_RAIL_DECISION_NOTE_2026-10-20.md"
@@ -4211,7 +4218,14 @@
       "purpose": "One unresolved-only MEM-D11 founder/legal decision-record template that references BIZ-002 closed-rail readiness without providing legal advice or commercial decisions.",
       "acceptance": "Exactly one uncommitted new Markdown file. Merchant/MoR, tax, policy/version, support, trial, cancellation/refund/dispute fields are unresolved decision fields; BIZ-002 is referenced rather than duplicated; checkout stays closed.",
       "exclusions": "No legal advice, policy/Terms/Privacy edit, merchant or provider contact/account, checkout/payment/tax configuration, account/data/browser/device/staging/deploy/remote Git/activation action; no invented legal/commercial approval.",
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20",
+      "centralSourceReceipt": {
+        "commit": "fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917",
+        "document": "docs/coordination/MEMD11_FOUNDER_LEGAL_CLOSED_RAIL_DECISION_NOTE_2026-10-20.md",
+        "carrier_handoff": "hnd_0pbRY3PPHEdzZ5A651Wlf7Mn",
+        "validation": "Outer hash/manifest, compact-base hash, patch reconstruction, unsigned-no-go/closed-rail semantic review, exact one-path scope, and whitespace PASS.",
+        "external_acceptance": "NOT PERFORMED"
+      }
     },
     {
       "id": "ADMIN-002-D3-D4-ROLE-GRANT-SOURCE-COMPARISON",
@@ -4219,7 +4233,7 @@
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
       "ownerTaskName": "Review uploaded pasted content",
       "priority": "P1",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "5e24a16e858053392259a3f66bff144e79d5754e",
       "paths": [
         "docs/coordination/ADMIN002_D3_D4_ROLE_GRANT_SOURCE_COMPARISON_2026-10-20.md"
@@ -4236,7 +4250,14 @@
       "purpose": "One static D3/D4 source comparison of existing role predicate, tester grant metadata, protected-admin control, and effective-tier seams without policy conclusion or mutation.",
       "acceptance": "Exactly one uncommitted new Markdown file. It crosswalks only packaged current source/hashes, keeps historic D3/D4 files unavailable/unresolved, and states no general approved roles/grants ledger/audit contract exists.",
       "exclusions": "No source/test/schema/route/UI/config edit; no account/data/provider/payment/browser/device/staging/deploy/remote Git/activation action; no grant classification, role approval, audit execution, or enforcement conclusion.",
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20",
+      "centralSourceReceipt": {
+        "commit": "fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917",
+        "document": "docs/coordination/ADMIN002_D3_D4_ROLE_GRANT_SOURCE_COMPARISON_2026-10-20.md",
+        "carrier_handoff": "hnd_Iw93AbUa589MqAUR2pvd5c8g",
+        "validation": "Outer hash/manifest, five packaged source hashes, bounded coordination-only base drift, patch reconstruction, full static-boundary review, exact one-path scope, and whitespace PASS.",
+        "external_acceptance": "NOT PERFORMED"
+      }
     }
   ],
   "globalDirectiveDelivery": [
