@@ -4899,7 +4899,7 @@
       "ownerTaskName": "Independent Gap Audit for Mapping with Melanin and KinfolkAI",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
       "paths": [
         "artifacts/api-server/src/routes/businesses.ts",
@@ -4911,12 +4911,20 @@
       "acceptance": "Add narrowly selected managed photo upload, cover, and delete endpoints only if they require the same active approved unrevoked target-owner check before object key, storage, or DB activity. Keep legacy photo endpoints and exact-one behavior intact. Native selected editor must use selected routes only when managedBusinessId exists; non-selected legacy branch remains unchanged. Preserve gallery membership fence, 10-photo limit, pending/cover behavior, DB-row-before-best-effort-delete ordering, and failure-safe local state. Add deterministic selected-own/cross/revoked/multi/no-side-effect and native selected-route/no-false-success assertions. Run targeted API and mobile contracts, API/mobile no-emit (mobile --ignoreDeprecations 6.0), exact four-path scope and diff check.",
       "exclusions": "No storage/IAM/bucket/live object/DB/schema/migration/configuration/public listing/Directory/Kinfolk/provider/browser/device/staging/deploy/remote Git/mobile-build action. Do not modify unrelated video, profile, schedule, or feature activation surfaces.",
       "source_boundary": "Source-only mocked route/client repair; no real storage/database/runtime/member/release/founder acceptance.",
-      "workerStart": "ACKNOWLEDGED_STARTED",
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
       "baseTransfer": {
         "handoff_id": "hnd_JdKkW4EGjO6mtzcqFunT2laQ",
         "file": "BIZ009_SELECTED_PHOTO_GALLERY_ROUTE_ISOLATION_BASE_2026-10-20.tar.gz",
         "sha256": "bd49b78401944531c117343ce0636cd4587f105dadb87251c0e08ef129b35039",
         "expires_at": "2026-10-21T03:54:24.274Z"
+      },
+      "sourceReceipt": {
+        "authority_commit": "edd18248779089092631adf3eb1d9581b0acad82",
+        "carrier_handoff": "hnd_JKN1Ffqj6IUfD2-cv-HF6KVD",
+        "carrier_sha256": "3e81ed3392f5e55a3cdb389b0ada3ee63ba8b184c4ada6eaf68b197ed1d99cd4",
+        "source_validation": "Current API selected-photo isolation: 1 file / 21 tests PASS; API tsc --noEmit PASS. Current native selected-photo + revision compatibility: 3 files / 12 tests PASS; mobile tsc --noEmit --ignoreDeprecations 6.0 PASS; exact four-path scope/diff and output hashes PASS. Final unified local source matrix: API 12/81, native 9/49, Web 3/25; all no-emit PASS.",
+        "semantic_validation": "Selected POST/DELETE/cover target routes require exact business ID plus approved/unrevoked owner predicate before object-key/storage/DB work; gallery membership and cap guard mutations; selected delete writes before best-effort cleanup. Native photo mutations derive selected routes only from managedBusinessId and update local media only after non-error responses, preserving legacy fallback when no selected ID exists.",
+        "boundary": "Source-only mocked server/client evidence. No real storage/DB/runtime/browser/device/staging/deploy/member/release/founder acceptance."
       }
     },
     {
