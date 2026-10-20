@@ -184,6 +184,7 @@ function useMyBusiness() {
   const [business, setBusiness] = useState<MyBusiness | null>(null);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [requiresManagedBusinessSelection, setRequiresManagedBusinessSelection] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -191,21 +192,29 @@ function useMyBusiness() {
         const token = await SecureStore.getItemAsync("auth_session_token");
         const base = getApiBase();
         if (!token || !base) { setLoading(false); return; }
-        const res = await fetch(`${base}/api/businesses/mine`, {
+        const res = await fetch(`${base}/api/businesses/mine/managed`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as { business: MyBusiness | null };
-          if (data.business) {
-            setBusiness(data.business);
-            const rRes = await fetch(
-              `${base}/api/reviews?businessId=${data.business.id}`,
-              { headers: { Authorization: `Bearer ${token}` } },
-            );
-            if (rRes.ok) {
-              const rData = await rRes.json() as { reviews: ReviewRow[] };
-              setReviews((rData.reviews ?? []).slice(0, 3));
-            }
+          const data = await res.json() as { businesses?: MyBusiness[] };
+          const managedBusinesses = Array.isArray(data.businesses) ? data.businesses : [];
+          if (managedBusinesses.length !== 1) {
+            setBusiness(null);
+            setReviews([]);
+            setRequiresManagedBusinessSelection(managedBusinesses.length > 1);
+            return;
+          }
+
+          const managedBusiness = managedBusinesses[0];
+          setBusiness(managedBusiness);
+          setRequiresManagedBusinessSelection(false);
+          const rRes = await fetch(
+            `${base}/api/reviews?businessId=${managedBusiness.id}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          if (rRes.ok) {
+            const rData = await rRes.json() as { reviews: ReviewRow[] };
+            setReviews((rData.reviews ?? []).slice(0, 3));
           }
         }
       } catch {}
@@ -214,7 +223,7 @@ function useMyBusiness() {
     void load();
   }, []);
 
-  return { business, reviews, loading };
+  return { business, reviews, loading, requiresManagedBusinessSelection };
 }
 
 const ACTIONS = [
@@ -261,7 +270,7 @@ export default function BusinessDashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights" | "products" | "grow">("overview");
-  const { business, reviews, loading } = useMyBusiness();
+  const { business, reviews, loading, requiresManagedBusinessSelection } = useMyBusiness();
   const [feedbackOptIn, setFeedbackOptIn] = useState<boolean>(false);
   const [togglingFeedback, setTogglingFeedback] = useState(false);
   const [addrExpanded, setAddrExpanded] = useState(false);
@@ -325,6 +334,10 @@ export default function BusinessDashboardScreen() {
   const [newCategory, setNewCategory] = useState("");
   const [savingListing, setSavingListing] = useState(false);
   const [onboarding, setOnboarding] = useState(false);
+
+  React.useEffect(() => {
+    if (requiresManagedBusinessSelection) router.replace("/business-owner" as never);
+  }, [requiresManagedBusinessSelection, router]);
 
   React.useEffect(() => {
     const feedbackOptIn = business?.feedbackOptIn;
@@ -633,7 +646,7 @@ export default function BusinessDashboardScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  if (loading) {
+  if (loading || requiresManagedBusinessSelection) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.primary }]}>
