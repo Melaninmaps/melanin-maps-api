@@ -2395,12 +2395,26 @@ router.delete("/businesses/mine/photos", async (req: any, res: Response) => {
       return;
     }
 
-    const currentPhotos = (business.photos as string[]) ?? [];
+    const currentPhotos = Array.isArray(business.photos) ? business.photos : [];
+    if (!currentPhotos.includes(url)) {
+      res.status(400).json({ error: "Photo not found" });
+      return;
+    }
     const updatedPhotos = currentPhotos.filter((p) => p !== url);
     const newImageUrl =
       business.imageUrl === url
         ? (updatedPhotos[0] ?? null)
         : business.imageUrl;
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({
+        photos: updatedPhotos,
+        imageUrl: newImageUrl,
+        updatedAt: new Date(),
+      })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
     if (bucketId && url.includes(`storage.googleapis.com/${bucketId}/`)) {
@@ -2413,16 +2427,6 @@ router.delete("/businesses/mine/photos", async (req: any, res: Response) => {
           .catch(() => {});
       }
     }
-
-    const [updated] = await db
-      .update(businessesTable)
-      .set({
-        photos: updatedPhotos,
-        imageUrl: newImageUrl,
-        updatedAt: new Date(),
-      })
-      .where(eq(businessesTable.id, business.id))
-      .returning();
 
     res.json({ photos: updated.photos, imageUrl: updated.imageUrl });
   } catch (err) {
