@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { buildExplicitMemoryConsentPlan } from "../explicit-memory-consent";
 import { isOrdinaryContinuityMemoryRelevant } from "../ordinary-continuity-memory";
+import { resolvePrivateMemoryPersonalizationAccess } from "../private-memory";
 import {
   isAuthorizedRelevantPrivateMemoryForTurn,
   memberFacingPrivateMemoryUseForAnswer,
@@ -98,6 +100,32 @@ describe("Kinfolk private-memory relevance selection", () => {
     })).toBe(true);
   });
 
+  it("keeps a relevant explicit item eligible while ordinary continuity is off", () => {
+    const plan = buildExplicitMemoryConsentPlan(
+      "Remember that I prefer vegan restaurants.",
+    );
+    const selected = plan?.ordinary[0];
+    expect(selected).toBeDefined();
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: false,
+      explicitMemberMemoryEnabled: true,
+    })).toBe(true);
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: false,
+      explicitMemberMemoryEnabled: false,
+    })).toBe(false);
+    expect(isAuthorizedRelevantPrivateMemoryForTurn({
+      memory: {
+        content: selected!.content,
+        purpose: plan!.purpose,
+        isSensitive: false,
+      },
+      currentMessage: "Where can I find a vegan dinner?",
+      directRelevance: false,
+      sensitiveUseAllowed: true,
+    })).toBe(true);
+  });
+
   it("shows the generic memory-use notice only for an eligible applied decision", () => {
     const notRelevant = resolvePrivateMemoryUseDecision({
       runtimeEnabled: true,
@@ -145,11 +173,22 @@ describe("Kinfolk private-memory relevance selection", () => {
     );
     expect(selector).toContain("isAuthorizedRelevantPrivateMemoryForTurn({");
     expect(selector).toContain("sensitiveUseAllowed,");
+    expect(selector).toContain("isSensitiveMemoryRelevant(memory.content, input.currentMessage)");
+    expect(selector).toContain(": false) &&");
+    expect(activeMemoryQuery).toContain(
+      "eq(kinfolkPrivateMemoriesTable.userId, req.user.id)",
+    );
     expect(activeMemoryQuery).toContain(
       "isNull(kinfolkPrivateMemoriesTable.revokedAt)",
     );
     expect(activeMemoryQuery).toContain(
       "isNull(kinfolkPrivateMemoriesTable.pausedAt)",
+    );
+    expect(activeMemoryQuery).toContain(
+      "gt(kinfolkPrivateMemoriesTable.expiresAt, new Date())",
+    );
+    expect(activeMemoryQuery).toContain(
+      "isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt)",
     );
   });
 });

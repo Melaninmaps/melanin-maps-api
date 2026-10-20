@@ -25,11 +25,12 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-function fixture(initial: Row[] = []) {
+function fixture(initial: Row[] = [], initialSettings: Row[] = [], sensitiveReauthAllowed = true) {
   const rows: Row[] = initial.map((row) => ({ pausedAt: null, revokedAt: null, expiresAt: null, isSensitive: false, ...row }));
-  const settings: Row[] = [];
+  const settings: Row[] = initialSettings.map((row) => ({ ...row }));
   const table = new Proxy({}, { get: (_target, key) => String(key) });
   const settingsTable = new Proxy({}, { get: (_target, key) => String(key) });
+  const sensitiveReauth = vi.fn(async () => sensitiveReauthAllowed);
   const project = (row: Row, shape?: Row) => shape ? Object.fromEntries(Object.entries(shape).map(([key, field]) => [key, row[field]])) : { ...row };
   function builder(shape?: Row, mode = "select", source: object = table) {
     let predicate: Predicate = () => true;
@@ -95,7 +96,7 @@ function fixture(initial: Row[] = []) {
     PREFERRED_NAME_MEMORY_PURPOSE: "preferred_name",
     isKinfolkPrivateMemoryEnabled: () => true, isExplicitMemberMemoryEnabled: () => true,
     resolveOwnerExplicitMemberMemoryAccess: async () => true,
-    requireSensitiveMemoryVaultReauth: async () => true,
+    requireSensitiveMemoryVaultReauth: sensitiveReauth,
     invalidatePrefsCache: () => undefined, invalidateSessionsCache: () => undefined,
     safeKinfolkErrorMetadata: () => ({ errorClass: "synthetic-error" }),
     KINFOLK_CONTINUITY_DISCLOSURE_VERSION: "synthetic-disclosure",
@@ -108,7 +109,7 @@ function fixture(initial: Row[] = []) {
     await handlers.get(method)!(req, res);
     return res;
   }
-  return { rows, settings, request, logs };
+  return { rows, settings, request, logs, sensitiveReauth };
 }
 
 const note = "I prefer quiet coffee shops for work meetings.";
@@ -135,14 +136,39 @@ describe("bounded memory route execution with synthetic owner-scoped storage", (
     expect(f.rows[0].contentFingerprint).not.toBe(f.rows[1].contentFingerprint);
   });
 
-  it("encrypts inline selected consent and rolls back settings/content writes if encryption is unavailable", async () => {
+  it("encrypts inline selected consent without inferring continuity settings and rolls back content writes if encryption is unavailable", async () => {
     const message = "Remember that I prefer quiet coffee shops for work meetings.";
     const selectedIds = buildExplicitMemoryConsentPlan(message)!.ordinary.map((item) => item.id);
-    const f = fixture();
-    const response = await f.request("post:/kinfolk/memory-consent", { message, selectedIds, consent: true });
-    expect(response.statusCode).toBe(201);
-    expect(f.rows[0].content).toBe("[Encrypted private memory]");
-    expect(memoryCrypto.readOrdinaryMemoryContent(f.rows[0] as any, "owner-a")).toContain("quiet coffee");
+    const settingsCases = [
+      [],
+      [{
+        userId: "owner-a",
+        kinfolkMemoryEnabled: false,
+        kinfolkContinuityEnabled: false,
+        kinfolkContinuityDisclosureDecision: "declined",
+        kinfolkContinuityDisclosureVersion: "existing-declined-v1",
+        kinfolkContinuityDisclosedAt: "2026-10-01T00:00:00.000Z",
+        updatedAt: "2026-10-01T00:00:00.000Z",
+      }],
+      [{
+        userId: "owner-a",
+        kinfolkMemoryEnabled: true,
+        kinfolkContinuityEnabled: false,
+        kinfolkContinuityDisclosureDecision: "accepted",
+        kinfolkContinuityDisclosureVersion: "existing-disabled-v1",
+        kinfolkContinuityDisclosedAt: "2026-10-02T00:00:00.000Z",
+        updatedAt: "2026-10-02T00:00:00.000Z",
+      }],
+    ];
+    for (const initialSettings of settingsCases) {
+      const f = fixture([], initialSettings);
+      const settingsBefore = JSON.stringify(f.settings);
+      const response = await f.request("post:/kinfolk/memory-consent", { message, selectedIds, consent: true });
+      expect(response.statusCode).toBe(201);
+      expect(f.rows[0].content).toBe("[Encrypted private memory]");
+      expect(memoryCrypto.readOrdinaryMemoryContent(f.rows[0] as any, "owner-a")).toContain("quiet coffee");
+      expect(JSON.stringify(f.settings)).toBe(settingsBefore);
+    }
     const failed = fixture();
     delete process.env.KINFOLK_SENSITIVE_MEMORY_ENCRYPTION_KEY;
     const unavailable = await failed.request("post:/kinfolk/memory-consent", { message, selectedIds, consent: true });
@@ -151,6 +177,29 @@ describe("bounded memory route execution with synthetic owner-scoped storage", (
     expect(failed.rows).toEqual([]);
     expect(failed.settings).toEqual([]);
     expect(failed.logs).not.toHaveBeenCalled();
+  });
+
+  it("keeps sensitive item reauthentication separate from continuity settings", async () => {
+    const message = "Remember that I have a peanut allergy.";
+    const selectedIds = buildExplicitMemoryConsentPlan(message)!.sensitive.map((item) => item.id);
+    const f = fixture([], [{
+      userId: "owner-a",
+      kinfolkMemoryEnabled: false,
+      kinfolkContinuityEnabled: false,
+      kinfolkContinuityDisclosureDecision: "declined",
+    }], false);
+    const settingsBefore = JSON.stringify(f.settings);
+
+    await f.request("post:/kinfolk/memory-consent", {
+      message,
+      selectedIds,
+      consent: true,
+      sensitiveConsent: true,
+    });
+
+    expect(f.sensitiveReauth).toHaveBeenCalledTimes(1);
+    expect(f.rows).toEqual([]);
+    expect(JSON.stringify(f.settings)).toBe(settingsBefore);
   });
 
   it("reads/deduplicates legacy only for its owner and converts it only on explicit owner correction", async () => {

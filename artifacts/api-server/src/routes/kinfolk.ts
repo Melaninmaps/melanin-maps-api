@@ -6952,40 +6952,6 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
           requestedCount: itemsToSave.length,
         });
         const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
-        const [current] = await tx
-          .select({ disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt })
-          .from(userSettingsTable)
-          .where(eq(userSettingsTable.userId, req.user!.id))
-          .limit(1);
-        const continuityUpdate = {
-          kinfolkMemoryEnabled: true,
-          kinfolkContinuityEnabled: true,
-          kinfolkContinuityUpdatedAt: now,
-          kinfolkContinuityDisclosureDecision: "accepted" as const,
-          kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-          kinfolkContinuityDisclosedAt: current?.disclosedAt ?? now,
-          updatedAt: now,
-        };
-        const updated = await tx
-          .update(userSettingsTable)
-          .set(continuityUpdate)
-          .where(eq(userSettingsTable.userId, req.user!.id))
-          .returning({ userId: userSettingsTable.userId });
-        if (updated.length === 0) {
-          await tx
-            .insert(userSettingsTable)
-            .values({
-              userId: req.user!.id,
-              // Private-memory consent never creates a Safety alert subscription.
-              safetyAlertPolice: false,
-              safetyAlertIce: false,
-              ...continuityUpdate,
-            })
-            .onConflictDoUpdate({
-              target: userSettingsTable.userId,
-              set: continuityUpdate,
-            });
-        }
         for (const item of itemsToSave) {
           const sensitiveCiphertext = item.kind === "sensitive"
             ? encryptSensitiveMemoryContent(item.content)
