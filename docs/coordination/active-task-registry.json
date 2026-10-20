@@ -4645,9 +4645,11 @@
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_EDITOR_SUCCESSIVE_SAVE_REVISION_BASE_2026-10-20.tar.gz",
         "sha256": "947eb495b56519bafe749ca868b3f30abbf072b07285a81023e918226f609d4a",
-        "handoff": "PENDING"
+        "handoff": "hnd_b4i6xZ8kPlE_IGwo87t2gEBe",
+        "expires_at": "2026-10-21T02:55:33.630Z",
+        "size_bytes": 13266
       },
-      "workerStart": "PENDING_DIRECT_DISPATCH"
+      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
     }
   ],
   "globalDirectiveDelivery": [
