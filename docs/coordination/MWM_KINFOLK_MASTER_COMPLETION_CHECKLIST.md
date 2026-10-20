@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | KMEM-004 mobile revoke authentication failure accepted as local source integration at `26eb57a60a703a27a88e6ba86b11877f6c575cff`. Mobile lifecycle **1 file / 8** and mobile no-emit PASS; token absence now fails closed before DELETE/local removal. Runtime/device/member gates remain external. |
 | 2026-10-20 | MEM-D4 bounded entitlement-consumer trace: **NO_LEGITIMATE_SOURCE_CLAIM**. Existing consumers cannot be converted without changing free-core/business-owner behavior, enforcement, disclosure, or payment/provider boundaries; no source changed. |
 | 2026-10-20 | Registered P0 `KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED` to 44XX at `b7a411e2…`: the mobile revoke action must surface missing authentication rather than silently no-op. Two exclusive mobile paths only; no source integration yet. |
 | 2026-10-20 | KMEM-004 selected-item consent/continuity separation accepted as local source integration at `242b58a6c5f04f116c76fe7cfd54174c96b0363d`. Authority matrix: API **4 files / 20**, Web **1 / 5**, mobile **1 / 7**, plus API/Web/mobile no-emit PASS; all runtime/platform/member gates remain external. |

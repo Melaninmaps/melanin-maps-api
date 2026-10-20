@@ -3825,7 +3825,7 @@
     {
       "id": "KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "KMEM-004",
@@ -3868,6 +3868,14 @@
         "at": "2026-10-20T00:28:19Z",
         "channel": "manus-tasks direct reply",
         "statement": "Owner acknowledged compact-base verification, exclusive two-path scope, exact missing-token validation, uncommitted carrier, and all source-only boundaries."
+      },
+      "sourceIntegration": {
+        "source_commit": "26eb57a60a703a27a88e6ba86b11877f6c575cff",
+        "carrier": "hnd_zVSG23yMhOIeYxqZudB21Lyu",
+        "outer_sha256": "72371c0c1a54b06549178ef8ab799e0e90bdbf62b56255537d785df8d321a0e1",
+        "authority_validation": "Mobile lifecycle Vitest 1 file / 8 tests PASS; mobile tsc --noEmit PASS with NODE_OPTIONS=--max-old-space-size=8192 and external temporary tsBuildInfo; exact two-path scope, semantic ordering proof, temporary-artifact cleanup, and diff check PASS.",
+        "behavior": "Missing-token revoke now throws inside the existing catch path, surfaces the sign-in error through memoryError, and cannot reach DELETE or local filtering. Token success, encoded exact-ID DELETE, response.ok gate, non-OK recovery, and haptic remain unchanged.",
+        "limitations": "Local source/static-contract evidence only; no physical device/browser/runtime/database/provider/staging/deployment/member/release/founder acceptance."
       }
     }
   ],
