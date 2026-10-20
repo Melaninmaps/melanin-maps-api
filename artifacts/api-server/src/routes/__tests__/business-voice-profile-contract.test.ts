@@ -80,23 +80,33 @@ describe("Business Voice Profile pre-traffic schema readiness", () => {
     poolQuery.mockReset();
   });
 
-  it("uses only the named idempotent table migration and a complete no-row structural probe on every boot", async () => {
-    poolQuery.mockResolvedValue({ rows: [] });
+  it("repairs and verifies the named table's one-profile-per-business invariant on every boot", async () => {
+    poolQuery.mockResolvedValue({ rows: [{ business_id_unique: true }] });
 
     await ensureBusinessKinfolkVoiceProfileSchema(logger);
     await ensureBusinessKinfolkVoiceProfileSchema(logger);
 
-    expect(poolQuery).toHaveBeenCalledTimes(4);
-    const [firstDdl, firstProbe, repeatedDdl, repeatedProbe] = poolQuery.mock.calls.map(
-      ([sql]) => sql as string,
-    );
+    expect(poolQuery).toHaveBeenCalledTimes(6);
+    const [firstDdl, firstColumnProbe, firstUniqueProbe, repeatedDdl, repeatedColumnProbe, repeatedUniqueProbe] =
+      poolQuery.mock.calls.map(([sql]) => sql as string);
     expect(firstDdl).toContain("CREATE TABLE IF NOT EXISTS business_kinfolk_voice_profiles");
     expect(firstDdl).toContain("CREATE INDEX IF NOT EXISTS business_kinfolk_voice_profiles_owner_updated_idx");
-    expect(firstProbe).toContain(
+    expect(firstDdl).toContain(
+      "CREATE UNIQUE INDEX business_kinfolk_voice_profiles_business_id_unique_idx",
+    );
+    expect(firstDdl).toContain("index_meta.indpred IS NULL");
+    expect(firstDdl).toContain("index_meta.indnkeyatts = 1");
+    expect(firstColumnProbe).toContain(
       "SELECT id, business_id, owner_user_id, tones, language_preference, audience_guidance, words_to_use, words_to_avoid, signature_phrases, owner_confirmed_at, created_at, updated_at FROM business_kinfolk_voice_profiles LIMIT 0",
     );
+    expect(firstUniqueProbe).toContain("SELECT EXISTS");
+    expect(firstUniqueProbe).toContain("FROM pg_index index_meta");
+    expect(firstUniqueProbe).toContain("column_meta.attname = 'business_id'");
+    expect(firstUniqueProbe).toContain("index_meta.indpred IS NULL");
+    expect(firstUniqueProbe).toContain("index_meta.indnkeyatts = 1");
     expect(repeatedDdl).toBe(firstDdl);
-    expect(repeatedProbe).toBe(firstProbe);
+    expect(repeatedColumnProbe).toBe(firstColumnProbe);
+    expect(repeatedUniqueProbe).toBe(firstUniqueProbe);
     expect(migration).toContain(
       'const BUSINESS_KINFOLK_VOICE_PROFILE_SCHEMA_MIGRATIONS = new Set([',
     );
@@ -127,6 +137,18 @@ describe("Business Voice Profile pre-traffic schema readiness", () => {
       'column "signature_phrases" does not exist',
     );
     expect(poolQuery).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails closed after the column probe when no equivalent unique business_id index is observable", async () => {
+    poolQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ business_id_unique: false }] });
+
+    await expect(ensureBusinessKinfolkVoiceProfileSchema(logger)).rejects.toThrow(
+      "Business Kinfolk Voice Profile schema is missing a unique business_id invariant.",
+    );
+    expect(poolQuery).toHaveBeenCalledTimes(3);
   });
 
   it("runs owner-profile readiness after owner-link safety and before either release mode can accept traffic", () => {

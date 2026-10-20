@@ -202,7 +202,29 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE INDEX IF NOT EXISTS business_kinfolk_voice_profiles_owner_updated_idx
-      ON business_kinfolk_voice_profiles (owner_user_id, updated_at DESC);`,
+      ON business_kinfolk_voice_profiles (owner_user_id, updated_at DESC);
+    -- CREATE TABLE IF NOT EXISTS does not add this invariant when an older
+    -- staging table already exists. Establish it independently and only when
+    -- no equivalent whole-table single-key index is already present.
+    DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_index index_meta
+        JOIN LATERAL unnest(index_meta.indkey::smallint[]) WITH ORDINALITY
+          AS key_meta(attnum, key_position) ON key_meta.key_position = 1
+        JOIN pg_attribute column_meta
+          ON column_meta.attrelid = index_meta.indrelid
+         AND column_meta.attnum = key_meta.attnum
+        WHERE index_meta.indrelid = 'public.business_kinfolk_voice_profiles'::regclass
+          AND index_meta.indisunique
+          AND index_meta.indpred IS NULL
+          AND index_meta.indnkeyatts = 1
+          AND column_meta.attname = 'business_id'
+      ) THEN
+        CREATE UNIQUE INDEX business_kinfolk_voice_profiles_business_id_unique_idx
+          ON public.business_kinfolk_voice_profiles (business_id);
+      END IF;
+    END $$;`,
   },
   {
     // Retain every member and waitlist record while allowing an administrator
@@ -7876,6 +7898,28 @@ export async function ensureBusinessKinfolkVoiceProfileSchema(
   await pool.query(
     "SELECT id, business_id, owner_user_id, tones, language_preference, audience_guidance, words_to_use, words_to_avoid, signature_phrases, owner_confirmed_at, created_at, updated_at FROM business_kinfolk_voice_profiles LIMIT 0",
   );
+
+  const uniqueBusinessId = await pool.query<{ business_id_unique: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM pg_index index_meta
+      JOIN LATERAL unnest(index_meta.indkey::smallint[]) WITH ORDINALITY
+        AS key_meta(attnum, key_position) ON key_meta.key_position = 1
+      JOIN pg_attribute column_meta
+        ON column_meta.attrelid = index_meta.indrelid
+       AND column_meta.attnum = key_meta.attnum
+      WHERE index_meta.indrelid = 'public.business_kinfolk_voice_profiles'::regclass
+        AND index_meta.indisunique
+        AND index_meta.indpred IS NULL
+        AND index_meta.indnkeyatts = 1
+        AND column_meta.attname = 'business_id'
+    ) AS business_id_unique`,
+  );
+  if (uniqueBusinessId.rows[0]?.business_id_unique !== true) {
+    throw new Error(
+      "Business Kinfolk Voice Profile schema is missing a unique business_id invariant.",
+    );
+  }
   log("Business Kinfolk Voice Profile schema is ready before traffic acceptance");
 }
 
