@@ -4800,22 +4800,16 @@
         "artifacts/api-server/src/routes/skip-feedback.ts",
         "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-delivery-contract.test.ts"
       ],
-      "purpose": "Deliver opted-in owner feedback only to the active approved unrevoked business owner rather than a nullable or former legacy submitter.",
-      "acceptance": "In POST delivery path only, resolve a business-scoped active owner link (owner/approved/unrevoked) before legacy submittedById. An active link always wins; legacy submittedById remains fallback only when no active link. Align an existing private-feedback conversation participant boundary to the resolved recipient before appending. If no recipient, preserve feedback persistence and non-fatal delivery containment without arbitrary conversation delivery. Preserve POST validation/filtering/opt-in, stored author provenance, envelopes, canonical GET and legacy GET. Add focused deterministic contract for null legacy submitter, active-owner precedence, stale conversation realignment, legacy fallback, and no-recipient containment.",
+      "purpose": "Deliver opted-in private feedback only to exactly one current active approved unrevoked business owner; submission provenance alone never grants an inbox-recipient entitlement.",
+      "acceptance": "In POST delivery only, inspect up to two same-business active owner links (role=owner/status=approved/revokedAt IS NULL). Deliver only when exactly one active owner exists; do not use businesses.submittedById as a recipient fallback. Zero or multiple active owners preserve stored feedback and return normal success without a conversation/message or recipient disclosure. For exactly one owner, it wins over legacy provenance and a reused private-feedback conversation is reset to exactly that recipient before append. Preserve POST validation/filtering/opt-in, stored author provenance, envelopes, canonical GET and legacy GET. Deterministic contract must prove current-owner delivery, ownership transfer/old-conversation realignment, revoked/no-link no delivery, multiple-owner fail-closed no delivery, and no delivery by legacy submittedById alone.",
       "exclusions": "No canonical/legacy GET changes, mobile/Dashboard/Owner Home, conversations.ts, schema/data, entitlement/BIZ-009 release, provider/runtime/browser/device/staging/deploy/remote action. Mocks only.",
       "requirementId": "BIZ-003",
       "priority": "P0",
       "status": "IN DEVELOPMENT",
       "authorityBase": "1a1c3299b349a4e2002f869fda2abba4a07360e2",
-      "baseArchive": {
-        "local_file": "/home/ubuntu/BIZ003_POST_SKIP_FEEDBACK_OWNER_DELIVERY_BASE_2026-10-20.tar.gz",
-        "sha256": "834bdf8e9509129a30d586fddb82e9d25e3b7ef90e50122f1f679fee32878de2",
-        "handoff": "hnd_7MAEkl1v_Mert7vyxSZQ4U33",
-        "expires_at": "2026-10-21T03:30:02.242Z",
-        "size_bytes": 7543
-      },
-      "workerStart": "ACKNOWLEDGED: compact base received/verification and source work started.",
-      "source_boundary": "Source-only deterministic inbox-recipient isolation repair; no actual notification/member/runtime acceptance."
+      "workerStart": "RETURNED_FOR_SAME_SCOPE_REPAIR_PENDING_REFRESHED_BASE",
+      "source_boundary": "Source-only deterministic inbox-recipient isolation repair; no actual notification/member/runtime acceptance.",
+      "reviewDisposition": "RETURNED_FOR_POLICY_REPAIR: rejected carrier 8761308402efe008196a725632030565b5af41e35b16dfae0c8de3ed49879136 was hash-valid and scope-valid but its businesses.submittedById recipient fallback violates the founder direction not to infer private-feedback recipient permission from submission alone; its limit(1) active-link lookup is nondeterministic for multiple active owners. No candidate source applied or integrated."
     },
     {
       "id": "BIZ-009-MOBILE-FEATURED-VIDEO-SELECTED-ROUTE-PROPAGATION",
