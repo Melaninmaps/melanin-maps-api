@@ -4626,6 +4626,28 @@
         "size_bytes": 46324
       },
       "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:25Z"
+    },
+    {
+      "id": "BIZ-009-MOBILE-SELECTED-EDITOR-SUCCESSIVE-SAVE-REVISION-REFRESH",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "ownerTaskName": "Correct Black capitalization across Mapping with Melanin and KinfolkAI",
+      "paths": [
+        "artifacts/mobile/app/business-owner/edit-profile.tsx",
+        "artifacts/mobile/__tests__/business-owner-edit-profile-successive-save-revision.test.ts"
+      ],
+      "purpose": "Refresh selected managed-profile revision from an OK selected PATCH response so a valid second save in the same editor session uses the canonical new revision rather than deterministically self-conflicting.",
+      "acceptance": "Focused source contract proves selected PATCH success reads business.updatedAt, calls setExpectedUpdatedAt before profileSaved/setOriginal, next selected payload derives from refreshed state, and legacy profile flow remains free of selected response-revision handling. Preserve URLs/auth/fields/stale error behavior/address review/media/schedule/video.",
+      "exclusions": "No server/API route, schema/DB/runtime, owner policy, managed selector, media/schedule/video behavior, provider/storage, browser/device, staging/deploy, remote Git, or external action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "d13754d29ae564dc04983fa89b55459910d75b28",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_MOBILE_EDITOR_SUCCESSIVE_SAVE_REVISION_BASE_2026-10-20.tar.gz",
+        "sha256": "947eb495b56519bafe749ca868b3f30abbf072b07285a81023e918226f609d4a",
+        "handoff": "PENDING"
+      },
+      "workerStart": "PENDING_DIRECT_DISPATCH"
     }
   ],
   "globalDirectiveDelivery": [
