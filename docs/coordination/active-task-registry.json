@@ -5012,14 +5012,19 @@
       "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "BLOCKED_INFRA_UNVALIDATED",
       "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
-      "workerStart": "DISPATCHED",
+      "workerStart": "RUNTIME_INITIALIZATION_FAILED",
       "baseTransfer": {
         "handoff_id": "hnd_dvfgqAgQGWHz4yCos_KRjV_S",
         "file": "BIZ009_SELECTED_EDITOR_AUXILIARY_MEDIA_SCHEDULE_BASE_E03B9104.tar.gz",
         "sha256": "40f91f1d07389715ceb8b813cf36dcc1945b8ab74135943b60f6256d42230fbf",
         "expires_at": "2026-10-21T11:36:55.870Z"
+      },
+      "infrastructure_blocker": {
+        "observed": "S9 sandbox reports runtime_initialization_failed after 0 bytes free under /home/ubuntu; authorized read-only inspection could not initialize.",
+        "preservation": "No further shell/cleanup command was sent to the blocked sandbox. Existing uncommitted source/carrier/manifest/evidence must be preserved; it was not tested, packaged, delivered, reviewed, or integrated.",
+        "recovery_request": "Targeted existing-sandbox recovery or safe migration preserving uncommitted files; no reset/recreation/deletion authorized."
       }
     },
     {
@@ -5134,6 +5139,27 @@
       "acceptance": "Render a valid eligible business name as a semantic internal link to exact existing `/businesses/:id`; retain truthful unavailable/unpublished status without inventing a destination; no arbitrary/stale ID or route. Add one focused Web contract for exact URL and accessible link semantics.",
       "exclusions": "No owner Dashboard/Owner Home/edit-profile/businesses/shared context/schema/staging/browser/provider/payment/deploy/remote Git change. Browser validation remains central and later only after staging candidate deployment using Take Control.",
       "source_boundary": "Uncommitted/unstaged source-only carrier; current central source base only."
+    },
+    {
+      "id": "BIZ-009-SELECTED-EDITOR-AUXILIARY-MEDIA-SCHEDULE-ISOLATION-R2",
+      "replaces_claim": "BIZ-009-SELECTED-EDITOR-AUXILIARY-MEDIA-SCHEDULE-ISOLATION",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "authorityBase": "63d33a5f7788fb890b5623a2444b981a3e543497",
+      "workerStart": "DISPATCH_PENDING_BASE",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/mobile/app/business-owner/edit-profile.tsx",
+        "artifacts/api-server/src/routes/__tests__/business-owner-selected-aux-media-schedule-authority.test.ts",
+        "artifacts/mobile/__tests__/business-owner-edit-profile-selected-aux-media-schedule.test.ts"
+      ],
+      "purpose": "Bind legacy selected editor auxiliary video, intro-video, and weekly-schedule actions to the explicitly selected managed business rather than an arbitrary /mine record.",
+      "acceptance": "Add only selected managed-business route variants needed for editor intro-video upload/delete, external video add/delete, and weekly-schedule save. Server routes must authorize exact current approved/unrevoked owner target before storage/DB effects; native selected branch must use those routes and preserve legacy no-selected-ID behavior. Preserve Feature Video/photo/profile routes and success-only local state. Add deterministic server/native selected, cross-owner, revoked, malformed/non-OK, and stale/account-switch assertions.",
+      "exclusions": "No real storage/schema/data/provider/browser/device/staging/deploy/remote Git/mobile build/publication action; do not modify Feature Video/photo/profile/identity/broadcast behavior.",
+      "source_boundary": "Uncommitted/unstaged source-only replacement carrier. It does not recover, alter, or make any claim about the blocked S9 workspace."
     }
   ],
   "globalDirectiveDelivery": [
