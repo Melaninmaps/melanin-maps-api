@@ -74,6 +74,9 @@ export default function EditBusinessProfile() {
   const managedBusinessId = typeof selectedBusinessId === "string" && selectedBusinessId.trim()
     ? selectedBusinessId.trim()
     : null;
+  const photoPath = managedBusinessId
+    ? `/api/businesses/mine/managed/${encodeURIComponent(managedBusinessId)}/photos`
+    : "/api/businesses/mine/photos";
   const topPad = (Platform.OS as string) === "web" ? 67 : insets.top;
   const bottomPad = (Platform.OS as string) === "web" ? 34 : insets.bottom;
 
@@ -331,7 +334,7 @@ export default function EditBusinessProfile() {
       const token = await getToken();
       const formData = new FormData();
       formData.append("photo", { uri: asset.uri, type: asset.mimeType ?? "image/jpeg", name: "photo.jpg" } as unknown as Blob);
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/photos`, {
+      const res = await fetch(`${getApiBase()}${photoPath}`, {
         method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: formData,
       });
       if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Upload failed"); }
@@ -345,22 +348,35 @@ export default function EditBusinessProfile() {
 
   const handleSetCover = async (url: string) => {
     if (url === coverUrl) return;
-    const token = await getToken();
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    const res = await fetch(`${getApiBase()}/api/businesses/mine/photos/cover`, { method: "PATCH", headers, body: JSON.stringify({ url }) });
-    if (res.ok) { setCoverUrl(url); if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
+    try {
+      const token = await getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${getApiBase()}${photoPath}/cover`, { method: "PATCH", headers, body: JSON.stringify({ url }) });
+      if (!res.ok) throw new Error("Could not set cover photo");
+      setCoverUrl(url);
+      if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      Alert.alert("Cover photo not changed", "Please try again.");
+    }
   };
 
   const handleDeletePhoto = (url: string) => {
     Alert.alert("Remove photo", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: async () => {
-        const token = await getToken();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`${getApiBase()}/api/businesses/mine/photos`, { method: "DELETE", headers, body: JSON.stringify({ url }) });
-        if (res.ok) { const d = await res.json() as { photos: string[]; imageUrl: string | null }; setPhotos(d.photos); setCoverUrl(d.imageUrl); }
+        try {
+          const token = await getToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+          const res = await fetch(`${getApiBase()}${photoPath}`, { method: "DELETE", headers, body: JSON.stringify({ url }) });
+          if (!res.ok) throw new Error("Could not delete photo");
+          const d = await res.json() as { photos: string[]; imageUrl: string | null };
+          setPhotos(d.photos);
+          setCoverUrl(d.imageUrl);
+        } catch {
+          Alert.alert("Photo not removed", "Please try again.");
+        }
       }},
     ]);
   };

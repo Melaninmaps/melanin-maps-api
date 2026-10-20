@@ -2481,6 +2481,263 @@ router.patch(
 );
 
 router.post(
+  "/businesses/mine/managed/:businessId/photos",
+  photoUpload.single("photo"),
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: "No photo provided" });
+      return;
+    }
+
+    try {
+      const [business] = await db
+        .select({
+          id: businessesTable.id,
+          photos: businessesTable.photos,
+          pendingPhotos: businessesTable.pendingPhotos,
+        })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ));
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const currentPhotos = (business.photos as string[]) ?? [];
+      const currentPending = (business.pendingPhotos as string[]) ?? [];
+      if (currentPhotos.length + currentPending.length >= 10) {
+        res.status(400).json({
+          error:
+            "Maximum of 10 photos allowed (including those pending review)",
+        });
+        return;
+      }
+
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      if (!bucketId) {
+        res.status(500).json({ error: "Object storage not configured" });
+        return;
+      }
+
+      const { originalname, mimetype, buffer } = req.file;
+      const ext = originalname.split(".").pop()?.toLowerCase() ?? "jpg";
+      const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(
+        ext,
+      )
+        ? ext
+        : "jpg";
+      const objectKey = `business-photos-pending/${business.id}/${randomUUID()}.${safeExt}`;
+
+      const bucket = objectStorageClient.bucket(bucketId);
+      const gcsFile = bucket.file(objectKey);
+      await gcsFile.save(buffer, { contentType: mimetype });
+      await gcsFile.makePublic();
+
+      const photoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+      const updatedPending = [...currentPending, photoUrl];
+      const [updated] = await db
+        .update(businessesTable)
+        .set({ pendingPhotos: updatedPending, updatedAt: new Date() })
+        .where(and(
+          eq(businessesTable.id, business.id),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .returning({ id: businessesTable.id });
+      if (!updated) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      await ensureBusinessImageEvidenceSchema(pool);
+      await pool.query(
+        `INSERT INTO business_image_evidence_receipts
+           (business_id, image_url, source_type, submitted_by_user_id, status, policy_version)
+         VALUES ($1, $2, 'business_owner_upload', $3, 'pending', $4)
+         ON CONFLICT (business_id, image_url) DO UPDATE SET
+           source_type = EXCLUDED.source_type,
+           submitted_by_user_id = EXCLUDED.submitted_by_user_id,
+           status = 'pending',
+           policy_version = EXCLUDED.policy_version,
+           rejection_or_revocation_reason = NULL,
+           updated_at = NOW()`,
+        [business.id, photoUrl, String(userId), BUSINESS_IMAGE_ELIGIBILITY_POLICY_VERSION],
+      );
+
+      res.status(201).json({
+        url: photoUrl,
+        pending: true,
+        message:
+          "Photo submitted for review. It will appear on your profile once approved.",
+        photos: currentPhotos,
+        pendingPhotos: updatedPending,
+        imageUrl: currentPhotos[0] ?? null,
+      });
+    } catch (err) {
+      req.log.error({ err }, "Failed to upload selected business photo");
+      res.status(500).json({ error: "Failed to upload photo" });
+    }
+  },
+);
+
+router.delete(
+  "/businesses/mine/managed/:businessId/photos",
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    const { url } = req.body as { url?: string };
+    if (!url) {
+      res.status(400).json({ error: "photo url is required" });
+      return;
+    }
+
+    try {
+      const [business] = await db
+        .select({
+          id: businessesTable.id,
+          photos: businessesTable.photos,
+          imageUrl: businessesTable.imageUrl,
+        })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ));
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const currentPhotos = Array.isArray(business.photos) ? business.photos : [];
+      if (!currentPhotos.includes(url)) {
+        res.status(400).json({ error: "Photo not found" });
+        return;
+      }
+      const updatedPhotos = currentPhotos.filter((photo) => photo !== url);
+      const newImageUrl =
+        business.imageUrl === url
+          ? (updatedPhotos[0] ?? null)
+          : business.imageUrl;
+
+      const [updated] = await db
+        .update(businessesTable)
+        .set({
+          photos: updatedPhotos,
+          imageUrl: newImageUrl,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(businessesTable.id, business.id),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .returning();
+      if (!updated) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      if (bucketId && url.includes(`storage.googleapis.com/${bucketId}/`)) {
+        const objectKey = url.split(`storage.googleapis.com/${bucketId}/`)[1];
+        if (objectKey) {
+          objectStorageClient
+            .bucket(bucketId)
+            .file(objectKey)
+            .delete()
+            .catch(() => {});
+        }
+      }
+
+      res.json({ photos: updated.photos, imageUrl: updated.imageUrl });
+    } catch (err) {
+      req.log.error({ err }, "Failed to delete selected business photo");
+      res.status(500).json({ error: "Failed to delete photo" });
+    }
+  },
+);
+
+router.patch(
+  "/businesses/mine/managed/:businessId/photos/cover",
+  async (req: any, res: Response) => {
+    const userId = req.user?.id;
+    const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!businessId) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+
+    const { url } = req.body as { url?: string };
+    if (!url) {
+      res.status(400).json({ error: "photo url is required" });
+      return;
+    }
+
+    try {
+      const [business] = await db
+        .select({ id: businessesTable.id, photos: businessesTable.photos })
+        .from(businessesTable)
+        .where(and(
+          eq(businessesTable.id, businessId),
+          approvedOwnerPredicate(String(userId)),
+        ));
+      if (!business) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      const currentPhotos = (business.photos as string[]) ?? [];
+      if (!currentPhotos.includes(url)) {
+        res.status(400).json({ error: "Photo not found in your gallery" });
+        return;
+      }
+
+      const [updated] = await db
+        .update(businessesTable)
+        .set({ imageUrl: url, updatedAt: new Date() })
+        .where(and(
+          eq(businessesTable.id, business.id),
+          approvedOwnerPredicate(String(userId)),
+        ))
+        .returning();
+      if (!updated) {
+        res.status(404).json({ error: "Managed business not found." });
+        return;
+      }
+
+      res.json({ imageUrl: updated.imageUrl });
+    } catch (err) {
+      req.log.error({ err }, "Failed to set selected business cover photo");
+      res.status(500).json({ error: "Failed to set cover photo" });
+    }
+  },
+);
+
+router.post(
   "/businesses/mine/videos",
   videoUpload.single("video"),
   async (req: any, res: Response) => {
