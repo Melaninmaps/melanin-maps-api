@@ -4708,11 +4708,12 @@
       "authorityBase": "7e3d9d8d9487732f21b5d04365a289377d9b4cb3",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_FEATURED_VIDEO_MANAGED_ENTRY_GUARD_BASE_2026-10-20.tar.gz",
-        "sha256": "PENDING_LOCAL_PACKAGE",
-        "handoff": "PENDING",
-        "expires_at": "PENDING"
+        "sha256": "65797c28eabe8c28ca715a36488ffec965eb03b9c91137f9eaa903af530285d9",
+        "handoff": "hnd_XaAGAhwirm17YAMzHe_f5FDo",
+        "expires_at": "2026-10-21T03:23:09.121Z",
+        "size_bytes": 13562
       },
-      "workerStart": "DISPATCH_PENDING",
+      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "source_boundary": "Source-only client entry guard. Parent journey, server media authority, runtime/staging/device/member/release/founder acceptance stay open."
     }
   ],
