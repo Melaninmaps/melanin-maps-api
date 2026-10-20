@@ -738,15 +738,15 @@
       "platform": "API",
       "founder_requirement": "D4 centralize paid/tier enforcement with effective resolver while preserving independent grants.",
       "acceptance_criteria": "Named direct memberType/raw Stripe/rc checks are converted/exempted; regression proves independent grants survive provider expiration/cancellation.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "D4 reconciliation/audit identifies unresolved raw checks; Stripe candidate only partial.",
+      "status": "BLOCKED",
+      "source_evidence": "D4 reconciliation/audit identifies unresolved raw checks; Stripe candidate only partial. Bounded current-authority trace: NO_LEGITIMATE_SOURCE_CLAIM. `/api/users/me/membership-status` is private display-only; raw community, trust, public-profile, travel, map, and auth consumers cannot be converted safely without altering policy/enforcement/disclosure/payment boundaries.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Entitlement owner",
-      "dependencies_or_blockers": "MISSING EVIDENCE \u2014 comprehensive inventory, authority conversion and operational/member proof.",
-      "next_action": "Inventory clean-authority consumers; propose smallest source-only conversion.",
+      "responsible_owner_or_task": "Founder/membership product owner; central coordinator records only a future canonical single-journey contract",
+      "dependencies_or_blockers": "NO CURRENT SAFE CONVERSION \u2014 a future source slice needs a single member journey with an existing canonical server entitlement endpoint for that exact capability plus agreed free-core/business-owner behavior. Current candidates either span unrelated community/Circle journeys, conflict with D9 free-core source, lack server-authoritative enforcement, disclose private entitlement, or cross payment/provider boundaries.",
+      "next_action": "No source claim. Preserve current raw consumers and effective resolver. Obtain a narrow approved journey contract with server authority and explicit free-core/business-owner behavior before source work.",
       "founder_approval_needed": "No for inventory; approval for policy/staging/DB/provider/member work.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -2056,6 +2056,10 @@
     {
       "date": "2026-10-20",
       "event": "Registered P0 `KMEM-004-MOBILE-REVOKE-AUTH-FAIL-CLOSED` to 44XX at b7a411e2\u2026: mobile revoke silently returns without a token while adjacent controls surface a sign-in failure. Two exclusive mobile paths only; no source integration yet."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Bounded MEM-D4 trace found NO_LEGITIMATE_SOURCE_CLAIM. Existing raw consumers either fan out across Community/Circles, conflict with D9 free-core, lack matching server authority, disclose private entitlement, or cross payment/provider boundaries. No source changed."
     }
   ],
   "evidence_gaps": [
@@ -2269,13 +2273,13 @@
           "INT-REVENUECAT-001"
         ],
         "existing_implementation": "Closed checkout, effective entitlement, free-core and no-auto-trial source leaves are linked.",
-        "missing_broken_elements": "D3 durable multi-grant ledger, provider/independent-grant precedence, no-silent-backfill treatment, migration/operations, and effective-tier enforcement remain design- and authorization-gated.",
-        "current_active_repair": "No current entitlement source claim. MEM-D3 requires founder-approved durable-ledger/precedence/historic-treatment design before any safe source path exists.",
+        "missing_broken_elements": "No agreed single canonical entitlement consumer journey that preserves free-core and business-owner behavior without disclosure or payment/provider changes; durable D3 ledger remains separately blocked.",
+        "current_active_repair": "No active MEM-D4 source claim. Current KMEM mobile revoke repair is unrelated; entitlement enforcement and consumer conversion remain protected.",
         "integrated_source": "Selected local child receipts only.",
         "test_evidence": "Focused source contracts only.",
         "external_gates": "Founder commercial decisions, rails/accounts, legal/tax and staged acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Keep checkout closed and valid memberships/trials/tester/business-owner access unchanged. Require D3 design and separately authorized persistence/enforcement scope."
+        "next_action": "Do not change raw consumer fields or effective-tier enforcement. Require a single approved member journey with server-authoritative entitlement semantics before a future conversion claim."
       },
       {
         "experience_id": "EXP-KINFOLK-FLIGHT-COORDINATION",
