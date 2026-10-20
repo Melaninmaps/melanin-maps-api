@@ -3752,7 +3752,7 @@
     {
       "id": "KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "requirementId": "KMEM-004",
@@ -3807,6 +3807,11 @@
         "sha256": "0c73b8d0598d12f4a99e4aa1dd0a114d145f5f81e997f0d12618c14570ff79ba",
         "expires_at": "2026-10-21T00:02:14.946Z",
         "authority_base": "f15e59867135baae2518dca44cf7bfef4bd55eda"
+      },
+      "ownerStartAcknowledgement": {
+        "at": "2026-10-20T00:03:07Z",
+        "channel": "manus-tasks direct reply",
+        "statement": "Owner acknowledged exact base/hash verification, the sole post-selection settings block, and two named tests; uncommitted three-path carrier only."
       }
     }
   ],
