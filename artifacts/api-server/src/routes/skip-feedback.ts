@@ -51,6 +51,10 @@ async function deliverToOwnerInbox(businessId: string, ownerId: string, business
     let convId: number;
     if (existing) {
       convId = existing.id;
+      await db
+        .update(convTable)
+        .set({ participantIds: [ownerId] })
+        .where(eq(convTable.id, convId));
     } else {
       const [created] = await db
         .insert(convTable)
@@ -96,7 +100,6 @@ router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response)
         id: businessesTable.id,
         name: businessesTable.name,
         feedbackOptIn: businessesTable.feedbackOptIn,
-        submittedById: businessesTable.submittedById,
       })
       .from(businessesTable)
       .where(eq(businessesTable.id, businessId))
@@ -127,11 +130,27 @@ router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response)
       wasFiltered: false,
     });
 
-    if (business.submittedById) {
-      await deliverToOwnerInbox(businessId, business.submittedById, business.name, message.trim());
+    try {
+      const activeOwnerLinks = await db
+        .select({ userId: businessOwnerLinksTable.userId })
+        .from(businessOwnerLinksTable)
+        .where(and(
+          eq(businessOwnerLinksTable.businessId, businessId),
+          eq(businessOwnerLinksTable.role, "owner"),
+          eq(businessOwnerLinksTable.status, "approved"),
+          isNull(businessOwnerLinksTable.revokedAt),
+        ))
+        .limit(2);
+
+      const [approvedOwnerLink] = activeOwnerLinks;
+      if (activeOwnerLinks.length === 1 && approvedOwnerLink?.userId) {
+        await deliverToOwnerInbox(businessId, approvedOwnerLink.userId, business.name, message.trim());
+      }
+    } catch (err) {
+      logger.error({ err, businessId }, "[skip-feedback] failed to resolve owner delivery recipient");
     }
 
-    logger.info({ businessId }, "[skip-feedback] feedback submitted and delivered to inbox");
+    logger.info({ businessId }, "[skip-feedback] feedback submitted; owner inbox delivery evaluated under exact-one active-owner policy");
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "POST /businesses/:id/skip-feedback error");
