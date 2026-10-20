@@ -1,7 +1,7 @@
 # BIZ-009 / BIZ-003 — Consolidated Isolated-Staging Authorization Request
 
 **Prepared:** 2026-10-20
-**Status:** Draft request only — **not approved and not executable**
+**Status:** Execution scope authorized by the 2026-10-20 `AUTONOMOUS COMPLETION AUTHORIZATION — Business Owner / BIZ-009 / BIZ-003`; **no staging action has yet been executed**.
 **Controlling records:** `BIZ-009` and `BIZ-003` in `MWM_KINFOLK_MASTER_COMPLETION_CHECKLIST.{md,json}`; Business Owner board `EXP-BUSINESS-OWNER-EDITOR-ANALYTICS-AND-PUBLICATION`.
 
 This packet supersedes neither a production deployment decision nor a mobile-device/build approval. It requests one future, controlled **isolated staging** exercise only. Until the founder explicitly approves an exact payload, no staging or production access, remote Git action, schema/data action, storage action, sign-in, browser/device test, deployment, provider call, or credential use may occur.
@@ -10,11 +10,11 @@ This packet supersedes neither a production deployment decision nor a mobile-dev
 
 | Item | Required value / boundary |
 | --- | --- |
-| Product-source candidate SHA | `edd18248779089092631adf3eb1d9581b0acad82` — last source commit for the unified candidate, `biz: isolate selected photo gallery routes`. |
+| Product-source candidate SHA | `b7c91eac18d0fd420f492891e56f67af8ec2ed16` — final reviewed local authority candidate; its last application-source commit is `58b5ba376aa1eaac52c3dbe745a2f4f08e0d3839` (`fix: isolate owner vibe and preview context`) and this documentation descendant records all accepted source receipts. |
 | Local coordination snapshot | `8935ac7a854cd4fa11026e6c04a5b999968c23d3` — latest local registry/checklist receipt. It is a documentation descendant, not a deployed identity. |
 | Local ref | `refs/heads/staging/kinfolk-full-candidate-20261014`. |
 | Remote availability | **Unverified.** No fetch, push, remote inspection, tag, branch, or deployment action has been performed or is implied. A future approval must separately require a byte-matching candidate selection before staging execution. |
-| Local deterministic matrix | API: **12 files / 81 tests**; native: **9 files / 49 tests**; Web: **3 files / 25 tests**; API, native, and Web `tsc --noEmit` all passed. This is source evidence only. |
+| Local deterministic matrix | API: **10 files / 95 tests**; native: **13 files / 81 tests**; Web: **3 files / 21 tests**; API, native, and Web `tsc --noEmit` all passed. This is source evidence only. |
 
 The future operator must stop before any action if the intended staging artifact cannot be proven to contain the product-source candidate above, or if its source/build/startup writer inventory differs from the reviewed request.
 
@@ -112,6 +112,6 @@ A later, distinct authorization is required for mobile build/device validation a
 
 A valid future founder approval must explicitly provide or confirm all of the following:
 
-> Authorize the isolated staging exercise for local product-source candidate `edd18248779089092631adf3eb1d9581b0acad82`, after byte-matching candidate selection. Target only `mwm-owner-staging-20261014 / staging / Postgres` and one named staging-only storage bucket/prefix. Permit the catalog-only Business Voice table preflight and, only if required, the table-specific `business_kinfolk_voice_profiles_v1` readiness operation—never broad migrations. Permit only the named synthetic fixtures and scenarios in this packet, the named staging rollback/cleanup procedure, and sanitized evidence capture. No production, remote Git publication, provider/OAuth/payment activation, mobile build/device, or founder/release acceptance is included.
+> Authorize the isolated staging exercise for final reviewed local authority candidate `b7c91eac18d0fd420f492891e56f67af8ec2ed16` (application-source tip `58b5ba376aa1eaac52c3dbe745a2f4f08e0d3839`), after byte-matching candidate selection. Target only `mwm-owner-staging-20261014 / staging / Postgres` and one named staging-only storage bucket/prefix. Permit the catalog-only Business Voice table preflight and, only if required, the table-specific `business_kinfolk_voice_profiles_v1` readiness operation—never broad migrations. Permit only the named synthetic fixtures and scenarios in this packet, the named staging rollback/cleanup procedure, and sanitized evidence capture. No production, remote Git publication, provider/OAuth/payment activation, mobile build/device, or founder/release acceptance is included.
 
-Without that explicit approval and named target/candidate/rollback/fixture details, this packet remains a planning artifact only.
+The authorization is limited by its explicit target/candidate/rollback/fixture stop conditions. If any named target, rollback procedure, storage namespace, synthetic-fixture identity, candidate match, or credential workflow is ambiguous, stop and request a decision; this packet does not itself record external execution.
