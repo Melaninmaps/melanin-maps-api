@@ -4289,7 +4289,7 @@
       "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "ownerTaskName": "Central authority",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "4a0e26c921d4dc0943562232d930daa7ec1a0831",
       "paths": [
         "docs/coordination/MEMD11_CONSOLIDATED_COMMERCIAL_READINESS_DECISION_PACKET_2026-10-20.md"
@@ -4297,7 +4297,14 @@
       "purpose": "Founder-directed substantive reconciliation of inspected local membership, commercial, legal-copy, checkout, entitlement, and closed-rail evidence into one 14-field decision-ready packet.",
       "acceptance": "Classifies verified facts, conflicts, unverified evidence, recommendations, approvers, and explicit source/simulation/staging/live-checkout gates for every MEM-D11 field; preserves free core and closed rails; includes one consolidated founder decision request only; does not invent approvals or alter product/legal/payment source.",
       "exclusions": "No provider/network/payment/config/account/data/schema/deploy/browser/device/action; no Terms/Privacy/copy/catalog/entitlement change; no legal, tax, merchant, or commercial approval claim.",
-      "workerStart": "CENTRAL_STARTED_2026-10-20T01:52:08Z"
+      "workerStart": "CENTRAL_STARTED_2026-10-20T01:52:08Z",
+      "centralSourceReceipt": {
+        "commit": "486ad180feec4f16e10ada22f9cad51beda1701f",
+        "document": "docs/coordination/MEMD11_CONSOLIDATED_COMMERCIAL_READINESS_DECISION_PACKET_2026-10-20.md",
+        "sha256": "e8afd77e7c2313438168e2416ce9b3ab7836aaaa7191883fcc81e7c73a0b2596",
+        "validation": "14-row acceptance matrix plus 14-row field register, exact unavailable-artifact inventory, closed-rail/static-boundary checks, one-path scope, and whitespace PASS.",
+        "external_acceptance": "NOT PERFORMED"
+      }
     }
   ],
   "globalDirectiveDelivery": [
