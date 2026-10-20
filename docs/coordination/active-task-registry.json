@@ -5253,7 +5253,7 @@
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "authorityBase": "5fbb80f3b91b71cfe61199115c47d2887c9e789b",
-      "workerStart": "BASE_TRANSFER_PENDING",
+      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "paths": [
         "artifacts/mobile/app/business-dashboard.tsx",
         "artifacts/mobile/__tests__/business-dashboard-trust-profile-selected-identity.test.ts"
@@ -5262,7 +5262,13 @@
       "acceptance": "Dashboard must capture the already managed-list-validated business.id for Trust Profile read and PATCH; use only /api/businesses/mine/managed/:businessId/identity; verify activeBusinessIdRef matches the captured ID before any Trust Profile load state, success/error result, collapse, or saving-state completion. Preserve legacy Identity routes for other callers, Dashboard selection/no-business behavior, identity payload/labels and non-Trust-Profile behavior. Add one additive focused static/native contract for selected route, exact ID, A→B stale response/result fencing, non-OK/malformed fail-closed behavior, and no Dashboard legacy identity URL.",
       "validation": "Focused new Dashboard Trust Profile contract plus business-dashboard-managed-selection and business-dashboard-selected-context; existing business-identity-selected-owner API contract read-only regression; mobile no-emit with --ignoreDeprecations 6.0 and temporary external build info; exact two-path diff/whitespace and fresh-base reconstruction.",
       "exclusions": "No API/server/business-identity route/schema/DB/data/storage/provider/OAuth/payment/push/AI action; no browser/device/mobile build/staging/deploy/remote Git/production action; no Dashboard feature redesign or changes outside Trust Profile identity read/save context.",
-      "source_boundary": "Return an uncommitted/unstaged hash-manifested carrier only. Source tests do not establish runtime, staging, device, member-visible, release, or founder acceptance."
+      "source_boundary": "Return an uncommitted/unstaged hash-manifested carrier only. Source tests do not establish runtime, staging, device, member-visible, release, or founder acceptance.",
+      "baseTransfer": {
+        "handoff_id": "hnd_3EMJ5575pYCtiCEn4Ll4XcTI",
+        "file": "BIZ009_DASHBOARD_TRUST_PROFILE_SELECTED_IDENTITY_BASE_5FBB80F3.tar.gz",
+        "sha256": "077c25e1f2a0a2ef5a5b6c894ebb1ed46ffbb6408ad35ba401d1ee399b97af40",
+        "expires_at": "2026-10-21T12:33:18.210Z"
+      }
     }
   ],
   "globalDirectiveDelivery": [
