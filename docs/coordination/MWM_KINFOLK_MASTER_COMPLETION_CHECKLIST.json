@@ -2140,6 +2140,10 @@
     {
       "date": "2026-10-20",
       "event": "INT-REVENUECAT-001 default-disabled mounted router guard SOURCE_INTEGRATED_LOCAL_ONLY at 620f2ec228a6211fc1763573a655776584585871 after current-authority 12-test payment-boundary suite and API no-emit. Provider/payment/member/release/founder acceptance remain blocked/unperformed."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "BIZ-009 Business Voice readiness compact base R2 issued after a read-only route dependency mismatch. The four writable paths remain unchanged; scope is not widened and no external schema action is authorized."
     }
   ],
   "evidence_gaps": [

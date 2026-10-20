@@ -4377,7 +4377,7 @@
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "priority": "P0",
       "status": "IN DEVELOPMENT",
-      "authorityBase": "ca00615f22b8c3311513567e2d0e6164b8bac058",
+      "authorityBase": "383384a8bd7e698942f1976a5af7eb93e6386fb0",
       "paths": [
         "artifacts/api-server/src/lib/startup-migrations.ts",
         "artifacts/api-server/src/index.ts",
@@ -4388,12 +4388,24 @@
       "acceptance": "Helper covers missing/existing/repeated calls, uses only the existing business_kinfolk_voice_profiles definition, structurally verifies required table shape, and fails before traffic if creation/verification fails. Startup wiring precedes listener traffic in normal and explicit modes without running broad migrations. Existing approved-owner profile read remains allowed only after readiness; cross-owner denial remains; malformed table/unprepared route case fails safely. Focused API/startup/neighboring dashboard regressions plus API no-emit pass.",
       "exclusions": "No broad runStartupMigrations invocation, competing migration system, business/profile/owner/entitlement/publication mutation, real schema execution, DB/data/account action, provider/drafting activation, remote Git, staging/deploy/browser/device or production action. Source helper is not evidence that any deployed schema is ready.",
       "baseArchive": {
-        "handoff": "hnd_OuCMIg5KaFMuPKkdvUOeOiNx",
-        "sha256": "e7072f730b8f5c5c3c0c9679415bf46edd245e52feb39a1790e081354ddfd252",
-        "expires_at": "2026-10-21T02:10:54.189Z",
-        "size_bytes": 1465894
+        "handoff": "hnd_btHoB6oZMmUGzvh2NrJ1_Oa0",
+        "sha256": "62482d59a57cd872bc4a820104e445d728607c1d11fecea4880ac11f7ce5f2f2",
+        "expires_at": "2026-10-21T02:15:04.086Z",
+        "size_bytes": 1466089,
+        "revision": "R2"
       },
-      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
+      "workerStart": "R2_HANDOFF_SENT_AWAITING_ACK",
+      "baseAmendments": [
+        {
+          "revision": "R2",
+          "reason": "The original compact base had an incompatible read-only business-voice-profile route snapshot. The four writable files are byte-stable; R2 refreshes only the read-only dependency from clean current authority.",
+          "handoff": "hnd_btHoB6oZMmUGzvh2NrJ1_Oa0",
+          "sha256": "62482d59a57cd872bc4a820104e445d728607c1d11fecea4880ac11f7ce5f2f2",
+          "expires_at": "2026-10-21T02:15:04.086Z",
+          "authority_base": "383384a8bd7e698942f1976a5af7eb93e6386fb0",
+          "business_voice_route_sha256": "a23054d6aa286502afb832f7044c44e706381625fa5478b454d527f39a88246f"
+        }
+      ]
     }
   ],
   "globalDirectiveDelivery": [
