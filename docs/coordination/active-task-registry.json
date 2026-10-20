@@ -4544,7 +4544,7 @@
       "exclusions": "No API/server, mobile, claim/owner-link, schema/DB/runtime, browser/device, staging/deploy, Directory/publication/Kinfolk/provider action. Historical BIZ claims are read-only evidence; this exact source defect is the only permitted reopening.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
       "pathOwnershipDisposition": "New claim supersedes historical non-active BIZ-009 candidate ownership only for these two paths and only for the demonstrated submission-context defect; do not reuse or broaden historic carriers.",
       "baseArchive": {
@@ -4554,7 +4554,15 @@
         "expires_at": "2026-10-21T02:50:18.371Z",
         "size_bytes": 13817
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:28Z"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "16c27ab409768a0fc28a04926a9141de480fde45",
+        "carrier_handoff": "hnd_SRiu1Ongm7Tn-CGQVo1SJLQA",
+        "carrier_sha256": "d8c47861ef08f8b1ddcd68bdb6cb1ce9e8fa325e0c88a3de6265cd0ce3dd627c",
+        "source_validation": "Web business-dashboard-managed-access contract 1 file/7 tests PASS; Web tsc --noEmit PASS; exact two-path scope/diff PASS.",
+        "semantic_validation": "businessId query is candidate-only; after managed-list fetch helper validates exact membership and falls back to first list ID/null. Every applicable reviews/community-needs/profile read/write is derived from resolved selectedId.",
+        "boundary": "No browser/device, DB/runtime, staging/deploy, provider, member-visible, release, or founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-MOBILE-FEATURED-VIDEO-LOAD-RECOVERY",
