@@ -568,3 +568,5 @@ This baseline explicitly retains **D1–D11** as `MEM-D1` through `MEM-D11`; **S
 | 2026-10-20 | P0 `BIZ-009-WEB-SELECTED-EXPERIENCE-DRAFT-ISOLATION` claimed for S9: Web Business Experience draft must bind to selected business identity and never save a prior listing’s tags/price to a new listing. |
 
 | 2026-10-20 | P0 `BIZ-009-FEATURED-VIDEO-SELECTED-OWNER-ROUTE-ISOLATION` claimed for M7: hosted Featured Video upload/delete must fail closed for legacy multi-business ownership and support explicit approved selected-target operations. No storage/runtime acceptance is implied. |
+
+| 2026-10-20 | P0 `BIZ-003-POST-SKIP-FEEDBACK-ACTIVE-OWNER-INBOX-DELIVERY` claimed for 44XX: opted-in feedback conversation delivery must prefer an active approved owner and realign stale legacy recipients. |

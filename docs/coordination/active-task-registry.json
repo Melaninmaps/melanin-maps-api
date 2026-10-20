@@ -4713,7 +4713,7 @@
         "expires_at": "2026-10-21T03:23:09.121Z",
         "size_bytes": 13562
       },
-      "workerStart": "ACKNOWLEDGED 2026-10-20: base verification in progress; no source overlay/edit.",
+      "workerStart": "ACKNOWLEDGED: base verification under way; no source edit.",
       "source_boundary": "Source-only client entry guard. Parent journey, server media authority, runtime/staging/device/member/release/founder acceptance stay open."
     },
     {
@@ -4738,7 +4738,7 @@
         "expires_at": "2026-10-21T03:26:27.221Z",
         "size_bytes": 4397
       },
-      "workerStart": "BASE CLARIFIED: record/manifest base b94ad4a790f461e4cfcb6ea7fa06b108f6c35405 confirmed; exact source bytes unchanged at current authority; resume requested.",
+      "workerStart": "ACKNOWLEDGED: b94ad4a7 base confirmed; exact two-path source work resumed.",
       "source_boundary": "Source-only Web selected-context draft isolation; no runtime/member/release/founder acceptance."
     },
     {
@@ -4754,7 +4754,7 @@
       "exclusions": "No mobile files (Hiib active), Web, featured-video standalone PATCH, routes/index, storage config/IAM/bucket, schema/DB migration, business data, publication, Directory/Kinfolk/provider/runtime/browser/device/staging/deploy/remote action. No real storage or DB calls.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "authorityBase": "cb69609d4569a5e8e8bbece776a7f5a6074130d3",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_FEATURED_VIDEO_SELECTED_OWNER_ROUTE_BASE_2026-10-20.tar.gz",
@@ -4763,8 +4763,32 @@
         "expires_at": "2026-10-21T03:28:30.154Z",
         "size_bytes": 48978
       },
-      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
+      "workerStart": "ACKNOWLEDGED: base receipt accepted; source work started.",
       "source_boundary": "Source-only deterministic server authorization/isolation repair; runtime/storage/member/release/founder acceptance open."
+    },
+    {
+      "id": "BIZ-003-POST-SKIP-FEEDBACK-ACTIVE-OWNER-INBOX-DELIVERY",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "ownerTaskName": "Review uploaded content",
+      "paths": [
+        "artifacts/api-server/src/routes/skip-feedback.ts",
+        "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-delivery-contract.test.ts"
+      ],
+      "purpose": "Deliver opted-in owner feedback only to the active approved unrevoked business owner rather than a nullable or former legacy submitter.",
+      "acceptance": "In POST delivery path only, resolve a business-scoped active owner link (owner/approved/unrevoked) before legacy submittedById. An active link always wins; legacy submittedById remains fallback only when no active link. Align an existing private-feedback conversation participant boundary to the resolved recipient before appending. If no recipient, preserve feedback persistence and non-fatal delivery containment without arbitrary conversation delivery. Preserve POST validation/filtering/opt-in, stored author provenance, envelopes, canonical GET and legacy GET. Add focused deterministic contract for null legacy submitter, active-owner precedence, stale conversation realignment, legacy fallback, and no-recipient containment.",
+      "exclusions": "No canonical/legacy GET changes, mobile/Dashboard/Owner Home, conversations.ts, schema/data, entitlement/BIZ-009 release, provider/runtime/browser/device/staging/deploy/remote action. Mocks only.",
+      "requirementId": "BIZ-003",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "1a1c3299b349a4e2002f869fda2abba4a07360e2",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ003_POST_SKIP_FEEDBACK_OWNER_DELIVERY_BASE_2026-10-20.tar.gz",
+        "sha256": "PENDING_LOCAL_PACKAGE",
+        "handoff": "PENDING",
+        "expires_at": "PENDING"
+      },
+      "workerStart": "DISPATCH_PENDING",
+      "source_boundary": "Source-only deterministic inbox-recipient isolation repair; no actual notification/member/runtime acceptance."
     }
   ],
   "globalDirectiveDelivery": [
