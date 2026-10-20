@@ -148,9 +148,9 @@ Q is the sole parent-lifecycle coordinator. The required outcome remains open th
 - **Linked permanent requirements:** `BIZ-001`, `BIZ-003`, `BIZ-005`, `BIZ-006`, `BIZ-007`, `BIZ-008`, `BIZ-009`
 - **Existing implementation:** Profile navigation, lifecycle controls, specialty save, edit/fresh-read/stale-write and analytics child work are linked.
 - **Missing/broken elements:** Publication/deployment, staging auth, moderated pending state, public propagation/Kinfolk freshness and runtime acceptance are open.
-- **Current active repair:** No new source child; BIZ-009 release/acceptance path is separately controlled.
-- **Integrated source:** Local BIZ source/candidate receipts only.
-- **Test evidence:** Focused API/Web/mobile source checks only.
+- **Current active repair:** P0 active BIZ-009 repairs: photo-delete owner isolation; native selected-editor revision propagation; native dashboard managed-business selection. Business Voice table-readiness source guard is integrated locally; parent remains open.
+- **Integrated source:** Local BIZ source/candidate receipts only. Business Voice table-readiness source guard `d7531a2b984fc35acb1ed1019c055fbfb1e9bbde` is integrated locally after Voice/explicit-release **10/10**, owner-drafting **3/3**, API no-emit, exact four-path scope, and retained revoked-owner guard; no schema execution or runtime evidence.
+- **Test evidence:** Focused API/Web/mobile source checks only. Business Voice source guard `d7531a2b984fc35acb1ed1019c055fbfb1e9bbde`: API Voice/explicit-release **10/10**, owner-drafting **3/3**, API no-emit PASS; no schema execution, staging, or runtime acceptance.
 - **External gates:** Remote publication, deploy/startup disposition, account/fixture, readback and platform acceptance.
 - **Next action:** Advance only a source prerequisite that moves the full editor journey.
 
@@ -403,6 +403,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | Business Voice Profile table-readiness source guard SOURCE_INTEGRATED_LOCAL_ONLY at `d7531a2b984fc35acb1ed1019c055fbfb1e9bbde`: current-authority Voice/explicit-release **10/10**, owner-drafting **3/3**, API no-emit, exact four-path scope, and retained `revoked_at IS NULL` owner guard PASS. No DDL/schema execution, staging/deploy, runtime, member, release, or founder acceptance is implied. |
 | 2026-10-20 | Registered three exact P0 BIZ-009 parent-journey source repairs: photo-delete owner isolation, native selected-editor revision propagation, and native dashboard managed-business selection. All are source-only, path-exclusive, and do not constitute runtime or founder acceptance. |
 | 2026-10-20 | Issued BIZ-009 Business Voice readiness R3 compatibility overlay. Its historical route snapshot is non-writable and compilation-only; central must retain the current `revoked_at IS NULL` owner guard and re-run authority tests. The four writable paths are unchanged. |
 | 2026-10-20 | BIZ-002 Marketplace Checkout closed-rail API/Web guard SOURCE_INTEGRATED_LOCAL_ONLY at `e4dff1de126d65cc4b31f21cbf78040f3c8acc6c` after API 12/12, Web 2/2, API/Web no-emit, and exact four-path scope; commercial rails remain closed and no provider/payment/release/member/founder acceptance is implied. |

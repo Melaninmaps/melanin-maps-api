@@ -4386,7 +4386,7 @@
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "383384a8bd7e698942f1976a5af7eb93e6386fb0",
       "paths": [
         "artifacts/api-server/src/lib/startup-migrations.ts",
@@ -4404,7 +4404,7 @@
         "size_bytes": 1466330,
         "revision": "R3_COMPAT"
       },
-      "workerStart": "R3_HANDOFF_SENT_AWAITING_ACK",
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
       "baseAmendments": [
         {
           "revision": "R2",
@@ -4428,7 +4428,15 @@
           "central_requirement": "Central application must preserve `AND bol.revoked_at IS NULL` and re-run current-authority tests."
         }
       ],
-      "validationLimit": "Worker compatibility-overlay evidence is not current-authority route evidence; central must preserve the newer revoked-at owner guard and run full current-authority regression before integration."
+      "validationLimit": "Worker compatibility-overlay evidence is not current-authority route evidence; central must preserve the newer revoked-at owner guard and run full current-authority regression before integration.",
+      "sourceReceipt": {
+        "authority_commit": "d7531a2b984fc35acb1ed1019c055fbfb1e9bbde",
+        "carrier_handoff": "hnd_BGQdKcUHbzPNGyMkKUYhH3er",
+        "carrier_sha256": "8be1b77f37bee5d76f4b88b0afd099d925d1d92e22a2b1f2fcc9e0189271b9d8",
+        "source_validation": "API Voice + explicit-release 2 files/10 tests PASS; owner-drafting 1 file/3 tests PASS; API tsc --noEmit PASS; exact four-path scope and diff check PASS.",
+        "security_preservation": "Current authority business-voice-profile route retains AND bol.revoked_at IS NULL; carrier excluded that read-only route.",
+        "boundary": "No helper execution, DB/DDL/schema action, staging/deployment, browser/device, provider, member-visible, release, or founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-BUSINESS-PHOTO-DELETE-OWNER-ISOLATION",
