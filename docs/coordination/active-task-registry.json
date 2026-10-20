@@ -4177,11 +4177,16 @@
       "baseArchive": {
         "file": "MEMD2_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "73cfab3242651bea4aa649f6deb465b97029c610a0db730d44f387b05051879d",
-        "handoff": "PENDING"
+        "handoff": {
+          "id": "hnd_ZOwDdem5xT7SLImMKBeX79OK",
+          "expires_at": "2026-10-21T01:36:08.824Z",
+          "verified_sha256": "73cfab3242651bea4aa649f6deb465b97029c610a0db730d44f387b05051879d"
+        }
       },
       "purpose": "One unresolved-only founder decision worksheet for MEM-D2 benefit/allowance/vocabulary/copy decisions while D1 checkout remains closed.",
       "acceptance": "Exactly one uncommitted new Markdown file. All benefits, allowances, cohorts, prices, label mappings, member copy, legal terms, fulfillment, and approvals remain explicitly NOT APPROVED/blank decision cells. No existing file/source/external action.",
-      "exclusions": "No checkout/payment/catalog/entitlement/provider/DB/schema/config/account/data/browser/device/staging/deploy/remote Git/activation action; no invented benefit, price, mapping, cohort, or approval."
+      "exclusions": "No checkout/payment/catalog/entitlement/provider/DB/schema/config/account/data/browser/device/staging/deploy/remote Git/activation action; no invented benefit, price, mapping, cohort, or approval.",
+      "workerStart": "PENDING_DIRECT_DISPATCH"
     },
     {
       "id": "MEM-D11-FOUNDER-LEGAL-CLOSED-RAIL-DECISION-NOTE",
@@ -4197,11 +4202,16 @@
       "baseArchive": {
         "file": "MEMD11_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "c281a5b99ac67a02dfe100b876c85b2af75c0076c5e245aef42fa3f7c282f9d9",
-        "handoff": "PENDING"
+        "handoff": {
+          "id": "hnd_0o1PAm6aioF5j36PfN-kknHc",
+          "expires_at": "2026-10-21T01:36:09.266Z",
+          "verified_sha256": "c281a5b99ac67a02dfe100b876c85b2af75c0076c5e245aef42fa3f7c282f9d9"
+        }
       },
       "purpose": "One unresolved-only MEM-D11 founder/legal decision-record template that references BIZ-002 closed-rail readiness without providing legal advice or commercial decisions.",
       "acceptance": "Exactly one uncommitted new Markdown file. Merchant/MoR, tax, policy/version, support, trial, cancellation/refund/dispute fields are unresolved decision fields; BIZ-002 is referenced rather than duplicated; checkout stays closed.",
-      "exclusions": "No legal advice, policy/Terms/Privacy edit, merchant or provider contact/account, checkout/payment/tax configuration, account/data/browser/device/staging/deploy/remote Git/activation action; no invented legal/commercial approval."
+      "exclusions": "No legal advice, policy/Terms/Privacy edit, merchant or provider contact/account, checkout/payment/tax configuration, account/data/browser/device/staging/deploy/remote Git/activation action; no invented legal/commercial approval.",
+      "workerStart": "PENDING_DIRECT_DISPATCH"
     },
     {
       "id": "ADMIN-002-D3-D4-ROLE-GRANT-SOURCE-COMPARISON",
@@ -4217,11 +4227,16 @@
       "baseArchive": {
         "file": "ADMIN002_DOC_BASE_2026-10-20.tar.gz",
         "sha256": "174c471c13689e2f0c8ef31acf134216b34fc5019a1c8ec803281297d89b2876",
-        "handoff": "PENDING"
+        "handoff": {
+          "id": "hnd_BAB_aLVugLcgsZvYbc3dwQaa",
+          "expires_at": "2026-10-21T01:36:09.571Z",
+          "verified_sha256": "174c471c13689e2f0c8ef31acf134216b34fc5019a1c8ec803281297d89b2876"
+        }
       },
       "purpose": "One static D3/D4 source comparison of existing role predicate, tester grant metadata, protected-admin control, and effective-tier seams without policy conclusion or mutation.",
       "acceptance": "Exactly one uncommitted new Markdown file. It crosswalks only packaged current source/hashes, keeps historic D3/D4 files unavailable/unresolved, and states no general approved roles/grants ledger/audit contract exists.",
-      "exclusions": "No source/test/schema/route/UI/config edit; no account/data/provider/payment/browser/device/staging/deploy/remote Git/activation action; no grant classification, role approval, audit execution, or enforcement conclusion."
+      "exclusions": "No source/test/schema/route/UI/config edit; no account/data/provider/payment/browser/device/staging/deploy/remote Git/activation action; no grant classification, role approval, audit execution, or enforcement conclusion.",
+      "workerStart": "PENDING_DIRECT_DISPATCH"
     }
   ],
   "globalDirectiveDelivery": [
