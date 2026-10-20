@@ -4361,6 +4361,29 @@
         "size_bytes": 234485
       },
       "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:00:29Z"
+    },
+    {
+      "id": "BIZ-009-BUSINESS-VOICE-PROFILE-SCHEMA-READINESS",
+      "requirementId": "BIZ-009",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "ca00615f22b8c3311513567e2d0e6164b8bac058",
+      "paths": [
+        "artifacts/api-server/src/lib/startup-migrations.ts",
+        "artifacts/api-server/src/index.ts",
+        "artifacts/api-server/src/routes/__tests__/business-voice-profile-contract.test.ts",
+        "artifacts/api-server/src/lib/__tests__/explicitFeatureReleaseMode.test.ts"
+      ],
+      "purpose": "Add a table-specific, idempotent Business Voice Profile schema-readiness helper that reuses the existing authoritative table definition and runs before API traffic in both normal and explicit feature-release startup modes.",
+      "acceptance": "Helper covers missing/existing/repeated calls, uses only the existing business_kinfolk_voice_profiles definition, structurally verifies required table shape, and fails before traffic if creation/verification fails. Startup wiring precedes listener traffic in normal and explicit modes without running broad migrations. Existing approved-owner profile read remains allowed only after readiness; cross-owner denial remains; malformed table/unprepared route case fails safely. Focused API/startup/neighboring dashboard regressions plus API no-emit pass.",
+      "exclusions": "No broad runStartupMigrations invocation, competing migration system, business/profile/owner/entitlement/publication mutation, real schema execution, DB/data/account action, provider/drafting activation, remote Git, staging/deploy/browser/device or production action. Source helper is not evidence that any deployed schema is ready.",
+      "baseArchive": {
+        "handoff": "PENDING",
+        "sha256": "PENDING"
+      },
+      "workerStart": "NOT_DISPATCHED"
     }
   ],
   "globalDirectiveDelivery": [
