@@ -5195,6 +5195,33 @@
         "sha256": "e7a3203f6290f119229e8e668346f3927d337980ad56dfa2ce8c5783783c3bce",
         "expires_at": "2026-10-21T12:00:21.543Z"
       }
+    },
+    {
+      "id": "BIZ-009-SELECTED-PINNED-HIGHLIGHTS-ROUTE-ISOLATION",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "n3V26eXux1YUjv25Jvn8Bm",
+      "ownerTaskName": "Differentiate Website Preview and App Onboarding",
+      "authorityBase": "e008e2b8400a0904334ca171e2166a0d9490ea68",
+      "workerStart": "CLAIM_RECORDED_AWAITING_BASE_TRANSFER",
+      "paths": [
+        "artifacts/api-server/src/routes/pinned.ts",
+        "artifacts/mobile/app/business-owner/pinned-highlights.tsx",
+        "artifacts/api-server/src/routes/__tests__/business-pinned-selected-owner-contract.test.ts",
+        "artifacts/mobile/__tests__/business-owner-pinned-highlights-selected-context.test.ts"
+      ],
+      "purpose": "Replace the demonstrated implicit single-business Pinned Highlights owner path with explicit selected managed-business read/pin/unpin routes and fail-closed mobile selected-context admission.",
+      "acceptance": "Add selected GET/POST/DELETE Pinned Highlights routes behind exact current active approved unrevoked owner authorization before item data/mutation; preserve legacy routes; native accepts only managed-list-validated incoming selection or an exact-one fallback, never an arbitrary first selection; clear/fence stale state; bind reviews, GET, pin, and unpin to the selected ID; malformed/zero/unowned/multiple-without-selection contexts expose no pin/unpin success. Add one focused server and one focused native contract.",
+      "exclusions": "No Owner Home, Dashboard, edit-profile, selected media/schedule, schema/migration, Directory/Kinfolk, provider/push/AI/payment, storage, database fixture, browser/device, staging/deployment, remote Git, or release work. Do not alter legacy `/business/pinned` semantics.",
+      "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only; no real accounts/businesses/reviews/pinned data or external call.",
+      "required_validation": [
+        "pnpm --dir artifacts/api-server exec vitest run src/routes/__tests__/business-pinned-selected-owner-contract.test.ts",
+        "pnpm --dir artifacts/mobile exec vitest run __tests__/business-owner-pinned-highlights-selected-context.test.ts",
+        "pnpm --dir artifacts/api-server exec tsc -p tsconfig.json --noEmit",
+        "NODE_OPTIONS=--max-old-space-size=8192 pnpm --dir artifacts/mobile exec tsc -p tsconfig.json --noEmit --ignoreDeprecations 6.0",
+        "git diff --check; exact four-path status; repository-relative ANSI-free patch plus fresh-base reconstruction"
+      ]
     }
   ],
   "globalDirectiveDelivery": [
