@@ -4451,7 +4451,7 @@
       "exclusions": "No object-storage credentials/IAM/bucket action, DB/data mutation, image publication workflow redesign, client/UI, schema, BIZ-002 commercial rail, remote/staging/deploy/browser/device action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
       "baseArchive": {
         "handoff": "hnd_THAZyAE6q11Nbuu74ZWiAUFi",
@@ -4459,7 +4459,15 @@
         "expires_at": "2026-10-21T02:21:58.102Z",
         "size_bytes": 276379
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:22-02:24Z"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "19942a8e27ba71908f4f7e490511d681a5fc35d1",
+        "carrier_handoff": "hnd_4l_cdd7tSOjYn7q_sJxOYsDs",
+        "carrier_sha256": "8c3c30305faf88d8bc19374a49c128e4d634b92c55e2d3c399bdb785c383eb6a",
+        "central_reconciliation": "Accepted the submitted exact persisted-gallery membership fence, then moved unchanged best-effort storage cleanup after the database update. This prevents database write failure from deleting a still-referenced object; cleanup failure leaves the committed row intact and is non-blocking.",
+        "source_validation": "Current-authority photo owner-isolation + multi-business contract suite: 2 files/15 tests PASS; API tsc --noEmit PASS; exact two-path scope and diff check PASS.",
+        "boundary": "No real bucket/DB action, schema, staging/deployment, browser/device, provider, member-visible, release, or founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-MOBILE-SELECTED-EDITOR-REVISION-PROPAGATION",
