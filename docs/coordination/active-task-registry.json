@@ -4959,6 +4959,90 @@
         "semantic_validation": "Owner Home forwards only explicit selected IDs. Cultural Teaching resolves the managed list, accepts a URL entry only on exact membership, permits implicit fallback only for exactly one valid business, clears context on invalid/error paths, epoch-fences stale loads, and binds GET/PUT/DELETE to the resolved selected ID.",
         "boundary": "Source-only native state/context evidence. No API route/server/storage/DB/runtime/browser/device/staging/deploy/member/release/founder acceptance."
       }
+    },
+    {
+      "id": "BIZ-009-SELECTED-DASHBOARD-INSIGHTS-ISOLATION",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "ownerTaskName": "Independent Gap Audit for Mapping with Melanin and KinfolkAI",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses-analytics.ts",
+        "artifacts/api-server/src/routes/skip-feedback.ts",
+        "artifacts/api-server/src/routes/post-nudge.ts",
+        "artifacts/api-server/src/routes/promote.ts",
+        "artifacts/mobile/app/business-owner/index.tsx",
+        "artifacts/mobile/app/business-dashboard.tsx",
+        "artifacts/api-server/src/routes/__tests__/business-dashboard-selected-context-contract.test.ts",
+        "artifacts/mobile/__tests__/business-dashboard-selected-context.test.ts"
+      ],
+      "purpose": "Replace selected-owner Dashboard and Owner Home reads/actions that still rely on ambiguous /businesses/mine routes with exact managed-business routing, while retaining no-provider/no-payment boundaries.",
+      "acceptance": "Add selected managed-business variants only for analytics, skip-feedback read/opt-in, post-nudge read/notify/captions, and read-only growth tools; every selected server route must require exact current approved/unrevoked owner scope and fail neutrally. Native Dashboard and Owner Home must use selected endpoints only after managed-list/selected-ID validation; no arbitrary first-business data/action, no stale context completion, and no false success. Do not alter checkout or activate AI/push/payment. Add deterministic API/native tests for single/multi/zero/outsider/revoked/account switch and selected target isolation.",
+      "exclusions": "No payment checkout changes, provider/AI/push activation, real notification, schema/data/storage, browser/device, staging/deploy, remote Git, publication, entitlement policy, or release action.",
+      "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
+      "workerStart": "DISPATCH_PENDING_BASE"
+    },
+    {
+      "id": "BIZ-009-SELECTED-EDITOR-AUXILIARY-MEDIA-SCHEDULE-ISOLATION",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "ownerTaskName": "Correct Black capitalization across Mapping with Melanin and KinfolkAI",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/mobile/app/business-owner/edit-profile.tsx",
+        "artifacts/api-server/src/routes/__tests__/business-owner-selected-aux-media-schedule-authority.test.ts",
+        "artifacts/mobile/__tests__/business-owner-edit-profile-selected-aux-media-schedule.test.ts"
+      ],
+      "purpose": "Bind legacy selected editor auxiliary video, intro-video, and weekly-schedule actions to the explicitly selected managed business rather than an arbitrary /mine record.",
+      "acceptance": "Add only selected managed-business route variants needed for editor intro-video upload/delete, external video add/delete, and weekly-schedule save. Server routes must authorize exact current approved/unrevoked owner target before storage/DB effects; native selected branch must use those routes and preserve legacy no-selected-ID behavior. Preserve Feature Video/photo/profile routes and success-only local state. Add deterministic server/native selected, cross-owner, revoked, malformed/non-OK, and stale/account-switch assertions.",
+      "exclusions": "No real storage/schema/data/provider/browser/device/staging/deploy/remote Git/mobile build/publication action; do not modify Feature Video/photo/profile/identity/broadcast behavior.",
+      "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
+      "workerStart": "DISPATCH_PENDING_BASE"
+    },
+    {
+      "id": "BIZ-009-SELECTED-BROADCASTS-ROUTE-ISOLATION",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "paths": [
+        "artifacts/api-server/src/routes/broadcasts.ts",
+        "artifacts/mobile/app/business-owner/broadcasts.tsx",
+        "artifacts/api-server/src/routes/__tests__/business-broadcasts-selected-owner-contract.test.ts",
+        "artifacts/mobile/__tests__/business-owner-broadcasts-selected-context.test.ts"
+      ],
+      "purpose": "Bind Owner Broadcast reads/submissions to an explicit selected managed business and prevent arbitrary-first-record broadcasts.",
+      "acceptance": "Add selected managed-business broadcast GET/POST route variants requiring exact current approved/unrevoked owner authorization. Native flow must validate a managed selected business before read/post, fail closed for zero/malformed/multi/unowned/revoked context, and never show/send a previous-business broadcast after context change. Preserve existing legacy no-selected behavior and message validation. Add deterministic server/native tests.",
+      "exclusions": "No real communication dispatch, notification/provider action, schema/data/storage/browser/device/staging/deploy/remote Git/mobile build/publication action.",
+      "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
+      "workerStart": "DISPATCH_PENDING_BASE"
+    },
+    {
+      "id": "BIZ-009-SELECTED-IDENTITY-ROUTE-ISOLATION",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "ownerTaskName": "Review uploaded content",
+      "paths": [
+        "artifacts/api-server/src/routes/business-identity.ts",
+        "artifacts/mobile/app/business-owner/identity.tsx",
+        "artifacts/api-server/src/routes/__tests__/business-identity-selected-owner-contract.test.ts",
+        "artifacts/mobile/__tests__/business-owner-identity-selected-context.test.ts"
+      ],
+      "purpose": "Bind standalone Business Identity reads/updates to an exact selected managed business and prevent cross-business identity disclosure/mutation.",
+      "acceptance": "Add selected managed-business Identity GET/PATCH variants with exact current approved/unrevoked owner authorization. Native Identity must accept only validated selected managed ID and fence late loads/saves on context/account change; it must preserve legacy no-selected behavior. Add deterministic server/native tests for anonymous/outsider/revoked/multi/selected/success/non-OK/stale context.",
+      "exclusions": "No identity-provider/OAuth/verification activation, real records/schema/data/browser/device/staging/deploy/remote Git/mobile build/publication action.",
+      "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
+      "workerStart": "DISPATCH_PENDING_BASE"
     }
   ],
   "globalDirectiveDelivery": [
