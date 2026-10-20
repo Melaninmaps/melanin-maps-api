@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -10,51 +10,89 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-function getApiBase(): string {
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    const domain = process.env.EXPO_PUBLIC_DEV_API_URL ?? "";
-    if (domain) return domain;
-  }
-  return "";
+import { useAuth } from "@/lib/auth";
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
+
+type ManagedBusinessListResponse = { businesses?: unknown };
+
+function selectManagedBusinessId(
+  payload: ManagedBusinessListResponse | null,
+  requestedBusinessId: string | string[] | undefined,
+): string | null {
+  if (!payload || !Array.isArray(payload.businesses)) return null;
+  const managedIds = payload.businesses.map((business) => {
+    if (!business || typeof business !== "object") return null;
+    const id = (business as { id?: unknown }).id;
+    return typeof id === "string" && id.length > 0 ? id : null;
+  });
+  if (managedIds.some((id) => id === null) || new Set(managedIds).size !== managedIds.length) return null;
+  if (typeof requestedBusinessId === "string") return managedIds.includes(requestedBusinessId) ? requestedBusinessId : null;
+  if (requestedBusinessId !== undefined) return null;
+  return managedIds.length === 1 ? managedIds[0] : null;
 }
 
 export default function BusinessPreviewScreen() {
+  const { businessId: requestedBusinessId } = useLocalSearchParams<{ businessId?: string | string[] }>();
+  const { user } = useAuth();
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const accountContextKey = user?.id ?? "anonymous";
+  const selectionContextKey = `${accountContextKey}:${typeof requestedBusinessId === "string" ? `selected:${requestedBusinessId}` : Array.isArray(requestedBusinessId) ? "invalid-array" : "fallback"}`;
+  const requestIdRef = useRef(0);
+  const activeContextRef = useRef<string | null>(null);
+  const resolvedContextRef = useRef<string | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const resolvedBusinessId = resolvedContextRef.current === selectionContextKey ? businessId : null;
 
   useEffect(() => {
+    const requestId = ++requestIdRef.current;
+    let cancelled = false;
+    activeContextRef.current = selectionContextKey;
+    resolvedContextRef.current = null;
+    setBusinessId(null);
+    setError(null);
+    setLoading(true);
+    const isCurrent = () => !cancelled && requestId === requestIdRef.current && activeContextRef.current === selectionContextKey;
     void (async () => {
       try {
-        const token = await SecureStore.getItemAsync("auth_session_token");
-        const res = await fetch(`${getApiBase()}/api/businesses/mine`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error("Could not load your business");
-        const data = await res.json() as { business?: { id: string } };
-        if (data.business?.id) {
-          setBusinessId(data.business.id);
-        } else {
-          setError("No business listing found");
+        const headers = await getMemberApiHeaders();
+        if (!isCurrent()) return;
+        const res = await fetch(`${getApiBase()}/api/businesses/mine/managed`, { headers });
+        if (!isCurrent()) return;
+        if (!res.ok) {
+          setError("Could not verify your managed business");
+          return;
         }
+        const data = (await res.json().catch(() => null)) as ManagedBusinessListResponse | null;
+        if (!isCurrent()) return;
+        const selectedBusinessId = selectManagedBusinessId(data, requestedBusinessId);
+        if (!selectedBusinessId) {
+          setError("No managed business listing found");
+          return;
+        }
+        resolvedContextRef.current = selectionContextKey;
+        setBusinessId(selectedBusinessId);
       } catch {
-        setError("Failed to load preview");
+        if (isCurrent()) setError("Failed to load preview");
       } finally {
-        setLoading(false);
+        if (isCurrent()) setLoading(false);
       }
     })();
-  }, []);
+    return () => {
+      cancelled = true;
+      requestIdRef.current += 1;
+      if (activeContextRef.current === selectionContextKey) activeContextRef.current = null;
+    };
+  }, [requestedBusinessId, selectionContextKey]);
 
   useEffect(() => {
-    if (businessId) {
-      router.replace({ pathname: "/business/[id]", params: { id: businessId, preview: "1" } });
-    }
-  }, [businessId, router]);
+    if (!resolvedBusinessId || activeContextRef.current !== selectionContextKey || resolvedContextRef.current !== selectionContextKey) return;
+    router.replace({ pathname: "/business/[id]", params: { id: resolvedBusinessId, preview: "1" } });
+  }, [resolvedBusinessId, router, selectionContextKey]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>

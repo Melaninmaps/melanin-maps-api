@@ -1,8 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -21,22 +20,68 @@ import {
   type BusinessExperienceChoice,
 } from "@workspace/constants";
 
-import { getApiBase } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
-async function getToken(): Promise<string | null> {
-  try {
-    return await SecureStore.getItemAsync("auth_session_token");
-  } catch {
-    return null;
-  }
+type ManagedBusinessListResponse = { businesses?: unknown };
+type SelectedManagedBusiness = {
+  id: string;
+  category?: string;
+  subcategory?: string;
+  vibes?: string[];
+  priceRange?: string | null;
+};
+
+function selectManagedBusinessId(
+  payload: ManagedBusinessListResponse | null,
+  requestedBusinessId: string | string[] | undefined,
+): string | null {
+  if (!payload || !Array.isArray(payload.businesses)) return null;
+  const managedIds = payload.businesses.map((business) => {
+    if (!business || typeof business !== "object") return null;
+    const id = (business as { id?: unknown }).id;
+    return typeof id === "string" && id.length > 0 ? id : null;
+  });
+  if (managedIds.some((id) => id === null) || new Set(managedIds).size !== managedIds.length) return null;
+  if (typeof requestedBusinessId === "string") return managedIds.includes(requestedBusinessId) ? requestedBusinessId : null;
+  if (requestedBusinessId !== undefined) return null;
+  return managedIds.length === 1 ? managedIds[0] : null;
+}
+
+function parseSelectedManagedBusiness(payload: unknown, businessId: string): SelectedManagedBusiness | null {
+  if (!payload || typeof payload !== "object") return null;
+  const business = (payload as { business?: unknown }).business;
+  if (!business || typeof business !== "object") return null;
+  const candidate = business as Record<string, unknown>;
+  if (candidate.id !== businessId) return null;
+  if (
+    (candidate.category !== undefined && typeof candidate.category !== "string") ||
+    (candidate.subcategory !== undefined && typeof candidate.subcategory !== "string") ||
+    (candidate.priceRange !== undefined && candidate.priceRange !== null && typeof candidate.priceRange !== "string") ||
+    (candidate.vibes !== undefined && (!Array.isArray(candidate.vibes) || !candidate.vibes.every((vibe) => typeof vibe === "string")))
+  ) return null;
+  return {
+    id: businessId,
+    category: candidate.category as string | undefined,
+    subcategory: candidate.subcategory as string | undefined,
+    vibes: candidate.vibes as string[] | undefined,
+    priceRange: candidate.priceRange as string | null | undefined,
+  };
 }
 
 export default function OwnerVibeTags() {
+  const { businessId: requestedBusinessId } = useLocalSearchParams<{ businessId?: string | string[] }>();
+  const { user } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+  const accountContextKey = user?.id ?? "anonymous";
+  const selectionContextKey = `${accountContextKey}:${typeof requestedBusinessId === "string" ? `selected:${requestedBusinessId}` : Array.isArray(requestedBusinessId) ? "invalid-array" : "fallback"}`;
+  const requestIdRef = useRef(0);
+  const activeContextRef = useRef<string | null>(null);
+  const resolvedContextRef = useRef<string | null>(null);
 
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -45,31 +90,57 @@ export default function OwnerVibeTags() {
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const resolvedBusinessId = resolvedContextRef.current === selectionContextKey ? businessId : null;
 
   const load = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    const isCurrent = () => requestId === requestIdRef.current && activeContextRef.current === selectionContextKey;
+    setBusinessId(null);
+    setSelected([]);
+    setChoices([]);
+    setPriceChoices([]);
+    setSelectedPrice(null);
+    setSaving(false);
+    setLoading(true);
     try {
-      const token = await getToken();
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const mineRes = await fetch(`${getApiBase()}/api/businesses/mine`, { headers });
-      if (!mineRes.ok) return;
-      const mineData = await mineRes.json() as { business: { id: string; category?: string; subcategory?: string; vibes?: string[]; priceRange?: string | null } | null };
-      if (!mineData.business) return;
-
-      setBusinessId(mineData.business.id);
-      const policy = getBusinessExperiencePolicy(mineData.business.category, mineData.business.subcategory);
+      const headers = await getMemberApiHeaders();
+      if (!isCurrent()) return;
+      const managedResponse = await fetch(`${getApiBase()}/api/businesses/mine/managed`, { headers });
+      if (!isCurrent() || !managedResponse.ok) return;
+      const managedPayload = (await managedResponse.json().catch(() => null)) as ManagedBusinessListResponse | null;
+      if (!isCurrent()) return;
+      const selectedBusinessId = selectManagedBusinessId(managedPayload, requestedBusinessId);
+      if (!selectedBusinessId) return;
+      const profileResponse = await fetch(`${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}`, { headers });
+      if (!isCurrent() || !profileResponse.ok) return;
+      const profilePayload = await profileResponse.json().catch(() => null);
+      if (!isCurrent()) return;
+      const business = parseSelectedManagedBusiness(profilePayload, selectedBusinessId);
+      if (!business || !isCurrent()) return;
+      const policy = getBusinessExperiencePolicy(business.category, business.subcategory);
       const profileChoices = getOwnerProfileExperienceChoices(policy);
+      resolvedContextRef.current = selectionContextKey;
+      setBusinessId(business.id);
       setChoices(profileChoices);
       setPriceChoices(policy.priceChoices);
-      setSelected((mineData.business.vibes ?? []).map(normalizeOwnerExperienceKey).filter((key) => profileChoices.some((choice) => choice.key === key)).slice(0, 2));
-      setSelectedPrice(policy.priceChoices.find((choice) => choice.label === mineData.business?.priceRange)?.key ?? null);
-    } catch { /* silent */ } finally {
-      setLoading(false);
+      setSelected((business.vibes ?? []).map(normalizeOwnerExperienceKey).filter((key) => profileChoices.some((choice) => choice.key === key)).slice(0, 2));
+      setSelectedPrice(policy.priceChoices.find((choice) => choice.label === business.priceRange)?.key ?? null);
+    } catch {
+      // A malformed, unavailable, or stale account context remains empty by design.
+    } finally {
+      if (isCurrent()) setLoading(false);
     }
-  }, []);
+  }, [requestedBusinessId, selectionContextKey]);
 
-  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
+  useEffect(() => {
+    activeContextRef.current = selectionContextKey;
+    resolvedContextRef.current = null;
+    void load();
+    return () => {
+      requestIdRef.current += 1;
+      if (activeContextRef.current === selectionContextKey) activeContextRef.current = null;
+    };
+  }, [load, selectionContextKey]);
 
   const toggle = (id: string) => {
     setSelected(prev => {
@@ -83,30 +154,32 @@ export default function OwnerVibeTags() {
   };
 
   const handleSave = async () => {
-    if (!businessId) return;
+    const selectedBusinessId = resolvedBusinessId;
+    const requestContext = activeContextRef.current;
+    if (!selectedBusinessId || requestContext !== selectionContextKey) return;
     setSaving(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const token = await getToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`${getApiBase()}/api/vibes/businesses/${businessId}/owner-tags`, {
+      const headers = await getMemberApiHeaders();
+      if (activeContextRef.current !== requestContext || resolvedContextRef.current !== requestContext) return;
+      const res = await fetch(`${getApiBase()}/api/vibes/businesses/${selectedBusinessId}/owner-tags`, {
         method: "PATCH",
-        headers,
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ vibes: selected, priceKey: selectedPrice }),
       });
-
+      if (activeContextRef.current !== requestContext || resolvedContextRef.current !== requestContext) return;
       if (res.ok) {
         Alert.alert("Saved!", "Your experience tags and price point have been updated for search.");
       } else {
-        const body = await res.json() as { error?: string };
-        Alert.alert("Error", body.error ?? "Could not save. Please try again.");
+        const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
+        Alert.alert("Error", typeof body?.error === "string" ? body.error : "Could not save. Please try again.");
       }
     } catch {
-      Alert.alert("Error", "Network error. Please try again.");
+      if (activeContextRef.current === requestContext && resolvedContextRef.current === requestContext) {
+        Alert.alert("Error", "Network error. Please try again.");
+      }
     } finally {
-      setSaving(false);
+      if (activeContextRef.current === requestContext) setSaving(false);
     }
   };
 
@@ -138,12 +211,12 @@ export default function OwnerVibeTags() {
 
         {loading ? (
           <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Loading your vibes...</Text>
-        ) : !businessId ? (
+        ) : !resolvedBusinessId ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
             <Feather name="alert-circle" size={28} color={colors.mutedForeground} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No Business Found</Text>
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              You need to list a business before setting vibe tags.
+              Select one managed business before setting vibe tags.
             </Text>
           </View>
         ) : (
@@ -211,8 +284,8 @@ export default function OwnerVibeTags() {
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => void handleSave()}
-              disabled={saving}
-              style={[styles.saveBtn, { backgroundColor: saving ? colors.mutedForeground : "#5B6AF0" }]}
+              disabled={saving || !resolvedBusinessId}
+              style={[styles.saveBtn, { backgroundColor: saving || !resolvedBusinessId ? colors.mutedForeground : "#5B6AF0" }]}
             >
               <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save Experience Details"}</Text>
             </TouchableOpacity>
