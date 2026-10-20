@@ -4320,7 +4320,7 @@
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "ownerTaskName": "Build Unmerged Community-Frequented Alternatives + Scorecard V1 Candidate",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "cf9a71c1c377c4e24c44949b26063f692deaa8f7",
       "paths": [
         "artifacts/api-server/src/routes/connect.ts",
@@ -4337,7 +4337,17 @@
         "expires_at": "2026-10-21T01:59:40.270Z",
         "size_bytes": 167025
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:00:40Z"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:00:40Z",
+      "source_receipt": "e4dff1de126d65cc4b31f21cbf78040f3c8acc6c",
+      "central_validation": {
+        "api_vitest": "2 files / 12 tests passed: marketplace closed rail + current stripe-checkout retirement",
+        "web_vitest": "1 file / 2 tests passed: business detail closed rail",
+        "api_no_emit": "passed",
+        "web_no_emit": "passed",
+        "scope": "exact four paths",
+        "effect": "API returns the prescribed pre-body/pre-DB/pre-Stripe generic 409; Web removes checkout POST/redirect while preserving non-commerce listing",
+        "external_acceptance": "not performed"
+      }
     },
     {
       "id": "INT-REVENUECAT-001-DEFAULT-DISABLED-SERVER-GUARD",

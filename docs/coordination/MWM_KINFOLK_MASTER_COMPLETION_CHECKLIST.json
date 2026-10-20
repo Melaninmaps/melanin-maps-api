@@ -543,7 +543,7 @@
       "founder_requirement": "Do not sell Growth/Premium until exact working profile/analytics/promotion/events/leads/support deliverables, price mapping, ranking disclosure and service boundaries are validated.",
       "acceptance_criteria": "One-to-one vocabulary/fulfillment table; authorized prices match targets; included vs add-on promotion, events/leads/support and transparent placement are proven before charge.",
       "status": "BLOCKED",
-      "source_evidence": "Membership audit A/B/D3/E/F/H/I/J10/K2; D10 partial. Documentation-only preparation claim `BIZ-002-D10-CLOSED-RAIL-ACCEPTANCE-READINESS` registered at 48d794e0\u2026; no approval or source integration yet. Documentation-only packet `docs/coordination/BIZ002_D10_CLOSED_RAIL_ACCEPTANCE_READINESS_CHECKLIST_2026-10-20.md` SOURCE_INTEGRATED_LOCAL_ONLY at `8f084b41d05286a0301569be515425f6d243804e`. Closed-rail D10 readiness checklist integrated locally; no charge, payment provider, checkout, staging journey, deployment, commercial term, price, or benefit is approved. Active P0 local source enforcement claim guards the separately present marketplace Checkout seam under closed-rail policy; it does not approve commerce.",
+      "source_evidence": "Membership audit A/B/D3/E/F/H/I/J10/K2; D10 partial. Documentation-only preparation claim `BIZ-002-D10-CLOSED-RAIL-ACCEPTANCE-READINESS` registered at 48d794e0\u2026; no approval or source integration yet. Documentation-only packet `docs/coordination/BIZ002_D10_CLOSED_RAIL_ACCEPTANCE_READINESS_CHECKLIST_2026-10-20.md` SOURCE_INTEGRATED_LOCAL_ONLY at `8f084b41d05286a0301569be515425f6d243804e`. Closed-rail D10 readiness checklist integrated locally; no charge, payment provider, checkout, staging journey, deployment, commercial term, price, or benefit is approved. Active P0 local source enforcement claim guards the separately present marketplace Checkout seam under closed-rail policy; it does not approve commerce. Marketplace Checkout closed-rail API/Web guard SOURCE_INTEGRATED_LOCAL_ONLY at `e4dff1de126d65cc4b31f21cbf78040f3c8acc6c`: current API 12/12, Web 2/2, API/Web no-emit pass; commerce/provider/member/release acceptance remains blocked.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
@@ -2144,6 +2144,10 @@
     {
       "date": "2026-10-20",
       "event": "BIZ-009 Business Voice readiness compact base R2 issued after a read-only route dependency mismatch. The four writable paths remain unchanged; scope is not widened and no external schema action is authorized."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "BIZ-002 Marketplace Checkout closed-rail guard SOURCE_INTEGRATED_LOCAL_ONLY at e4dff1de126d65cc4b31f21cbf78040f3c8acc6c after API 12/12, Web 2/2, API/Web no-emit, exact four-path scope. Commercial rails remain closed; no provider/payment/release/member/founder acceptance."
     }
   ],
   "evidence_gaps": [
@@ -2590,8 +2594,8 @@
         ],
         "existing_implementation": "Closed checkout, effective entitlement, free-core and no-auto-trial source leaves are linked.",
         "missing_broken_elements": "No agreed single canonical entitlement consumer journey that preserves free-core and business-owner behavior without disclosure or payment/provider changes; durable D3 ledger remains separately blocked.",
-        "current_active_repair": "No active MEM-D4 source claim. Current KMEM mobile revoke repair is unrelated; entitlement enforcement and consumer conversion remain protected.",
-        "integrated_source": "Selected local child receipts only. RevenueCat default-disabled router guard integrated locally at 620f2ec228a6211fc1763573a655776584585871; source-only.",
+        "current_active_repair": "No payment/provider activation claim. Closed-rail guards are source-integrated; BIZ-002/MEM-D10/MEM-D11 commercial/legal and external acceptance gates remain blocked.",
+        "integrated_source": "Selected local child receipts only. RevenueCat default-disabled router guard integrated locally at 620f2ec228a6211fc1763573a655776584585871; source-only. BIZ-002 Marketplace Checkout hard closed-rail API/Web guard integrated locally at e4dff1de126d65cc4b31f21cbf78040f3c8acc6c; source-only.",
         "test_evidence": "Focused source contracts only, including current closed-rail router regressions; no provider or member lifecycle evidence.",
         "external_gates": "Founder commercial decisions, rails/accounts, legal/tax and staged acceptance.",
         "completion_status": "IN PROGRESS",
