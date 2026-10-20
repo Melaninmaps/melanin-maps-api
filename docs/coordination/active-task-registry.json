@@ -5345,6 +5345,30 @@
         "typecheck": "full current-authority mobile no-emit PASS with --ignoreDeprecations 6.0 and temporary build info removed",
         "semantic": "Test-only alignment proves current exact requested-ID membership, exactly-one no-request fallback, no arbitrary first business, review-ID encoding and selection redirect ordering; no Dashboard behavior changed."
       }
+    },
+    {
+      "id": "BIZ-009-BUSINESS-INTELLIGENCE-SELECTED-CONTEXT",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "authorityBase": "e80946423a8c86702fdbc99884227596c5aeb0df",
+      "workerStart": "BASE_TRANSFER_PENDING",
+      "paths": [
+        "artifacts/mobile/app/business-dashboard.tsx",
+        "artifacts/mobile/app/business-intelligence.tsx",
+        "artifacts/mobile/__tests__/business-intelligence-selected-context.test.ts"
+      ],
+      "purpose": "Eliminate native Business Intelligence implicit owner, analytics and growth reads by carrying a validated Dashboard selected business ID and resolving it against /businesses/mine/managed before selected route reads.",
+      "acceptance": "Dashboard Full Intelligence Report forwards the validated selected business ID. Business Intelligence resolves only /businesses/mine/managed; exact requested-ID membership is required before selected analytics, reviews and growth reads. Without an ID, fallback only for one structurally valid managed business. Invalid/unowned/stale/zero/malformed/multiple-without-selection contexts clear all business/analytics/reviews/growth/paywall state, do not call implicit /mine, and redirect to the established selection surface. Capture/fence async responses, use encodeURIComponent(selectedBusinessId) for selected paths and review query, and retain selected ID on back/grow navigation. Existing selected server routes remain read-only dependencies; no server change.",
+      "exclusions": "No server/API route/schema/data/storage/provider/payment/OAuth/push/AI/browser/device/staging/deploy/remote Git/mobile build/publication action. No Owner Home change; do not alter active Vibe/Preview paths.",
+      "validation": [
+        "pnpm --dir artifacts/mobile exec vitest run __tests__/business-intelligence-selected-context.test.ts __tests__/business-dashboard-managed-selection.test.ts __tests__/business-dashboard-selected-context.test.ts",
+        "NODE_OPTIONS=--max-old-space-size=8192 pnpm --dir artifacts/mobile exec tsc -p tsconfig.json --noEmit --ignoreDeprecations 6.0 --tsBuildInfoFile /tmp/biz009-intelligence-selected-context.tsbuildinfo",
+        "exact three-path diff/whitespace and fresh-base repository-relative ANSI-free patch reconstruction"
+      ],
+      "source_boundary": "Uncommitted/unstaged source-only carrier; deterministic tests only."
     }
   ],
   "globalDirectiveDelivery": [
