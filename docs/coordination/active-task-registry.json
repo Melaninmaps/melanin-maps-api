@@ -4530,6 +4530,94 @@
         "semantic_validation": "Root dashboard reads only managed businesses; zero clears context, exactly one proceeds, multiple clears selection and redirects before no-business render. The selected business comes from the validated managed list and no legacy singular endpoint is used.",
         "boundary": "No mobile build/device, browser, DB/runtime, staging/deploy, provider, member-visible, release, or founder acceptance."
       }
+    },
+    {
+      "id": "BIZ-009-WEB-SUBMISSION-CONTEXT-MANAGED-SELECTION",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "ownerTaskName": "Build Unmerged Community-Frequented Alternatives + Scorecard V1 Candidate",
+      "paths": [
+        "artifacts/web/src/pages/business-dashboard.tsx",
+        "artifacts/web/src/__tests__/business-dashboard-managed-access.test.ts"
+      ],
+      "purpose": "Honor a valid owner-submission businessId handoff only when it is present in the already authorized managed list; otherwise preserve safe fallback and prevent query-string context from reaching selected-business reads/writes.",
+      "acceptance": "Existing Web contract proves valid managed query context is preferred, unknown/malformed context falls back only to a managed-list item, empty list remains unselected, and no unvalidated query ID reaches profile endpoints. Preserve managed-list-only transport, stale-write handling, manual selection, and legacy endpoint exclusion.",
+      "exclusions": "No API/server, mobile, claim/owner-link, schema/DB/runtime, browser/device, staging/deploy, Directory/publication/Kinfolk/provider action. Historical BIZ claims are read-only evidence; this exact source defect is the only permitted reopening.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
+      "pathOwnershipDisposition": "New claim supersedes historical non-active BIZ-009 candidate ownership only for these two paths and only for the demonstrated submission-context defect; do not reuse or broaden historic carriers.",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_WEB_SUBMISSION_CONTEXT_SELECTION_BASE_2026-10-20.tar.gz",
+        "sha256": "862bbf31d2f4b60c1a501ba263e99224bc852c88932ea5ab924c5e62056f67b2",
+        "handoff": "PENDING"
+      },
+      "workerStart": "PENDING_DIRECT_DISPATCH"
+    },
+    {
+      "id": "BIZ-009-MOBILE-FEATURED-VIDEO-LOAD-RECOVERY",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "ownerTaskName": "Review uploaded content",
+      "paths": [
+        "artifacts/mobile/app/business-owner/featured-video.tsx",
+        "artifacts/mobile/__tests__/business-owner-featured-video-recovery.test.ts"
+      ],
+      "purpose": "Fail closed and recover visibly when the featured-video screen cannot resolve an owner business, rather than leaving a permanent loading spinner.",
+      "acceptance": "New source contract proves non-OK/missing/invalid/throwing initial resolution enters generic retryable load-error, Try again re-invokes existing load, and no upload/link controls appear without resolved business ID. Preserve media upload/link/delete semantics and back navigation.",
+      "exclusions": "No server/API, storage/bucket, schema/DB/runtime, video provider, browser/device, staging/deploy, public listing, remote action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_MOBILE_FEATURED_VIDEO_RECOVERY_BASE_2026-10-20.tar.gz",
+        "sha256": "a59e6e24c4d73f73f7a7c3ad85175bcb057e78557e34c54503d38e270c60ac9f",
+        "handoff": "PENDING"
+      },
+      "workerStart": "PENDING_DIRECT_DISPATCH"
+    },
+    {
+      "id": "BIZ-009-MOBILE-BUSINESS-VOICE-SELECTED-BUSINESS-CONTEXT",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "paths": [
+        "artifacts/mobile/app/business-owner/kinfolk-voice.tsx",
+        "artifacts/mobile/__tests__/business-owner-voice-drafting.test.ts"
+      ],
+      "purpose": "Replace the Voice screen legacy singular-business context with managed-list selection so approved multi-business owners can select an authorized business without retrying into a dead end.",
+      "acceptance": "Focused native contract proves managed-list-only context, no arbitrary first selection, explicit multi-business selection before profile/draft action, selected ID drives GET/PUT/draft, and reload/error/session change clears old business/profile context. Preserve server approved-owner authority, confirmation and editable-draft boundaries.",
+      "exclusions": "No server/API route, schema/DB/runtime, Voice provider activation, Kinfolk chat, Directory/public profile, browser/device, staging/deploy, remote action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_MOBILE_VOICE_MANAGED_CONTEXT_BASE_2026-10-20.tar.gz",
+        "sha256": "5fc5d9bf77a1399212103e8b700324f9bc94bbeef258dcea1ea2087cb2a16969",
+        "handoff": "PENDING"
+      },
+      "workerStart": "PENDING_DIRECT_DISPATCH"
+    },
+    {
+      "id": "BIZ-009-SELECTED-PROFILE-AUTHORITY-ROUTE-CONTRACT",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "ownerTaskName": "Review uploaded pasted content",
+      "paths": [
+        "artifacts/api-server/src/routes/__tests__/business-owner-selected-profile-authority.test.ts"
+      ],
+      "purpose": "Add deterministic real-route-harness coverage for selected-profile authorization, atomic stale-write denial, and no-mutation boundaries already required by the unified BIZ-009 owner journey.",
+      "acceptance": "One new mocked route-harness test proves 401 before query, approved selected owner success, cross-business/unauthorized 404 before mutation, missing revision rejection, stale 409 BUSINESS_PROFILE_STALE_WRITE with no update, and matching revision update/readback only. Route source remains read-only.",
+      "exclusions": "No routes/source mutation, schema/DB/runtime, external data, client/mobile/Web, browser/device, staging/deploy, provider or remote action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_SELECTED_PROFILE_ROUTE_AUTHORITY_CONTRACT_BASE_2026-10-20.tar.gz",
+        "sha256": "1628f36f0418244680f110c860c5c72d46202894538344ce2345a0a8060df4d5",
+        "handoff": "PENDING"
+      },
+      "workerStart": "PENDING_DIRECT_DISPATCH"
     }
   ],
   "globalDirectiveDelivery": [
