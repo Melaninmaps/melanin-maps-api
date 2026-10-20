@@ -4783,11 +4783,12 @@
       "authorityBase": "1a1c3299b349a4e2002f869fda2abba4a07360e2",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ003_POST_SKIP_FEEDBACK_OWNER_DELIVERY_BASE_2026-10-20.tar.gz",
-        "sha256": "PENDING_LOCAL_PACKAGE",
-        "handoff": "PENDING",
-        "expires_at": "PENDING"
+        "sha256": "834bdf8e9509129a30d586fddb82e9d25e3b7ef90e50122f1f679fee32878de2",
+        "handoff": "hnd_7MAEkl1v_Mert7vyxSZQ4U33",
+        "expires_at": "2026-10-21T03:30:02.242Z",
+        "size_bytes": 7543
       },
-      "workerStart": "DISPATCH_PENDING",
+      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "source_boundary": "Source-only deterministic inbox-recipient isolation repair; no actual notification/member/runtime acceptance."
     }
   ],
