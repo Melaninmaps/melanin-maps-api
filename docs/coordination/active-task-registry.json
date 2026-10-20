@@ -4771,7 +4771,7 @@
       "exclusions": "No mobile files (Hiib active), Web, featured-video standalone PATCH, routes/index, storage config/IAM/bucket, schema/DB migration, business data, publication, Directory/Kinfolk/provider/runtime/browser/device/staging/deploy/remote action. No real storage or DB calls.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "cb69609d4569a5e8e8bbece776a7f5a6074130d3",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_FEATURED_VIDEO_SELECTED_OWNER_ROUTE_BASE_2026-10-20.tar.gz",
@@ -4780,8 +4780,17 @@
         "expires_at": "2026-10-21T03:28:30.154Z",
         "size_bytes": 48978
       },
-      "workerStart": "ACKNOWLEDGED: base receipt accepted; source work started.",
-      "source_boundary": "Source-only deterministic server authorization/isolation repair; runtime/storage/member/release/founder acceptance open."
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "source_boundary": "Source-only deterministic server authorization/isolation repair; runtime/storage/member/release/founder acceptance open.",
+      "sourceReceipt": {
+        "authority_commit": "c34f5c763d9a2adfc37dfe7faa6bf7267ed3002b",
+        "carrier_handoff": "hnd_YhC6boRcB-ti_cf2dF3CuCI7",
+        "carrier_sha256": "8bb28847961aa0b6186503b73dcda7b09f75bd0699d655699326ff93b9c5bf76",
+        "source_validation": "Current-authority API selected-owner route suite: 1 file / 9 tests PASS; explicit-release startup suite: 1 file / 8 tests PASS; API tsc --noEmit PASS; exact two-path scope/diff PASS.",
+        "semantic_validation": "Legacy hosted upload/delete fail closed with BUSINESS_SELECTION_REQUIRED before side effects when ownership is ambiguous; selected upload/delete require an active approved unrevoked owner link for the target. Selected delete persists the row update before best-effort cleanup; cleanup failure is non-fatal.",
+        "formatting_caveat": "Prettier --check on businesses.ts reports a pre-existing whole-file formatting delta outside the carrier hunk; no unrelated reformat was applied. The focused changed block and new test are whitespace-clean.",
+        "boundary": "Mocked deterministic source evidence only. No storage/DB execution, runtime, browser/device, staging, deployment, member, release, or founder acceptance."
+      }
     },
     {
       "id": "BIZ-003-POST-SKIP-FEEDBACK-ACTIVE-OWNER-INBOX-DELIVERY",
