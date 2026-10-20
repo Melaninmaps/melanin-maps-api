@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | Transferred verified compact base `hnd_Ug4mZ8D23K8JKoN5C4CV3kbY` for the active BIZ-003 legacy owner-isolation repair; central review remains required. |
 | 2026-10-20 | Parent acceptance trace found BIZ-003 source FAIL: legacy `GET /kinfolk/skip-feedback` trusts former `submittedById` without canonical active-approved-owner isolation. Exact P0 two-path repair claim recorded; no runtime/member/release acceptance is implied. |
 | 2026-10-20 | Accepted three documentation-only preparation carriers at `fdbb26bac5a0a6fcafc1fcae9ce6a08d00d12917`: MEM-D2 unresolved benefit/vocabulary worksheet, MEM-D11 unsigned closed-rail founder/legal decision note, and ADMIN-002 static D3/D4 source comparison. All parent requirements remain BLOCKED; no decision, external action, or acceptance was created. |
 | 2026-10-20 | Five-lane trace registered three exact local documentation claims (MEM-D2 benefit/vocabulary worksheet, MEM-D11 closed-rail decision note, ADMIN-002 D3/D4 static source comparison). INT-TRANSPORT-001 and INT-STRIPE-001 have evidence-backed no-legitimate-source-claim dispositions; no speculative helper or duplicate D1 test was created. |

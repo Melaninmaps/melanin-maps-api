@@ -2088,6 +2088,10 @@
     {
       "date": "2026-10-20",
       "event": "Founder-required parent acceptance trace confirmed a current BIZ-003 source FAIL: legacy GET /kinfolk/skip-feedback authorizes former submitter via submittedById without checking active approved owner links, unlike canonical GET. Registered exact P0 two-path repair BIZ-003-LEGACY-SKIP-FEEDBACK-OWNER-ISOLATION; no BIZ-009/release or external action."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Transferred verified compact base for BIZ-003 legacy owner-isolation repair to worker 44XX: hnd_Ug4mZ8D23K8JKoN5C4CV3kbY, SHA-256 68f5698bb951acf976e5206bbf7f3b2eeb28ccdea7b95c5368bd1cf8e3174407, expiry 2026-10-21T01:48:46.981Z. Claim remains IN DEVELOPMENT until an uncommitted two-path carrier passes central review."
     }
   ],
   "evidence_gaps": [
