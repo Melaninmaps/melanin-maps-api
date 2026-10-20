@@ -387,6 +387,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | Accepted five one-document preparation carriers at `8f084b41d05286a0301569be515425f6d243804e`: DIR-003 verification/benefit boundary, BIZ-002/MEM-D10 closed-rail readiness, ADMIN-001 QA authorization template, MEM-D5 historic-access ambiguity template, and INT-AUTH-001 staging evidence template. These are local documentation receipts only; every parent requirement remains blocked and no execution authority or external acceptance is implied. |
 | 2026-10-20 | Five-lane source-claim trace found no safe code repair for MAP-002/MEM-D9, KIN-DISC-1617, ADMIN-002, or MEM-D6; integrated seams remain frozen or need external/design authority. Registered five exclusive documentation-only completion-preparation claims for DIR-003, BIZ-002, ADMIN-001, MEM-D5, and INT-AUTH-001—no approval, account, data, payment, provider, deployment, or release action is implied. |
 | 2026-10-20 | Targeted KMEM Web revoke-auth parity trace: **NO_LEGITIMATE_SOURCE_CLAIM**. Web removes only after `response.ok`; missing-auth semantics require excluded server/runtime evidence, so no speculative repair was created. |
 | 2026-10-20 | KMEM-004 mobile revoke authentication failure accepted as local source integration at `26eb57a60a703a27a88e6ba86b11877f6c575cff`. Mobile lifecycle **1 file / 8** and mobile no-emit PASS; token absence now fails closed before DELETE/local removal. Runtime/device/member gates remain external. |
