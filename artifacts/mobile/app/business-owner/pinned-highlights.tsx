@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -49,6 +49,7 @@ interface PinnedItem {
 
 interface ReviewItem {
   id: string;
+  businessId: string;
   authorName: string;
   rating: number;
   text: string | null;
@@ -58,97 +59,286 @@ interface ReviewItem {
 
 const AVATAR_COLORS = ["#CA922B", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
+export interface ManagedPinnedBusiness {
+  id: string;
+  name: string;
+  managementRole: "owner" | "manager";
+}
+
+function isWellFormedBusinessId(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0 && value.trim() === value && value.length <= 128;
+}
+
+export function parseManagedPinnedBusinesses(value: unknown): ManagedPinnedBusiness[] | null {
+  if (!Array.isArray(value)) return null;
+
+  const seenIds = new Set<string>();
+  const businesses: ManagedPinnedBusiness[] = [];
+  for (const candidate of value) {
+    if (!candidate || typeof candidate !== "object") return null;
+    const business = candidate as Record<string, unknown>;
+    if (!isWellFormedBusinessId(business.id)) return null;
+    if (business.managementRole !== "owner" && business.managementRole !== "manager") return null;
+    if (seenIds.has(business.id)) return null;
+    seenIds.add(business.id);
+    businesses.push({
+      id: business.id,
+      name: typeof business.name === "string" && business.name.trim() ? business.name : "Business",
+      managementRole: business.managementRole,
+    });
+  }
+  return businesses;
+}
+
+export function resolvePinnedHighlightsBusiness(
+  incomingBusinessId: string | string[] | undefined,
+  localBusinessId: string | null,
+  managedBusinesses: unknown,
+): ManagedPinnedBusiness | null {
+  const parsedBusinesses = parseManagedPinnedBusinesses(managedBusinesses);
+  if (!parsedBusinesses) return null;
+
+  const ownerBusinesses = parsedBusinesses.filter((business) => business.managementRole === "owner");
+  const requestedBusinessId = localBusinessId ?? incomingBusinessId;
+  if (requestedBusinessId !== undefined && requestedBusinessId !== null) {
+    if (!isWellFormedBusinessId(requestedBusinessId)) return null;
+    return ownerBusinesses.find((business) => business.id === requestedBusinessId) ?? null;
+  }
+
+  // Legacy fallback is allowed only when the entire managed response contains
+  // exactly one well-formed active owner relationship. Never take index zero.
+  return parsedBusinesses.length === 1 && ownerBusinesses.length === 1
+    ? ownerBusinesses[0]
+    : null;
+}
+
+export function isPinnedListForSelectedBusiness(
+  value: unknown,
+  selectedBusinessId: string,
+): value is { businessId: string; pinned: PinnedItem[] } {
+  if (!value || typeof value !== "object") return false;
+  const payload = value as { businessId?: unknown; pinned?: unknown };
+  return payload.businessId === selectedBusinessId &&
+    Array.isArray(payload.pinned) &&
+    payload.pinned.every((item) => item && typeof item === "object" && (item as PinnedItem).businessId === selectedBusinessId);
+}
+
+export function isSelectedPinSuccess(
+  value: unknown,
+  selectedBusinessId: string,
+): value is { businessId: string; pinned: PinnedItem } {
+  if (!value || typeof value !== "object") return false;
+  const payload = value as { businessId?: unknown; pinned?: unknown };
+  return payload.businessId === selectedBusinessId &&
+    Boolean(payload.pinned) &&
+    typeof payload.pinned === "object" &&
+    (payload.pinned as PinnedItem).businessId === selectedBusinessId;
+}
+
 export default function PinnedHighlightsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { businessId: incomingBusinessId } = useLocalSearchParams<{
+    businessId?: string | string[];
+  }>();
 
   const [pinned, setPinned] = useState<PinnedItem[]>([]);
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [managedBusinesses, setManagedBusinesses] = useState<ManagedPinnedBusiness[]>([]);
+  const [localBusinessId, setLocalBusinessId] = useState<string | null>(null);
+  const [selectionMessage, setSelectionMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [unpinning, setUnpinning] = useState<number | null>(null);
   const [showPickReview, setShowPickReview] = useState(false);
   const [pinningReviewId, setPinningReviewId] = useState<string | null>(null);
   const [showExpiryPrompt, setShowExpiryPrompt] = useState<PinnedItem | null>(null);
+  const requestVersion = useRef(0);
+  const selectedBusinessIdRef = useRef<string | null>(null);
 
-  const { reviews } = useReviews(businessId ?? "");
+  const { reviews: loadedReviews } = useReviews(businessId ?? "");
+  const reviews = businessId
+    ? loadedReviews.filter((review) => review.businessId === businessId)
+    : [];
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 24 : insets.bottom;
 
-  const loadPinned = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${getApiBase()}/api/business/pinned`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
-        const data = await res.json() as { pinned: PinnedItem[]; businessId: string };
-        setPinned(data.pinned);
-        setBusinessId(data.businessId);
-
-        // Show expiry prompt for expired/expiring-soon active pins (one at a time)
-        const needsPrompt = data.pinned.find(
-          (p) => p.status === "active" && (p.isExpired || p.isExpiringSoon) && !p.notifiedExpiry
-        );
-        if (needsPrompt) setShowExpiryPrompt(needsPrompt);
-      }
-    } catch { /* silent */ }
-    finally { setLoading(false); }
+  const clearSelectedBusinessState = useCallback(() => {
+    selectedBusinessIdRef.current = null;
+    setBusinessId(null);
+    setPinned([]);
+    setShowPickReview(false);
+    setShowExpiryPrompt(null);
+    setPinningReviewId(null);
+    setUnpinning(null);
   }, []);
 
-  useEffect(() => { queueMicrotask(() => { void loadPinned(); }); }, [loadPinned]);
+  const setValidatedBusinessId = useCallback((nextBusinessId: string | null) => {
+    selectedBusinessIdRef.current = nextBusinessId;
+    setBusinessId(nextBusinessId);
+  }, []);
+
+  const isCurrentRequest = useCallback(
+    (requestId: number, selectedBusinessId?: string) =>
+      requestVersion.current === requestId &&
+      (selectedBusinessId === undefined || selectedBusinessIdRef.current === selectedBusinessId),
+    [],
+  );
+
+  const loadPinned = useCallback(async () => {
+    const requestId = requestVersion.current + 1;
+    requestVersion.current = requestId;
+    clearSelectedBusinessState();
+    setLoading(true);
+    setSelectionMessage(null);
+
+    if (!isAuthenticated) {
+      setManagedBusinesses([]);
+      setSelectionMessage("Sign in to manage Pinned Highlights.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const managedResponse = await fetch(`${getApiBase()}/api/businesses/mine/managed`, {
+        headers,
+      });
+      if (!isCurrentRequest(requestId)) return;
+      if (!managedResponse.ok) {
+        setManagedBusinesses([]);
+        setSelectionMessage("Your business access could not be confirmed.");
+        return;
+      }
+
+      const managedPayload = await managedResponse.json() as { businesses?: unknown };
+      if (!isCurrentRequest(requestId)) return;
+      const parsedBusinesses = parseManagedPinnedBusinesses(managedPayload.businesses);
+      if (!parsedBusinesses) {
+        setManagedBusinesses([]);
+        setSelectionMessage("Your business access response was unavailable. Please choose a business again.");
+        return;
+      }
+      setManagedBusinesses(parsedBusinesses);
+
+      const selectedBusiness = resolvePinnedHighlightsBusiness(
+        incomingBusinessId,
+        localBusinessId,
+        parsedBusinesses,
+      );
+      if (!selectedBusiness) {
+        const ownerCount = parsedBusinesses.filter((business) => business.managementRole === "owner").length;
+        setSelectionMessage(
+          ownerCount > 1 || parsedBusinesses.length > 1
+            ? "Choose an approved owner business before managing its pinned highlights."
+            : "No approved owner business is available for Pinned Highlights.",
+        );
+        return;
+      }
+
+      setValidatedBusinessId(selectedBusiness.id);
+      const res = await fetch(
+        `${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(selectedBusiness.id)}/pinned`,
+        { headers },
+      );
+      if (!isCurrentRequest(requestId, selectedBusiness.id)) return;
+      if (!res.ok) {
+        clearSelectedBusinessState();
+        setSelectionMessage("The selected business is no longer available for Pinned Highlights.");
+        return;
+      }
+
+      const data = await res.json() as unknown;
+      if (!isCurrentRequest(requestId, selectedBusiness.id)) return;
+      if (!isPinnedListForSelectedBusiness(data, selectedBusiness.id)) {
+        clearSelectedBusinessState();
+        setSelectionMessage("Pinned Highlights could not confirm the selected business.");
+        return;
+      }
+
+      setPinned(data.pinned);
+      const needsPrompt = data.pinned.find(
+        (item) => item.status === "active" && (item.isExpired || item.isExpiringSoon) && !item.notifiedExpiry,
+      );
+      if (needsPrompt) setShowExpiryPrompt(needsPrompt);
+    } catch {
+      if (isCurrentRequest(requestId)) {
+        clearSelectedBusinessState();
+        setManagedBusinesses([]);
+        setSelectionMessage("Pinned Highlights could not load your selected business.");
+      }
+    } finally {
+      if (isCurrentRequest(requestId)) setLoading(false);
+    }
+  }, [clearSelectedBusinessState, incomingBusinessId, isAuthenticated, isCurrentRequest, localBusinessId, setValidatedBusinessId]);
+
+  useEffect(() => {
+    setLocalBusinessId(null);
+  }, [incomingBusinessId]);
+
+  useEffect(() => {
+    void loadPinned();
+    return () => { requestVersion.current += 1; };
+  }, [loadPinned]);
 
   const handleUnpin = async (itemId: number) => {
+    const selectedBusinessId = selectedBusinessIdRef.current;
+    if (!selectedBusinessId) return;
+    const requestId = requestVersion.current;
     setUnpinning(itemId);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      await fetch(`${getApiBase()}/api/business/pinned/${itemId}`, {
-        method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const res = await fetch(
+        `${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/pinned/${encodeURIComponent(String(itemId))}`,
+        {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        },
+      );
+      if (!isCurrentRequest(requestId, selectedBusinessId) || !res.ok) return;
       await loadPinned();
     } catch { /* silent */ }
-    finally { setUnpinning(null); }
+    finally {
+      if (selectedBusinessIdRef.current === selectedBusinessId) setUnpinning(null);
+    }
   };
 
   const handlePinReview = async (review: ReviewItem) => {
+    const selectedBusinessId = selectedBusinessIdRef.current;
+    if (!selectedBusinessId || review.businessId !== selectedBusinessId) return;
+    const requestId = requestVersion.current;
     setPinningReviewId(review.id);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const initials = review.authorName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
-      const color = AVATAR_COLORS[review.authorName.charCodeAt(0) % AVATAR_COLORS.length];
-      const timeAgo = new Date(review.createdAt).toLocaleDateString();
-      const res = await fetch(`${getApiBase()}/api/business/pinned`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({
-          itemType: "review",
-          reviewId: review.id,
-          reviewText: review.text,
-          reviewAuthor: review.authorName,
-          reviewRating: review.rating,
-          reviewInitials: initials,
-          reviewColor: color,
-          reviewTimeAgo: timeAgo,
-        }),
-      });
-      if (res.ok) {
-        setShowPickReview(false);
-        setShowExpiryPrompt(null);
-        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        await loadPinned();
-      }
+      const res = await fetch(
+        `${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/pinned`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({ itemType: "review", reviewId: review.id }),
+        },
+      );
+      const data = await res.json().catch(() => null) as unknown;
+      if (!isCurrentRequest(requestId, selectedBusinessId) || !res.ok || !isSelectedPinSuccess(data, selectedBusinessId)) return;
+
+      setShowPickReview(false);
+      setShowExpiryPrompt(null);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await loadPinned();
     } catch { /* silent */ }
-    finally { setPinningReviewId(null); }
+    finally {
+      if (selectedBusinessIdRef.current === selectedBusinessId) setPinningReviewId(null);
+    }
   };
 
-  const activePins = pinned.filter((p) => p.status === "active");
-  const pastPins = pinned.filter((p) => p.status !== "active");
+  const activePins = businessId ? pinned.filter((item) => item.businessId === businessId && item.status === "active") : [];
+  const pastPins = businessId ? pinned.filter((item) => item.businessId === businessId && item.status !== "active") : [];
+  const ownerBusinessOptions = managedBusinesses.filter((business) => business.managementRole === "owner");
 
   const daysLeftColor = (item: PinnedItem) => {
     if (item.isExpired) return "#DC2626";
@@ -190,7 +380,32 @@ export default function PinnedHighlightsScreen() {
             </View>
           </View>
 
-          {/* Pin a review CTA */}
+          {!businessId && (
+            <View style={[s.selectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[s.selectionTitle, { color: colors.foreground }]}>Choose a business</Text>
+              {selectionMessage ? (
+                <Text style={[s.selectionMessage, { color: colors.mutedForeground }]}>{selectionMessage}</Text>
+              ) : null}
+              {ownerBusinessOptions.map((business) => (
+                <TouchableOpacity
+                  key={business.id}
+                  testID={`select-pinned-business-${business.id}`}
+                  style={[s.selectionOption, { borderColor: colors.border }]}
+                  activeOpacity={0.82}
+                  onPress={() => setLocalBusinessId(business.id)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.selectionOptionName, { color: colors.foreground }]}>{business.name}</Text>
+                    <Text style={[s.selectionOptionMeta, { color: colors.mutedForeground }]}>Approved owner workspace</Text>
+                  </View>
+                  <Feather name="chevron-right" size={18} color={colors.primary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Pinned-item actions are unavailable until a selected owner ID has been confirmed. */}
+          {businessId && (
           <View style={s.section}>
             <Text style={[s.sectionLabel, { color: colors.foreground }]}>Active Pins</Text>
             {activePins.length === 0 && (
@@ -273,9 +488,10 @@ export default function PinnedHighlightsScreen() {
               </View>
             ))}
           </View>
+          )}
 
           {/* Pin a new review */}
-          {reviews.length > 0 && (
+          {businessId && reviews.length > 0 && (
             <View style={s.section}>
               <TouchableOpacity
                 style={[s.pinNewBtn, { backgroundColor: colors.primary }]}
@@ -315,7 +531,7 @@ export default function PinnedHighlightsScreen() {
       )}
 
       {/* Pick a review modal */}
-      <Modal visible={showPickReview} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowPickReview(false)}>
+      <Modal visible={showPickReview && Boolean(businessId)} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowPickReview(false)}>
         <View style={[s.modalRoot, { backgroundColor: colors.background }]}>
           <View style={[s.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPickReview(false)}>
@@ -376,7 +592,7 @@ export default function PinnedHighlightsScreen() {
       </Modal>
 
       {/* Expiry prompt modal */}
-      <Modal visible={showExpiryPrompt !== null} animationType="fade" transparent onRequestClose={() => setShowExpiryPrompt(null)}>
+      <Modal visible={showExpiryPrompt !== null && Boolean(businessId)} animationType="fade" transparent onRequestClose={() => setShowExpiryPrompt(null)}>
         <View style={s.expiryOverlay}>
           <View style={[s.expiryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={{ fontSize: 36, textAlign: "center" }}>📌</Text>
@@ -419,6 +635,12 @@ const s = StyleSheet.create({
   explainerCard: { margin: 16, borderRadius: 16, borderWidth: 1, padding: 14, flexDirection: "row", gap: 12, alignItems: "flex-start" },
   explainerTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 4 },
   explainerSub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  selectionCard: { marginHorizontal: 16, marginBottom: 20, borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
+  selectionTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  selectionMessage: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  selectionOption: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  selectionOptionName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  selectionOptionMeta: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
   section: { paddingHorizontal: 16, marginBottom: 20 },
   sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 10 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingVertical: 12 },
