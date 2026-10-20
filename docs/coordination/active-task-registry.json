@@ -4867,7 +4867,7 @@
       "ownerTaskName": "Correct Black capitalization across Mapping with Melanin and KinfolkAI",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
       "paths": [
         "artifacts/web/src/features/businesses/BusinessVoiceProfileEditor.tsx",
@@ -4877,12 +4877,20 @@
       "acceptance": "On each businessId transition, reset profile, confirmations, ordinary and draft messages, editable draft, and loading state before the new request. Bind load, save, and draft completions to the captured current ID so late A work cannot alter B. Preserve current per-ID authenticated endpoints, ownerConfirmed, editable/review-only drafting, no-post/send/reply policy, and useful same-ID success/error behavior. Add deterministic A→B and late-A completion assertions to the existing contract; run the focused Web contract, Web no-emit, exact two-path scope and diff check.",
       "exclusions": "No dashboard, API/route, ownership/schema/DB, token/provider/AI activation, Kinfolk behavior, Directory/publication, browser/device/staging/deploy/remote Git action.",
       "source_boundary": "Source-only Web state-isolation repair; no runtime/member/release/founder acceptance.",
-      "workerStart": "ACKNOWLEDGED_STARTED",
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
       "baseTransfer": {
         "handoff_id": "hnd_QAV6J2B4MxomptLPyXZny99d",
         "file": "BIZ009_WEB_VOICE_PROP_CHANGE_ISOLATION_BASE_2026-10-20.tar.gz",
         "sha256": "fa7ae231f75b7297c72c24eb8dcacba715ea4e801a54c89a5418bc336702a318",
         "expires_at": "2026-10-21T03:54:23.986Z"
+      },
+      "sourceReceipt": {
+        "authority_commit": "0a642bca5590e5ddf11dfaba473462583d45505a",
+        "carrier_handoff": "hnd_QPmwzqPcp-q1aCQlBEh-GqtL",
+        "carrier_sha256": "309d5805d98c186ed73c9f2d3aa31b8ae5dacfdfa1300781dec9d29cb5d0973d",
+        "source_validation": "Web Voice drafting: 1 file / 4 tests PASS; Web tsc --noEmit PASS. Relevant selected-profile/multi-business API authority: 2 files / 11 tests and API tsc --noEmit PASS; exact two-path scope/diff and output hashes PASS.",
+        "semantic_validation": "On businessId change, monotonic context generation and bound-ID/epoch state clear profile, confirmation, messages, draft kind/request/editable text and action state before loading. Captured ID plus generation guard load/save/draft success/error/finally completions, preventing stale A results after A→B or A→B→A.",
+        "boundary": "Source-only Web state-isolation evidence. No API route/ownership/schema/DB/provider/AI/runtime/browser/device/staging/deploy/member/release/founder acceptance."
       }
     },
     {
