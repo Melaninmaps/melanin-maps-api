@@ -4513,7 +4513,7 @@
       "exclusions": "No owner-link/server/client Web edit, BIZ-009 release, browser/device/mobile build, DB/runtime/staging/deploy action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
       "baseArchive": {
         "handoff": "hnd_5L1sPH98EsuxdBBodVsp5Rvt",
@@ -4521,7 +4521,15 @@
         "expires_at": "2026-10-21T02:21:58.834Z",
         "size_bytes": 253058
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:22-02:24Z"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "c985588237c94bacec34bd3a4444a20b119261c0",
+        "carrier_handoff": "hnd_sXr6xQNlz5vIbRtypCslQh03",
+        "carrier_sha256": "b692f3dc29845bf6898fb0e2c7992fb5248f3dd7bbd9086977e5317e463b3712",
+        "source_validation": "Current-authority native dashboard selection + selected-editor suite 2 files/5 tests PASS; Web managed-dashboard suite 1 file/6 tests PASS; API selected-business ownership/stale-write suite 1 file/6 tests PASS; mobile/Web/API no-emit PASS; exact two-path scope and diff check PASS.",
+        "semantic_validation": "Root dashboard reads only managed businesses; zero clears context, exactly one proceeds, multiple clears selection and redirects before no-business render. The selected business comes from the validated managed list and no legacy singular endpoint is used.",
+        "boundary": "No mobile build/device, browser, DB/runtime, staging/deploy, provider, member-visible, release, or founder acceptance."
+      }
     }
   ],
   "globalDirectiveDelivery": [
