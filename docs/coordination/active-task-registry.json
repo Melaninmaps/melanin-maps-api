@@ -4806,10 +4806,18 @@
       "requirementId": "BIZ-003",
       "priority": "P0",
       "status": "IN DEVELOPMENT",
-      "authorityBase": "1a1c3299b349a4e2002f869fda2abba4a07360e2",
-      "workerStart": "RETURNED_FOR_SAME_SCOPE_REPAIR_PENDING_REFRESHED_BASE",
+      "authorityBase": "b72b7abee1b6299333dfb19c6a529ec97eeed3ee",
+      "workerStart": "REPAIR_DISPATCH_PENDING",
       "source_boundary": "Source-only deterministic inbox-recipient isolation repair; no actual notification/member/runtime acceptance.",
-      "reviewDisposition": "RETURNED_FOR_POLICY_REPAIR: rejected carrier 8761308402efe008196a725632030565b5af41e35b16dfae0c8de3ed49879136 was hash-valid and scope-valid but its businesses.submittedById recipient fallback violates the founder direction not to infer private-feedback recipient permission from submission alone; its limit(1) active-link lookup is nondeterministic for multiple active owners. No candidate source applied or integrated."
+      "reviewDisposition": "RETURNED_FOR_POLICY_REPAIR: rejected carrier 8761308402efe008196a725632030565b5af41e35b16dfae0c8de3ed49879136 was hash-valid and scope-valid but its businesses.submittedById recipient fallback violates the founder direction not to infer private-feedback recipient permission from submission alone; its limit(1) active-link lookup is nondeterministic for multiple active owners. No candidate source applied or integrated.",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ003_POST_SKIP_FEEDBACK_OWNER_DELIVERY_R2_BASE_2026-10-20.tar.gz",
+        "sha256": "4dc1ad1a7569f3ae9563a58202eb798ba28c177ddfbe135bd9f13186580801f6",
+        "handoff": "hnd_KXuvwkppIJ_ebnLU9Dgloqf-",
+        "expires_at": "2026-10-21T03:58:41.926Z",
+        "size_bytes": 5281,
+        "reason": "replacement same-scope base after policy return; all product source remains current authority"
+      }
     },
     {
       "id": "BIZ-009-MOBILE-FEATURED-VIDEO-SELECTED-ROUTE-PROPAGATION",
