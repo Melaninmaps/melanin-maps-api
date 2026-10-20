@@ -4624,7 +4624,7 @@
       "exclusions": "No routes/source mutation, schema/DB/runtime, external data, client/mobile/Web, browser/device, staging/deploy, provider or remote action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_SELECTED_PROFILE_ROUTE_AUTHORITY_CONTRACT_BASE_2026-10-20.tar.gz",
@@ -4633,7 +4633,15 @@
         "expires_at": "2026-10-21T02:50:19.868Z",
         "size_bytes": 46324
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:25Z"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "675ee8f614aa9e7564ef836b39dfe2f819ee4488",
+        "carrier_handoff": "hnd_shGjDQlG10CsDxIt_7aTo2KC",
+        "carrier_sha256": "f22ca9120b108dc571a28bf4f05d5e3e57ea51132690d6269a4fc32de9157e34",
+        "source_validation": "API selected-profile authority plus multi-business pair: 2 files / 11 tests PASS; API tsc --noEmit PASS; exact one-path scope/diff PASS.",
+        "coverage": "Actual Express/Supertest router harness proves anonymous 401 before query/update; approved selected-owner read/update/fresh readback; cross-business/outsider neutral 404 before update; missing revision rejection; stale 409 with no update.",
+        "boundary": "Test-only source evidence. No runtime/database/browser/device/staging/deploy/member/release/founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-MOBILE-SELECTED-EDITOR-SUCCESSIVE-SAVE-REVISION-REFRESH",
