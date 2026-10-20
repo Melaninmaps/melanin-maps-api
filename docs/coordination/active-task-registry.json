@@ -4265,7 +4265,7 @@
       "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
       "ownerTaskName": "Review uploaded content",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "f10e00a969c56dc2b129496cad3e5ffb90652cc9",
       "paths": [
         "artifacts/api-server/src/routes/kinfolk.ts",
@@ -4281,7 +4281,15 @@
       "purpose": "Repair confirmed owner-isolation bypass in the still-registered legacy GET /kinfolk/skip-feedback route by aligning it with canonical active-approved-owner precedence and former-submitter denial.",
       "acceptance": "Legacy read preserves 401/tier/error/response sanitization; it grants active approved/unrevoked owner link first; only then falls back to submittedById if no active link exists; a former submitter whose business has an active approved owner link is denied before feedback selection. New real-route regression covers these boundaries.",
       "exclusions": "No client/canonical skip-feedback route/schema/migration/account/data/config/payment/provider/BIZ-009/deploy/browser/device/activation change. No runtime/member acceptance claim.",
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T01:49:35Z"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T01:49:35Z",
+      "source_receipt": "5ef66d80185c3f3af71ec48d43853a34e98c0180",
+      "central_validation": {
+        "api_vitest": "2 files / 14 tests passed: legacy isolation + canonical owner contract",
+        "mobile_vitest": "2 files / 6 tests passed: Dashboard and Owner Home canonical consumers",
+        "api_no_emit": "passed",
+        "scope": "exact two paths",
+        "external_acceptance": "not performed"
+      }
     },
     {
       "id": "MEM-D11-CONSOLIDATED-COMMERCIAL-READINESS-DECISION-PACKET",

@@ -403,6 +403,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | BIZ-003 legacy approved-owner/former-submitter feedback isolation SOURCE_INTEGRATED_LOCAL_ONLY at `5ef66d80185c3f3af71ec48d43853a34e98c0180` after API 14/14, Dashboard/Owner Home 6/6, and API no-emit; parent remains open and external acceptance is unperformed. |
 | 2026-10-20 | y and IIU acknowledged and started the exclusive BIZ-002 marketplace closed-rail and INT-REVENUECAT-001 default-disabled server enforcement repairs; no source integration or external action has occurred. |
 | 2026-10-20 | Transferred verified compact bases for active BIZ-002 marketplace Checkout closed-rail and INT-REVENUECAT-001 default-disabled server enforcement repairs; both remain source-only and require central review. |
 | 2026-10-20 | Registered two P0 source-only enforcement repairs: BIZ-002 marketplace Checkout closed-rail guard and INT-REVENUECAT-001 server default-disabled guard. They address demonstrated source capability only; no commercial/provider action or acceptance is authorized. |
