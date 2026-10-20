@@ -180,6 +180,47 @@ interface GrowthToolsData {
   catalogue: GrowthTool[];
 }
 
+type TrustProfileIdentity = {
+  audienceType?: string;
+  ageRestrictionReasons?: string[];
+  environmentTags?: string[];
+  amenityTags?: string[];
+};
+
+function parseTrustProfileIdentityResponse(value: unknown): TrustProfileIdentity | null {
+  if (!value || typeof value !== "object") return null;
+  const identity = (value as { identity?: unknown }).identity;
+  if (!identity || typeof identity !== "object") return null;
+
+  const candidate = identity as Record<string, unknown>;
+  const stringArray = (field: string): string[] | undefined | null => {
+    const fieldValue = candidate[field];
+    if (fieldValue === undefined || fieldValue === null) return undefined;
+    return Array.isArray(fieldValue) && fieldValue.every((item) => typeof item === "string")
+      ? fieldValue
+      : null;
+  };
+
+  const ageRestrictionReasons = stringArray("ageRestrictionReasons");
+  const environmentTags = stringArray("environmentTags");
+  const amenityTags = stringArray("amenityTags");
+  if (
+    (candidate.audienceType !== undefined && candidate.audienceType !== null && typeof candidate.audienceType !== "string") ||
+    ageRestrictionReasons === null ||
+    environmentTags === null ||
+    amenityTags === null
+  ) {
+    return null;
+  }
+
+  return {
+    audienceType: (candidate.audienceType ?? undefined) as string | undefined,
+    ageRestrictionReasons,
+    environmentTags,
+    amenityTags,
+  };
+}
+
 function useMyBusiness(requestedBusinessId: string | null) {
   const [business, setBusiness] = useState<MyBusiness | null>(null);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
@@ -386,6 +427,13 @@ export default function BusinessDashboardScreen() {
     setActionPlan(null);
     setMarketInsights(null);
     setFeedbackOptIn(Boolean(business?.feedbackOptIn));
+    setTrustProfileExpanded(false);
+    setTrustAudienceType("unknown");
+    setTrustAgeReasons([]);
+    setTrustEnvironmentTags([]);
+    setTrustAmenityTags([]);
+    setTrustProfileSaving(false);
+    setTrustProfileResult(null);
     setTrustProfileLoaded(false);
   }, [business?.id]);
 
@@ -405,21 +453,37 @@ export default function BusinessDashboardScreen() {
   // Load Trust Profile identity data when business is available
   React.useEffect(() => {
     if (!business?.id || trustProfileLoaded) return;
+    const selectedBusinessId = business.id;
     void (async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
-        const res = await fetch(`${getApiBase()}/api/businesses/mine/identity`, {
+        const base = getApiBase();
+        if (!token || !base || activeBusinessIdRef.current !== selectedBusinessId) {
+          if (activeBusinessIdRef.current === selectedBusinessId) setTrustProfileResult("error");
+          return;
+        }
+        const res = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/identity`, {
           headers: { Authorization: `Bearer ${token ?? ""}` },
         });
-        if (res.ok) {
-          const d = await res.json() as { identity: { audienceType?: string; ageRestrictionReasons?: string[]; environmentTags?: string[]; amenityTags?: string[] } };
-          if (d.identity.audienceType) setTrustAudienceType(d.identity.audienceType);
-          if (d.identity.ageRestrictionReasons) setTrustAgeReasons(d.identity.ageRestrictionReasons);
-          if (d.identity.environmentTags) setTrustEnvironmentTags(d.identity.environmentTags);
-          if (d.identity.amenityTags) setTrustAmenityTags(d.identity.amenityTags);
-          setTrustProfileLoaded(true);
+        if (activeBusinessIdRef.current !== selectedBusinessId) return;
+        if (!res.ok) {
+          setTrustProfileResult("error");
+          return;
         }
-      } catch { /* non-fatal */ }
+        const identity = parseTrustProfileIdentityResponse(await res.json());
+        if (activeBusinessIdRef.current !== selectedBusinessId) return;
+        if (!identity) {
+          setTrustProfileResult("error");
+          return;
+        }
+        if (identity.audienceType) setTrustAudienceType(identity.audienceType);
+        if (identity.ageRestrictionReasons) setTrustAgeReasons(identity.ageRestrictionReasons);
+        if (identity.environmentTags) setTrustEnvironmentTags(identity.environmentTags);
+        if (identity.amenityTags) setTrustAmenityTags(identity.amenityTags);
+        setTrustProfileLoaded(true);
+      } catch {
+        if (activeBusinessIdRef.current === selectedBusinessId) setTrustProfileResult("error");
+      }
     })();
   }, [business?.id, trustProfileLoaded]);
 
@@ -1219,11 +1283,18 @@ export default function BusinessDashboardScreen() {
 
               const handleSave = async () => {
                 if (!business?.id) return;
+                const selectedBusinessId = business.id;
+                if (activeBusinessIdRef.current !== selectedBusinessId) return;
                 setTrustProfileSaving(true);
                 setTrustProfileResult(null);
                 try {
                   const token = await SecureStore.getItemAsync("auth_session_token");
-                  const res = await fetch(`${getApiBase()}/api/businesses/mine/identity`, {
+                  const base = getApiBase();
+                  if (!token || !base || activeBusinessIdRef.current !== selectedBusinessId) {
+                    if (activeBusinessIdRef.current === selectedBusinessId) setTrustProfileResult("error");
+                    return;
+                  }
+                  const res = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/identity`, {
                     method: "PATCH",
                     headers: { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -1233,10 +1304,22 @@ export default function BusinessDashboardScreen() {
                       amenityTags: trustAmenityTags,
                     }),
                   });
-                  setTrustProfileResult(res.ok ? "success" : "error");
-                  if (res.ok) setTrustProfileExpanded(false);
-                } catch { setTrustProfileResult("error"); }
-                finally { setTrustProfileSaving(false); }
+                  if (activeBusinessIdRef.current !== selectedBusinessId) return;
+                  const identity = res.ok
+                    ? parseTrustProfileIdentityResponse(await res.json())
+                    : null;
+                  if (activeBusinessIdRef.current !== selectedBusinessId) return;
+                  if (!identity) {
+                    setTrustProfileResult("error");
+                    return;
+                  }
+                  setTrustProfileResult("success");
+                  setTrustProfileExpanded(false);
+                } catch {
+                  if (activeBusinessIdRef.current === selectedBusinessId) setTrustProfileResult("error");
+                } finally {
+                  if (activeBusinessIdRef.current === selectedBusinessId) setTrustProfileSaving(false);
+                }
               };
 
               return (
