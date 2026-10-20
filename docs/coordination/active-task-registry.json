@@ -4380,10 +4380,12 @@
       "acceptance": "Helper covers missing/existing/repeated calls, uses only the existing business_kinfolk_voice_profiles definition, structurally verifies required table shape, and fails before traffic if creation/verification fails. Startup wiring precedes listener traffic in normal and explicit modes without running broad migrations. Existing approved-owner profile read remains allowed only after readiness; cross-owner denial remains; malformed table/unprepared route case fails safely. Focused API/startup/neighboring dashboard regressions plus API no-emit pass.",
       "exclusions": "No broad runStartupMigrations invocation, competing migration system, business/profile/owner/entitlement/publication mutation, real schema execution, DB/data/account action, provider/drafting activation, remote Git, staging/deploy/browser/device or production action. Source helper is not evidence that any deployed schema is ready.",
       "baseArchive": {
-        "handoff": "PENDING",
-        "sha256": "PENDING"
+        "handoff": "hnd_OuCMIg5KaFMuPKkdvUOeOiNx",
+        "sha256": "e7072f730b8f5c5c3c0c9679415bf46edd245e52feb39a1790e081354ddfd252",
+        "expires_at": "2026-10-21T02:10:54.189Z",
+        "size_bytes": 1465894
       },
-      "workerStart": "NOT_DISPATCHED"
+      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
     }
   ],
   "globalDirectiveDelivery": [
