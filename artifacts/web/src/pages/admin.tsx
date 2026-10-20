@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Redirect } from "wouter";
+import { Link, Redirect } from "wouter";
 import {
   Check,
   X,
@@ -358,6 +358,22 @@ type AdminBusiness = {
     createdAt: string;
   } | null;
 };
+
+function canOpenPublicBusinessProfile(
+  business: Pick<
+    AdminBusiness,
+    "id" | "listingStatus" | "isDuplicate" | "permanentlyClosed"
+  >,
+): boolean {
+  return (
+    typeof business.id === "string" &&
+    business.id.trim().length > 0 &&
+    (business.listingStatus === "live_unclaimed" ||
+      business.listingStatus === "live_claimed") &&
+    !business.isDuplicate &&
+    !business.permanentlyClosed
+  );
+}
 
 type KinfolkCatalogState = "intake" | "review" | "ready" | "held" | "removed";
 type KinfolkCatalogMembership = {
@@ -5642,9 +5658,19 @@ Selected: ${summary}`,
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-[#3A1F0E]">
-                            {biz.name}
-                          </div>
+                          {canOpenPublicBusinessProfile(biz) ? (
+                            <Link
+                              href={`/businesses/${encodeURIComponent(biz.id)}`}
+                              aria-label={`Open ${biz.name} public profile`}
+                              className="font-semibold text-[#3A1F0E] hover:text-[#CA922B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]"
+                            >
+                              {biz.name}
+                            </Link>
+                          ) : (
+                            <span className="font-semibold text-[#3A1F0E]">
+                              {biz.name}
+                            </span>
+                          )}
                           <div className="text-xs text-[#3A1F0E]/50 mt-0.5">
                             {biz.subcategory
                               ? `${biz.category} · ${biz.subcategory}`
@@ -5808,14 +5834,20 @@ Selected: ${summary}`,
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1.5">
                             <>
-                              <a
-                                href={`${BASE}businesses/${biz.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs font-bold text-[#5F1E2D] hover:text-[#7A2637] border border-[#7A2637]/25 hover:bg-[#7A2637]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" /> Open canonical MWM profile
-                              </a>
+                              {canOpenPublicBusinessProfile(biz) ? (
+                                <a
+                                  href={`${BASE}businesses/${encodeURIComponent(biz.id)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-xs font-bold text-[#5F1E2D] hover:text-[#7A2637] border border-[#7A2637]/25 hover:bg-[#7A2637]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" /> Open canonical MWM profile
+                                </a>
+                              ) : (
+                                <span className="px-3 py-1.5 text-xs text-[#3A1F0E]/55">
+                                  Public profile unavailable
+                                </span>
+                              )}
                               <div
                                 className="rounded-lg border border-[#5F1E2D]/15 bg-[#FAF6EF] px-3 py-2 text-[11px] leading-4 text-[#3A1F0E]/70"
                                 aria-live="polite"
