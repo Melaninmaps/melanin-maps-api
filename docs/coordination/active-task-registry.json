@@ -4980,9 +4980,9 @@
       "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "REVIEW_PENDING",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "4d1b80e0519ef49772aaa2ec45817dae4ddf3557",
-      "workerStart": "DISPATCHED",
+      "workerStart": "ACCEPTED_AND_FROZEN",
       "baseTransfer": {
         "handoff_id": "hnd_YlFw-kBFpP2SX4GVWDlNMnz1",
         "file": "BIZ009_SELECTED_DASHBOARD_INSIGHTS_BASE_E03B9104.tar.gz",
@@ -4994,6 +4994,15 @@
         "file": "BIZ009_SELECTED_DASHBOARD_INSIGHTS_ISOLATION_CARRIER_2026-10-20.tar.gz",
         "outer_sha256": "6237efc83d8d5253231e58ca2fa0a77a60e89b22e38e2969489b1f89490c156f",
         "patch_sha256": "9ad548ee46e73f09af92d3c843459e6fcb8ad5615c6e988ce1d1c4167836a1d1"
+      },
+      "sourceIntegration": {
+        "commit": "0e7b1c93f88b4cb6499a1937c600aedd332e8d09",
+        "carrier_outer_sha256": "6237efc83d8d5253231e58ca2fa0a77a60e89b22e38e2969489b1f89490c156f",
+        "carrier_patch_sha256": "9ad548ee46e73f09af92d3c843459e6fcb8ad5615c6e988ce1d1c4167836a1d1",
+        "central_reconciliation": "Normalized only the three new clickable name/profile links and their static contract from secondary `/business/:id` alias to established canonical `/businesses/${encodeURIComponent(id)}`; pre-existing alias actions were untouched.",
+        "validation": "Selected Dashboard API contract: 1 file/15 mock-only tests PASS; native selected-context contract: 1 file/6 tests PASS; API/mobile no-emit PASS; exact eight-path scope and diff hygiene PASS.",
+        "provider_boundary": "Push notification and AI-caption handlers were not invoked outside mocks. Any staging invocation needs the separate provider/AI activation decision.",
+        "boundary": "Local source only; no real owner/account/feedback/storage/provider/AI/payment/browser/device/staging/deployment/release/founder acceptance."
       }
     },
     {
