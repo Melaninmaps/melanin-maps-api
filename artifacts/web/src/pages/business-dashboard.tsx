@@ -60,6 +60,17 @@ const TYPE_LABELS: Record<string, string> = {
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   search: Search, star: Star, "map-pin": MapPin, zap: Zap, calendar: Calendar,
 };
+
+function initialManagedBusinessId(
+  requestedBusinessId: string | null,
+  businesses: readonly BusinessSummary[],
+): string | null {
+  const requestedBusiness = typeof requestedBusinessId === "string"
+    ? businesses.find((business) => business.id === requestedBusinessId)
+    : undefined;
+  return requestedBusiness?.id ?? businesses[0]?.id ?? null;
+}
+
 function managedProfileFromResponse(payload: unknown, expectedBusinessId: string): ManagedBusinessProfile | null {
   if (!payload || typeof payload !== "object") return null;
   const business = (payload as { business?: unknown }).business;
@@ -121,6 +132,7 @@ export default function BusinessDashboard() {
   const params = new URLSearchParams(search);
   const justActivated = params.get("growth_tool_activated") === "1";
   const activatedTool = params.get("tool");
+  const requestedBusinessId = params.get("businessId");
 
   const [businesses, setBusinesses] = useState<BusinessSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -167,7 +179,7 @@ export default function BusinessDashboard() {
     fetch(`${BASE}api/businesses/mine/managed`, { credentials: "include" }).then((r) => r.json()).then((d) => {
       const list = Array.isArray(d.businesses) ? d.businesses : [];
       setBusinesses(list);
-      if (list.length) setSelectedId(list[0].id);
+      setSelectedId(initialManagedBusinessId(requestedBusinessId, list));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

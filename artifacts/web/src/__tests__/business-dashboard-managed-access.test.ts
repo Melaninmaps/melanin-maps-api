@@ -18,12 +18,61 @@ function managedProfileEditor(): string {
   return dashboard.slice(start, end);
 }
 
+function managedListInitialization(): string {
+  const start = dashboard.indexOf('fetch(`${BASE}api/businesses/mine/managed`, { credentials: "include" })');
+  const end = dashboard.indexOf("}).catch(() => setLoading(false));", start);
+  return dashboard.slice(start, end);
+}
+
+function initialManagedSelection(): string {
+  const start = dashboard.indexOf("function initialManagedBusinessId(");
+  const end = dashboard.indexOf("function managedProfileFromResponse", start);
+  return dashboard.slice(start, end);
+}
+
+function selectedBusinessReads(): string {
+  const start = dashboard.indexOf("useEffect(() => {\n    if (!selectedId) return;");
+  const end = dashboard.indexOf("\n  }, [selectedId]);", start);
+  return dashboard.slice(start, end);
+}
+
+function selectedManagedProfile(): string {
+  const start = dashboard.indexOf("useEffect(() => {\n    const requestVersion = ++managedProfileRequestVersion.current;");
+  const end = dashboard.indexOf("\n  }, [selectedId]);", start);
+  return dashboard.slice(start, end);
+}
+
 describe("Business Dashboard multi-business access", () => {
   it("uses the explicit managed-business list rather than the legacy ambiguous endpoint", () => {
     expect(dashboard).toContain('fetch(`${BASE}api/businesses/mine/managed`, { credentials: "include" })');
     expect(dashboard).toContain("Array.isArray(d.businesses) ? d.businesses : []");
     expect(dashboard).toContain("The dashboard is explicitly multi-business.");
     expect(dashboard).not.toContain('fetch(`${BASE}api/businesses/mine`, { credentials: "include" })');
+  });
+
+  it("honors a submission business ID only after exact membership in the returned managed list", () => {
+    const selection = initialManagedSelection();
+    const initialization = managedListInitialization();
+    const firstOwned = initialization.indexOf("setBusinesses(list);");
+    const selectionCommit = initialization.indexOf("setSelectedId(initialManagedBusinessId(requestedBusinessId, list));");
+
+    expect(dashboard).toContain('const requestedBusinessId = params.get("businessId");');
+    expect(selection).toContain("typeof requestedBusinessId === \"string\"");
+    expect(selection).toContain("businesses.find((business) => business.id === requestedBusinessId)");
+    expect(selection).toContain("return requestedBusiness?.id ?? businesses[0]?.id ?? null;");
+    expect(firstOwned).toBeGreaterThanOrEqual(0);
+    expect(selectionCommit).toBeGreaterThan(firstOwned);
+    expect(initialization).not.toContain("setSelectedId(list[0].id)");
+    expect(dashboard).not.toContain("setSelectedId(requestedBusinessId)");
+    expect(dashboard).toContain("onClick={() => setSelectedId(b.id === selectedId ? null : b.id)}");
+
+    const reads = selectedBusinessReads();
+    const profile = selectedManagedProfile();
+    expect(reads).toContain('fetch(`${BASE}api/reviews?businessId=${selectedId}`');
+    expect(reads).toContain('fetch(`${BASE}api/businesses/${selectedId}/kinfolk-community-needs`');
+    expect(reads).not.toContain("requestedBusinessId");
+    expect(profile).toContain("const businessId = selectedId;");
+    expect(profile).not.toContain("requestedBusinessId");
   });
 
   it("does not mistake a revalidated auth response for a signed-out owner", () => {
