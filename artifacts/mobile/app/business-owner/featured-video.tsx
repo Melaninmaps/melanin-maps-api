@@ -36,6 +36,10 @@ function isHostedUrl(url: string): boolean {
   return url.includes("storage.googleapis.com");
 }
 
+function safeErrorMessage(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
 // ── Question bank (from Mapping With Melanin™ conversation starters) ──────────
 const QUESTION_BANK = [
   // Meet the Owner
@@ -198,7 +202,7 @@ export default function FeaturedVideoScreen() {
       }
 
       const response = await fetch(
-        `${base}/api/businesses/${encodeURIComponent(selectedBusinessId)}`,
+        `${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}`,
         { headers },
       );
       const data = (await response.json().catch(() => ({}))) as {
@@ -298,6 +302,10 @@ export default function FeaturedVideoScreen() {
 
   // ── Upload ────────────────────────────────────────────────────────────────────
   const handleUpload = async () => {
+    if (!businessId) {
+      Alert.alert("Business unavailable", "We couldn't confirm your business selection. Please try again.");
+      return;
+    }
     if ((Platform.OS as string) === "web") {
       Alert.alert("Not supported", "Video upload is available on the mobile app.");
       return;
@@ -319,19 +327,21 @@ export default function FeaturedVideoScreen() {
       const token = await getToken();
       const formData = new FormData();
       formData.append("video", { uri: asset.uri, type: asset.mimeType ?? "video/mp4", name: "featured.mp4" } as unknown as Blob);
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/featured-video/upload`, {
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video/upload`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
-      if (!res.ok) {
-        const e = await res.json() as { error?: string };
-        throw new Error(e.error ?? "Upload failed");
+      const data = (await res.json().catch(() => ({}))) as { featuredVideoUrl?: unknown; error?: unknown };
+      const uploadedUrl = typeof data.featuredVideoUrl === "string" && isHostedUrl(data.featuredVideoUrl)
+        ? data.featuredVideoUrl
+        : "";
+      if (!res.ok || !uploadedUrl) {
+        throw new Error(safeErrorMessage(data.error, "Upload failed"));
       }
-      const data = await res.json() as { featuredVideoUrl: string };
-      setHostedUrl(data.featuredVideoUrl);
+      setHostedUrl(uploadedUrl);
       // Clear stored prompts — they've filmed their video
-      if (businessId) await AsyncStorage.removeItem(storageKey(businessId));
+      await AsyncStorage.removeItem(storageKey(businessId));
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("You're live!", "Your community introduction video is now on your listing.");
     } catch (err) {
@@ -340,18 +350,26 @@ export default function FeaturedVideoScreen() {
   };
 
   const handleDeleteHosted = () => {
+    if (!businessId) {
+      Alert.alert("Business unavailable", "We couldn't confirm your business selection. Please try again.");
+      return;
+    }
     Alert.alert("Remove video?", "This will remove your community introduction video.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Remove", style: "destructive", onPress: async () => {
           try {
             const token = await getToken();
-            await fetch(`${getApiBase()}/api/businesses/mine/featured-video/hosted`, {
+            const res = await fetch(`${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video/hosted`, {
               method: "DELETE",
               headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
+            const data = (await res.json().catch(() => ({}))) as { ok?: unknown; error?: unknown };
+            if (!res.ok || data.ok !== true) {
+              throw new Error(safeErrorMessage(data.error, "Failed to remove video."));
+            }
             setHostedUrl(null);
-          } catch { Alert.alert("Error", "Failed to remove video."); }
+          } catch (err) { Alert.alert("Error", err instanceof Error ? err.message : "Failed to remove video."); }
         }
       },
     ]);
@@ -370,7 +388,7 @@ export default function FeaturedVideoScreen() {
     if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const token = await getToken();
-      const res = await fetch(`${getApiBase()}/api/businesses/${businessId}/featured-video`, {
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
@@ -379,9 +397,12 @@ export default function FeaturedVideoScreen() {
           videoPurpose: videoPurpose || null,
         }),
       });
-      const data = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok || !data.success) { setError(data.error ?? "Failed to save."); return; }
-      if (businessId) await AsyncStorage.removeItem(storageKey(businessId));
+      const data = (await res.json().catch(() => ({}))) as { success?: unknown; error?: unknown };
+      if (!res.ok || data.success !== true) {
+        setError(safeErrorMessage(data.error, "Failed to save."));
+        return;
+      }
+      await AsyncStorage.removeItem(storageKey(businessId));
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -391,17 +412,23 @@ export default function FeaturedVideoScreen() {
 
   const handleClearLink = async () => {
     if (!businessId) return;
+    setError("");
     setSaving(true);
     try {
       const token = await getToken();
-      await fetch(`${getApiBase()}/api/businesses/${businessId}/featured-video`, {
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ videoUrl: null }),
       });
+      const data = (await res.json().catch(() => ({}))) as { success?: unknown; error?: unknown };
+      if (!res.ok || data.success !== true) {
+        setError(safeErrorMessage(data.error, "Failed to remove featured video. Please try again."));
+        return;
+      }
       setVideoUrl(""); setVideoTitle(""); setVideoPurpose("");
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch { }
+    } catch { setError("Could not connect. Please try again."); }
     finally { setSaving(false); }
   };
 

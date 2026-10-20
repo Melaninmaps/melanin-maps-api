@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const runtime = vi.hoisted(() => {
@@ -164,6 +165,11 @@ vi.mock("@/components/FeaturedVideoCard", () => ({
 
 import FeaturedVideoScreen from "../app/business-owner/featured-video";
 
+const featuredVideoSource = readFileSync(
+  new URL("../app/business-owner/featured-video.tsx", import.meta.url),
+  "utf8",
+);
+
 type Node = string | number | null | undefined | { type?: unknown; props?: { children?: Node[]; onPress?: () => void } } | Node[];
 
 function textContent(node: Node): string {
@@ -248,6 +254,34 @@ function assertNoVideoControls(tree: Node) {
 }
 
 describe("native Business Owner Featured Video load recovery", () => {
+  it("propagates only the exact selected managed-business ID through video routes and gates UI success on valid responses", () => {
+    const uploadStart = featuredVideoSource.indexOf("const handleUpload = async () => {");
+    const deleteStart = featuredVideoSource.indexOf("const handleDeleteHosted = () => {");
+    const saveStart = featuredVideoSource.indexOf("const handleSaveLink = async () => {");
+    const clearStart = featuredVideoSource.indexOf("const handleClearLink = async () => {");
+    const renderStart = featuredVideoSource.indexOf("// ── Render");
+    const upload = featuredVideoSource.slice(uploadStart, deleteStart);
+    const hostedDelete = featuredVideoSource.slice(deleteStart, saveStart);
+    const save = featuredVideoSource.slice(saveStart, clearStart);
+    const clear = featuredVideoSource.slice(clearStart, renderStart);
+
+    expect(featuredVideoSource).toContain("`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}`");
+    expect(upload).toContain("if (!businessId)");
+    expect(upload).toContain("/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video/upload");
+    expect(upload).toContain("typeof data.featuredVideoUrl === \"string\" && isHostedUrl(data.featuredVideoUrl)");
+    expect(upload).toContain("if (!res.ok || !uploadedUrl)");
+    expect(hostedDelete).toContain("/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video/hosted");
+    expect(hostedDelete).toContain("if (!res.ok || data.ok !== true)");
+    expect(save).toContain("/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video");
+    expect(save).toContain("if (!res.ok || data.success !== true)");
+    expect(clear).toContain("/api/businesses/mine/managed/${encodeURIComponent(businessId)}/featured-video");
+    expect(clear).toContain("if (!res.ok || data.success !== true)");
+    expect(clear.indexOf("if (!res.ok || data.success !== true)")).toBeLessThan(clear.indexOf('setVideoUrl("")'));
+    expect(featuredVideoSource).not.toContain("/api/businesses/mine/featured-video/upload");
+    expect(featuredVideoSource).not.toContain("/api/businesses/mine/featured-video/hosted");
+    expect(featuredVideoSource).not.toContain("/api/businesses/${businessId}/featured-video");
+  });
+
   beforeEach(() => {
     runtime.reset();
     mocks.fetch.mockReset();
@@ -255,7 +289,7 @@ describe("native Business Owner Featured Video load recovery", () => {
       if (input.endsWith("/api/businesses/mine/managed")) {
         return Promise.resolve(managedResponse([{ id: "owner-business" }]));
       }
-      if (input.endsWith("/api/businesses/owner-business")) {
+      if (input.endsWith("/api/businesses/mine/managed/owner-business")) {
         return Promise.resolve(selectedResponse({ id: "owner-business" }));
       }
       return Promise.reject(new Error(`Unexpected request: ${input}`));
@@ -383,7 +417,7 @@ describe("native Business Owner Featured Video load recovery", () => {
     expect(textContent(resolved)).toContain("Need some inspiration?");
     expect(textContent(resolved)).not.toContain("We couldn't load your video settings");
     expect(mocks.fetch).toHaveBeenLastCalledWith(
-      "/api/businesses/resolved-owner-business",
+      "/api/businesses/mine/managed/resolved-owner-business",
       { headers: { Authorization: "Bearer owner-token" } },
     );
   });
@@ -433,7 +467,7 @@ describe("native Business Owner Featured Video load recovery", () => {
     );
     expect(mocks.fetch).toHaveBeenNthCalledWith(
       2,
-      "/api/businesses/owner-business",
+      "/api/businesses/mine/managed/owner-business",
       { headers: { Authorization: "Bearer owner-token" } },
     );
   });
