@@ -4704,7 +4704,7 @@
       "exclusions": "No server/API route or storage semantics; do not make a selected-business video endpoint, alter upload/delete/link routes, data/schema/provider, Directory/Kinfolk/public listing, runtime/browser/device/staging/deploy/remote action. This client guard does not make legacy media routes multi-business authoritative.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "IN DEVELOPMENT",
       "authorityBase": "7e3d9d8d9487732f21b5d04365a289377d9b4cb3",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_FEATURED_VIDEO_MANAGED_ENTRY_GUARD_BASE_2026-10-20.tar.gz",
@@ -4713,7 +4713,7 @@
         "expires_at": "2026-10-21T03:23:09.121Z",
         "size_bytes": 13562
       },
-      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
+      "workerStart": "ACKNOWLEDGED 2026-10-20: base verification in progress; no source overlay/edit.",
       "source_boundary": "Source-only client entry guard. Parent journey, server media authority, runtime/staging/device/member/release/founder acceptance stay open."
     }
   ],
