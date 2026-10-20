@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, Mic2 } from "lucide-react";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
@@ -43,6 +43,13 @@ export function BusinessVoiceProfileEditor({
 }: {
   businessId: string;
 }) {
+  const activeBusinessIdRef = useRef(businessId);
+  const activeBusinessEpochRef = useRef(0);
+  if (activeBusinessIdRef.current !== businessId) {
+    activeBusinessIdRef.current = businessId;
+    activeBusinessEpochRef.current += 1;
+  }
+  const currentBusinessEpoch = activeBusinessEpochRef.current;
   const [profile, setProfile] = useState<Profile>(EMPTY);
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -53,13 +60,35 @@ export function BusinessVoiceProfileEditor({
   const [drafting, setDrafting] = useState(false);
   const [editableDraft, setEditableDraft] = useState("");
   const [draftMessage, setDraftMessage] = useState<string | null>(null);
+  const [boundBusinessId, setBoundBusinessId] = useState(businessId);
+  const [boundBusinessEpoch, setBoundBusinessEpoch] = useState(currentBusinessEpoch);
+  const contextReady = boundBusinessId === businessId && boundBusinessEpoch === currentBusinessEpoch;
+
+  function isCurrentBusinessContext(id: string, epoch: number) {
+    return activeBusinessIdRef.current === id && activeBusinessEpochRef.current === epoch;
+  }
 
   useEffect(() => {
+    const loadBusinessId = businessId;
+    const loadBusinessEpoch = currentBusinessEpoch;
     let active = true;
+    const isCurrent = () => active && isCurrentBusinessContext(loadBusinessId, loadBusinessEpoch);
+    setProfile(EMPTY);
+    setConfirmed(false);
+    setLoading(true);
+    setSaving(false);
+    setMessage(null);
+    setDraftKind("caption");
+    setDraftRequest("");
+    setDrafting(false);
+    setEditableDraft("");
+    setDraftMessage(null);
+    setBoundBusinessId(loadBusinessId);
+    setBoundBusinessEpoch(loadBusinessEpoch);
     async function load() {
       try {
         const response = await authenticatedFetch(
-          `${BASE}api/businesses/${businessId}/kinfolk-voice-profile`,
+          `${BASE}api/businesses/${loadBusinessId}/kinfolk-voice-profile`,
         );
         const payload = (await response.json()) as {
           profile?: Profile | null;
@@ -69,24 +98,24 @@ export function BusinessVoiceProfileEditor({
           throw new Error(
             payload.error ?? "Could not load Business Voice Profile.",
           );
-        if (active && payload.profile)
+        if (isCurrent() && payload.profile)
           setProfile({ ...EMPTY, ...payload.profile });
       } catch (error) {
-        if (active)
+        if (isCurrent())
           setMessage(
             error instanceof Error
               ? error.message
               : "Could not load Business Voice Profile.",
           );
       } finally {
-        if (active) setLoading(false);
+        if (isCurrent()) setLoading(false);
       }
     }
     void load();
     return () => {
       active = false;
     };
-  }, [businessId]);
+  }, [businessId, currentBusinessEpoch]);
 
   function toggleTone(tone: Tone) {
     setProfile((current) => ({
@@ -100,11 +129,14 @@ export function BusinessVoiceProfileEditor({
   }
 
   async function save() {
+    if (!contextReady || loading || saving) return;
+    const saveBusinessId = businessId;
+    const saveBusinessEpoch = currentBusinessEpoch;
     setSaving(true);
     setMessage(null);
     try {
       const response = await authenticatedFetch(
-        `${BASE}api/businesses/${businessId}/kinfolk-voice-profile`,
+        `${BASE}api/businesses/${saveBusinessId}/kinfolk-voice-profile`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -119,28 +151,36 @@ export function BusinessVoiceProfileEditor({
         throw new Error(
           payload.error ?? "Could not save Business Voice Profile.",
         );
-      if (payload.profile) setProfile({ ...EMPTY, ...payload.profile });
-      setConfirmed(false);
-      setMessage(
-        "Saved. Kinfolk will use this only for a future business-facing draft you request.",
-      );
+      if (isCurrentBusinessContext(saveBusinessId, saveBusinessEpoch)) {
+        if (payload.profile) setProfile({ ...EMPTY, ...payload.profile });
+        setConfirmed(false);
+        setMessage(
+          "Saved. Kinfolk will use this only for a future business-facing draft you request.",
+        );
+      }
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Could not save Business Voice Profile.",
-      );
+      if (isCurrentBusinessContext(saveBusinessId, saveBusinessEpoch)) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Could not save Business Voice Profile.",
+        );
+      }
     } finally {
-      setSaving(false);
+      if (isCurrentBusinessContext(saveBusinessId, saveBusinessEpoch))
+        setSaving(false);
     }
   }
 
   async function requestDraft() {
+    if (!contextReady || loading || drafting || !draftRequest.trim()) return;
+    const draftBusinessId = businessId;
+    const draftBusinessEpoch = currentBusinessEpoch;
     setDrafting(true);
     setDraftMessage(null);
     try {
       const response = await authenticatedFetch(
-        `${BASE}api/businesses/${businessId}/kinfolk-drafts`,
+        `${BASE}api/businesses/${draftBusinessId}/kinfolk-drafts`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -154,18 +194,23 @@ export function BusinessVoiceProfileEditor({
       const payload = (await response.json()) as { draft?: string; error?: string };
       if (!response.ok)
         throw new Error(payload.error ?? "Could not prepare an editable draft.");
-      setEditableDraft(payload.draft ?? "");
-      setDraftMessage("Editable draft ready. Review and revise it before any use.");
+      if (isCurrentBusinessContext(draftBusinessId, draftBusinessEpoch)) {
+        setEditableDraft(payload.draft ?? "");
+        setDraftMessage("Editable draft ready. Review and revise it before any use.");
+      }
     } catch (error) {
-      setDraftMessage(
-        error instanceof Error ? error.message : "Could not prepare an editable draft.",
-      );
+      if (isCurrentBusinessContext(draftBusinessId, draftBusinessEpoch)) {
+        setDraftMessage(
+          error instanceof Error ? error.message : "Could not prepare an editable draft.",
+        );
+      }
     } finally {
-      setDrafting(false);
+      if (isCurrentBusinessContext(draftBusinessId, draftBusinessEpoch))
+        setDrafting(false);
     }
   }
 
-  if (loading)
+  if (loading || !contextReady)
     return (
       <div className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-5 text-sm text-[#3A1F0E]/60">
         Loading Business Voice Profile…
@@ -301,7 +346,7 @@ export function BusinessVoiceProfileEditor({
         </p>
         <button
           type="button"
-          disabled={saving || !confirmed}
+          disabled={saving || !confirmed || loading || !contextReady}
           onClick={() => void save()}
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-[#2B1507] px-5 text-sm font-bold text-white disabled:opacity-50"
         >
@@ -345,7 +390,7 @@ export function BusinessVoiceProfileEditor({
           </p>
           <button
             type="button"
-            disabled={drafting || !draftRequest.trim()}
+            disabled={drafting || !draftRequest.trim() || loading || !contextReady}
             onClick={() => void requestDraft()}
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-[#5E3B87] px-5 text-sm font-bold text-white disabled:opacity-50"
           >
