@@ -716,15 +716,15 @@
       "platform": "API/database/providers",
       "founder_requirement": "D3 build additive durable entitlement/grant model; payment evidence cannot overwrite memberType/independent access.",
       "acceptance_criteria": "General ledger has source/scope/tier/start/end/provider/status/audit; effective tier recomputes across provider/independent grants; no silent historic backfill.",
-      "status": "IN DEVELOPMENT",
-      "source_evidence": "9b1e72 Stripe-only candidate reports 19 tests/4 files but is not authority evidence; audit H2 target.",
+      "status": "BLOCKED",
+      "source_evidence": "9b1e72 Stripe-only candidate reports 19 tests/4 files but is not authority evidence; audit H2 target. Bounded current-authority trace: NO_LEGITIMATE_SOURCE_CLAIM. The reported 9b1e72 Stripe-only candidate is not locally resolvable; current effective tier depends on mutable legacy fields plus active business-owner links, not an additive ledger.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Entitlement owner; central integration owner",
-      "dependencies_or_blockers": "MISSING EVIDENCE \u2014 authority/cross-provider design/migration/operational/member proof.",
-      "next_action": "Compare candidate to authority; propose additive-ledger slice without merge/migration/provider.",
+      "responsible_owner_or_task": "Founder/membership product owner; entitlement owner; central coordinator records only approved design",
+      "dependencies_or_blockers": "REQUIRES D3 DESIGN/AUTHORIZATION \u2014 additive durable multi-grant ledger (source/scope/tier/start/end/provider/status/audit), precedence across legacy/provider/trial/founding/beta/tester/business grants, no-silent-backfill historic treatment, schema/migration/operations disposition, and safe effective-tier enforcement plan.",
+      "next_action": "No source claim. Obtain the D3 persistence/precedence and historic-treatment decision plus separately authorized schema/enforcement scope before code is proposed.",
       "founder_approval_needed": "Yes for historic treatment/release; no for read-only comparison.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -2044,6 +2044,10 @@
     {
       "date": "2026-10-20",
       "event": "Bounded COMM-004 Shared Plans trace found NO_LEGITIMATE_SOURCE_CLAIM. Aggregate-only SP-002, Circle consent SP-003, private owner itinerary, and legacy bearer-link flows cannot be extended without unapproved named-recipient/content/audit/retention design. No source was changed."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Bounded MEM-D3 entitlement trace found NO_LEGITIMATE_SOURCE_CLAIM. A real D3 journey requires an additive durable ledger, precedence/historic treatment, migration and broad membership enforcement changes; unresolved 9b1e72 Stripe-only candidate is not locally resolvable. Existing access, checkout closure, trials, tester and business-owner logic remain untouched."
     }
   ],
   "evidence_gaps": [
@@ -2257,13 +2261,13 @@
           "INT-REVENUECAT-001"
         ],
         "existing_implementation": "Closed checkout, effective entitlement, free-core and no-auto-trial source leaves are linked.",
-        "missing_broken_elements": "Final catalog, durable grants, rail lifecycle and billing acceptance are missing.",
-        "current_active_repair": "No current child claim.",
+        "missing_broken_elements": "D3 durable multi-grant ledger, provider/independent-grant precedence, no-silent-backfill treatment, migration/operations, and effective-tier enforcement remain design- and authorization-gated.",
+        "current_active_repair": "No current entitlement source claim. MEM-D3 requires founder-approved durable-ledger/precedence/historic-treatment design before any safe source path exists.",
         "integrated_source": "Selected local child receipts only.",
         "test_evidence": "Focused source contracts only.",
         "external_gates": "Founder commercial decisions, rails/accounts, legal/tax and staged acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Continue only decision-cleared source slices."
+        "next_action": "Keep checkout closed and valid memberships/trials/tester/business-owner access unchanged. Require D3 design and separately authorized persistence/enforcement scope."
       },
       {
         "experience_id": "EXP-KINFOLK-FLIGHT-COORDINATION",
