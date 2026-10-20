@@ -570,3 +570,5 @@ This baseline explicitly retains **D1–D11** as `MEM-D1` through `MEM-D11`; **S
 | 2026-10-20 | P0 `BIZ-009-FEATURED-VIDEO-SELECTED-OWNER-ROUTE-ISOLATION` claimed for M7: hosted Featured Video upload/delete must fail closed for legacy multi-business ownership and support explicit approved selected-target operations. No storage/runtime acceptance is implied. |
 
 | 2026-10-20 | P0 `BIZ-003-POST-SKIP-FEEDBACK-ACTIVE-OWNER-INBOX-DELIVERY` claimed for 44XX: opted-in feedback conversation delivery must prefer an active approved owner and realign stale legacy recipients. |
+
+| 2026-10-20 | `BIZ-009-MOBILE-FEATURED-VIDEO-MANAGED-LIST-ENTRY-GUARD` source-integrated locally at `e5b1e3e590e65b6a088650f09898ba7fd6e5ce90`: mobile focused recovery/social suite 31/31 and no-emit PASS; exact-one context guard only, with server/media/runtime acceptance still separate. |
