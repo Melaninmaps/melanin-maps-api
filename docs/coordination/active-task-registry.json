@@ -4554,7 +4554,7 @@
         "expires_at": "2026-10-21T02:50:18.371Z",
         "size_bytes": 13817
       },
-      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:28Z"
     },
     {
       "id": "BIZ-009-MOBILE-FEATURED-VIDEO-LOAD-RECOVERY",
@@ -4578,7 +4578,7 @@
         "expires_at": "2026-10-21T02:50:18.723Z",
         "size_bytes": 10113
       },
-      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:37Z"
     },
     {
       "id": "BIZ-009-MOBILE-BUSINESS-VOICE-SELECTED-BUSINESS-CONTEXT",
@@ -4602,7 +4602,7 @@
         "expires_at": "2026-10-21T02:50:19.011Z",
         "size_bytes": 51364
       },
-      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:24Z"
     },
     {
       "id": "BIZ-009-SELECTED-PROFILE-AUTHORITY-ROUTE-CONTRACT",
@@ -4625,7 +4625,7 @@
         "expires_at": "2026-10-21T02:50:19.868Z",
         "size_bytes": 46324
       },
-      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:25Z"
     }
   ],
   "globalDirectiveDelivery": [
