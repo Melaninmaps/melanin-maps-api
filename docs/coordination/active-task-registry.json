@@ -5244,6 +5244,25 @@
         "sha256": "8a7a60fc6463b4fb627dafa2223021326624d9acb5166b761cfd6f8d696fe64a",
         "expires_at": "2026-10-21T12:16:18.324Z"
       }
+    },
+    {
+      "id": "BIZ-009-DASHBOARD-TRUST-PROFILE-SELECTED-IDENTITY-ISOLATION",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "authorityBase": "5fbb80f3b91b71cfe61199115c47d2887c9e789b",
+      "workerStart": "BASE_TRANSFER_PENDING",
+      "paths": [
+        "artifacts/mobile/app/business-dashboard.tsx",
+        "artifacts/mobile/__tests__/business-dashboard-trust-profile-selected-identity.test.ts"
+      ],
+      "purpose": "Replace Dashboard Trust Profile legacy identity read/save calls with the existing selected managed-business Identity endpoints and fence late business/account context completion.",
+      "acceptance": "Dashboard must capture the already managed-list-validated business.id for Trust Profile read and PATCH; use only /api/businesses/mine/managed/:businessId/identity; verify activeBusinessIdRef matches the captured ID before any Trust Profile load state, success/error result, collapse, or saving-state completion. Preserve legacy Identity routes for other callers, Dashboard selection/no-business behavior, identity payload/labels and non-Trust-Profile behavior. Add one additive focused static/native contract for selected route, exact ID, A→B stale response/result fencing, non-OK/malformed fail-closed behavior, and no Dashboard legacy identity URL.",
+      "validation": "Focused new Dashboard Trust Profile contract plus business-dashboard-managed-selection and business-dashboard-selected-context; existing business-identity-selected-owner API contract read-only regression; mobile no-emit with --ignoreDeprecations 6.0 and temporary external build info; exact two-path diff/whitespace and fresh-base reconstruction.",
+      "exclusions": "No API/server/business-identity route/schema/DB/data/storage/provider/OAuth/payment/push/AI action; no browser/device/mobile build/staging/deploy/remote Git/production action; no Dashboard feature redesign or changes outside Trust Profile identity read/save context.",
+      "source_boundary": "Return an uncommitted/unstaged hash-manifested carrier only. Source tests do not establish runtime, staging, device, member-visible, release, or founder acceptance."
     }
   ],
   "globalDirectiveDelivery": [
