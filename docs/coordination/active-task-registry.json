@@ -5142,11 +5142,11 @@
       "id": "BIZ-009-ADMIN-INVENTORY-CANONICAL-PUBLIC-PROFILE-LINK",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "n3V26eXux1YUjv25Jvn8Bm",
       "ownerTaskName": "Differentiate Website Preview and App Onboarding",
       "authorityBase": "095d1384bbabb9e6560c7bb5e7be162272eb5e69",
-      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
+      "workerStart": "ACCEPTED_AND_FROZEN",
       "paths": [
         "artifacts/web/src/pages/admin.tsx",
         "artifacts/web/src/__tests__/admin-inventory-public-profile-link.test.ts"
@@ -5160,6 +5160,13 @@
         "file": "BIZ009_ADMIN_INVENTORY_CANONICAL_PUBLIC_LINK_BASE_095D1384.tar.gz",
         "sha256": "33ef935c011a3fcfd735b76766edac624a35e2482a2938a91f7d56b53dceb081",
         "expires_at": "2026-10-21T12:01:22.756Z"
+      },
+      "sourceIntegration": {
+        "commit": "b54c96eb0860aba887279369fb3e357330dffec3",
+        "carrier_outer_sha256": "39191429a2114e3578bc7b00ae1f93eb6cbe49a4e0a6c797cc13dc6676861a3b",
+        "carrier_patch_sha256": "aba25ad9bd29a5b83a569e008350cf8d9e109a8ccdb99bdf286dd1f0b2cb7533",
+        "validation": "Focused Admin public-profile-link contract: 1 file/3 tests PASS; full-authority Web no-emit PASS; exact two-path scope and diff hygiene PASS.",
+        "boundary": "Local deterministic source only. No real Admin account, browser journey, deployed public profile, staging, device, release, or founder acceptance."
       }
     },
     {
