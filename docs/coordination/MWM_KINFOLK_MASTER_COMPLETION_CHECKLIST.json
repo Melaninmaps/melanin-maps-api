@@ -1141,7 +1141,7 @@
       "founder_requirement": "Keep RevenueCat disabled; future cross-provider work cannot mutate shared member_type/subscription fields or overwrite independent grants.",
       "acceptance_criteria": "Provider receipt/entitlement rows integrate with additive ledger; cancellation only affects provider row; native rail stays disabled until enabled.",
       "status": "BLOCKED",
-      "source_evidence": "Audit A/F/H2 and D3/D8 reconciliation identify disabled client and mutable-field conflict. Active P0 local source enforcement claim guards mounted server RevenueCat routes that otherwise could call a provider and mutate shared membership fields despite default-disabled policy.",
+      "source_evidence": "Audit A/F/H2 and D3/D8 reconciliation identify disabled client and mutable-field conflict. Active P0 local source enforcement claim guards mounted server RevenueCat routes that otherwise could call a provider and mutate shared membership fields despite default-disabled policy. Default-disabled mounted server guard SOURCE_INTEGRATED_LOCAL_ONLY at `620f2ec228a6211fc1763573a655776584585871`: both sync/webhook endpoints return the identical generic 409 before auth/body/config/provider/pool/logging; current payment-boundary contracts 12/12 and API no-emit pass. No provider or member lifecycle acceptance.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
@@ -2136,6 +2136,10 @@
     {
       "date": "2026-10-20",
       "event": "Transferred verified compact base for founder-mandated BIZ-009 Business Voice Profile table-readiness source repair. Claim remains four-path, source-only, and no external schema action is authorized."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "INT-REVENUECAT-001 default-disabled mounted router guard SOURCE_INTEGRATED_LOCAL_ONLY at 620f2ec228a6211fc1763573a655776584585871 after current-authority 12-test payment-boundary suite and API no-emit. Provider/payment/member/release/founder acceptance remain blocked/unperformed."
     }
   ],
   "evidence_gaps": [
@@ -2583,8 +2587,8 @@
         "existing_implementation": "Closed checkout, effective entitlement, free-core and no-auto-trial source leaves are linked.",
         "missing_broken_elements": "No agreed single canonical entitlement consumer journey that preserves free-core and business-owner behavior without disclosure or payment/provider changes; durable D3 ledger remains separately blocked.",
         "current_active_repair": "No active MEM-D4 source claim. Current KMEM mobile revoke repair is unrelated; entitlement enforcement and consumer conversion remain protected.",
-        "integrated_source": "Selected local child receipts only.",
-        "test_evidence": "Focused source contracts only.",
+        "integrated_source": "Selected local child receipts only. RevenueCat default-disabled router guard integrated locally at 620f2ec228a6211fc1763573a655776584585871; source-only.",
+        "test_evidence": "Focused source contracts only, including current closed-rail router regressions; no provider or member lifecycle evidence.",
         "external_gates": "Founder commercial decisions, rails/accounts, legal/tax and staged acceptance.",
         "completion_status": "IN PROGRESS",
         "next_action": "Do not change raw consumer fields or effective-tier enforcement. Require a single approved member journey with server-authoritative entitlement semantics before a future conversion claim."

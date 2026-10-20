@@ -403,6 +403,7 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 
 | Date | Evidence event |
 | --- | --- |
+| 2026-10-20 | INT-REVENUECAT-001 mounted default-disabled server guard SOURCE_INTEGRATED_LOCAL_ONLY at `620f2ec228a6211fc1763573a655776584585871` after current 12-test payment-boundary suite and API no-emit; no provider/payment/member/release/founder acceptance is implied. |
 | 2026-10-20 | Transferred the verified compact base for the founder-mandated BIZ-009 Business Voice Profile table-readiness source repair; no schema execution, staging, production, provider, or browser/device action is authorized. |
 | 2026-10-20 | Founder-authorized P0 BIZ-009 Business Voice Profile table-readiness repair registered with four exact startup/contract paths. It is source-only; no DDL was executed, no staging/production action occurred, and parent acceptance remains open. |
 | 2026-10-20 | BIZ-003 legacy approved-owner/former-submitter feedback isolation SOURCE_INTEGRATED_LOCAL_ONLY at `5ef66d80185c3f3af71ec48d43853a34e98c0180` after API 14/14, Dashboard/Owner Home 6/6, and API no-emit; parent remains open and external acceptance is unperformed. |

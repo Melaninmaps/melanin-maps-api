@@ -4345,7 +4345,7 @@
       "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
       "ownerTaskName": "Review uploaded pasted content",
       "priority": "P0",
-      "status": "IN DEVELOPMENT",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "cf9a71c1c377c4e24c44949b26063f692deaa8f7",
       "paths": [
         "artifacts/api-server/src/routes/revenuecat.ts",
@@ -4360,7 +4360,15 @@
         "expires_at": "2026-10-21T01:59:40.618Z",
         "size_bytes": 234485
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:00:29Z"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:00:29Z",
+      "source_receipt": "620f2ec228a6211fc1763573a655776584585871",
+      "central_validation": {
+        "api_vitest": "2 files / 12 tests passed: RevenueCat disabled real-router + current stripe-checkout-retirement",
+        "api_no_emit": "passed",
+        "scope": "exact two paths",
+        "effect": "both mounted endpoints return identical generic 409 before auth/body/config/provider/pool/logging",
+        "external_acceptance": "not performed"
+      }
     },
     {
       "id": "BIZ-009-BUSINESS-VOICE-PROFILE-SCHEMA-READINESS",
