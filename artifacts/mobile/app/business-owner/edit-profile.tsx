@@ -85,6 +85,7 @@ export default function EditBusinessProfile() {
   const [original, setOriginal] = useState<FormState | null>(null);
 
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [pendingPhotos, setPendingPhotos] = useState<string[]>([]);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
@@ -115,7 +116,7 @@ export default function EditBusinessProfile() {
         : "/api/businesses/mine";
       const res = await fetch(`${getApiBase()}${selectedPath}`, { headers });
       if (res.ok) {
-        const data = await res.json() as { business: (FormState & { id: string; imageUrl?: string; photos?: string[]; videos?: string[]; introVideoUrl?: string | null; weeklySchedule?: Record<string, { open: string; close: string } | null> | null; showAvailability?: boolean }) | null };
+        const data = await res.json() as { business: (FormState & { id: string; updatedAt?: string | null; imageUrl?: string; photos?: string[]; videos?: string[]; introVideoUrl?: string | null; weeklySchedule?: Record<string, { open: string; close: string } | null> | null; showAvailability?: boolean }) | null };
         if (data.business) {
           const b = data.business;
           const f: FormState = {
@@ -132,6 +133,7 @@ export default function EditBusinessProfile() {
           setForm(f);
           setOriginal(f);
           setBusinessId(b.id);
+          setExpectedUpdatedAt(managedBusinessId ? b.updatedAt ?? null : null);
           setPhotos(b.photos ?? []);
           setPendingPhotos((b as any).pendingPhotos ?? []);
           setCoverUrl(b.imageUrl ?? null);
@@ -179,6 +181,7 @@ export default function EditBusinessProfile() {
       const res = await fetch(`${getApiBase()}${profilePath}`, {
         method: "PATCH", headers,
         body: JSON.stringify({
+          ...(managedBusinessId ? { expectedUpdatedAt } : {}),
           name: form.name.trim(), category: form.category,
           subcategory: form.subcategory || form.category,
           description: form.description.trim(),
