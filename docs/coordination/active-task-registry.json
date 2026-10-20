@@ -3877,6 +3877,201 @@
         "behavior": "Missing-token revoke now throws inside the existing catch path, surfaces the sign-in error through memoryError, and cannot reach DELETE or local filtering. Token success, encoded exact-ID DELETE, response.ok gate, non-OK recovery, and haptic remain unchanged.",
         "limitations": "Local source/static-contract evidence only; no physical device/browser/runtime/database/provider/staging/deployment/member/release/founder acceptance."
       }
+    },
+    {
+      "id": "DIR-003-VERIFICATION-BENEFIT-BOUNDARY-MATRIX",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCucG6",
+      "requirementId": "DIR-003",
+      "baseline": "48d794e0bde79aa97d23008b72518f74aa4809e4",
+      "paths": [
+        "docs/coordination/DIR003_BUSINESS_BENEFIT_VERIFICATION_BOUNDARY_MATRIX_2026-10-20.md"
+      ],
+      "documentationOnly": true,
+      "purpose": "Create a decision-ready matrix separating workflow/eligibility support from merit-based verification, with an explicit prohibition on purchasable trust. Unknown benefit/fulfillment facts must remain decisions, not assertions.",
+      "constraints": [
+        "Exactly one new coordination Markdown file at the claimed path; do not edit source, existing coordination records, or any other file.",
+        "No account/session/record/data access; no DB/schema/configuration/provider/payment/checkout/remote Git/deployment/browser/device/activation; no founder or member acceptance claim.",
+        "Historical cited inputs not present in the current workspace are unresolved evidence, not a basis to infer facts or approvals."
+      ],
+      "requiredDocumentSections": [
+        "Status and immutable requirement ID",
+        "Authority/base and evidence considered",
+        "What is known versus missing/ambiguous",
+        "Explicit decision/authorization requested",
+        "Hard no-action/no-claim boundary",
+        "Future acceptance evidence and rollback/reversal constraints where applicable"
+      ],
+      "validationPlan": [
+        "One-path-only working tree; Markdown contains all required sections and no fabricated approval/account/price/record assertion.",
+        "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
+      ],
+      "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
+      "baseTransfer": {
+        "state": "PENDING_HANDOFF",
+        "file": "DIR003_DOC_BASE_2026-10-20.tar.gz",
+        "sha256": "5b4a3a62923f91fd573334af36cedb18260f1f52502093ee53423befa527af13",
+        "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
+      }
+    },
+    {
+      "id": "BIZ-002-D10-CLOSED-RAIL-ACCEPTANCE-READINESS",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCucG6",
+      "requirementId": "BIZ-002",
+      "baseline": "48d794e0bde79aa97d23008b72518f74aa4809e4",
+      "paths": [
+        "docs/coordination/BIZ002_D10_CLOSED_RAIL_ACCEPTANCE_READINESS_CHECKLIST_2026-10-20.md"
+      ],
+      "documentationOnly": true,
+      "purpose": "Create a decision-ready D10 closed-rail acceptance checklist that distinguishes existing evidence, missing business/price/terms decisions, required operational/legal proof, and explicit no-charge/no-deployment gates.",
+      "constraints": [
+        "Exactly one new coordination Markdown file at the claimed path; do not edit source, existing coordination records, or any other file.",
+        "No account/session/record/data access; no DB/schema/configuration/provider/payment/checkout/remote Git/deployment/browser/device/activation; no founder or member acceptance claim.",
+        "Historical cited inputs not present in the current workspace are unresolved evidence, not a basis to infer facts or approvals."
+      ],
+      "requiredDocumentSections": [
+        "Status and immutable requirement ID",
+        "Authority/base and evidence considered",
+        "What is known versus missing/ambiguous",
+        "Explicit decision/authorization requested",
+        "Hard no-action/no-claim boundary",
+        "Future acceptance evidence and rollback/reversal constraints where applicable"
+      ],
+      "validationPlan": [
+        "One-path-only working tree; Markdown contains all required sections and no fabricated approval/account/price/record assertion.",
+        "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
+      ],
+      "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
+      "baseTransfer": {
+        "state": "PENDING_HANDOFF",
+        "file": "BIZ002_DOC_BASE_2026-10-20.tar.gz",
+        "sha256": "ee6f6b1a895558a2cd48e78b04de21af40e1ab00113365658128a8e708e79333",
+        "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
+      }
+    },
+    {
+      "id": "ADMIN-001-NARROW-QA-ACTIVATION-REVERSAL-PACKET",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "IIUhb1wR0gfLjzmdLmEovt",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCucG6",
+      "requirementId": "ADMIN-001",
+      "baseline": "48d794e0bde79aa97d23008b72518f74aa4809e4",
+      "paths": [
+        "docs/coordination/ADMIN001_NARROW_QA_ACTIVATION_REVERSAL_AUTHORIZATION_PACKET_2026-10-20.md"
+      ],
+      "documentationOnly": true,
+      "purpose": "Create a narrow, authorization-only QA activation/reversal packet for one existing consented account, with dry-run/apply/reread/reversal steps held pending named authority. Do not name or access an account.",
+      "constraints": [
+        "Exactly one new coordination Markdown file at the claimed path; do not edit source, existing coordination records, or any other file.",
+        "No account/session/record/data access; no DB/schema/configuration/provider/payment/checkout/remote Git/deployment/browser/device/activation; no founder or member acceptance claim.",
+        "Historical cited inputs not present in the current workspace are unresolved evidence, not a basis to infer facts or approvals."
+      ],
+      "requiredDocumentSections": [
+        "Status and immutable requirement ID",
+        "Authority/base and evidence considered",
+        "What is known versus missing/ambiguous",
+        "Explicit decision/authorization requested",
+        "Hard no-action/no-claim boundary",
+        "Future acceptance evidence and rollback/reversal constraints where applicable"
+      ],
+      "validationPlan": [
+        "One-path-only working tree; Markdown contains all required sections and no fabricated approval/account/price/record assertion.",
+        "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
+      ],
+      "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
+      "baseTransfer": {
+        "state": "PENDING_HANDOFF",
+        "file": "ADMIN001_DOC_BASE_2026-10-20.tar.gz",
+        "sha256": "ce6d12b211124564d06cd8ebb4d216fffaae6ccaa719c7b05bc07bd4df10f4a2",
+        "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
+      }
+    },
+    {
+      "id": "MEM-D5-HISTORIC-ACCESS-AMBIGUITY-PACKET",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCucG6",
+      "requirementId": "MEM-D5",
+      "baseline": "48d794e0bde79aa97d23008b72518f74aa4809e4",
+      "paths": [
+        "docs/coordination/MEMD5_HISTORIC_ACCESS_AMBIGUITY_AND_DATA_AUTHORIZATION_PACKET_2026-10-20.md"
+      ],
+      "documentationOnly": true,
+      "purpose": "Create a source-only historic-access ambiguity list and minimized data-authorization request. It must prohibit export, classification, auto-upgrade, deletion, or mutation until a founder-approved plan exists.",
+      "constraints": [
+        "Exactly one new coordination Markdown file at the claimed path; do not edit source, existing coordination records, or any other file.",
+        "No account/session/record/data access; no DB/schema/configuration/provider/payment/checkout/remote Git/deployment/browser/device/activation; no founder or member acceptance claim.",
+        "Historical cited inputs not present in the current workspace are unresolved evidence, not a basis to infer facts or approvals."
+      ],
+      "requiredDocumentSections": [
+        "Status and immutable requirement ID",
+        "Authority/base and evidence considered",
+        "What is known versus missing/ambiguous",
+        "Explicit decision/authorization requested",
+        "Hard no-action/no-claim boundary",
+        "Future acceptance evidence and rollback/reversal constraints where applicable"
+      ],
+      "validationPlan": [
+        "One-path-only working tree; Markdown contains all required sections and no fabricated approval/account/price/record assertion.",
+        "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
+      ],
+      "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
+      "baseTransfer": {
+        "state": "PENDING_HANDOFF",
+        "file": "MEMD5_DOC_BASE_2026-10-20.tar.gz",
+        "sha256": "bef61c9f13ff042cd34ba47d5c2dd2d6c6fbd97676d6f534be31a8c0a1e12c04",
+        "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
+      }
+    },
+    {
+      "id": "INT-AUTH-001-STAGING-EVIDENCE-AUTHORIZATION-PACKET",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCucG6",
+      "requirementId": "INT-AUTH-001",
+      "baseline": "48d794e0bde79aa97d23008b72518f74aa4809e4",
+      "paths": [
+        "docs/coordination/INTAUTH001_AUTHENTICATED_STAGING_EVIDENCE_AUTHORIZATION_PACKET_2026-10-20.md"
+      ],
+      "documentationOnly": true,
+      "purpose": "Create an authorization-only authenticated-staging evidence packet naming the minimum future evidence categories for a consented existing QA account and immutable records. Do not access account/session/records or deploy.",
+      "constraints": [
+        "Exactly one new coordination Markdown file at the claimed path; do not edit source, existing coordination records, or any other file.",
+        "No account/session/record/data access; no DB/schema/configuration/provider/payment/checkout/remote Git/deployment/browser/device/activation; no founder or member acceptance claim.",
+        "Historical cited inputs not present in the current workspace are unresolved evidence, not a basis to infer facts or approvals."
+      ],
+      "requiredDocumentSections": [
+        "Status and immutable requirement ID",
+        "Authority/base and evidence considered",
+        "What is known versus missing/ambiguous",
+        "Explicit decision/authorization requested",
+        "Hard no-action/no-claim boundary",
+        "Future acceptance evidence and rollback/reversal constraints where applicable"
+      ],
+      "validationPlan": [
+        "One-path-only working tree; Markdown contains all required sections and no fabricated approval/account/price/record assertion.",
+        "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
+      ],
+      "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 preparation-only, not founder approval, runtime evidence, or release readiness.",
+      "baseTransfer": {
+        "state": "PENDING_HANDOFF",
+        "file": "INTAUTH001_DOC_BASE_2026-10-20.tar.gz",
+        "sha256": "d3ba0b65f7ce85103309054717d5b9e02c2ec88fe1eea86f51f926d7d90a9dad",
+        "authority_base": "48d794e0bde79aa97d23008b72518f74aa4809e4"
+      }
     }
   ],
   "globalDirectiveDelivery": [
