@@ -198,6 +198,15 @@ export default function EditBusinessProfile() {
         }),
       });
       if (!res.ok) throw new Error("Save failed");
+      if (managedBusinessId) {
+        const { business: updated } = await res.json() as {
+          business: { updatedAt?: string | null } | null;
+        };
+        if (!updated || typeof updated.updatedAt !== "string" || !updated.updatedAt) {
+          throw new Error("Save failed");
+        }
+        setExpectedUpdatedAt(updated.updatedAt);
+      }
       profileSaved = true;
 
       if (addressChanged && businessId && form.address.trim() && form.city.trim() && form.state.trim()) {
