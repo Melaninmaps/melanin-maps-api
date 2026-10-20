@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -180,48 +180,78 @@ interface GrowthToolsData {
   catalogue: GrowthTool[];
 }
 
-function useMyBusiness() {
+function useMyBusiness(requestedBusinessId: string | null) {
   const [business, setBusiness] = useState<MyBusiness | null>(null);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [requiresManagedBusinessSelection, setRequiresManagedBusinessSelection] = useState(false);
+  const requestGenerationRef = useRef(0);
 
   useEffect(() => {
+    let cancelled = false;
+    const generation = ++requestGenerationRef.current;
+    const isCurrent = () => !cancelled && requestGenerationRef.current === generation;
     const load = async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         const base = getApiBase();
-        if (!token || !base) { setLoading(false); return; }
+        if (!token || !base) {
+          if (isCurrent()) setLoading(false);
+          return;
+        }
         const res = await fetch(`${base}/api/businesses/mine/managed`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.ok) {
-          const data = await res.json() as { businesses?: MyBusiness[] };
-          const managedBusinesses = Array.isArray(data.businesses) ? data.businesses : [];
-          if (managedBusinesses.length !== 1) {
+        if (!res.ok) {
+          if (isCurrent()) {
             setBusiness(null);
             setReviews([]);
-            setRequiresManagedBusinessSelection(managedBusinesses.length > 1);
-            return;
+            setRequiresManagedBusinessSelection(false);
           }
-
-          const managedBusiness = managedBusinesses[0];
-          setBusiness(managedBusiness);
-          setRequiresManagedBusinessSelection(false);
-          const rRes = await fetch(
-            `${base}/api/reviews?businessId=${managedBusiness.id}`,
-            { headers: { Authorization: `Bearer ${token}` } },
-          );
-          if (rRes.ok) {
-            const rData = await rRes.json() as { reviews: ReviewRow[] };
-            setReviews((rData.reviews ?? []).slice(0, 3));
-          }
+          return;
         }
-      } catch {}
-      finally { setLoading(false); }
+        const data = await res.json() as { businesses?: MyBusiness[] };
+        const managedBusinesses = Array.isArray(data.businesses) ? data.businesses : [];
+        const selectedBusiness = requestedBusinessId
+          ? managedBusinesses.find((candidate) => candidate.id === requestedBusinessId) ?? null
+          : managedBusinesses.length === 1
+            ? managedBusinesses[0] ?? null
+            : null;
+        if (!selectedBusiness) {
+          if (isCurrent()) {
+            setBusiness(null);
+            setReviews([]);
+            // A supplied stale/invalid selection never falls back to index zero.
+            setRequiresManagedBusinessSelection(Boolean(requestedBusinessId) || managedBusinesses.length > 1);
+          }
+          return;
+        }
+        if (!isCurrent()) return;
+        setBusiness(selectedBusiness);
+        setRequiresManagedBusinessSelection(false);
+        const rRes = await fetch(
+          `${base}/api/reviews?businessId=${encodeURIComponent(selectedBusiness.id)}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!isCurrent()) return;
+        if (rRes.ok) {
+          const rData = await rRes.json() as { reviews: ReviewRow[] };
+          if (isCurrent()) setReviews((rData.reviews ?? []).slice(0, 3));
+        }
+      } catch {
+        if (isCurrent()) {
+          setBusiness(null);
+          setReviews([]);
+        }
+      } finally {
+        if (isCurrent()) setLoading(false);
+      }
     };
     void load();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [requestedBusinessId]);
 
   return { business, reviews, loading, requiresManagedBusinessSelection };
 }
@@ -269,8 +299,12 @@ export default function BusinessDashboardScreen() {
   const [renderedAt] = useState(() => Date.now());
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const routeParams = useLocalSearchParams<{ businessId?: string | string[] }>();
+  const requestedBusinessId = typeof routeParams.businessId === "string" && routeParams.businessId.trim()
+    ? routeParams.businessId.trim()
+    : null;
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights" | "products" | "grow">("overview");
-  const { business, reviews, loading, requiresManagedBusinessSelection } = useMyBusiness();
+  const { business, reviews, loading, requiresManagedBusinessSelection } = useMyBusiness(requestedBusinessId);
   const [feedbackOptIn, setFeedbackOptIn] = useState<boolean>(false);
   const [togglingFeedback, setTogglingFeedback] = useState(false);
   const [addrExpanded, setAddrExpanded] = useState(false);
@@ -308,6 +342,7 @@ export default function BusinessDashboardScreen() {
   const [growthTools, setGrowthTools] = useState<GrowthToolsData | null>(null);
   const [growthLoading, setGrowthLoading] = useState(false);
   const [growthCheckoutLoading, setGrowthCheckoutLoading] = useState<string | null>(null);
+  const [nudgeNotifyLoading, setNudgeNotifyLoading] = useState(false);
   const [skipFeedback, setSkipFeedback] = useState<{ id: string; message: string; createdAt: string }[] | null>(null);
   const [marketInsights, setMarketInsights] = useState<{ trendingSearches: { query: string; searchCount: number; topCategory: string }[]; opportunityAlerts: { type: string; message: string; action: string; impact: string }[]; targetAudience: { ageGroups: string[]; lifestyleKeywords: string[]; topCities: string[] } | null } | null>(null);
   const [marketInsightsLoading, setMarketInsightsLoading] = useState(false);
@@ -334,6 +369,25 @@ export default function BusinessDashboardScreen() {
   const [newCategory, setNewCategory] = useState("");
   const [savingListing, setSavingListing] = useState(false);
   const [onboarding, setOnboarding] = useState(false);
+
+  const activeBusinessIdRef = useRef<string | null>(business?.id ?? null);
+
+  React.useEffect(() => {
+    activeBusinessIdRef.current = business?.id ?? null;
+    setAnalytics(null);
+    setAnalyticsError(null);
+    setSkipFeedback(null);
+    setNudge(null);
+    setNudgeDismissed(false);
+    setAiCaptions([]);
+    setAiCaptionsGenerated(false);
+    setSelectedCaptionIdx(0);
+    setGrowthTools(null);
+    setActionPlan(null);
+    setMarketInsights(null);
+    setFeedbackOptIn(Boolean(business?.feedbackOptIn));
+    setTrustProfileLoaded(false);
+  }, [business?.id]);
 
   React.useEffect(() => {
     if (requiresManagedBusinessSelection) router.replace("/business-owner" as never);
@@ -447,72 +501,102 @@ export default function BusinessDashboardScreen() {
 
   React.useEffect(() => {
     if (!business) return;
+    const selectedBusinessId = business.id;
     void (async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         const base = getApiBase();
         if (!token || !base) return;
-        const res = await fetch(`${base}/api/businesses/mine/post-nudge`, {
+        const res = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/post-nudge`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.ok) setNudge(await res.json() as PostNudgeData);
+        if (res.ok && activeBusinessIdRef.current === selectedBusinessId) {
+          const nextNudge = await res.json() as PostNudgeData;
+          if (activeBusinessIdRef.current === selectedBusinessId) setNudge(nextNudge);
+        }
       } catch {}
     })();
   }, [business?.id]);
 
   const loadAnalytics = useCallback(async () => {
-    if (analyticsLoading || analytics) return;
+    if (!business || analyticsLoading || analytics) return;
+    const selectedBusinessId = business.id;
     setAnalyticsLoading(true);
     setAnalyticsError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getApiBase();
-      if (!token || !base) { setAnalyticsError("error"); return; }
-      const res = await fetch(`${base}/api/businesses/mine/analytics`, {
+      if (!token || !base) {
+        if (activeBusinessIdRef.current === selectedBusinessId) setAnalyticsError("error");
+        return;
+      }
+      const res = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/analytics`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 403) { setAnalyticsError("paywall"); return; }
-      if (!res.ok) { setAnalyticsError("error"); return; }
-      const data = await res.json() as AnalyticsData;
-      setAnalytics(data);
-      fetch(`${base}/api/businesses/mine/skip-feedback`, { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.ok ? r.json() : null)
-        .then((d: { feedback?: { id: string; message: string; createdAt: string }[] } | null) => { if (d?.feedback) setSkipFeedback(d.feedback); })
-        .catch(() => {});
-      // Load cached AI plan alongside analytics (fire-and-forget)
-      if (business?.id) {
-        fetch(`${base}/api/kinfolk/business-action-plan/${business.id}`, { headers: { Authorization: `Bearer ${token}` } })
-          .then((r) => r.ok ? r.json() : null)
-          .then((d: { plan: ActionPlanData | null } | null) => { if (d?.plan && !actionPlan) setActionPlan(d.plan); })
-          .catch(() => {});
-
-        // Load market insights (AI Marketing Manager)
-        if (!marketInsights && !marketInsightsLoading) {
-          setMarketInsightsLoading(true);
-          fetch(`${base}/api/businesses/${business.id}/market-insights`, { headers: { Authorization: `Bearer ${token}` } })
-            .then((r) => r.ok ? r.json() : null)
-            .then((d: typeof marketInsights | null) => { if (d) setMarketInsights(d); })
-            .catch(() => {})
-            .finally(() => setMarketInsightsLoading(false));
-        }
+      if (activeBusinessIdRef.current !== selectedBusinessId) return;
+      if (res.status === 403) {
+        setAnalyticsError("paywall");
+        return;
       }
-    } catch { setAnalyticsError("error"); }
-    finally { setAnalyticsLoading(false); }
-  }, [analyticsLoading, analytics, business?.id, actionPlan]);
+      if (!res.ok) {
+        setAnalyticsError("error");
+        return;
+      }
+      const data = await res.json() as AnalyticsData;
+      if (activeBusinessIdRef.current !== selectedBusinessId) return;
+      setAnalytics(data);
+      fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/skip-feedback`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((d: { feedback?: { id: string; message: string; createdAt: string }[] } | null) => {
+          if (d?.feedback && activeBusinessIdRef.current === selectedBusinessId) setSkipFeedback(d.feedback);
+        })
+        .catch(() => {});
+      // These existing explicit-ID companion reads remain gated by the same validated ID.
+      fetch(`${base}/api/kinfolk/business-action-plan/${selectedBusinessId}`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((d: { plan: ActionPlanData | null } | null) => {
+          if (d?.plan && activeBusinessIdRef.current === selectedBusinessId && !actionPlan) setActionPlan(d.plan);
+        })
+        .catch(() => {});
+
+      if (!marketInsights && !marketInsightsLoading) {
+        setMarketInsightsLoading(true);
+        fetch(`${base}/api/businesses/${selectedBusinessId}/market-insights`, { headers: { Authorization: `Bearer ${token}` } })
+          .then((r) => r.ok ? r.json() : null)
+          .then((d: typeof marketInsights | null) => {
+            if (d && activeBusinessIdRef.current === selectedBusinessId) setMarketInsights(d);
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (activeBusinessIdRef.current === selectedBusinessId) setMarketInsightsLoading(false);
+          });
+      }
+    } catch {
+      if (activeBusinessIdRef.current === selectedBusinessId) setAnalyticsError("error");
+    } finally {
+      if (activeBusinessIdRef.current === selectedBusinessId) setAnalyticsLoading(false);
+    }
+  }, [analyticsLoading, analytics, business?.id, actionPlan, marketInsights, marketInsightsLoading]);
 
   const loadGrowthTools = useCallback(async () => {
-    if (growthLoading || growthTools) return;
+    if (!business || growthLoading || growthTools) return;
+    const selectedBusinessId = business.id;
     setGrowthLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getApiBase();
       if (!token || !base) return;
-      const res = await fetch(`${base}/api/businesses/mine/growth-tools`, {
+      const res = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/growth-tools`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) setGrowthTools(await res.json() as GrowthToolsData);
-    } catch {} finally { setGrowthLoading(false); }
-  }, [growthLoading, growthTools]);
+      if (res.ok && activeBusinessIdRef.current === selectedBusinessId) {
+        const nextGrowthTools = await res.json() as GrowthToolsData;
+        if (activeBusinessIdRef.current === selectedBusinessId) setGrowthTools(nextGrowthTools);
+      }
+    } catch {} finally {
+      if (activeBusinessIdRef.current === selectedBusinessId) setGrowthLoading(false);
+    }
+  }, [growthLoading, growthTools, business?.id]);
 
   async function openMembershipWebsite() {
     const result = await openWebPaymentHandoff("membership");
@@ -552,26 +636,30 @@ export default function BusinessDashboardScreen() {
   useEffect(() => {
     if (activeTab === "insights") queueMicrotask(() => { void loadAnalytics(); });
     if (activeTab === "grow") queueMicrotask(() => { void loadGrowthTools(); });
-  }, [activeTab]);
+  }, [activeTab, business?.id, loadAnalytics, loadGrowthTools]);
 
   async function loadAiCaptions() {
-    if (aiCaptionsLoading) return;
+    if (!business || aiCaptionsLoading) return;
+    const selectedBusinessId = business.id;
     setAiCaptionsLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getApiBase();
       if (!token || !base) return;
-      const res = await fetch(`${base}/api/businesses/mine/post-nudge/captions`, {
+      const res = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/post-nudge/captions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
+      if (res.ok && activeBusinessIdRef.current === selectedBusinessId) {
         const data = await res.json() as AiCaptionsData;
+        if (activeBusinessIdRef.current !== selectedBusinessId) return;
         setAiCaptions(data.captions);
         setAiCaptionsGenerated(data.aiGenerated);
         setSelectedCaptionIdx(0);
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-    } catch {} finally { setAiCaptionsLoading(false); }
+    } catch {} finally {
+      if (activeBusinessIdRef.current === selectedBusinessId) setAiCaptionsLoading(false);
+    }
   }
 
   async function generateActionPlan() {
@@ -632,13 +720,15 @@ export default function BusinessDashboardScreen() {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getApiBase();
       if (!token || !base) return;
+      const selectedBusinessId = business?.id;
+      if (!selectedBusinessId) return;
       const next = !feedbackOptIn;
-      const res = await fetch(`${base}/api/businesses/mine/feedback-opt-in`, {
+      const res = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/feedback-opt-in`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ enabled: next }),
       });
-      if (res.ok) setFeedbackOptIn(next);
+      if (res.ok && activeBusinessIdRef.current === selectedBusinessId) setFeedbackOptIn(next);
     } catch {}
     finally { setTogglingFeedback(false); }
   }
@@ -729,7 +819,13 @@ export default function BusinessDashboardScreen() {
           <Feather name="arrow-left" size={22} color="#FFF" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerBiz}>{business.name}</Text>
+          <TouchableOpacity
+            accessibilityLabel={`View public profile for ${business.name}`}
+            activeOpacity={0.8}
+            onPress={() => router.push(`/businesses/${encodeURIComponent(business.id)}` as never)}
+          >
+            <Text style={styles.headerBiz}>{business.name}</Text>
+          </TouchableOpacity>
           {business.verified && (
             <View style={styles.verifyBadge}>
               <Feather name="shield" size={11} color="#FFF" />
@@ -1447,16 +1543,24 @@ export default function BusinessDashboardScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.nudgeNotifyBtn, { borderColor: nudge.isNearPeak ? "#2D7A4F50" : colors.border }]}
+                    disabled={nudgeNotifyLoading}
                     onPress={async () => {
+                      if (nudgeNotifyLoading) return;
+                      const selectedBusinessId = business.id;
+                      setNudgeNotifyLoading(true);
                       try {
                         const token = await SecureStore.getItemAsync("auth_session_token");
                         const base = getApiBase();
-                        await fetch(`${base}/api/businesses/mine/post-nudge/notify`, {
+                        const response = await fetch(`${base}/api/businesses/mine/managed/${encodeURIComponent(selectedBusinessId)}/post-nudge/notify`, {
                           method: "POST",
                           headers: { Authorization: `Bearer ${token ?? ""}` },
                         });
-                        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                      } catch {}
+                        if (response.ok && activeBusinessIdRef.current === selectedBusinessId && Platform.OS !== "web") {
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }
+                      } catch {} finally {
+                        if (activeBusinessIdRef.current === selectedBusinessId) setNudgeNotifyLoading(false);
+                      }
                     }}
                     activeOpacity={0.8}
                   >

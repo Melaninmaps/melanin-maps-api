@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, savedPlacesTable, reviewsTable, businessProfileViewsTable, businessSkipFeedbackTable, businessClickEventsTable } from "@workspace/db";
-import { and, avg, count, eq, gt, inArray, ne, sql } from "drizzle-orm";
+import { db, businessesTable, savedPlacesTable, reviewsTable, businessProfileViewsTable, businessSkipFeedbackTable, businessClickEventsTable, businessOwnerLinksTable } from "@workspace/db";
+import { and, avg, count, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
 import { getUserTier, requireMembership, TIER_RANK } from "../middleware/requireMembership";
 import { logger } from "../lib/logger";
 
@@ -204,6 +204,31 @@ function pctVsPeers(value: number, peerAvg: number): number {
   return Math.round((value / peerAvg) * 100);
 }
 
+async function getSelectedOwnedBusiness(userId: string, businessId: string) {
+  if (!businessId) return null;
+  const [ownerLink] = await db
+    .select({ businessId: businessOwnerLinksTable.businessId })
+    .from(businessOwnerLinksTable)
+    .where(
+      and(
+        eq(businessOwnerLinksTable.businessId, businessId),
+        eq(businessOwnerLinksTable.userId, userId),
+        eq(businessOwnerLinksTable.role, "owner"),
+        eq(businessOwnerLinksTable.status, "approved"),
+        isNull((businessOwnerLinksTable as unknown as { revokedAt: any }).revokedAt),
+      ),
+    )
+    .limit(1);
+  if (!ownerLink) return null;
+
+  const [business] = await db
+    .select()
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
+    .limit(1);
+  return business ?? null;
+}
+
 router.get(
   "/businesses/mine/analytics",
   requireMembership("navigator"),
@@ -405,6 +430,208 @@ router.get(
       res.json(response);
     } catch (err) {
       req.log.error({ err }, "GET /businesses/mine/analytics error");
+      res.status(500).json({ error: "Failed to load analytics." });
+    }
+  },
+);
+
+router.get(
+  "/businesses/mine/managed/:businessId/analytics",
+  requireMembership("navigator"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.id as string;
+      const businessId =
+        typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+      const business = await getSelectedOwnedBusiness(userId, businessId);
+      if (!business) {
+        res.status(404).json({ error: "No business found." });
+        return;
+      }
+
+      const effectiveTier = await getUserTier(userId);
+      const tier: "navigator" | "trailblazer" =
+        TIER_RANK[effectiveTier] >= TIER_RANK.trailblazer
+          ? "trailblazer"
+          : "navigator";
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const [savesRow] = await db
+        .select({ count: count() })
+        .from(savedPlacesTable)
+        .where(eq(savedPlacesTable.businessId, business.id));
+
+      const [reviewRow] = await db
+        .select({ count: count(), avgRating: avg(reviewsTable.rating) })
+        .from(reviewsTable)
+        .where(eq(reviewsTable.businessId, business.id));
+
+      const [viewRow] = await db
+        .select({ count: count() })
+        .from(businessProfileViewsTable)
+        .where(
+          and(
+            eq(businessProfileViewsTable.businessId, business.id),
+            gt(businessProfileViewsTable.viewedAt, thirtyDaysAgo),
+          ),
+        );
+
+      const [skipRow] = await db
+        .select({ count: count() })
+        .from(businessSkipFeedbackTable)
+        .where(eq(businessSkipFeedbackTable.businessId, business.id));
+
+      const clickRows = await db
+        .select({ clickType: businessClickEventsTable.clickType, cnt: count() })
+        .from(businessClickEventsTable)
+        .where(and(eq(businessClickEventsTable.businessId, business.id), gt(businessClickEventsTable.clickedAt, thirtyDaysAgo)))
+        .groupBy(businessClickEventsTable.clickType);
+      const clickMap: Record<string, number> = {};
+      for (const row of clickRows) clickMap[row.clickType] = Number(row.cnt);
+
+      const peers = await db
+        .select({
+          id: businessesTable.id,
+          reviewCount: businessesTable.reviewCount,
+          rating: businessesTable.rating,
+        })
+        .from(businessesTable)
+        .where(
+          and(
+            eq(businessesTable.category, business.category),
+            eq(businessesTable.city, business.city),
+            ne(businessesTable.id, business.id),
+            eq(businessesTable.status, "active"),
+          ),
+        );
+
+      const peerIds = peers.map((p) => p.id);
+
+      let peerSavesData: { businessId: string; saveCount: number }[] = [];
+      let peerViewsData: { businessId: string; viewCount: number }[] = [];
+
+      if (peerIds.length > 0) {
+        const allPeerSaves = await db
+          .select({ businessId: savedPlacesTable.businessId, count: count() })
+          .from(savedPlacesTable)
+          .where(inArray(savedPlacesTable.businessId, peerIds))
+          .groupBy(savedPlacesTable.businessId);
+        peerSavesData = allPeerSaves.map((r) => ({ businessId: r.businessId, saveCount: Number(r.count) }));
+
+        const allPeerViews = await db
+          .select({ businessId: businessProfileViewsTable.businessId, count: count() })
+          .from(businessProfileViewsTable)
+          .where(
+            and(
+              inArray(businessProfileViewsTable.businessId, peerIds),
+              gt(businessProfileViewsTable.viewedAt, thirtyDaysAgo),
+            ),
+          )
+          .groupBy(businessProfileViewsTable.businessId);
+        peerViewsData = allPeerViews.map((r) => ({ businessId: r.businessId, viewCount: Number(r.count) }));
+      }
+
+      const peerSavesMap = new Map(peerSavesData.map((r) => [r.businessId, r.saveCount]));
+      const peerViewsMap = new Map(peerViewsData.map((r) => [r.businessId, r.viewCount]));
+
+      const peerCount = peers.length;
+      const categoryAvgSaves = peerCount === 0 ? 0 : peerIds.reduce((s, id) => s + (peerSavesMap.get(id) ?? 0), 0) / peerCount;
+      const categoryAvgReviews = peerCount === 0 ? 0 : peers.reduce((s, p) => s + p.reviewCount, 0) / peerCount;
+      const categoryAvgRating = peerCount === 0 ? 0 : peers.reduce((s, p) => s + Number(p.rating), 0) / peerCount;
+      const categoryAvgViews30d = peerCount === 0 ? 0 : peerIds.reduce((s, id) => s + (peerViewsMap.get(id) ?? 0), 0) / peerCount;
+
+      const metrics = {
+        saves: savesRow?.count ?? 0,
+        reviews: reviewRow?.count ?? 0,
+        avgRating: Number(reviewRow?.avgRating ?? business.rating ?? 0),
+        views30d: viewRow?.count ?? 0,
+        skipFeedbackCount: skipRow?.count ?? 0,
+      };
+
+      const benchmarks = {
+        peerCount,
+        categoryAvgSaves: Math.round(categoryAvgSaves * 10) / 10,
+        categoryAvgReviews: Math.round(categoryAvgReviews * 10) / 10,
+        categoryAvgRating: Math.round(categoryAvgRating * 100) / 100,
+        categoryAvgViews30d: Math.round(categoryAvgViews30d * 10) / 10,
+      };
+
+      const suggestions = buildSuggestions(metrics, benchmarks, {
+        website: business.website,
+        phone: business.phone,
+        hours: business.hours,
+        photos: business.photos,
+        verified: business.verified,
+        confidenceScore: business.confidenceScore,
+        safetyRating: business.safetyRating,
+        description: business.description,
+      }, tier);
+
+      const engagementScore = computeEngagementScore(metrics, benchmarks, {
+        website: business.website,
+        phone: business.phone,
+        hours: business.hours,
+        photos: business.photos,
+        verified: business.verified,
+        confidenceScore: business.confidenceScore,
+      });
+
+      let trend: Trend[] | undefined;
+      if (tier === "trailblazer") {
+        const rows = await db
+          .select({
+            day: sql<string>`DATE(${businessProfileViewsTable.viewedAt})`,
+            count: count(),
+          })
+          .from(businessProfileViewsTable)
+          .where(
+            and(
+              eq(businessProfileViewsTable.businessId, business.id),
+              gt(businessProfileViewsTable.viewedAt, sevenDaysAgo),
+            ),
+          )
+          .groupBy(sql`DATE(${businessProfileViewsTable.viewedAt})`);
+
+        const trendMap = new Map(rows.map((r) => [r.day, r.count]));
+        trend = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = d.toISOString().slice(0, 10);
+          trend.push({ day: key, count: trendMap.get(key) ?? 0 });
+        }
+      }
+
+      const response: AnalyticsResponse = {
+        tier,
+        business: { id: business.id, name: business.name, category: business.category, city: business.city },
+        metrics,
+        benchmarks,
+        suggestions,
+        engagementScore,
+        trend,
+        savesVsPeersPct: pctVsPeers(metrics.saves, benchmarks.categoryAvgSaves),
+        reviewsVsPeersPct: pctVsPeers(metrics.reviews, benchmarks.categoryAvgReviews),
+        ratingVsPeersPct: pctVsPeers(metrics.avgRating, benchmarks.categoryAvgRating),
+        viewsVsPeersPct: pctVsPeers(metrics.views30d, benchmarks.categoryAvgViews30d),
+        clicks30d: {
+          tiktok: clickMap["tiktok_visit"] ?? 0,
+          instagram: clickMap["instagram_visit"] ?? 0,
+          youtube: clickMap["youtube_visit"] ?? 0,
+          facebook: clickMap["facebook_visit"] ?? 0,
+          pinterest: clickMap["pinterest_visit"] ?? 0,
+          website: clickMap["website_visit"] ?? 0,
+          phoneCalls: clickMap["phone_call"] ?? 0,
+          directions: clickMap["directions"] ?? 0,
+        },
+      };
+
+      logger.info({ businessId: business.id, tier, engagementScore }, "[analytics] served");
+      res.json(response);
+    } catch (err) {
+      req.log.error({ err }, "GET /businesses/mine/managed/:businessId/analytics error");
       res.status(500).json({ error: "Failed to load analytics." });
     }
   },

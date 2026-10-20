@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -83,8 +83,11 @@ export default function BusinessOwnerHome() {
   const [communityNeeds, setCommunityNeeds] = useState<CommunityNeedInsight[]>([]);
   const [creatingOpportunityId, setCreatingOpportunityId] = useState<string | null>(null);
   const business = businesses.length === 1 ? businesses[0] ?? null : null;
+  const loadGenerationRef = useRef(0);
 
   const load = useCallback(async () => {
+    const generation = ++loadGenerationRef.current;
+    const isCurrent = () => loadGenerationRef.current === generation;
     setLoading(true);
     setLoadError(null);
     setStats({ views: 0, saves: 0, reviews: 0 });
@@ -106,40 +109,49 @@ export default function BusinessOwnerHome() {
       if (!Array.isArray(data.businesses)) {
         throw new Error("Business Admin could not load right now. Please try again.");
       }
+      if (!isCurrent()) return;
       setBusinesses(data.businesses);
 
-      // The remaining console APIs are legacy single-business reads. Do not
-      // attach their data or routes to an arbitrary business when the member
-      // has more than one approved relationship.
-      if (data.businesses.length === 1) {
-        const managedBusiness = data.businesses[0];
-        const aRes = await fetch(`${getApiBase()}/api/businesses/mine/analytics`, { headers });
-        if (aRes.ok) {
-          const aData = await aRes.json() as { metrics?: { views30d?: number; saves?: number; reviews?: number }; clicks30d?: { tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } };
-          const m = aData.metrics;
-          if (m) setStats({ views: m.views30d ?? 0, saves: m.saves ?? 0, reviews: m.reviews ?? 0 });
-          if (aData.clicks30d) setClicks(aData.clicks30d);
-        } else if (aRes.status === 403) {
-          setAnalyticsLocked(true);
-        }
-        const sRes = await fetch(`${getApiBase()}/api/businesses/mine/skip-feedback`, { headers });
-        if (sRes.ok) {
-          const sData = await sRes.json() as { feedback?: { message: string }[] };
-          setSkipInsights((sData.feedback ?? []).map((feedback) => feedback.message));
-        }
-        const needsRes = await fetch(`${getApiBase()}/api/businesses/${managedBusiness.id}/kinfolk-community-needs`, { headers });
-        if (needsRes.ok) {
-          const needsData = await needsRes.json() as { insights?: CommunityNeedInsight[] };
-          setCommunityNeeds(needsData.insights ?? []);
-        } else {
-          setCommunityNeeds([]);
-        }
+      // A selected managed route is used only after the managed list proves that
+      // there is exactly one compatible legacy selection. Multiple listings stay
+      // on the explicit list; no arbitrary first listing is used for insights.
+      if (data.businesses.length !== 1) return;
+      const managedBusiness = data.businesses[0];
+      const selectedBase = `${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(managedBusiness.id)}`;
+      const aRes = await fetch(`${selectedBase}/analytics`, { headers });
+      if (!isCurrent()) return;
+      if (aRes.ok) {
+        const aData = await aRes.json() as { metrics?: { views30d?: number; saves?: number; reviews?: number }; clicks30d?: { tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } };
+        if (!isCurrent()) return;
+        const m = aData.metrics;
+        if (m) setStats({ views: m.views30d ?? 0, saves: m.saves ?? 0, reviews: m.reviews ?? 0 });
+        if (aData.clicks30d) setClicks(aData.clicks30d);
+      } else if (aRes.status === 403) {
+        setAnalyticsLocked(true);
+      }
+      const sRes = await fetch(`${selectedBase}/skip-feedback`, { headers });
+      if (!isCurrent()) return;
+      if (sRes.ok) {
+        const sData = await sRes.json() as { feedback?: { message: string }[] };
+        if (!isCurrent()) return;
+        setSkipInsights((sData.feedback ?? []).map((feedback) => feedback.message));
+      }
+      const needsRes = await fetch(`${getApiBase()}/api/businesses/${managedBusiness.id}/kinfolk-community-needs`, { headers });
+      if (!isCurrent()) return;
+      if (needsRes.ok) {
+        const needsData = await needsRes.json() as { insights?: CommunityNeedInsight[] };
+        if (isCurrent()) setCommunityNeeds(needsData.insights ?? []);
+      } else {
+        setCommunityNeeds([]);
       }
     } catch (error) {
+      if (!isCurrent()) return;
       setBusinesses([]);
       setLoadError(error instanceof Error ? error.message : "Business Admin could not load right now. Please try again.");
     }
-    finally { setLoading(false); }
+    finally {
+      if (isCurrent()) setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -170,7 +182,13 @@ export default function BusinessOwnerHome() {
       label: "Business Identity",
       sub: "Your story, values, vibe, accessibility & growth goals",
       color: "#5B2D8E",
-      route: "/business-owner/identity",
+      onPress: () => {
+        if (business) {
+          router.push({ pathname: "/business-owner/identity", params: { businessId: business.id } } as never);
+          return;
+        }
+        router.push("/business-owner/identity" as never);
+      },
     },
     {
       id: "kinfolk-voice",
@@ -196,7 +214,13 @@ export default function BusinessOwnerHome() {
       label: "Send Broadcast",
       sub: "Notify followers — events, offers, updates & emergency alerts",
       color: "#1A6B4A",
-      route: "/business-owner/broadcasts",
+      onPress: () => {
+        if (business) {
+          router.push({ pathname: "/business-owner/broadcasts", params: { businessId: business.id } } as never);
+          return;
+        }
+        router.push("/business-owner/broadcasts" as never);
+      },
     },
     {
       id: "edit",
@@ -220,7 +244,9 @@ export default function BusinessOwnerHome() {
       label: "Reviews",
       sub: `${stats.reviews} total review${stats.reviews !== 1 ? "s" : ""} from the community`,
       color: "#3A6BB5",
-      route: "/business-dashboard",
+      onPress: business
+        ? () => router.push({ pathname: "/business-dashboard", params: { businessId: business.id } } as never)
+        : undefined,
     },
     {
       id: "pinned",
@@ -236,7 +262,9 @@ export default function BusinessOwnerHome() {
       label: "Analytics & Insights",
       sub: `${stats.views} profile views · ${stats.saves} saves this month`,
       color: "#5B2D2D",
-      route: "/business-dashboard",
+      onPress: business
+        ? () => router.push({ pathname: "/business-dashboard", params: { businessId: business.id } } as never)
+        : undefined,
     },
     {
       id: "challenges",
@@ -252,7 +280,9 @@ export default function BusinessOwnerHome() {
       label: "Growth Tools",
       sub: "Promotions, deals, and marketing options",
       color: "#CA922B",
-      route: "/business-dashboard",
+      onPress: business
+        ? () => router.push({ pathname: "/business-dashboard", params: { businessId: business.id } } as never)
+        : undefined,
     },
     {
       id: "verify",
@@ -268,7 +298,13 @@ export default function BusinessOwnerHome() {
       label: "Preview My Listing",
       sub: "See exactly how customers see your business",
       color: "#CA922B",
-      route: "/business-owner/preview",
+      onPress: () => {
+        if (business) {
+          router.push({ pathname: "/business-owner/preview", params: { businessId: business.id } } as never);
+          return;
+        }
+        router.push("/business-owner/preview" as never);
+      },
     },
     {
       id: "featured-video",
@@ -284,7 +320,13 @@ export default function BusinessOwnerHome() {
       label: "Vibe Search Tags",
       sub: "Tag your atmosphere so people find you in vibe searches",
       color: "#5B6AF0",
-      route: "/business-owner/vibe-tags",
+      onPress: () => {
+        if (business) {
+          router.push({ pathname: "/business-owner/vibe-tags", params: { businessId: business.id } } as never);
+          return;
+        }
+        router.push("/business-owner/vibe-tags" as never);
+      },
     },
     {
       id: "global",
@@ -372,7 +414,13 @@ export default function BusinessOwnerHome() {
                   <Feather name="briefcase" size={16} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[styles.managedBusinessName, { color: colors.foreground }]} numberOfLines={1}>{managedBusiness.name}</Text>
+                  <TouchableOpacity
+                    accessibilityLabel={`View public profile for ${managedBusiness.name}`}
+                    activeOpacity={0.8}
+                    onPress={() => router.push(`/businesses/${encodeURIComponent(managedBusiness.id)}` as never)}
+                  >
+                    <Text style={[styles.managedBusinessName, { color: colors.foreground }]} numberOfLines={1}>{managedBusiness.name}</Text>
+                  </TouchableOpacity>
                   <Text style={[styles.managedBusinessMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
                     {managedBusiness.category} · {managedBusiness.city}, {managedBusiness.state}
                   </Text>
@@ -428,7 +476,13 @@ export default function BusinessOwnerHome() {
                   <Text style={styles.bizAvatarEmoji}>🏪</Text>
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>
-                  <Text style={styles.bizName} numberOfLines={1}>{business.name}</Text>
+                  <TouchableOpacity
+                    accessibilityLabel={`View public profile for ${business.name}`}
+                    activeOpacity={0.8}
+                    onPress={() => router.push(`/businesses/${encodeURIComponent(business.id)}` as never)}
+                  >
+                    <Text style={styles.bizName} numberOfLines={1}>{business.name}</Text>
+                  </TouchableOpacity>
                   <View style={[styles.categoryChip, { backgroundColor: "rgba(201,146,43,0.25)" }]}>
                     <Text style={styles.categoryChipTxt}>{business.category}</Text>
                   </View>

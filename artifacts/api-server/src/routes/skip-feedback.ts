@@ -32,6 +32,31 @@ function checkBusinessFeedback(text: string): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
+async function getSelectedOwnedBusiness(userId: string, businessId: string) {
+  if (!businessId) return null;
+  const [ownerLink] = await db
+    .select({ businessId: businessOwnerLinksTable.businessId })
+    .from(businessOwnerLinksTable)
+    .where(
+      and(
+        eq(businessOwnerLinksTable.businessId, businessId),
+        eq(businessOwnerLinksTable.userId, userId),
+        eq(businessOwnerLinksTable.role, "owner"),
+        eq(businessOwnerLinksTable.status, "approved"),
+        isNull((businessOwnerLinksTable as unknown as { revokedAt: any }).revokedAt),
+      ),
+    )
+    .limit(1);
+  if (!ownerLink) return null;
+
+  const [business] = await db
+    .select()
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
+    .limit(1);
+  return business ?? null;
+}
+
 async function deliverToOwnerInbox(businessId: string, ownerId: string, businessName: string, message: string): Promise<void> {
   try {
     const preview = message.length > 80 ? message.slice(0, 77) + "…" : message;
@@ -262,5 +287,74 @@ router.get("/businesses/mine/skip-feedback", async (req: Request, res: Response)
     res.status(500).json({ error: "Failed to fetch feedback." });
   }
 });
+
+router.patch(
+  "/businesses/mine/managed/:businessId/feedback-opt-in",
+  async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: "Authentication required." });
+        return;
+      }
+      const { enabled } = req.body as { enabled?: boolean };
+      if (typeof enabled !== "boolean") {
+        res.status(400).json({ error: "enabled (boolean) is required." });
+        return;
+      }
+      const businessId =
+        typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+      const business = await getSelectedOwnedBusiness(req.user.id, businessId);
+      if (!business) {
+        res.status(404).json({ error: "No business found." });
+        return;
+      }
+
+      await db
+        .update(businessesTable)
+        .set({ feedbackOptIn: enabled })
+        .where(eq(businessesTable.id, business.id));
+
+      logger.info({ businessId: business.id, enabled }, "[skip-feedback] selected opt-in toggled");
+      res.json({ success: true, feedbackOptIn: enabled });
+    } catch (err) {
+      req.log.error({ err }, "PATCH /businesses/mine/managed/:businessId/feedback-opt-in error");
+      res.status(500).json({ error: "Failed to update setting." });
+    }
+  },
+);
+
+router.get(
+  "/businesses/mine/managed/:businessId/skip-feedback",
+  async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: "Authentication required." });
+        return;
+      }
+      const businessId =
+        typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+      const business = await getSelectedOwnedBusiness(req.user.id, businessId);
+      if (!business) {
+        res.status(404).json({ error: "No business found." });
+        return;
+      }
+
+      const feedback = await db
+        .select({
+          id: businessSkipFeedbackTable.id,
+          message: businessSkipFeedbackTable.message,
+          createdAt: businessSkipFeedbackTable.createdAt,
+        })
+        .from(businessSkipFeedbackTable)
+        .where(eq(businessSkipFeedbackTable.businessId, business.id))
+        .orderBy(businessSkipFeedbackTable.createdAt);
+
+      res.json({ feedback });
+    } catch (err) {
+      req.log.error({ err }, "GET /businesses/mine/managed/:businessId/skip-feedback error");
+      res.status(500).json({ error: "Failed to fetch feedback." });
+    }
+  },
+);
 
 export default router;

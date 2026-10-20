@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessPromotionsTable } from "@workspace/db";
-import { and, desc, eq, gt } from "drizzle-orm";
+import { db, businessesTable, businessOwnerLinksTable, businessPromotionsTable } from "@workspace/db";
+import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { getUncachableStripeClient } from "../stripeClient";
 import { logger } from "../lib/logger";
 
@@ -19,6 +19,31 @@ async function getOwnedBusiness(userId: string) {
     .select()
     .from(businessesTable)
     .where(eq(businessesTable.submittedById, userId))
+    .limit(1);
+  return business ?? null;
+}
+
+async function getSelectedOwnedBusiness(userId: string, businessId: string) {
+  if (!businessId) return null;
+  const [ownerLink] = await db
+    .select({ businessId: businessOwnerLinksTable.businessId })
+    .from(businessOwnerLinksTable)
+    .where(
+      and(
+        eq(businessOwnerLinksTable.businessId, businessId),
+        eq(businessOwnerLinksTable.userId, userId),
+        eq(businessOwnerLinksTable.role, "owner"),
+        eq(businessOwnerLinksTable.status, "approved"),
+        isNull((businessOwnerLinksTable as unknown as { revokedAt: any }).revokedAt),
+      ),
+    )
+    .limit(1);
+  if (!ownerLink) return null;
+
+  const [business] = await db
+    .select()
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
     .limit(1);
   return business ?? null;
 }
@@ -662,5 +687,66 @@ router.get("/businesses/mine/promote/status", async (req: Request, res: Response
     res.status(500).json({ error: "Failed to fetch promotion status." });
   }
 });
+
+router.get(
+  "/businesses/mine/managed/:businessId/growth-tools",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+
+    try {
+      const businessId =
+        typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+      const business = await getSelectedOwnedBusiness(userId, businessId);
+      if (!business) {
+        res.status(404).json({ error: "No business found." });
+        return;
+      }
+
+    const now = new Date();
+    const activePromotions = await db
+      .select()
+      .from(businessPromotionsTable)
+      .where(
+        and(
+          eq(businessPromotionsTable.businessId, business.id),
+          eq(businessPromotionsTable.status, "active"),
+          gt(businessPromotionsTable.endsAt, now),
+        ),
+      )
+      .orderBy(desc(businessPromotionsTable.createdAt));
+
+    const pendingPromotions = await db
+      .select()
+      .from(businessPromotionsTable)
+      .where(
+        and(
+          eq(businessPromotionsTable.businessId, business.id),
+          eq(businessPromotionsTable.status, "pending"),
+        ),
+      )
+      .orderBy(desc(businessPromotionsTable.createdAt));
+
+    const eligibility = checkEligibility(business);
+
+    res.json({
+      business: {
+        id: business.id,
+        name: business.name,
+        category: business.category,
+        city: business.city,
+        verified: business.verified,
+      },
+      eligibility,
+      activePromotions,
+      pendingPromotions,
+      catalogue: TOOL_CATALOGUE,
+    });
+    } catch (err) {
+      req.log.error({ err }, "GET /businesses/mine/managed/:businessId/growth-tools error");
+      res.status(500).json({ error: "Failed to fetch growth tools status." });
+    }
+  },
+);
 
 export default router;
