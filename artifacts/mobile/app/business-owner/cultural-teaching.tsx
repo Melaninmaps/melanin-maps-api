@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -18,15 +18,42 @@ import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
 const MAX_WORDS = 90;
 type OwnerTeaching = { title: string; text: string; active: boolean };
+type ManagedBusiness = { id: string; name: string | null };
+
+type ManagedBusinessesResponse = {
+  businesses?: unknown;
+  error?: string;
+};
 
 function countWords(value: string): number {
   return value.trim() ? value.trim().split(/\s+/).length : 0;
+}
+
+function parseManagedBusinesses(value: unknown): ManagedBusiness[] | null {
+  if (!Array.isArray(value)) return null;
+
+  const businesses: ManagedBusiness[] = [];
+  const ids = new Set<string>();
+  for (const candidate of value) {
+    if (!candidate || typeof candidate !== "object") return null;
+    const record = candidate as { id?: unknown; name?: unknown };
+    if (typeof record.id !== "string" || !record.id.trim()) return null;
+    if (record.name !== undefined && record.name !== null && typeof record.name !== "string") return null;
+
+    const id = record.id.trim();
+    if (ids.has(id)) return null;
+    ids.add(id);
+    businesses.push({ id, name: typeof record.name === "string" && record.name.trim() ? record.name.trim() : null });
+  }
+
+  return businesses;
 }
 
 export default function BusinessCulturalTeachingScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ businessId?: string | string[] }>();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -39,48 +66,86 @@ export default function BusinessCulturalTeachingScreen() {
   const [saving, setSaving] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const loadEpoch = useRef(0);
   const words = useMemo(() => countWords(teaching), [teaching]);
+  const requestedBusinessId = typeof params.businessId === "string" ? params.businessId.trim() : null;
+  const hasEntryBusinessId = params.businessId !== undefined;
+
+  const clearManagedContext = useCallback((nextMessage: string | null = null) => {
+    setBusinessId(null);
+    setBusinessName(null);
+    setTitle("");
+    setTeaching("");
+    setConfirmed(false);
+    setSaved(false);
+    setMessage(nextMessage);
+  }, []);
 
   const load = useCallback(async () => {
+    const epoch = loadEpoch.current + 1;
+    loadEpoch.current = epoch;
     setLoading(true);
-    setMessage(null);
+    clearManagedContext();
     try {
       const base = getApiBase();
       const headers = await getMemberApiHeaders();
-      const mineResponse = await fetch(`${base}/api/businesses/mine`, { headers, cache: "no-store" });
-      const mine = (await mineResponse.json().catch(() => ({}))) as {
-        business?: { id?: string; name?: string } | null;
-        error?: string;
-      };
-      if (!mineResponse.ok || !mine.business?.id) {
-        throw new Error(mine.error ?? "An approved business owner link is required.");
+      const managedResponse = await fetch(`${base}/api/businesses/mine/managed`, { headers, cache: "no-store" });
+      const managedPayload = (await managedResponse.json().catch(() => ({}))) as ManagedBusinessesResponse;
+      if (loadEpoch.current !== epoch) return;
+      if (!managedResponse.ok) {
+        throw new Error(managedPayload.error ?? "An approved business owner link is required.");
       }
-      const id = mine.business.id;
+
+      const managedBusinesses = parseManagedBusinesses(managedPayload.businesses);
+      if (!managedBusinesses) {
+        throw new Error("Business access could not be verified. Please return to Business Admin and try again.");
+      }
+
+      let selectedBusiness: ManagedBusiness | null = null;
+      if (hasEntryBusinessId) {
+        if (!requestedBusinessId) {
+          throw new Error("Choose a business in Business Admin before managing optional teaching.");
+        }
+        selectedBusiness = managedBusinesses.find((business) => business.id === requestedBusinessId) ?? null;
+        if (!selectedBusiness) {
+          throw new Error("Choose an approved business in Business Admin before managing optional teaching.");
+        }
+      } else if (managedBusinesses.length === 1) {
+        selectedBusiness = managedBusinesses[0];
+      } else if (managedBusinesses.length === 0) {
+        throw new Error("An approved business owner link is required.");
+      } else {
+        throw new Error("Choose a business in Business Admin before managing optional teaching.");
+      }
+
       const response = await fetch(
-        `${base}/api/businesses/${encodeURIComponent(id)}/cultural-teaching/owner`,
+        `${base}/api/businesses/${encodeURIComponent(selectedBusiness.id)}/cultural-teaching/owner`,
         { headers, cache: "no-store" },
       );
       const payload = (await response.json().catch(() => ({}))) as {
         teaching?: OwnerTeaching | null;
         error?: string;
       };
+      if (loadEpoch.current !== epoch) return;
       if (!response.ok) throw new Error(payload.error ?? "Could not load the teaching.");
-      setBusinessId(id);
-      setBusinessName(mine.business.name?.trim() || null);
+      setBusinessId(selectedBusiness.id);
+      setBusinessName(selectedBusiness.name);
       setTitle(payload.teaching?.title ?? "");
       setTeaching(payload.teaching?.text ?? "");
       setSaved(payload.teaching?.active === true);
     } catch (error) {
-      setBusinessId(null);
-      setSaved(false);
-      setMessage(error instanceof Error ? error.message : "Could not load the teaching.");
+      if (loadEpoch.current !== epoch) return;
+      clearManagedContext(error instanceof Error ? error.message : "Could not load the teaching.");
     } finally {
-      setLoading(false);
+      if (loadEpoch.current === epoch) setLoading(false);
     }
-  }, []);
+  }, [clearManagedContext, hasEntryBusinessId, requestedBusinessId]);
 
   useEffect(() => {
     void load();
+    return () => {
+      loadEpoch.current += 1;
+    };
   }, [load]);
 
   const save = async () => {

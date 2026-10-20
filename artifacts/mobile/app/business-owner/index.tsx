@@ -82,7 +82,7 @@ export default function BusinessOwnerHome() {
   const [skipExpanded, setSkipExpanded] = useState(false);
   const [communityNeeds, setCommunityNeeds] = useState<CommunityNeedInsight[]>([]);
   const [creatingOpportunityId, setCreatingOpportunityId] = useState<string | null>(null);
-  const business = businesses[0] ?? null;
+  const business = businesses.length === 1 ? businesses[0] ?? null : null;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -186,7 +186,9 @@ export default function BusinessOwnerHome() {
       label: "Optional Cultural Teaching",
       sub: "Share one short, voluntary teaching on your business detail page",
       color: "#2D7A4F",
-      route: "/business-owner/cultural-teaching",
+      onPress: business
+        ? () => router.push({ pathname: "/business-owner/cultural-teaching", params: { businessId: business.id } } as never)
+        : undefined,
     },
     {
       id: "broadcasts",
@@ -397,6 +399,15 @@ export default function BusinessOwnerHome() {
                     <Feather name="edit-2" size={14} color="#FFF" />
                     <Text style={[styles.managedBusinessActionText, { color: "#FFF" }]}>Manage profile</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityLabel={`Manage optional teaching for ${managedBusiness.name}`}
+                    activeOpacity={0.8}
+                    style={[styles.managedBusinessAction, { borderColor: colors.border }]}
+                    onPress={() => router.push({ pathname: "/business-owner/cultural-teaching", params: { businessId: managedBusiness.id } } as never)}
+                  >
+                    <Feather name="book-open" size={14} color={colors.foreground} />
+                    <Text style={[styles.managedBusinessActionText, { color: colors.foreground }]}>Optional teaching</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))}
@@ -483,31 +494,35 @@ export default function BusinessOwnerHome() {
 
             {/* Sections */}
             <View style={[styles.sectionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {sections.map((s, i) => (
-                <React.Fragment key={s.id}>
-                  <TouchableOpacity
-                    style={styles.sectionRow}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      if (!s.route) return;
-                      if (Platform.OS !== "web") Haptics.selectionAsync();
-                      router.push(s.route as never);
-                    }}
-                    disabled={!s.route}
-                  >
-                    <View style={[styles.sectionIcon, { backgroundColor: s.color + "18" }]}>
-                      <Feather name={s.icon} size={18} color={s.color} />
-                    </View>
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={[styles.sectionLabel, { color: !s.route ? colors.mutedForeground : colors.foreground }]}>{s.label}</Text>
-                      <Text style={[styles.sectionSub, { color: colors.mutedForeground }]} numberOfLines={1}>{s.sub}</Text>
-                    </View>
-                    {s.route && <Feather name="chevron-right" size={16} color={colors.mutedForeground} />}
-                    {!s.route && <Feather name="lock" size={14} color={colors.mutedForeground} />}
-                  </TouchableOpacity>
-                  {i < sections.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
-                </React.Fragment>
-              ))}
+              {sections.map((s, i) => {
+                const canNavigate = Boolean(s.route || s.onPress);
+                return (
+                  <React.Fragment key={s.id}>
+                    <TouchableOpacity
+                      style={styles.sectionRow}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        if (!canNavigate) return;
+                        if (Platform.OS !== "web") Haptics.selectionAsync();
+                        if (s.onPress) s.onPress();
+                        else router.push(s.route as never);
+                      }}
+                      disabled={!canNavigate}
+                    >
+                      <View style={[styles.sectionIcon, { backgroundColor: s.color + "18" }]}>
+                        <Feather name={s.icon} size={18} color={s.color} />
+                      </View>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={[styles.sectionLabel, { color: !canNavigate ? colors.mutedForeground : colors.foreground }]}>{s.label}</Text>
+                        <Text style={[styles.sectionSub, { color: colors.mutedForeground }]} numberOfLines={1}>{s.sub}</Text>
+                      </View>
+                      {canNavigate && <Feather name="chevron-right" size={16} color={colors.mutedForeground} />}
+                      {!canNavigate && <Feather name="lock" size={14} color={colors.mutedForeground} />}
+                    </TouchableOpacity>
+                    {i < sections.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
+                  </React.Fragment>
+                );
+              })}
             </View>
 
             {communityNeeds.length > 0 && (

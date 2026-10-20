@@ -26,6 +26,40 @@ describe("native business cultural teaching surfaces", () => {
     expect(owner).not.toMatch(/\b(?:ai|model|provider|notification)\b|Linking|WebBrowser/i);
   });
 
+  it("resolves Cultural Teaching only from a verified managed-business context", () => {
+    expect(owner).toContain("useLocalSearchParams");
+    expect(owner).toContain("/api/businesses/mine/managed");
+    expect(owner).toContain("parseManagedBusinesses");
+    expect(owner).toContain("hasEntryBusinessId");
+    expect(owner).toContain("managedBusinesses.find((business) => business.id === requestedBusinessId)");
+    expect(owner).toContain("managedBusinesses.length === 1");
+    expect(owner).toContain("Choose an approved business in Business Admin before managing optional teaching.");
+    expect(owner).toContain("Choose a business in Business Admin before managing optional teaching.");
+    expect(owner).toContain("clearManagedContext");
+    expect(owner).toContain("setTitle(\"\")");
+    expect(owner).toContain("setTeaching(\"\")");
+    expect(owner).toContain("setConfirmed(false)");
+    expect(owner).toContain("setSaved(false)");
+    expect(owner).toContain("loadEpoch");
+    expect(owner).toContain("if (loadEpoch.current !== epoch) return;");
+    expect(owner).toContain("encodeURIComponent(selectedBusiness.id)");
+    expect(owner).toContain("encodeURIComponent(businessId)");
+
+    const managedRead = owner.indexOf("/api/businesses/mine/managed");
+    const selectedTeachingRead = owner.indexOf("encodeURIComponent(selectedBusiness.id)");
+    expect(managedRead).toBeGreaterThanOrEqual(0);
+    expect(selectedTeachingRead).toBeGreaterThan(managedRead);
+    expect(owner).not.toContain("/api/businesses/mine`,");
+  });
+
+  it("forwards only an explicit managed-business selection from Owner Home", () => {
+    expect(ownerIndex).toContain("businesses.length === 1 ? businesses[0] ?? null : null");
+    expect(ownerIndex).toContain('pathname: "/business-owner/cultural-teaching", params: { businessId: business.id }');
+    expect(ownerIndex).toContain('pathname: "/business-owner/cultural-teaching", params: { businessId: managedBusiness.id }');
+    expect(ownerIndex).toContain("Manage optional teaching for ${managedBusiness.name}");
+    expect(ownerIndex).not.toContain('route: "/business-owner/cultural-teaching"');
+  });
+
   it("places a quiet, auth-gated opt-in card after About without persisting or sending a member choice", () => {
     expect(detail).toContain("BusinessCulturalTeachingCard");
     expect(card).toContain("getApiBase, getMemberApiHeaders");
