@@ -110,7 +110,9 @@ function sanitize(
 
 async function getOwnedBusiness(req: Request, res: Response): Promise<typeof businessesTable.$inferSelect | null> {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return null; }
-  const requestedId = typeof req.query.businessId === "string" ? req.query.businessId.trim() : "";
+  const selectedBusinessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : null;
+  if (selectedBusinessId === "") { res.status(400).json({ error: "A business selection is required." }); return null; }
+  const requestedId = selectedBusinessId ?? (typeof req.query.businessId === "string" ? req.query.businessId.trim() : "");
   const hasApprovedOwnerLink = sql<boolean>`EXISTS (
     SELECT 1 FROM business_owner_links bol
     WHERE bol.business_id = ${businessesTable.id}
@@ -127,7 +129,7 @@ async function getOwnedBusiness(req: Request, res: Response): Promise<typeof bus
   return biz;
 }
 
-router.get("/businesses/mine/identity", async (req: Request, res: Response) => {
+async function getBusinessIdentity(req: Request, res: Response) {
   const biz = await getOwnedBusiness(req, res);
   if (!biz) return;
 
@@ -146,9 +148,9 @@ router.get("/businesses/mine/identity", async (req: Request, res: Response) => {
     },
     business: { id: biz.id, category: biz.category, subcategory: biz.subcategory },
   });
-});
+}
 
-router.patch("/businesses/mine/identity", async (req: Request, res: Response) => {
+async function patchBusinessIdentity(req: Request, res: Response) {
   const biz = await getOwnedBusiness(req, res);
   if (!biz) return;
 
@@ -185,6 +187,11 @@ router.patch("/businesses/mine/identity", async (req: Request, res: Response) =>
 
   req.log.info({ businessId: biz.id }, "Business identity updated");
   res.json({ identity });
-});
+}
+
+router.get("/businesses/mine/identity", getBusinessIdentity);
+router.patch("/businesses/mine/identity", patchBusinessIdentity);
+router.get("/businesses/mine/managed/:businessId/identity", getBusinessIdentity);
+router.patch("/businesses/mine/managed/:businessId/identity", patchBusinessIdentity);
 
 export default router;

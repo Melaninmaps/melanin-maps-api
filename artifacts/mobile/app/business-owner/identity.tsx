@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -28,6 +28,13 @@ async function getToken(): Promise<string | null> {
     if (Platform.OS === "web") return null;
     return await SecureStore.getItemAsync("auth_session_token");
   } catch { return null; }
+}
+
+async function validateManagedBusinessSelection(businessId: string, headers: Record<string, string>): Promise<boolean> {
+  const response = await fetch(`${getApiBase()}/api/businesses/mine/managed/${encodeURIComponent(businessId)}`, { headers });
+  if (!response.ok) return false;
+  const data = await response.json() as { business?: { id?: unknown } };
+  return data.business?.id === businessId;
 }
 
 // ─── Option sets ────────────────────────────────────────────────
@@ -64,6 +71,7 @@ const GROWTH_GOALS = [
 
 // ─── Types ───────────────────────────────────────────────────────
 type Identity = {
+  businessId?: string;
   businessStory?: string | null;
   missionStatement?: string | null;
   whyStarted?: string | null;
@@ -208,6 +216,11 @@ export default function BusinessIdentityScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { businessId: selectedBusinessId } = useLocalSearchParams<{ businessId?: string }>();
+  const managedBusinessId = typeof selectedBusinessId === "string" && selectedBusinessId.trim()
+    ? selectedBusinessId.trim()
+    : null;
+  const hasInvalidSelectedBusinessId = typeof selectedBusinessId === "string" && !selectedBusinessId.trim();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -216,6 +229,9 @@ export default function BusinessIdentityScreen() {
   const [form, setForm] = useState<Identity>(EMPTY);
   const [vibeOptions, setVibeOptions] = useState<VibeOption[]>([]);
   const [ownedBusiness, setOwnedBusiness] = useState<OwnedBusiness | null>(null);
+  const [validatedManagedBusinessId, setValidatedManagedBusinessId] = useState<string | null>(null);
+  const managedBusinessIdRef = useRef<string | null>(managedBusinessId);
+  const contextRequestRef = useRef(0);
 
   const availableVibes = useMemo(
     () => vibeOptions.filter((option) => option.categories.includes(ownedBusiness?.category ?? "")),
@@ -233,51 +249,132 @@ export default function BusinessIdentityScreen() {
   };
 
   const load = useCallback(async () => {
+    const requestVersion = ++contextRequestRef.current;
+    const expectedBusinessId = managedBusinessId;
+    if (hasInvalidSelectedBusinessId) {
+      setLoading(false);
+      return;
+    }
+    let token: string | null = null;
     try {
-      const token = await getToken();
+      token = await getToken();
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
+      const isCurrentContext = async () =>
+        requestVersion === contextRequestRef.current
+        && managedBusinessIdRef.current === expectedBusinessId
+        && await getToken() === token;
+      if (expectedBusinessId) {
+        if (!await validateManagedBusinessSelection(expectedBusinessId, headers) || !await isCurrentContext()) return;
+        setValidatedManagedBusinessId(expectedBusinessId);
+      }
+      const identityPath = expectedBusinessId
+        ? `/api/businesses/mine/managed/${encodeURIComponent(expectedBusinessId)}/identity`
+        : "/api/businesses/mine/identity";
       const [res, vibeResponse] = await Promise.all([
-        fetch(`${getApiBase()}/api/businesses/mine/identity`, { headers }),
+        fetch(`${getApiBase()}${identityPath}`, { headers }),
         fetch(`${getApiBase()}/api/vibes/list`),
       ]);
       if (res.ok) {
-        const data = await res.json() as { identity: Identity; business?: OwnedBusiness };
-        setForm({ ...EMPTY, ...data.identity });
-        setOwnedBusiness(data.business ?? null);
+        const data = await res.json() as { identity?: Identity; business?: OwnedBusiness };
+        const identity = data.identity;
+        const selectedIdentityMatches = !expectedBusinessId || (
+          data.business?.id === expectedBusinessId
+          && identity?.businessId === expectedBusinessId
+        );
+        if (identity && selectedIdentityMatches && await isCurrentContext()) {
+          setForm({ ...EMPTY, ...identity });
+          setOwnedBusiness(data.business ?? null);
+        }
       }
-      if (vibeResponse.ok) {
+      if (vibeResponse.ok && await isCurrentContext()) {
         const data = await vibeResponse.json() as { vibes?: VibeOption[] };
         setVibeOptions(data.vibes ?? []);
       }
     } catch { /* silent */ } finally {
-      setLoading(false);
+      if (
+        requestVersion === contextRequestRef.current
+        && managedBusinessIdRef.current === expectedBusinessId
+        && await getToken() === token
+      ) {
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [hasInvalidSelectedBusinessId, managedBusinessId]);
 
-  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
+  useEffect(() => {
+    managedBusinessIdRef.current = managedBusinessId;
+    setLoading(true);
+    setSaving(false);
+    setForm(EMPTY);
+    setOwnedBusiness(null);
+    setValidatedManagedBusinessId(null);
+    queueMicrotask(() => { void load(); });
+    return () => { contextRequestRef.current += 1; };
+  }, [load, managedBusinessId]);
 
   const handleSave = async () => {
+    if (hasInvalidSelectedBusinessId) {
+      Alert.alert("Error", "Could not load the selected business. Please return to your business dashboard and try again.");
+      return;
+    }
+    if (managedBusinessId && (validatedManagedBusinessId !== managedBusinessId || ownedBusiness?.id !== managedBusinessId)) {
+      Alert.alert("Error", "Could not load the selected business. Please return to your business dashboard and try again.");
+      return;
+    }
+    const requestVersion = ++contextRequestRef.current;
+    const expectedBusinessId = managedBusinessId;
     setSaving(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    let token: string | null = null;
     try {
-      const token = await getToken();
+      token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/identity`, {
+      const identityPath = expectedBusinessId
+        ? `/api/businesses/mine/managed/${encodeURIComponent(expectedBusinessId)}/identity`
+        : "/api/businesses/mine/identity";
+      const isCurrentContext = async () =>
+        requestVersion === contextRequestRef.current
+        && managedBusinessIdRef.current === expectedBusinessId
+        && await getToken() === token;
+      if (expectedBusinessId) {
+        const hasValidatedSelection = await validateManagedBusinessSelection(expectedBusinessId, headers);
+        if (!await isCurrentContext()) return;
+        if (!hasValidatedSelection) {
+          Alert.alert("Error", "Could not save. Please try again.");
+          return;
+        }
+      }
+      const res = await fetch(`${getApiBase()}${identityPath}`, {
         method: "PATCH",
         headers,
         body: JSON.stringify(form),
       });
-      if (res.ok) {
+      const data = await res.json().catch(() => null) as { identity?: Identity } | null;
+      if (!await isCurrentContext()) return;
+      const selectedIdentityMatches = !expectedBusinessId || data?.identity?.businessId === expectedBusinessId;
+      if (res.ok && selectedIdentityMatches) {
         Alert.alert("Saved!", "Your business identity has been updated.");
       } else {
         Alert.alert("Error", "Could not save. Please try again.");
       }
     } catch {
-      Alert.alert("Error", "Something went wrong. Please try again.");
+      if (
+        requestVersion === contextRequestRef.current
+        && managedBusinessIdRef.current === expectedBusinessId
+        && await getToken() === token
+      ) {
+        Alert.alert("Error", "Something went wrong. Please try again.");
+      }
     } finally {
-      setSaving(false);
+      if (
+        requestVersion === contextRequestRef.current
+        && managedBusinessIdRef.current === expectedBusinessId
+        && await getToken() === token
+      ) {
+        setSaving(false);
+      }
     }
   };
 
@@ -292,7 +389,7 @@ export default function BusinessIdentityScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Business Identity</Text>
-        <TouchableOpacity activeOpacity={0.85} style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
+        <TouchableOpacity activeOpacity={0.85} style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading || hasInvalidSelectedBusinessId}>
           <Text style={styles.saveBtnTxt}>{saving ? "Saving…" : "Save"}</Text>
         </TouchableOpacity>
       </View>
@@ -435,7 +532,7 @@ export default function BusinessIdentityScreen() {
         <ChipGrid options={GROWTH_GOALS} selected={form.growthGoals} onToggle={v => toggle("growthGoals", v)} />
 
         {/* Bottom save button */}
-        <TouchableOpacity activeOpacity={0.85} style={[styles.bottomSave, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
+        <TouchableOpacity activeOpacity={0.85} style={[styles.bottomSave, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading || hasInvalidSelectedBusinessId}>
           <Feather name="check" size={18} color="#FFF" />
           <Text style={styles.bottomSaveTxt}>{saving ? "Saving…" : "Save Business Identity"}</Text>
         </TouchableOpacity>
