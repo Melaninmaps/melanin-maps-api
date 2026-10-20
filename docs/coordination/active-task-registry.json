@@ -5311,7 +5311,7 @@
       "id": "BIZ-009-DASHBOARD-MANAGED-SELECTION-CONTRACT-ALIGNMENT",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "n3V26eXux1YUjv25Jvn8Bm",
       "ownerTaskName": "Differentiate Website Preview and App Onboarding",
       "authorityBase": "28fe7419397bf1b7f586095c19668dfee6fd0045",
@@ -5323,7 +5323,7 @@
       "acceptance": "Modify only the existing test to prove current behavior: managed-list fetch; a requested businessId proceeds only on exact managed membership; missing requested ID permits fallback only for exactly one managed business; supplied invalid/unowned ID and multi-business-without-selection fail closed without index-zero fallback; selection branch is rendered before no-business; review read uses encodeURIComponent(selectedBusiness.id); legacy /api/businesses/mine remains absent. Remove obsolete literal assumptions requiring if (managedBusinesses.length !== 1) and managedBusinesses[0] after that condition. Retain current Owner Home navigation assertions as read-only dependencies.",
       "validation": "Focused business-dashboard-managed-selection plus business-dashboard-selected-context and Pinned selected-context regression; mobile no-emit with --ignoreDeprecations 6.0 and temporary external build info; exact one-path diff/whitespace and fresh-base reconstruction.",
       "exclusions": "No Dashboard source/API/server/schema/data/storage/provider/OAuth/payment/push/AI/browser/device/staging/deploy/remote Git/mobile-build change; no behavior redesign; test-only alignment to observed current source.",
-      "source_boundary": "Return an uncommitted/unstaged hash-manifested carrier only. A static test repair establishes neither runtime nor staging/device/member/release/founder acceptance.",
+      "source_boundary": "SOURCE_INTEGRATED_LOCAL_ONLY test contract. No API/runtime/provider/storage/schema/data/staging/device/deploy/release/member/founder acceptance occurred.",
       "baseTransfer": {
         "handoff_id": "hnd_gKkkrJ_vw-8VUO_YVZKG7Znh",
         "file": "BIZ009_DASHBOARD_MANAGED_SELECTION_CONTRACT_BASE_28FE7419.tar.gz",
@@ -5331,6 +5331,19 @@
         "expires_at": "2026-10-21T12:45:16.299Z",
         "source_authority_base": "28fe7419397bf1b7f586095c19668dfee6fd0045",
         "claim_record_commit": "569c511c8dfd5200e652a7a779e95d7e6136a609"
+      },
+      "sourceIntegrationCommit": "e52fc63d00d71facc8eac7d3056b5b201ead04ec",
+      "carrier": {
+        "handoff_id": "hnd_o7igFQDH_1VOTTkCMeYEOKuy",
+        "outer_sha256": "0acf9977bd27c34a4264c2efacee8eba257168d40263041947b40471ca50a771",
+        "manifest_sha256": "a0a65bfc2c3129682fca7656bf04afdf110e86f7a5a10a6f990f0b307b109a3d",
+        "patch_sha256": "fbcefd9cb1dba403de47960593620110e1a5593213f8be01ea3d4cc68969cf35"
+      },
+      "centralValidation": {
+        "carrier_protocol": "outer/manifest/patch/inner checksums, base/result identity, one-path scope and apply/reconstruction PASS",
+        "native": "managed-selection + Dashboard selected-context + Pinned selected-context: 3 files / 17 tests PASS",
+        "typecheck": "full current-authority mobile no-emit PASS with --ignoreDeprecations 6.0 and temporary build info removed",
+        "semantic": "Test-only alignment proves current exact requested-ID membership, exactly-one no-request fallback, no arbitrary first business, review-ID encoding and selection redirect ordering; no Dashboard behavior changed."
       }
     }
   ],
