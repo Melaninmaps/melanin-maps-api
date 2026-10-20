@@ -210,6 +210,18 @@ This is the authoritative parent-experience layer of the controlling checklist. 
 - **External gates:** Publication, deployment, DB/fixture/auth, providers and Web/iOS/Android evidence.
 - **Next action:** Maintain per-experience release gates; do not conflate them with source status.
 
+## Independent Parent Acceptance Matrix — 2026-10-20
+
+The following cumulative counts come from independent local authoritative-source/board traces. **They do not credit source tests as runtime, member-visible, release, or founder acceptance.** Detailed per-criterion classifications are preserved in the JSON Experience Completion Board.
+
+| Parent experience | Applicable | PASS | FAIL | PARTIAL | NOT TESTED | EXTERNALLY BLOCKED | Current disposition |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| COMM-001 private DM lifecycle | 15 | 0 | 0 | 9 | 0 | 6 | Runtime/device/account-switch authorization required; no current source defect. |
+| FLIGHT-001 coordination lifecycle | 12 | 1 | 0 | 8 | 1 | 2 | Source-only/fake seams; durable consent, live data, UI, and runtime gates remain. |
+| OAUTH-001 Calendar availability | 11 | 5 | 0 | 0 | 0 | 6 | OAUTH-001 NO-GO remains controlling; no legitimate new source claim. |
+| BIZ-003 owner feedback | 9 | 0 | 1 | 4 | 2 | 2 | Active P0 legacy-owner isolation repair; then cumulative source retest. |
+| KMEM-004 memory consent/revoke | 7 | 0 | 0 | 4 | 2 | 1 | Retention/erasure decision plus controlled cross-platform runtime required. |
+
 ## Requirement register — founder-area view
 
 **Register-field key:** Each row preserves the object fields in compact form: **Founder/acceptance**, **evidence layers** (source; staging; Web; iOS; Android), **owner/blocker/next**, **approval/verified/prior evidence**. Full machine-readable values are in the companion JSON.

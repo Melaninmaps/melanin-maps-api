@@ -2104,6 +2104,10 @@
     {
       "date": "2026-10-20",
       "event": "Central substantive MEM-D11 commercial-readiness packet source-integrated at 486ad180feec4f16e10ada22f9cad51beda1701f. It independently reconciles free-core, KinfolkAI/owner boundaries, D1 limited closure, payment-source capability, Terms/Privacy cross-surface conflicts, independent-entitlement seams, 14 decision fields, unavailable evidence, and one governance-only founder request. MEM-D11 remains BLOCKED/NO GO; no legal/tax/commercial/provider/member/release/founder acceptance."
+    },
+    {
+      "date": "2026-10-20",
+      "event": "Applied founder-mandated independent parent acceptance trace to existing Experience Completion Board. Added explicit cumulative matrices for COMM-001 (0/15 PASS), FLIGHT-001 (1/12 source-document PASS only), OAUTH-001 (5/11 default-disabled source PASS), BIZ-003 (1 current source FAIL; active repair), and KMEM-004 (0/7 full lifecycle PASS). No parent marked complete; all source receipts remain distinct from runtime/member/release/founder acceptance."
     }
   ],
   "evidence_gaps": [
@@ -2191,13 +2195,64 @@
           "KMEM-005"
         ],
         "existing_implementation": "Consent, purpose/owner gates and deletion child receipts are linked.",
-        "missing_broken_elements": "Accepted source covers explicit-item consent separation and no-token mobile revoke safe failure. Still missing controlled runtime/data, physical Web/iOS/Android/voice journey evidence, deployment/release/member/founder acceptance; no retention/deletion schedule is inferred.",
+        "missing_broken_elements": "Four criteria are source-partial; two are not tested; retention/erasure is externally blocked. Corrected current board status supersedes stale Markdown wording that called KMEM-004 NOT STARTED.",
         "current_active_repair": "No active KMEM source claim after accepted mobile revoke fail-closed repair.",
         "integrated_source": "Linked local source receipts only. KMEM-004 selected-item consent/continuity separation source receipt: `242b58a6\u2026`. KMEM-004 mobile revoke auth fail-closed source receipt: `26eb57a6\u2026`.",
         "test_evidence": "Focused source contracts only. KMEM-004 authority matrix: API 4 files/20; Web 1/5; mobile 1/7; API/Web/mobile no-emit PASS. KMEM-004 mobile revoke authority contract: mobile 1/8; mobile no-emit with temporary external metadata PASS. Targeted Web revoke parity trace: no demonstrated missing-auth no-op; no claim issued.",
         "external_gates": "Controlled provider/test-account and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Accepted KMEM source verticals remain frozen. No Web revoke claim absent evidence of server/runtime missing-auth semantics; trace only concrete source defects or obtain separate runtime/platform authorization."
+        "next_action": "Do not speculate a Web defect. Retain accepted source repairs; obtain retention/erasure decision and controlled cross-platform, two-account runtime authorization before new implementation.",
+        "independent_acceptance_matrix": {
+          "trace_date": "2026-10-20",
+          "evidence_scope": "Independent local authoritative-source/board trace; source tests are never credited as runtime, member, release, or founder acceptance.",
+          "total_applicable_criteria": 7,
+          "classification_counts": {
+            "PASS": 0,
+            "FAIL": 0,
+            "PARTIAL": 4,
+            "NOT TESTED": 2,
+            "EXTERNALLY BLOCKED": 1,
+            "NOT APPLICABLE": 0
+          },
+          "criteria": [
+            {
+              "criterion": "Explicit selected-item save preserves independent continuity settings",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Source route/test evidence only"
+            },
+            {
+              "criterion": "Purpose separation for later relevance",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Source selection evidence only"
+            },
+            {
+              "criterion": "Review/correction/revoke propagation through later use",
+              "classification": "NOT TESTED",
+              "evidence_or_gate": "No runtime/cache/readback journey"
+            },
+            {
+              "criterion": "Two-member/account-switch isolation",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Source ownership gates only"
+            },
+            {
+              "criterion": "Mobile missing-token revoke failure",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Source contract only"
+            },
+            {
+              "criterion": "Web/iOS/Android/voice equivalent lifecycle",
+              "classification": "NOT TESTED",
+              "evidence_or_gate": "No authorized platform execution"
+            },
+            {
+              "criterion": "Retention/erasure semantics",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "UM-001 deletion/retention decision remains blocked"
+            }
+          ],
+          "next_disposition": "Do not speculate a Web defect. Retain accepted source repairs; obtain retention/erasure decision and controlled cross-platform, two-account runtime authorization before new implementation."
+        }
       },
       {
         "experience_id": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS",
@@ -2207,13 +2262,104 @@
           "COMM-001"
         ],
         "existing_implementation": "Free event/post/group/Spotlight repairs plus DM guard/recovery child receipts are linked.",
-        "missing_broken_elements": "The demonstrated malformed-2xx inbox mutation defect is repaired locally. Real persistence, delivery/read/unread, timeout/idempotency/logout-account-switch, browser/device/iOS/Android/staging/member/release/founder gates remain unperformed.",
+        "missing_broken_elements": "Nine lifecycle stages are source-partial only; six runtime/device/account-switch stages are externally blocked. Earlier Markdown evidence references are superseded by current JSON/registry source receipts, including no-preaccept send and inbox response validation.",
         "current_active_repair": "No active DM code claim pending bounded cumulative matrix or demonstrated source defect.",
         "integrated_source": "Guard `e3665ecaf8a529e74204200ce8134f1511f6d84d`; recovery `7cc2e1deef831283d5199b81195aa7aecfdc95af`; notification `dfe4b9c3a8d7708c21fdd52b0e3f07139136b793`; lifecycle contract `93af8b11cd545ffc5e4661bb5a0f3a9a94d501c5`; inbox routing `bfe0f50d4a96931c270b5bc6e7cfdabf38b18ced`; other linked source receipts. Pending communication-consent guard `c7d1bb0199806e3db9f0598b44f11e5ba894b373` (API 9/9, mobile 6/6, API/Web/mobile no-emit). Mobile send fail-closed `44d6777a50a3a2b4aa259a0e78042dc5f6ad6ef0` (mobile 4/4, no-emit). Inbox accept/decline action-response validation `0b96b8cd7be62e5036d20e98fe7184ba46329ade`.",
         "test_evidence": "Notification producer: 3 API files / 10 tests and API no-emit; server-authoritative lifecycle: 4 API files / 14 tests and API no-emit; inbox routing: mobile 4/4, Web 4/4, API 8/8, mobile/Web no-emit. #1 requires separate focused authority checks. #1 current-authority receipt: API 9/9; mobile 6/6; API/Web/mobile no-emit PASS. #2 current-authority receipt: mobile 4/4 and no-emit PASS. Cumulative current-authority local source matrix: API 5 files/18 tests, mobile 3 files/14 tests, Web 2 files/7 tests; API/mobile/Web no-emit PASS. Inbox response contract: mobile 2 files/10 tests and no-emit PASS. Expanded mobile DM source matrix: 4 files/18 tests and mobile no-emit PASS.",
         "external_gates": "Separate authorization is required for controlled account/data use, safe isolated runtime/API database and notification-channel execution, Web browser acceptance, iOS/Android build/device acceptance, staging deployment, and member/release/founder acceptance. HTTP or queued-notification source behavior is not delivery/observed evidence.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Central owner owns the blocked runtime matrix record. Re-run source matrices only after a demonstrated source repair; request each runtime/build/staging gate separately."
+        "next_action": "No demonstrated current source defect. Maintain Q as blocked runtime owner; request discrete controlled runtime, delivery, browser, iOS, Android, and account-switch authorization.",
+        "independent_acceptance_matrix": {
+          "trace_date": "2026-10-20",
+          "evidence_scope": "Independent local authoritative-source/board trace; source tests are never credited as runtime, member, release, or founder acceptance.",
+          "total_applicable_criteria": 15,
+          "classification_counts": {
+            "PASS": 0,
+            "FAIL": 0,
+            "PARTIAL": 9,
+            "NOT TESTED": 0,
+            "EXTERNALLY BLOCKED": 6,
+            "NOT APPLICABLE": 0
+          },
+          "criteria": [
+            {
+              "criterion": "Create private request with participant/block boundaries",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Mocked route/source contract only"
+            },
+            {
+              "criterion": "Produce generic recipient notification",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Source call/helper contract only"
+            },
+            {
+              "criterion": "Route generic inbox notification across Web/mobile",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Static/source contracts only"
+            },
+            {
+              "criterion": "Redact pending history/preview",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Mocked source contract only"
+            },
+            {
+              "criterion": "Block pre-accept messaging",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Mocked source contract only"
+            },
+            {
+              "criterion": "Accept/decline/replay authorization",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Mocked source contract only"
+            },
+            {
+              "criterion": "Recover safe client pending state",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Static/source contracts only"
+            },
+            {
+              "criterion": "Validate 2xx action responses",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Mobile mocked-hook contract only"
+            },
+            {
+              "criterion": "Truthful mobile send failure recovery",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Mobile source contract only"
+            },
+            {
+              "criterion": "Durable request/reopen/accept/decline state",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Requires authorized isolated runtime/database disposition"
+            },
+            {
+              "criterion": "Notification record/push delivery/read/navigation",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Requires authorized notification/device execution"
+            },
+            {
+              "criterion": "Authenticated Web lifecycle",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Requires browser/runtime authorization"
+            },
+            {
+              "criterion": "Authenticated iOS lifecycle",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Requires build/device authorization"
+            },
+            {
+              "criterion": "Authenticated Android lifecycle",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Requires build/device authorization"
+            },
+            {
+              "criterion": "Account switch/session/refetch cross-surface sync",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Requires controlled two-account runtime protocol"
+            }
+          ],
+          "next_disposition": "No demonstrated current source defect. Maintain Q as blocked runtime owner; request discrete controlled runtime, delivery, browser, iOS, Android, and account-switch authorization."
+        }
       },
       {
         "experience_id": "EXP-KINFOLK-CIRCLES-AND-SHARED-PLANS",
@@ -2267,13 +2413,74 @@
           "BIZ-009"
         ],
         "existing_implementation": "Profile navigation, lifecycle controls, specialty save, edit/fresh-read/stale-write and analytics child work are linked.",
-        "missing_broken_elements": "The owner-link reader authority mismatch is repaired locally. Real approved-claim/feedback data, runtime/browser/device/staging/member/release/founder evidence remain external; BIZ-009 protected publication/deployment/startup-writer gates are unchanged.",
-        "current_active_repair": "No current BIZ source claim: bounded trace found no reproducible in-scope BIZ-003 owner-feedback defect.",
+        "missing_broken_elements": "Confirmed source FAIL: legacy GET /kinfolk/skip-feedback authorizes via submittedById without canonical approved-owner isolation. Active repair is limited to that route/test; all real claim/feedback/runtime/platform/release gates remain external.",
+        "current_active_repair": "P0 BIZ-003-LEGACY-SKIP-FEEDBACK-OWNER-ISOLATION: active, exclusive two-path repair for confirmed former-submitter legacy-reader bypass.",
         "integrated_source": "Local BIZ source/candidate receipts only. Canonical owner skip-insights read `476d3017ed9fcda9a13d2837aa664ee8281f3d24` is source-integrated locally (API 2/2, mobile 3/3, no-emit). Owner Home canonical skip-insights `6e244c6676a1f0725b4aac2348540dff783b91bd` (mobile 3/3, API 2/2, mobile no-emit). BIZ-003 explicit owner skip-feedback private projection `f100d7694db1b829196ea6af26a5c6d2502b68e6`. BIZ approved-owner skip-feedback read isolation `78d55d511500d35ba37858cf80437193267f9abd`.",
         "test_evidence": "Focused API/Web/mobile source checks only. Owner Home current-authority: mobile 3/3, owner API 2/2, mobile no-emit PASS. Projection: API 1 file/4, mobile consumer contracts 2/6, API no-emit PASS. Approved-owner feedback read isolation: API 1 file/7, mobile 2 files/6, API no-emit PASS. Cumulative BIZ owner-feedback source matrix: API 1 file/7, mobile 2 files/6, API no-emit PASS.",
         "external_gates": "Remote publication, deploy/startup disposition, account/fixture, readback and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Preserve BIZ-009 protected release gates and external runtime/member requirements. Create source work only after a concrete defect, not a generic acceptance gap."
+        "next_action": "Finish and centrally validate active BIZ-003 legacy-reader repair; then rerun owner-feedback source matrix. Preserve BIZ-009 release gates and all runtime/member gates.",
+        "independent_acceptance_matrix": {
+          "trace_date": "2026-10-20",
+          "evidence_scope": "Independent local authoritative-source/board trace; source tests are never credited as runtime, member, release, or founder acceptance.",
+          "total_applicable_criteria": 9,
+          "classification_counts": {
+            "PASS": 0,
+            "FAIL": 1,
+            "PARTIAL": 4,
+            "NOT TESTED": 2,
+            "EXTERNALLY BLOCKED": 2,
+            "NOT APPLICABLE": 0
+          },
+          "criteria": [
+            {
+              "criterion": "Legacy owner-feedback read matches approved-owner isolation",
+              "classification": "FAIL",
+              "evidence_or_gate": "Confirmed former-submitter bypass in GET /kinfolk/skip-feedback; active exact repair"
+            },
+            {
+              "criterion": "Canonical owner read authorization/projection",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Mocked API source evidence only"
+            },
+            {
+              "criterion": "Least-privilege feedback projection",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Static/API source evidence only"
+            },
+            {
+              "criterion": "Dashboard and Owner Home canonical consumers",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Static client contracts only"
+            },
+            {
+              "criterion": "Member feedback submit/error/readback lifecycle",
+              "classification": "NOT TESTED",
+              "evidence_or_gate": "No full submit-to-owner source/runtime journey"
+            },
+            {
+              "criterion": "Claim/reassignment/revocation/multiple-owner lifecycle",
+              "classification": "NOT TESTED",
+              "evidence_or_gate": "No complete lifecycle evidence"
+            },
+            {
+              "criterion": "Controlled owner/link/feedback persistence",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Requires authorized data/runtime protocol"
+            },
+            {
+              "criterion": "Web/iOS/Android/member/release acceptance",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "BIZ-009 publication/deployment/startup and platform gates remain separate"
+            },
+            {
+              "criterion": "Cross-reader source consistency after repair",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Pending active repair and cumulative retest"
+            }
+          ],
+          "next_disposition": "Finish and centrally validate active BIZ-003 legacy-reader repair; then rerun owner-feedback source matrix. Preserve BIZ-009 release gates and all runtime/member gates."
+        }
       },
       {
         "experience_id": "EXP-ADMINISTRATION-DIRECTORY-GOVERNANCE",
@@ -2341,7 +2548,83 @@
         "test_evidence": "FLIGHT-003: 2 files / 34 API tests and API no-emit; no member journey. Current-authority FLIGHT-004 + sharing: API 2 files/51 tests, API no-emit PASS. Current-authority FLIGHT-005 matrix: API 4 files/91 tests and no-emit PASS. Boundary regression: API 4 files/93 tests and no-emit PASS. Cumulative Flight current-authority source matrix: API 5 files/106 tests and API no-emit PASS. FLIGHT-007: lifecycle 1 file/41; cumulative Flight 5 files/113; API no-emit PASS. Flight #8 repair/current-authority matrix: 6 files / 120 tests and API no-emit PASS.",
         "external_gates": "Source-only parent evidence is ongoing under Flight #7/#8. Separate authorizations are required for provider hard-cap/account/call, real Calendar/OAuth/consent and durable grants, real venue catalog/verification/current details, routes/UI/invitations/replies/notifications/delivery, runtime/network/browser/device/staging, and member/release/founder acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Do not invent another fixture slice. Seek separately scoped authorization for any durable consent, route/UI, provider/Calendar or runtime stage."
+        "next_action": "Do not invent another fixture repair. Seek a separately scoped durable consent/route/UI/provider/Calendar/venue/runtime stage only after its external prerequisites.",
+        "independent_acceptance_matrix": {
+          "trace_date": "2026-10-20",
+          "evidence_scope": "Independent local authoritative-source/board trace; source tests are never credited as runtime, member, release, or founder acceptance.",
+          "total_applicable_criteria": 12,
+          "classification_counts": {
+            "PASS": 1,
+            "FAIL": 0,
+            "PARTIAL": 8,
+            "NOT TESTED": 1,
+            "EXTERNALLY BLOCKED": 2,
+            "NOT APPLICABLE": 0
+          },
+          "criteria": [
+            {
+              "criterion": "Provider readiness no-go record",
+              "classification": "PASS",
+              "evidence_or_gate": "Document acceptance only; not provider/member journey"
+            },
+            {
+              "criterion": "Default-disabled status normalization",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Injected fake-provider source only"
+            },
+            {
+              "criterion": "Named-recipient sharing",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "In-memory pure policy only"
+            },
+            {
+              "criterion": "Reciprocal recipient intent",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Pure policy only"
+            },
+            {
+              "criterion": "Freshness/timestamp/31-day gate",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Injected source lifecycle only"
+            },
+            {
+              "criterion": "Pair coordination slot selection",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Injected busy-only fixtures only"
+            },
+            {
+              "criterion": "Triad role/use isolation",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Injected authorization objects only"
+            },
+            {
+              "criterion": "Triad coordinator availability/venue fixture",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Injected fixture only"
+            },
+            {
+              "criterion": "Three-member member-facing lifecycle",
+              "classification": "NOT TESTED",
+              "evidence_or_gate": "No routes/UI/invitations/replies/delivery evidence"
+            },
+            {
+              "criterion": "Live provider/Calendar/venue truth and durable consent",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Separate provider/OAuth/venue/consent authorization"
+            },
+            {
+              "criterion": "Runtime/browser/device/member release lifecycle",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Separate controlled deployment/platform authorization"
+            },
+            {
+              "criterion": "No fabricated unavailable fallback",
+              "classification": "PARTIAL",
+              "evidence_or_gate": "Source/fake-policy evidence only"
+            }
+          ],
+          "next_disposition": "Do not invent another fixture repair. Seek a separately scoped durable consent/route/UI/provider/Calendar/venue/runtime stage only after its external prerequisites."
+        }
       },
       {
         "experience_id": "EXP-KINFOLK-CALENDAR-AVAILABILITY-AND-MEETING-PLANNING",
@@ -2359,7 +2642,78 @@
         "test_evidence": "Focused pure contracts only. Current-authority vault/normalizer/state-PKCE: 3 files/18 tests + API no-emit PASS. Admission composition current-authority matrix: API 4 files/26 tests and no-emit PASS.",
         "external_gates": "Consent, OAuth configuration, security review, controlled pilot and platform acceptance.",
         "completion_status": "SOURCE VALIDATED",
-        "next_action": "Do not invent Calendar work. Require separate external approvals/acceptance for every real OAuth or runtime phase."
+        "next_action": "Keep OAUTH-001 NO-GO controlling. No demonstrated source defect or legitimate successor code claim exists before separate contract/client/scope/consent/security/pilot approval.",
+        "independent_acceptance_matrix": {
+          "trace_date": "2026-10-20",
+          "evidence_scope": "Independent local authoritative-source/board trace; source tests are never credited as runtime, member, release, or founder acceptance.",
+          "total_applicable_criteria": 11,
+          "classification_counts": {
+            "PASS": 5,
+            "FAIL": 0,
+            "PARTIAL": 0,
+            "NOT TESTED": 0,
+            "EXTERNALLY BLOCKED": 6,
+            "NOT APPLICABLE": 0
+          },
+          "criteria": [
+            {
+              "criterion": "OAUTH-001 availability readiness no-go",
+              "classification": "PASS",
+              "evidence_or_gate": "Decision packet only"
+            },
+            {
+              "criterion": "Default-disabled fake normalizers",
+              "classification": "PASS",
+              "evidence_or_gate": "Pure source leaf only"
+            },
+            {
+              "criterion": "Default-disabled fake state/PKCE",
+              "classification": "PASS",
+              "evidence_or_gate": "Pure source leaf only"
+            },
+            {
+              "criterion": "Default-disabled in-memory vault/redaction",
+              "classification": "PASS",
+              "evidence_or_gate": "Pure source leaf only"
+            },
+            {
+              "criterion": "Default-disabled injected lifecycle admission",
+              "classification": "PASS",
+              "evidence_or_gate": "Pure source leaf only"
+            },
+            {
+              "criterion": "Founder-approved Connection Contract v1",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "No approval for real implementation/pilot"
+            },
+            {
+              "criterion": "Member delegated consent/disconnect/revocation",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "No real flow authorized"
+            },
+            {
+              "criterion": "Durable encrypted server vault/security review",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "Fake closure is not durable vault"
+            },
+            {
+              "criterion": "Google/Microsoft real adapter behavior",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "No client/scope/network authorization"
+            },
+            {
+              "criterion": "Aggregate co-planner privacy lifecycle",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "No connected provider/member workflow"
+            },
+            {
+              "criterion": "Pilot/staging/Web/iOS/Android acceptance",
+              "classification": "EXTERNALLY BLOCKED",
+              "evidence_or_gate": "No client/config/pilot/platform authorization"
+            }
+          ],
+          "next_disposition": "Keep OAUTH-001 NO-GO controlling. No demonstrated source defect or legitimate successor code claim exists before separate contract/client/scope/consent/security/pilot approval."
+        }
       },
       {
         "experience_id": "EXP-MWM-RELEASE-RUNTIME-AND-CROSS-PLATFORM-ACCEPTANCE",
