@@ -5354,7 +5354,7 @@
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "authorityBase": "e80946423a8c86702fdbc99884227596c5aeb0df",
-      "workerStart": "BASE_TRANSFER_PENDING",
+      "workerStart": "BASE_TRANSFERRED",
       "paths": [
         "artifacts/mobile/app/business-dashboard.tsx",
         "artifacts/mobile/app/business-intelligence.tsx",
@@ -5368,7 +5368,15 @@
         "NODE_OPTIONS=--max-old-space-size=8192 pnpm --dir artifacts/mobile exec tsc -p tsconfig.json --noEmit --ignoreDeprecations 6.0 --tsBuildInfoFile /tmp/biz009-intelligence-selected-context.tsbuildinfo",
         "exact three-path diff/whitespace and fresh-base repository-relative ANSI-free patch reconstruction"
       ],
-      "source_boundary": "Uncommitted/unstaged source-only carrier; deterministic tests only."
+      "source_boundary": "Uncommitted/unstaged source-only carrier; deterministic tests only.",
+      "baseTransfer": {
+        "handoff_id": "hnd_GICEygjglfD00b1BBuriGudb",
+        "file": "BIZ009_BUSINESS_INTELLIGENCE_SELECTED_CONTEXT_BASE_E8094642.tar.gz",
+        "outer_sha256": "a4d6bc14ecafcebff30b44ce5f1835062da9abf3abf4a6776a17f469c33dd129",
+        "expires_at": "2026-10-21T12:57:52.980Z",
+        "source_authority_base": "e80946423a8c86702fdbc99884227596c5aeb0df",
+        "claim_record_commit": "82f100f82b3c6dc167dd572103c99319c05037c9"
+      }
     }
   ],
   "globalDirectiveDelivery": [
