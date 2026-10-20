@@ -4609,7 +4609,7 @@
       "exclusions": "No server/API route, schema/DB/runtime, Voice provider activation, Kinfolk chat, Directory/public profile, browser/device, staging/deploy, remote action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "d99b86c1c9b8c372d25c4863d761c8462c11d082",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_VOICE_MANAGED_CONTEXT_BASE_2026-10-20.tar.gz",
@@ -4618,7 +4618,15 @@
         "expires_at": "2026-10-21T02:50:19.011Z",
         "size_bytes": 51364
       },
-      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:51:24Z"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "17c0d47756dc369a076694599b6d41da9ee60ba6",
+        "carrier_handoff": "hnd_NK3wCizOPz6VRdBWMIf-vFV7",
+        "carrier_sha256": "4de8c28c5ccb45ff6f2ff8d5885e986122af6b98bd6a831163b93edb8b9cbb94",
+        "source_validation": "Voice drafting contract: 1 file / 5 tests PASS; mobile tsc --noEmit --ignoreDeprecations 6.0 PASS; exact two-path scope/diff PASS.",
+        "semantic_validation": "Managed-list load clears old context first; zero fails closed; multi renders explicit selector; sole business may continue. Profile PUT and draft POST bind to selected managed ID; epoch guards prevent stale restoration.",
+        "boundary": "No server/API/schema/DB/runtime/provider/browser/device/staging/deploy/member/release/founder acceptance."
+      }
     },
     {
       "id": "BIZ-009-SELECTED-PROFILE-AUTHORITY-ROUTE-CONTRACT",
