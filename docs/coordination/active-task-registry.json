@@ -4282,6 +4282,22 @@
       "acceptance": "Legacy read preserves 401/tier/error/response sanitization; it grants active approved/unrevoked owner link first; only then falls back to submittedById if no active link exists; a former submitter whose business has an active approved owner link is denied before feedback selection. New real-route regression covers these boundaries.",
       "exclusions": "No client/canonical skip-feedback route/schema/migration/account/data/config/payment/provider/BIZ-009/deploy/browser/device/activation change. No runtime/member acceptance claim.",
       "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T01:49:35Z"
+    },
+    {
+      "id": "MEM-D11-CONSOLIDATED-COMMERCIAL-READINESS-DECISION-PACKET",
+      "requirementId": "MEM-D11",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "ownerTaskName": "Central authority",
+      "priority": "P0",
+      "status": "IN DEVELOPMENT",
+      "authorityBase": "4a0e26c921d4dc0943562232d930daa7ec1a0831",
+      "paths": [
+        "docs/coordination/MEMD11_CONSOLIDATED_COMMERCIAL_READINESS_DECISION_PACKET_2026-10-20.md"
+      ],
+      "purpose": "Founder-directed substantive reconciliation of inspected local membership, commercial, legal-copy, checkout, entitlement, and closed-rail evidence into one 14-field decision-ready packet.",
+      "acceptance": "Classifies verified facts, conflicts, unverified evidence, recommendations, approvers, and explicit source/simulation/staging/live-checkout gates for every MEM-D11 field; preserves free core and closed rails; includes one consolidated founder decision request only; does not invent approvals or alter product/legal/payment source.",
+      "exclusions": "No provider/network/payment/config/account/data/schema/deploy/browser/device/action; no Terms/Privacy/copy/catalog/entitlement change; no legal, tax, merchant, or commercial approval claim.",
+      "workerStart": "CENTRAL_STARTED_2026-10-20T01:52:08Z"
     }
   ],
   "globalDirectiveDelivery": [
