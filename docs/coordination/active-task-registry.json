@@ -4672,7 +4672,7 @@
       "exclusions": "No server/API route, schema/DB/runtime, owner policy, managed selector, media/schedule/video behavior, provider/storage, browser/device, staging/deploy, remote Git, or external action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "d13754d29ae564dc04983fa89b55459910d75b28",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_MOBILE_EDITOR_SUCCESSIVE_SAVE_REVISION_BASE_2026-10-20.tar.gz",
@@ -4681,7 +4681,15 @@
         "expires_at": "2026-10-21T02:55:33.630Z",
         "size_bytes": 13266
       },
-      "workerStart": "BASE_TRANSFERRED_AWAITING_DIRECT_DISPATCH"
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
+      "sourceReceipt": {
+        "authority_commit": "dfd4d46ee938f0b51591242b53deb4f27de699ea",
+        "carrier_handoff": "hnd_DxOQvEV5PhVHmYU-PXhg-cwE",
+        "carrier_sha256": "4e2df96437a9e8233ae36486e33bfec17d91ab41cf394d86bed7d92f6aed039e",
+        "source_validation": "Selected editor revision + successive-save contracts: 2 files / 7 tests PASS; mobile tsc --noEmit --ignoreDeprecations 6.0 PASS; exact two-path scope/diff PASS.",
+        "semantic_validation": "Selected managed PATCH includes expectedUpdatedAt; successful response requires nonempty canonical updatedAt and refreshes state before profileSaved/setOriginal. Non-OK/malformed success response remains fail-closed; legacy profile path unchanged.",
+        "boundary": "No server/API/schema/DB/runtime/provider/browser/device/staging/deploy/member/release/founder acceptance."
+      }
     }
   ],
   "globalDirectiveDelivery": [
