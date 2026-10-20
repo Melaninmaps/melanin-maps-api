@@ -4825,7 +4825,7 @@
       "ownerTaskName": "Build Unmerged Community-Frequented Alternatives + Scorecard V1 Candidate",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
       "paths": [
         "artifacts/mobile/app/business-owner/featured-video.tsx",
@@ -4835,12 +4835,20 @@
       "acceptance": "Retain exact-one managed-list admission and all current failure/retry/context-clear behavior. Use the returned selected ID only after the exact-one managed-list + selected-read checks. Selected hosted upload/delete must call /api/businesses/mine/managed/:businessId/featured-video/{upload|hosted}; selected external-link mutations must retain the existing active-approved owner-authorized selected endpoint. On non-OK or malformed responses, retain no false hosted/link success. Focused recovery contract plus an added single/selected-route/zero-multiple/retry/late-response assertion, mobile no-emit with --ignoreDeprecations 6.0, exact two-path scope and diff check.",
       "exclusions": "No server/API/route/schema/DB/storage/IAM/provider/configuration/Directory/Kinfolk/publication/runtime/browser/device/staging/deploy/remote Git/mobile-build action. Do not modify Business Owner index or selected-route server authority.",
       "source_boundary": "Source-only mocked client repair; no storage/database/runtime/member/release/founder acceptance.",
-      "workerStart": "ACKNOWLEDGED_STARTED",
+      "workerStart": "SOURCE_RECEIPT_RECORDED",
       "baseTransfer": {
         "handoff_id": "hnd_yVCwXkpCmVa32HTnMdTIyasJ",
         "file": "BIZ009_FEATURED_VIDEO_SELECTED_ROUTE_PROPAGATION_BASE_2026-10-20.tar.gz",
         "sha256": "3bf929230640b97b3cd2d73a8ac34ddc99f64d20d4f42cd44526284dd73727fa",
         "expires_at": "2026-10-21T03:54:23.587Z"
+      },
+      "sourceReceipt": {
+        "authority_commit": "a80a60ba46a689906613431d2205529d09a30c1d",
+        "carrier_handoff": "hnd_gBdE4U2XmpOBoGbAHlDFuVy7",
+        "carrier_sha256": "39ea30798ee8ce887d24e658d3467e944bd46c03e99b7b5924a3eb6421ddeee0",
+        "source_validation": "Current native BIZ matrix: 6 files / 36 tests PASS; mobile tsc --noEmit --ignoreDeprecations 6.0 PASS; exact two-path scope/diff and output hashes PASS.",
+        "semantic_validation": "Exact-one managed admission and retry/late-response clearing are retained. The resolved selected ID drives managed read, hosted upload/delete, and external-link update/clear. Non-OK or malformed responses cannot create false hosted/link success; legacy ambiguous media paths are absent from the selected flow.",
+        "boundary": "Source-only mocked client evidence. No storage/DB/runtime/provider/browser/device/staging/deploy/member/release/founder acceptance."
       }
     },
     {
