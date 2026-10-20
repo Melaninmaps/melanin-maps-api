@@ -3748,6 +3748,65 @@
         "review_failure_receipt": "82e80ac1fee8cb404181a5a957293fc0557e06ee",
         "outcome": "Repaired carrier addressed exact role-bound allowed uses, triad coordinator availability envelope, and pair/outer clock binding before integration."
       }
+    },
+    {
+      "id": "KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "ownerTaskId": "44XXTVLrtPEqRlFbDRQx9y",
+      "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "requirementId": "KMEM-004",
+      "baseline": "f15e59867135baae2518dca44cf7bfef4bd55eda",
+      "paths": [
+        "artifacts/api-server/src/routes/kinfolk.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/private-memory-encryption-routes.test.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/private-memory-relevance-selector.test.ts"
+      ],
+      "writablePathHashAtClaim": {
+        "artifacts/api-server/src/routes/kinfolk.ts": "ca08cc3b5dc11748f2b020e11f1a70859a6314459068448dfb21d1824b759837",
+        "artifacts/api-server/src/kinfolk/__tests__/private-memory-encryption-routes.test.ts": "6e9f5746e3fbd75ce9de87c58bf2dba34f7bef029c58a1df14c56ffa3076891b",
+        "artifacts/api-server/src/kinfolk/__tests__/private-memory-relevance-selector.test.ts": "035dabb78fc94f4454e12dc4da8cd5c562396af9da8d95bc1369588aaf709cca"
+      },
+      "readOnlyDependencies": [
+        "artifacts/api-server/src/kinfolk/explicit-memory-consent.ts",
+        "artifacts/api-server/src/kinfolk/explicit-member-memory.ts",
+        "artifacts/api-server/src/kinfolk/private-memory.ts",
+        "artifacts/api-server/src/kinfolk/private-memory-personalization.ts",
+        "artifacts/api-server/src/kinfolk/private-memory-encryption.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/continuity-memory-boundaries.test.ts",
+        "artifacts/api-server/src/kinfolk/__tests__/private-memory-workflow-proof.test.ts",
+        "artifacts/web/src/components/kinfolk/KinfolkInlineMemoryConsent.tsx",
+        "artifacts/web/src/components/kinfolk/KinfolkMemoryManager.tsx",
+        "artifacts/web/src/__tests__/kinfolk-memory-lifecycle-controls.test.ts",
+        "artifacts/mobile/components/KinfolkInlineMemoryConsent.tsx",
+        "artifacts/mobile/app/kinfolk-memory.tsx",
+        "artifacts/mobile/__tests__/kinfolk-memory-lifecycle-controls.test.ts"
+      ],
+      "evidence": "Both inline clients submit selected-item consent with no continuity choice, but POST /kinfolk/memory-consent then unconditionally writes enabled/accepted continuity settings. Existing owner/purpose/relevance policy allows a selected explicit item with continuity off.",
+      "requiredBehavior": [
+        "In only POST /kinfolk/memory-consent\u2019s userSettings block, remove automatic `kinfolkMemoryEnabled`, `kinfolkContinuityEnabled`, and accepted-disclosure writes caused only by selected item save.",
+        "A successful selected ordinary item save must remain encrypted/owner-bound yet leave absent, declined, or disabled continuity settings unchanged.",
+        "Retain relevant explicit item selection with continuity false; preserve all owner/purpose/relevance/sensitive/paused/revoked/expired fail-closed selectors."
+      ],
+      "constraints": [
+        "Within kinfolk.ts modify only the post-selection userSettings read/update/upsert block; do not alter continuity, generic-memory PATCH/DELETE, session deletion, Journey, Flight, or any other handler.",
+        "No schema/migration/DB execution/real member data/new persistence model/retention or permanent-clear semantics/LLM/provider/mass ingestion/client redesign/browser/device/staging/deploy/remote/activation.",
+        "Preserve KINFOLK-SESSION-DELETION, LA-001, UM-001, KMEM-001/002/003, and completed source scopes outside the exact block."
+      ],
+      "validationPlan": [
+        "Synthetic encrypted ordinary selected-item save against absent or prior declined/disabled settings leaves userSettings byte-for-byte unchanged.",
+        "Existing private-memory encryption routes retain auth/consent/sensitive reauth, owner A/B isolation, correction, revoke and encryption rollback behavior.",
+        "Relevance selector proves authorized relevant explicit item may be used with continuity false; unrelated/paused/revoked/cross-owner/expired/unrecognized-purpose/unauthorized-sensitive items remain excluded.",
+        "Run API private-memory-encryption-routes, private-memory-relevance-selector, continuity-memory-boundaries, private-memory-workflow-proof; Web/mobile kinfolk-memory-lifecycle-controls; API no-emit, exact scope and diff check."
+      ],
+      "carrierDisposition": "Uncommitted, unstaged, hash-manifested three-path review carrier only. Central owner must validate full authority before source integration.",
+      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only synthetic evidence; no runtime, real account/data, browser/device, staging/deploy, member/release/founder claim.",
+      "baseTransfer": {
+        "state": "PENDING_HANDOFF",
+        "file": "KMEM004_EXPLICIT_ITEM_CONSENT_CONTINUITY_SEPARATION_BASE_2026-10-19.tar.gz",
+        "sha256": "0c73b8d0598d12f4a99e4aa1dd0a114d145f5f81e997f0d12618c14570ff79ba",
+        "authority_base": "f15e59867135baae2518dca44cf7bfef4bd55eda"
+      }
     }
   ],
   "globalDirectiveDelivery": [

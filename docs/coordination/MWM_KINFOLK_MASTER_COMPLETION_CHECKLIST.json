@@ -300,15 +300,15 @@
       "platform": "Web/iOS/Android/voice",
       "founder_requirement": "Universal Memory/Connected Intelligence completion requires member-facing verticals, not a helper/test.",
       "acceptance_criteria": "Evidence proves later relevant use, purpose separation, correction/deletion propagation, A/B isolation and equivalent server semantics on Web/iOS/Android/voice.",
-      "status": "NOT STARTED",
-      "source_evidence": "Universal Memory \u00a7\u00a769\u2013120: Slices 1\u20133 are not completion; feature matrix remains not verified.",
+      "status": "IN DEVELOPMENT",
+      "source_evidence": "Universal Memory \u00a7\u00a769\u2013120: Slices 1\u20133 are not completion; feature matrix remains not verified. Active P0 claim `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` registered against f15e5986\u2026 for the demonstrated selected-item-consent/continuity-setting separation defect; no source integration yet.",
       "staging_evidence": "MISSING EVIDENCE \u2014 no authorized staging deployment/member journey receipt.",
       "web_evidence": "MISSING EVIDENCE \u2014 source-only/no authenticated browser acceptance.",
       "ios_evidence": "MISSING EVIDENCE \u2014 no coordinated iOS build/physical-device receipt.",
       "android_evidence": "MISSING EVIDENCE \u2014 no coordinated Android build/physical-device receipt.",
-      "responsible_owner_or_task": "Unified integration/platform owners",
-      "dependencies_or_blockers": "MISSING EVIDENCE \u2014 vertical design, integration and platform/member acceptance.",
-      "next_action": "Select one smallest approved vertical, not a new silo.",
+      "responsible_owner_or_task": "44XXTVLrtPEqRlFbDRQx9y (exclusive source carrier); QJATRGk7nUgzDlccMCUcG6 (central validation)",
+      "dependencies_or_blockers": "No active path conflict. Shared kinfolk.ts must remain limited to POST /kinfolk/memory-consent settings block; all runtime/real-data/platform gates remain external.",
+      "next_action": "Await only the uncommitted three-path carrier; central validate the full deterministic source journey before recording any local integration.",
       "founder_approval_needed": "Yes for external activation packets/new runtime scope.",
       "last_verified_date": "2026-10-19",
       "prior_evidence_refs": [
@@ -2036,6 +2036,10 @@
     {
       "date": "2026-10-19",
       "event": "FLIGHT-008 repaired carrier `hnd_lpcRu4YdFHjtqAam3OKrW7dn` source-integrated locally at `19151dd025ce7010e58e16e429f199da8987bc83`: exact role uses, triad-bound coordinator availability and pair/outer clock equality. Full source matrix PASS: 6 files / 120 tests plus API no-emit. Fixture-only; external lifecycle gates unchanged."
+    },
+    {
+      "date": "2026-10-19",
+      "event": "Registered P0 `KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` to 44XX at f15e5986\u2026: selected-item consent currently infers general continuity acceptance. Only three route/test paths are owned; no source integration or external acceptance claimed."
     }
   ],
   "evidence_gaps": [
@@ -2124,12 +2128,12 @@
         ],
         "existing_implementation": "Consent, purpose/owner gates and deletion child receipts are linked.",
         "missing_broken_elements": "Universal-memory/member-facing verticals and runtime assistant acceptance are missing.",
-        "current_active_repair": "No current child claim.",
+        "current_active_repair": "`KMEM-004-EXPLICIT-ITEM-CONSENT-CONTINUITY-SEPARATION` (44XX): selected-item save must not infer general continuity consent; exactly three exclusive API route/test paths.",
         "integrated_source": "Linked local source receipts only.",
         "test_evidence": "Focused source contracts only.",
         "external_gates": "Controlled provider/test-account and platform acceptance.",
         "completion_status": "IN PROGRESS",
-        "next_action": "Trace one complete missing member vertical."
+        "next_action": "Receive the bounded carrier; validate explicit item consent \u2192 encrypted owner-isolated relevant use \u2192 correction/revoke boundaries without enabling continuity or changing retention/deletion semantics."
       },
       {
         "experience_id": "EXP-MWM-COMMUNITY-DIRECT-MESSAGING-GROUPS-EVENTS",
