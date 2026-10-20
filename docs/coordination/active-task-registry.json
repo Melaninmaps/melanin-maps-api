@@ -4733,11 +4733,12 @@
       "authorityBase": "b94ad4a790f461e4cfcb6ea7fa06b108f6c35405",
       "baseArchive": {
         "local_file": "/home/ubuntu/BIZ009_WEB_SELECTED_EXPERIENCE_DRAFT_ISOLATION_BASE_2026-10-20.tar.gz",
-        "sha256": "PENDING_LOCAL_PACKAGE",
-        "handoff": "PENDING",
-        "expires_at": "PENDING"
+        "sha256": "8894a54ee54c12dab9ff05a2614f2216a212468e8e16e953e2048031e17bd0c2",
+        "handoff": "hnd_XDwUKo1vAQdUvpuqIQuEHf9f",
+        "expires_at": "2026-10-21T03:26:27.221Z",
+        "size_bytes": 4397
       },
-      "workerStart": "DISPATCH_PENDING",
+      "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "source_boundary": "Source-only Web selected-context draft isolation; no runtime/member/release/founder acceptance."
     }
   ],
