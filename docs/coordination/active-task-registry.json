@@ -4446,10 +4446,12 @@
       "status": "IN DEVELOPMENT",
       "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
       "baseArchive": {
-        "handoff": "PENDING",
-        "sha256": "PENDING"
+        "handoff": "hnd_THAZyAE6q11Nbuu74ZWiAUFi",
+        "sha256": "ecd044131380375f897be28e837a7a8ab4bf1cca071eb4249c1e475e8ac5429d",
+        "expires_at": "2026-10-21T02:21:58.102Z",
+        "size_bytes": 276379
       },
-      "workerStart": "NOT_DISPATCHED"
+      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
     },
     {
       "id": "BIZ-009-MOBILE-SELECTED-EDITOR-REVISION-PROPAGATION",
@@ -4467,10 +4469,12 @@
       "status": "IN DEVELOPMENT",
       "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
       "baseArchive": {
-        "handoff": "PENDING",
-        "sha256": "PENDING"
+        "handoff": "hnd_UngqSBoysizxEDRbDkVIqElq",
+        "sha256": "6d58bb49506ab77585ef01c6be764f83c86c1bf6b88698e4191fb003d1bcf6ed",
+        "expires_at": "2026-10-21T02:21:58.509Z",
+        "size_bytes": 343164
       },
-      "workerStart": "NOT_DISPATCHED"
+      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
     },
     {
       "id": "BIZ-009-MOBILE-DASHBOARD-MANAGED-BUSINESS-SELECTION",
@@ -4488,10 +4492,12 @@
       "status": "IN DEVELOPMENT",
       "authorityBase": "12c12502c043dccb667342249f08b8be224a75ed",
       "baseArchive": {
-        "handoff": "PENDING",
-        "sha256": "PENDING"
+        "handoff": "hnd_5L1sPH98EsuxdBBodVsp5Rvt",
+        "sha256": "942e339c7a18cfe1c98c74c5d5a3c1898b7e7008b5106081135524edbd7ae5e0",
+        "expires_at": "2026-10-21T02:21:58.834Z",
+        "size_bytes": 253058
       },
-      "workerStart": "NOT_DISPATCHED"
+      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
     }
   ],
   "globalDirectiveDelivery": [
