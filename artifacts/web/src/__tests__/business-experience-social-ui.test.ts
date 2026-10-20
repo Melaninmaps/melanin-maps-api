@@ -45,6 +45,37 @@ describe("website business experience", () => {
     expect(editor).toContain("priceKey");
     expect(editor).toContain("Community feedback remains separate");
   });
+
+  it("resets an A draft before enabling B saves and ignores late A save outcomes", () => {
+    const editor = source("../features/businesses/BusinessExperienceEditor.tsx");
+    const resetBlock = editor.slice(
+      editor.indexOf("const selectedDraftForBusiness"),
+      editor.indexOf("function toggle"),
+    );
+    const saveBlock = editor.slice(
+      editor.indexOf("async function save()"),
+      editor.indexOf("return ("),
+    );
+
+    expect(resetBlock).toContain("const [draftBusinessId, setDraftBusinessId] = useState(business.id);");
+    expect(resetBlock).toContain("const draftReady = draftBusinessId === business.id;");
+    expect(resetBlock).toContain("activeBusinessIdRef.current = business.id;");
+    expect(resetBlock).toContain("setSelected(selectedDraftForBusiness());");
+    expect(resetBlock).toContain("setPriceKey(priceDraftForBusiness());");
+    expect(resetBlock).toContain("setSaving(false);");
+    expect(resetBlock).toContain("setMessage(null);");
+    expect(resetBlock).toContain("setDraftBusinessId(business.id);");
+    expect(resetBlock).toContain("}, [business.id]);");
+    expect(editor).toContain("disabled={saving || !draftReady}");
+
+    expect(saveBlock).toContain("if (!draftReady || saving) return;");
+    expect(saveBlock).toContain("const saveBusinessId = business.id;");
+    expect(saveBlock).toContain("api/vibes/businesses/${saveBusinessId}/owner-tags");
+    expect(saveBlock).toContain("body: JSON.stringify({ vibes: selected, priceKey })");
+    expect(saveBlock.match(/activeBusinessIdRef\.current === saveBusinessId/g)).toHaveLength(3);
+    expect(saveBlock).toContain("setMessage(\"Saved. Your profile now uses these owner-provided tags and price point in search.\");");
+    expect(saveBlock).toContain("setMessage(error instanceof Error ? error.message : \"Could not save experience details.\");");
+  });
 });
 
 describe("website social video choices", () => {
