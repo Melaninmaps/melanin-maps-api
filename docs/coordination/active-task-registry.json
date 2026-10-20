@@ -5423,6 +5423,24 @@
         },
         "externalAcceptance": "PENDING — local deterministic source evidence only; no staging, database/storage, browser/device, member-visible, deployment/release, or founder acceptance occurred."
       }
+    },
+    {
+      "id": "BIZ-009-VOICE-PROFILE-BUSINESS-ID-UNIQUENESS-READINESS-REPAIR",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "IN_PROGRESS_CENTRAL",
+      "ownerTaskId": "QJATRGk7nUgzDlccMCUcG6",
+      "ownerTaskName": "Central integration/acceptance owner",
+      "authorityBase": "e678063f6235257aa26e679ef404ea92d5b1fdda",
+      "paths": [
+        "artifacts/api-server/src/lib/startup-migrations.ts",
+        "artifacts/api-server/src/routes/__tests__/business-voice-profile-contract.test.ts"
+      ],
+      "purpose": "Repair the demonstrated isolated-staging incompatibility where an existing Business Voice Profile table has the expected columns and owner index but lacks a one-profile-per-business uniqueness invariant; CREATE TABLE IF NOT EXISTS alone cannot repair that pre-existing shape.",
+      "acceptance": "Within the existing business_kinfolk_voice_profiles_v1 table-only readiness path, idempotently establish exactly one unique single-column business_id index/constraint when no equivalent unique index exists; fail before traffic if existing duplicate data prevents it; then verify the exact unique invariant with catalog-only metadata in addition to the existing no-row column probe. Preserve normal and explicit-feature-release pre-traffic placement. Extend the existing focused contract for first/repeated readiness, missing uniqueness repair/probe, and failure propagation.",
+      "exclusions": "No broad startup migrations; no unrelated relation/index; no business, member, owner-link, entitlement, profile, publication, or Kinfolk data action; no provider/OAuth/payment/push/AI change; no production action. Any staging operation is limited to the named isolated environment and this table-only readiness path under the standing authorization.",
+      "source_boundary": "A source claim only. The 2026-10-20 catalog preflight recorded schema incompatibility; no remediation DDL, data mutation, browser/device/member validation, release, or founder acceptance is credited by this claim record.",
+      "originEvidence": "Sanitized isolated-staging catalog preflight at 2026-10-20T13:22:31-04:00: table and 12 expected columns present, owner_updated index present, but business_id_unique=false; no row data or credentials read."
     }
   ],
   "globalDirectiveDelivery": [
