@@ -56,7 +56,7 @@
         ],
         "reportedResult": "The remote D1 delta after f818056 contains exactly the existing twelve centralized D1 paths. This registry receipt records the implementation task's direct GitHub verification; the integration owner did not repeat a remote check under the source-only boundary."
       },
-      "externalAcceptance": "PENDING \u2014 no provider/payment, database, staging, browser/device, or production acceptance is recorded for the D1 source completion.",
+      "externalAcceptance": "PENDING — no provider/payment, database, staging, browser/device, or production acceptance is recorded for the D1 source completion.",
       "paths": [
         "artifacts/api-server/src/routes/billing.ts",
         "artifacts/api-server/src/routes/membership-family.ts",
@@ -129,7 +129,7 @@
           "retired mobile curatorMemberId selector absent"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no staging deployment, database operation, provider call, browser validation, or device validation was performed."
+      "externalAcceptance": "PENDING — no staging deployment, database operation, provider call, browser validation, or device validation was performed."
     },
     {
       "id": "SP-002-SHARED-PLAN-FREE-BUSY-AVAILABILITY-ENGINE",
@@ -180,7 +180,7 @@
           "git diff --check passed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
+      "externalAcceptance": "PENDING — this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
     },
     {
       "id": "SP-003-CIRCLE-ITINERARY-ACCOUNT-PREFERENCE-CONSENT",
@@ -233,7 +233,7 @@
           "git diff --check passed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
+      "externalAcceptance": "PENDING — this is source-only local integration. No remote operation, provider call, database/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred."
     },
     {
       "id": "KINFOLK-SESSION-DELETION-OWNER-BOUNDARY",
@@ -275,7 +275,7 @@
         "independentReview": "Passed with no material correctness or privacy regression identified."
       },
       "separateTestObservation": "A broader exploratory command also included the unchanged kinfolk-route-wiring contract, which reported its own current-research chat assertion failure outside the new session handlers. It was not used as validation for this two-path repair; the direct relevant contract set passed.",
-      "externalAcceptance": "PENDING \u2014 no remote operation, provider call, database execution/schema/migration, browser/device, authenticated-member, staging/deployment, or feature activation was performed."
+      "externalAcceptance": "PENDING — no remote operation, provider call, database execution/schema/migration, browser/device, authenticated-member, staging/deployment, or feature activation was performed."
     },
     {
       "id": "COMMUNITY-FREQUENTED-ALTERNATIVES-SCORECARD-V1",
@@ -313,7 +313,7 @@
         ],
         "reviewAdjustment": "Integration review added a fail-closed confidence-evidence requirement and its focused regression."
       },
-      "externalAcceptance": "PENDING \u2014 no route activation, database/schema/migration, UI, provider, cache, notification, client, deployment, staging, browser, device, or member acceptance was performed. The policy creates no visible scorecard."
+      "externalAcceptance": "PENDING — no route activation, database/schema/migration, UI, provider, cache, notification, client, deployment, staging, browser, device, or member acceptance was performed. The policy creates no visible scorecard."
     },
     {
       "id": "UM-001-INDIVIDUAL-MEMORY-DELETE-SEMANTICS",
@@ -374,7 +374,7 @@
           "git diff --check passed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no database/DSN action, provider call, browser, device, authenticated member, staging/production, deployment, migration, or mobile build acceptance was performed."
+      "externalAcceptance": "PENDING — no database/DSN action, provider call, browser, device, authenticated member, staging/production, deployment, migration, or mobile build acceptance was performed."
     },
     {
       "id": "LA-001-LEGACY-LIFE-JOURNEY-FREE-TEXT-BOUNDARY",
@@ -446,7 +446,7 @@
           "temporary validation artifacts removed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no provider/OpenAI call, database/schema/migration action, browser, web/iOS/Android device, authenticated member, staging/production, deployment, or mobile build acceptance was performed."
+      "externalAcceptance": "PENDING — no provider/OpenAI call, database/schema/migration action, browser, web/iOS/Android device, authenticated member, staging/production, deployment, or mobile build acceptance was performed."
     },
     {
       "id": "CI-001-CULTURAL-EXPLORER-SOURCE-ATTRIBUTION",
@@ -476,7 +476,7 @@
           "git diff --check passed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no database query, staging deployment, provider call, browser validation, or device validation was performed."
+      "externalAcceptance": "PENDING — no database query, staging deployment, provider call, browser validation, or device validation was performed."
     },
     {
       "id": "MAP-001-DIRECTORY-PUBLIC-HANDLE-HANDOFF",
@@ -532,7 +532,7 @@
           "temporary validation files removed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no browser, physical device, authenticated API, server, database, schema/migration, provider, cache activation, staging/production, or deployment acceptance was performed."
+      "externalAcceptance": "PENDING — no browser, physical device, authenticated API, server, database, schema/migration, provider, cache activation, staging/production, or deployment acceptance was performed."
     },
     {
       "id": "D4-KNOWLEDGE-CANONICAL-ENTITLEMENT-ENFORCEMENT",
@@ -570,7 +570,7 @@
           "git diff --check passed before commit"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no database/provider/browser/device/staging/deployment or authenticated-member acceptance is authorized or recorded."
+      "externalAcceptance": "PENDING — no database/provider/browser/device/staging/deployment or authenticated-member acceptance is authorized or recorded."
     },
     {
       "id": "D9-BUSINESS-DETAIL-DESTINATION-ONLY-MAPS-COPY",
@@ -621,7 +621,7 @@
           "git diff --check passed before commit"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no authenticated member, browser, device, Maps application, staging/production, or deployment acceptance is authorized or recorded."
+      "externalAcceptance": "PENDING — no authenticated member, browser, device, Maps application, staging/production, or deployment acceptance is authorized or recorded."
     },
     {
       "id": "BUSINESS-ADMIN-001-CANONICAL-PROFILE-NAVIGATION",
@@ -676,7 +676,7 @@
           "exact two-path scope and git diff --check passed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 no authenticated Admin browser, public profile visibility, database, provider, staging/production, or deployment acceptance is authorized or recorded."
+      "externalAcceptance": "PENDING — no authenticated Admin browser, public profile visibility, database, provider, staging/production, or deployment acceptance is authorized or recorded."
     },
     {
       "id": "BUSINESS-ADMIN-002-KINFOLK-CURRENT-LIFECYCLE",
@@ -706,7 +706,7 @@
       ],
       "constraints": [
         "No schema/migration/DDL, provider, directory record mutation, public-profile visibility change, archive/restore/delete-queue implementation, permanent deletion, Kinfolk recommendation/prompt behavior, mobile/client path beyond the named Admin page, browser/device, staging/deployment, remote, or feature-activation action.",
-        "Do not modify BA-001 beyond preserving its accepted canonical link, and do not modify D1\u2013D11, SP, Community, UM, LA, D4, D9, entitlement, Maps, or the separate 1617 deterministic-recognizer claim.",
+        "Do not modify BA-001 beyond preserving its accepted canonical link, and do not modify D1–D11, SP, Community, UM, LA, D4, D9, entitlement, Maps, or the separate 1617 deterministic-recognizer claim.",
         "Task 44 may return only an uncommitted review carrier for these exact four paths; the unified local integration owner remains the sole acceptor."
       ],
       "sourceReceipt": {
@@ -721,7 +721,7 @@
           "hygiene": "exact four-path scope, manifest result hashes, eligibility-before-upsert ordering, removal-only UPDATE, canonical profile anchor, bilingual recovery, executable lifecycle-mutation isolation, and git diff --check passed"
         }
       },
-      "externalAcceptance": "PENDING \u2014 source-only local claim. No authenticated Admin action, database execution, browser/device, provider, staging/deployment, or feature activation is authorized or recorded."
+      "externalAcceptance": "PENDING — source-only local claim. No authenticated Admin action, database execution, browser/device, provider, staging/deployment, or feature activation is authorized or recorded."
     },
     {
       "id": "KIN-DISC-1617-DETERMINISTIC-GEOGRAPHY-BARBER-RECOGNITION",
@@ -745,7 +745,7 @@
         "Recognize only the explicit Temple University, Universidad Temple, Temple main campus/main-campus, and campus principal de Temple forms as a current-turn Philadelphia, PA alias. Preserve generic-university and bare-Temple denials; never use saved/private/member context to create that scope.",
         "Treat Filadelfia as the canonical Spanish alias for Philadelphia only through the shared heritage-city resolver; do not add a route-local city map or infer an unregistered city.",
         "Allow only the required Spanish discovery actions needed for the stated prompts (Necesito and Encuentra) to reach the existing governed business-discovery classifier when an exact resolved city is present. Do not broaden generic conversation, travel, memory, or policy routing.",
-        "For hot towel shave, kid-friendly haircut, haircut/hair cut, and shape-up, require both structured barber classification (category, subcategory, or structured specialty\u2014not a tag) and documented service evidence from published description or structured specialty\u2014not a tag. A Salon with a source-backed barber tag must fail closed.",
+        "For hot towel shave, kid-friendly haircut, haircut/hair cut, and shape-up, require both structured barber classification (category, subcategory, or structured specialty—not a tag) and documented service evidence from published description or structured specialty—not a tag. A Salon with a source-backed barber tag must fail closed.",
         "Preserve loc-retwist precedence, medical/safety exclusions, existing card/source gates, no-provider deterministic operation, and all current ownership/access isolation."
       ],
       "validationPlan": [
@@ -762,7 +762,7 @@
         "Do not apply, amend, or relabel the rejected four-path carrier as integrated. Do not alter the 1617 intake record, directory data, tags, database, provider, production renderer, Maps, Business Admin, memory, external systems, or release state.",
         "The six-path remediation carrier must not claim real 1617 row ingestion, public availability, or service evidence; those are NOT VERIFIED pending separately authorized DB/runtime proof."
       ],
-      "externalAcceptance": "PENDING \u2014 source-only local claim. The separately recorded production observation must not be repeated and is not evidence of this claim's implementation.",
+      "externalAcceptance": "PENDING — source-only local claim. The separately recorded production observation must not be repeated and is not evidence of this claim's implementation.",
       "reviewDisposition": {
         "carrier": "KIN_DISC_1617_REVIEW_CARRIER_CA4F2420.tar.gz",
         "archiveSha256": "c77b8f057fac8661cf66210b74ccde0b76e1bdaa6893964a04432d3cd816541c",
@@ -850,7 +850,7 @@
         ],
         "independentReview": "Passed with no required correction."
       },
-      "externalAcceptance": "PENDING \u2014 no authenticated owner, database write, runtime propagation timing, browser/device, provider, staging/production, or deployment validation is authorized or recorded."
+      "externalAcceptance": "PENDING — no authenticated owner, database write, runtime propagation timing, browser/device, provider, staging/production, or deployment validation is authorized or recorded."
     },
     {
       "id": "D3-D8-CONTROLLED-FUTURE-RECONCILIATION-INPUT",
@@ -893,7 +893,7 @@
       "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
       "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
       "baseline": "f3d4457abdb3ef7858cea0f68c2238b435129935",
-      "sourceFinding": "The pure current-turn qualified-care guard recognizes only a narrow initial action vocabulary. Direct, unambiguous medical-navigation forms such as \u2018Where should I go for urgent care?\u2019, \u2018Can you recommend a hospital near me?\u2019, and \u2018Where is the nearest hospital?\u2019 therefore do not produce the health-care override and can fall through to ordinary business-catalog handling despite the medical-health intent boundary.",
+      "sourceFinding": "The pure current-turn qualified-care guard recognizes only a narrow initial action vocabulary. Direct, unambiguous medical-navigation forms such as ‘Where should I go for urgent care?’, ‘Can you recommend a hospital near me?’, and ‘Where is the nearest hospital?’ therefore do not produce the health-care override and can fall through to ordinary business-catalog handling despite the medical-health intent boundary.",
       "paths": [
         "artifacts/api-server/src/kinfolk/health-care-override.ts",
         "artifacts/api-server/src/kinfolk/__tests__/health-care-override.test.ts"
@@ -914,7 +914,7 @@
         "This is additive phrase coverage only; do not remove or weaken existing health-care override, medical-safety, source, or ordinary-discovery safeguards.",
         "Task yINBiovLIPiFnyQCFfSycn is the sole implementation owner and may return only an uncommitted review carrier. The unified local integration owner is the sole acceptor."
       ],
-      "externalAcceptance": "PENDING \u2014 source-only local integration. No remote operation, provider call, database/schema/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred.",
+      "externalAcceptance": "PENDING — source-only local integration. No remote operation, provider call, database/schema/migration, browser/device, authenticated-member, staging/deployment, or feature activation occurred.",
       "centralIntegration": {
         "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
         "sourceCommit": "68695deab2b6d8859596edfe7ae3c71924db7957",
@@ -933,11 +933,11 @@
         },
         "reviewConclusion": "The patch adds only three imperative alternatives to CARE_NAVIGATION_RE and table-driven coverage. It preserves the medical_health intent gate, official finder sources, private-origin protection, no-diagnosis/no-referral/ordinary-MWM-card safeguards, and non-health behavior.",
         "validation": {
-          "healthCareOverrideContract": "PASS \u2014 1 file / 11 tests",
+          "healthCareOverrideContract": "PASS — 1 file / 11 tests",
           "apiTypeScriptNoEmit": "PASS",
           "diffCheck": "PASS",
-          "qualifiedCareStaticWiringAssertions": "PASS \u2014 2 tests (57 skipped)",
-          "fullStaticWiringSuite": "ATTEMPTED \u2014 five failures in unchanged static route-wiring test/route inputs. The test reads static sources and does not import either LA-002 path; no unrelated change was made or attributed to this carrier."
+          "qualifiedCareStaticWiringAssertions": "PASS — 2 tests (57 skipped)",
+          "fullStaticWiringSuite": "ATTEMPTED — five failures in unchanged static route-wiring test/route inputs. The test reads static sources and does not import either LA-002 path; no unrelated change was made or attributed to this carrier."
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration; no external acceptance is implied."
@@ -975,7 +975,7 @@
         "Do not add owner address/city/state editing, map-coordinate changes, automatic publication, field-level pending-approval semantics, or claims about live propagation. The current authoritative moderation contract/schema is not in this two-path claim.",
         "No remote Git, connector, database, provider, staging/deployment, browser/device, authenticated-member, production save, fixture, or feature-activation action. Return only an uncommitted review carrier; the central owner alone integrates and updates status."
       ],
-      "externalAcceptance": "PENDING \u2014 no authenticated owner save, database canonical readback, public profile/Directory/Map/Kinfolk propagation, moderation/publication/eligibility check, provider, staging/deployment, browser/device, production, or feature-activation action occurred.",
+      "externalAcceptance": "PENDING — no authenticated owner save, database canonical readback, public profile/Directory/Map/Kinfolk propagation, moderation/publication/eligibility check, provider, staging/deployment, browser/device, production, or feature-activation action occurred.",
       "externalEvidence": {
         "kind": "read-only production UI observation",
         "observedAt": "2026-10-19",
@@ -1007,7 +1007,7 @@
         },
         "reviewConclusion": "The direct dashboard editor replaces only the misleading claim-page detour. It loads and PATCHes only the selected approved owner record through existing managed endpoints, limits the payload to description/phone/website/hours, keeps draft input on failure, and marks Saved only after a cache-bypassing selected-record re-read. It retains public-listing handoff and existing panels while making no publication, eligibility, map, Kinfolk, Admin, or lifecycle assertion or change.",
         "validation": {
-          "focusedWebContract": "PASS \u2014 1 file / 5 tests",
+          "focusedWebContract": "PASS — 1 file / 5 tests",
           "webTypeScriptNoEmit": "PASS",
           "diffCheck": "PASS"
         }
@@ -1053,7 +1053,7 @@
         "No schema/migration/startup writer, database execution, public profile/Directory/Map/Kinfolk reader or eligibility change, moderation/Pending Approval model, address/map policy change, provider, payment/entitlement, mobile, source-receipt policy, feature activation, staging/deployment, browser/device, production, or remote Git action.",
         "Task yINBiovLIPiFnyQCFfSycn is the sole implementation owner and returns only an uncommitted review carrier. The unified local integration owner alone accepts and updates status."
       ],
-      "externalAcceptance": "PENDING \u2014 local source integration only. No concurrent runtime, authenticated Owner/Admin, database, staging/deployment, browser/device, provider, production, fixture, remote Git, or feature-activation action occurred.",
+      "externalAcceptance": "PENDING — local source integration only. No concurrent runtime, authenticated Owner/Admin, database, staging/deployment, browser/device, provider, production, fixture, remote Git, or feature-activation action occurred.",
       "acceptedSourceCommit": "897910cba14d720276b20bc1011232e68b0d16df",
       "carrier": {
         "handoffId": "hnd_JCCfRTZcrKLC4Rei-HythXjm",
@@ -1148,7 +1148,7 @@
         }
       },
       "publicationAuthorizationRequest": "docs/coordination/BIZ009_REMOTE_PUBLICATION_AUTHORIZATION_REQUEST_2026-10-19.md",
-      "remotePublicationStatus": "NOT AUTHORIZED \u2014 no remote collision check, ref creation, tag, push, fetch, or verification occurred after the candidate was formed.",
+      "remotePublicationStatus": "NOT AUTHORIZED — no remote collision check, ref creation, tag, push, fetch, or verification occurred after the candidate was formed.",
       "nextAction": "Await separate founder approval of the exact publication request; do not deploy or change Railway source selection/configuration.",
       "completionContract": {
         "journey": "An authenticated approved owner or authorized Admin selects one controlled business, receives a canonical selected-business profile read, edits the approved ordinary fields, submits the loaded revision, receives a confirmed fresh canonical re-read before Saved, and sees a draft-preserving stale-write recovery instead of silent overwrite.",
@@ -1212,7 +1212,7 @@
           "git diff --check passed"
         ]
       },
-      "externalAcceptance": "PENDING \u2014 local source integration only. No database/provider/browser/device/staging/production/deployment/migration/activation or member-visible acceptance occurred."
+      "externalAcceptance": "PENDING — local source integration only. No database/provider/browser/device/staging/production/deployment/migration/activation or member-visible acceptance occurred."
     },
     {
       "id": "COMM-001-FREE-COMMUNITY-EVENT-HOSTING-GATE",
@@ -1250,7 +1250,7 @@
         "expiresAt": "2026-10-20T20:05:08.031Z",
         "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
       },
-      "externalAcceptance": "PENDING \u2014 local source-only integration. No runtime database write, provider call, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance occurred.",
+      "externalAcceptance": "PENDING — local source-only integration. No runtime database write, provider call, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance occurred.",
       "centralIntegration": {
         "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
         "sourceCommit": "d7e340905c88f94b511a854e7d0cd7a07aeb6f29",
@@ -1268,10 +1268,10 @@
         },
         "reviewConclusion": "The patch removes only the free-tier event-hosting denial and reuses the existing calendar-month count guard for free and navigator. It keeps Trailblazer and all other existing tier behavior untouched; the cap response is neutral with no upgrade URL or plan claim. It retains the unauthenticated 401, required title/date/city/state validation, event ownership, notification fan-out, error handling, edit/delete authorization, public visibility, RSVP, recurring-event, pricing, and featured boundaries.",
         "validation": {
-          "publicEventFeedContract": "PASS \u2014 1 file / 4 tests",
+          "publicEventFeedContract": "PASS — 1 file / 4 tests",
           "apiTypeScriptNoEmit": "PASS",
           "diffCheck": "PASS",
-          "sourceBoundaryReview": "PASS \u2014 exact two paths; free/navigator shared existing cap; no upgrade URL/plan claim in POST /events; required auth/validation/ownership/notification controls retained."
+          "sourceBoundaryReview": "PASS — exact two paths; free/navigator shared existing cap; no upgrade URL/plan claim in POST /events; required auth/validation/ownership/notification controls retained."
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is one direct free event-hosting gate only; it does not complete COMM-001 or establish external acceptance."
@@ -1316,7 +1316,7 @@
         },
         "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
       },
-      "externalAcceptance": "PENDING \u2014 local source-only integration. No runtime database write, provider call, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance occurred.",
+      "externalAcceptance": "PENDING — local source-only integration. No runtime database write, provider call, remote Git, staging/deployment, browser/device, feature activation, or member-visible acceptance occurred.",
       "centralIntegration": {
         "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
         "sourceCommit": "1138ea621c3e81d273f076c7e1c616bf3d0a3456",
@@ -1341,10 +1341,10 @@
         },
         "reviewConclusion": "The patch changes only the ordinary free community-post cap response after the existing finite five-post calendar-month guard. It retains status 403 and TIER_LIMIT_REACHED but removes the upgrade URL and commercial prompt. The business-promotion gate, including its existing upgrade behavior, is separately sliced and retained; image/video media gates, authentication, validation, anti-spam, content/family filters, business-mention stance, moderation/trust, privacy/visibility, authorship, notifications, edit/delete and unrelated routes are untouched.",
         "validation": {
-          "communityFeedContract": "PASS \u2014 1 file / 27 tests",
+          "communityFeedContract": "PASS — 1 file / 27 tests",
           "apiTypeScriptNoEmit": "PASS",
           "diffCheck": "PASS",
-          "sourceBoundaryReview": "PASS \u2014 exact two paths; five-post ordinary free cap retained and neutral; business-promotion/media gates unchanged."
+          "sourceBoundaryReview": "PASS — exact two paths; five-post ordinary free cap retained and neutral; business-promotion/media gates unchanged."
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is one ordinary community-post cap response repair only; it does not complete COMM-001 or establish external acceptance."
@@ -1390,7 +1390,7 @@
         },
         "disposition": "Private compact two-path source base transferred to the exclusive owner; recipient must hash-verify and return an uncommitted carrier."
       },
-      "externalAcceptance": "PENDING \u2014 local source-only integration. No database seed/runtime query, provider/network/OAuth action, deployment, browser/device action, activation, or member-visible resource-search acceptance occurred.",
+      "externalAcceptance": "PENDING — local source-only integration. No database seed/runtime query, provider/network/OAuth action, deployment, browser/device action, activation, or member-visible resource-search acceptance occurred.",
       "centralIntegration": {
         "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
         "sourceCommit": "1223344b750fdf69dfde7eca18ab95f4ae4ef4bf",
@@ -1408,10 +1408,10 @@
         },
         "reviewConclusion": "The public GET /resources q block retains literal title/description/organization/keywords matching and existing eligibility/ordering/pagination. Only for transit, public transport, bus, train, or subway it ORs the existing transportation keyword. Rideshare and generic ride/directions/nearby/travel/location terms are excluded; no private memory, provider/network, route, fare/ETA/status, origin/device location, booking, monitoring, sharing, payment, Maps, Kinfolk prompt/provider, client, schema/migration/seed execution, or runtime mutation was introduced.",
         "validation": {
-          "resourceProviderContract": "PASS \u2014 1 file / 4 tests",
+          "resourceProviderContract": "PASS — 1 file / 4 tests",
           "apiTypeScriptNoEmit": "PASS",
           "diffCheck": "PASS",
-          "sourceBoundaryReview": "PASS \u2014 exact two paths; five aliases only; literal matching and public eligibility preserved; no provider/location/booking scope."
+          "sourceBoundaryReview": "PASS — exact two paths; five aliases only; literal matching and public eligibility preserved; no provider/location/booking scope."
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This is a source-only public-transit query-alias repair; it does not prove seeded data, runtime search results, member-visible behavior, or broader KMEM-005 completion."
@@ -1458,7 +1458,7 @@
         "disposition": "Private compact two-path source base transferred to exclusive owner; recipient must hash-verify and return an uncommitted carrier.",
         "metadataCorrection": "2026-10-19: Initial task-message per-file hashes were erroneous. The private archive manifest and extracted bytes, verified against committed authority be89b37649497542caea556a642fcff7e0664109, supersede them. Outer archive SHA remains unchanged and valid."
       },
-      "externalAcceptance": "PENDING \u2014 local source-only integration. No authenticated runtime/database observation, cohort grant, provider/payment action, deployment, browser/device action, activation, or member-visible acceptance occurred.",
+      "externalAcceptance": "PENDING — local source-only integration. No authenticated runtime/database observation, cohort grant, provider/payment action, deployment, browser/device action, activation, or member-visible acceptance occurred.",
       "centralIntegration": {
         "integrationOwnerTaskId": "QJATRGk7nUgzDlccMCUcG6",
         "sourceCommit": "9f2114e8edd25343991f7b2c8222fc58d17aafe7",
@@ -1476,10 +1476,10 @@
         },
         "reviewConclusion": "Only the authenticated GET /users/me automatic 90-day trialEndsAt database update and local replacement were removed. The handler retains direct auth 401, owner-scoped usersTable lookup, 404, stored user response with existing stripeCustomerId/stripeSubscriptionId/pushToken redaction, and an already-stored explicit trialEndsAt value. The separate owner-only membership-status route and getUserTier/effective-entitlement semantics are untouched.",
         "validation": {
-          "privateMembershipProfileContract": "PASS \u2014 1 file / 4 tests",
+          "privateMembershipProfileContract": "PASS — 1 file / 4 tests",
           "apiTypeScriptNoEmit": "PASS",
           "diffCheck": "PASS",
-          "sourceBoundaryReview": "PASS \u2014 exact two paths; profile-read handler has no trialEndsAt/db.update/Date.now/90-day mutation; auth, lookup, redaction, membership-status boundaries retained."
+          "sourceBoundaryReview": "PASS — exact two paths; profile-read handler has no trialEndsAt/db.update/Date.now/90-day mutation; auth, lookup, redaction, membership-status boundaries retained."
         }
       },
       "claimDisposition": "Implementation claim closed after central local-only two-path integration. This removes one unauthorized implicit profile-read allocation; it does not add/alter explicit cohort grants or establish runtime/member-visible acceptance."
@@ -1512,11 +1512,11 @@
           "Do not invent a new cap or alter existing GROUP_MAX_MEMBERS values or Navigator/Trailblazer optional-capacity behavior.",
           "Do not change invitations, private-group admission, group posts/media privacy, age safeguards, roles/moderators, reports, itineraries, notifications, community post/event gates, membership catalog, providers, schema, or payments."
         ],
-        "externalAcceptance": "PENDING \u2014 source-only carrier and later central validation do not establish runtime, staging, Web/iOS/Android device, or member-visible acceptance."
+        "externalAcceptance": "PENDING — source-only carrier and later central validation do not establish runtime, staging, Web/iOS/Android device, or member-visible acceptance."
       },
       "requiredBehavior": [
         "Remove only the direct free-tier denial from POST /groups so authenticated free members can create a Group under the existing free maximum-member cap; retain authentication, payload validation, creator-as-admin membership insertion, privacy/audience/rules handling, and all existing group controls.",
-        "Use the existing authenticated GET /groups catalog for mobile discovery; expose only server-returned public non-member groups as detail navigation. Preserve the route\u2019s private-group suppression, audience filtering, membership markers, authentication, and existing payload fields.",
+        "Use the existing authenticated GET /groups catalog for mobile discovery; expose only server-returned public non-member groups as detail navigation. Preserve the route’s private-group suppression, audience filtering, membership markers, authentication, and existing payload fields.",
         "After a successful create, show confirmation, refresh membership state, and open the returned group through the live /group/[id] route. On non-success, show only safe server error text and preserve the form draft.",
         "Retain the existing finite free group-join count guard, but make only its reached-cap response neutral: preserve status 403 and TIER_LIMIT_REACHED while removing upgrade URL and commercial plan claims. Keep Navigator/Trailblazer capacity behavior untouched.",
         "The live /group/[id] join screen must show the returned safe server error while retaining current group state; successful join refreshes its membership state. Do not change the stale app/groups/[id].tsx route."
@@ -1534,7 +1534,7 @@
         "Exact six-path scope, git diff --check, source boundaries, hash-verified carrier/apply reconstruction."
       ],
       "carrierDisposition": "Return an uncommitted, hash-verified six-path review carrier only; central owner alone may apply, validate, commit, and update source status.",
-      "externalAcceptance": "PENDING \u2014 no runtime database persistence, staging, Web/iOS/Android device, browser, provider, deployment, or member-visible acceptance occurred.",
+      "externalAcceptance": "PENDING — no runtime database persistence, staging, Web/iOS/Android device, browser, provider, deployment, or member-visible acceptance occurred.",
       "sourceBaseCarrier": {
         "authorityBase": "bf645aba13a022cbbcfce00b660b25969cae7693",
         "claimBaseline": "1a56f0397eeb9e9efdabbd77d9a4d9fe29348fd3",
@@ -1567,7 +1567,7 @@
         },
         "centralReconciliation": {
           "path": "artifacts/api-server/src/routes/groups.ts",
-          "reason": "Carrier\u2019s free-cap early return made the following existing free-tier ternary unreachable under TypeScript narrowing.",
+          "reason": "Carrier’s free-cap early return made the following existing free-tier ternary unreachable under TypeScript narrowing.",
           "change": "Replaced only `joinTier === \"free\" ? \"Explorer+\" : \"Navigator\"` with the behavior-equivalent constant `\"Navigator\"` on the post-return Navigator branch.",
           "finalSha256": "9150444522ca256ccb829de403a7d2f0675d3622fde77179fa4178e6c929afcb"
         },
@@ -1579,7 +1579,7 @@
           "scopeAndWhitespace": "exact six paths; git diff --check passed",
           "localE2E": "No Group-specific integration/E2E harness exists locally; no runtime/device claim."
         },
-        "reviewDisposition": "Accepted local source-only free-group create \u2192 confirmation/open \u2192 server-filtered public discovery \u2192 join \u2192 refreshed membership journey. The claim is released. This does not complete broader Community Groups or any runtime/member-visible layer."
+        "reviewDisposition": "Accepted local source-only free-group create → confirmation/open → server-filtered public discovery → join → refreshed membership journey. The claim is released. This does not complete broader Community Groups or any runtime/member-visible layer."
       }
     },
     {
@@ -1606,10 +1606,10 @@
           "No owner/business selection rewrite, multi-business context, Kinfolk action-plan/AI endpoint, growth tool, marketplace, catalog, payment, checkout, provider, schema, migration, or runtime action.",
           "Do not define new product entitlements, prices, allowances, plan copy, or commercial conversion. BIZ-003 remains IN DEVELOPMENT after this vertical."
         ],
-        "externalAcceptance": "PENDING \u2014 source-only validation does not establish deployed entitlement behavior, account state, payment lifecycle, mobile-device experience, or member-visible acceptance."
+        "externalAcceptance": "PENDING — source-only validation does not establish deployed entitlement behavior, account state, payment lifecycle, mobile-device experience, or member-visible acceptance."
       },
       "requiredBehavior": [
-        "Replace only the analytics handler\u2019s raw user.memberType depth selection with the existing getUserTier/TIER_RANK effective-entitlement policy already used by requireMembership.",
+        "Replace only the analytics handler’s raw user.memberType depth selection with the existing getUserTier/TIER_RANK effective-entitlement policy already used by requireMembership.",
         "Preserve requireMembership(\"navigator\"), the current single-business query/404 boundary, existing response fields and navigator/trailblazer union, existing metric/benchmark/trend calculations, logging, error handling, and every existing mobile endpoint consumer.",
         "Map only already-effective tiers at or above existing Trailblazer rank to the existing trailblazer depth; do not create a new tier, add a grant, or change access for an otherwise-ineligible member.",
         "Add focused server and mobile source contracts proving the raw memberType branch is absent from the analytics handler; effective-tier/rank mapping is present; current mobile consumers retain authenticated endpoint calls and their existing success/recovery boundaries."
@@ -1626,7 +1626,7 @@
         "Exact three-path scope, git diff --check, static response/access/depth boundary review, and hash-verified carrier/apply reconstruction."
       ],
       "carrierDisposition": "Return an uncommitted, hash-verified three-path review carrier only; central owner alone may integrate, validate, commit, or update requirement status.",
-      "externalAcceptance": "PENDING \u2014 no account/grant/payment/device/staging/production/member-visible evidence occurred.",
+      "externalAcceptance": "PENDING — no account/grant/payment/device/staging/production/member-visible evidence occurred.",
       "sourceBaseTransfer": {
         "handoffId": "hnd_68ZXQBMSe4xEsW4QVqtsCC_j",
         "archive": "BIZ003_ANALYTICS_EFFECTIVE_ENTITLEMENT_BASE_2026-10-19.tar.gz",
@@ -1693,7 +1693,7 @@
         "nonGoals": [
           "No nomination/admin award/revoke/status change; no business/media eligibility change; no payment/catalog/checkout/tier/cap/schema/migration/provider/Map/client implementation change; no activation."
         ],
-        "externalAcceptance": "PENDING \u2014 local source validation does not establish a deployed list, runtime database eligibility, mobile device behavior, or member-visible acceptance."
+        "externalAcceptance": "PENDING — local source validation does not establish a deployed list, runtime database eligibility, mobile device behavior, or member-visible acceptance."
       },
       "requiredBehavior": [
         "Retain unauthenticated { locked: true, lockedReason: \"auth_required\", gems: [] } behavior exactly.",
@@ -1713,7 +1713,7 @@
         "Exact three-path scope, git diff --check, API access/list-boundary review, and mobile existing-consumer compatibility review."
       ],
       "carrierDisposition": "Return an uncommitted, hash-verified three-path review carrier only; central owner alone may integrate, validate, commit, or update requirement status.",
-      "externalAcceptance": "PENDING \u2014 no database/staging/device/member-visible evidence or release claim.",
+      "externalAcceptance": "PENDING — no database/staging/device/member-visible evidence or release claim.",
       "sourceBase": {
         "authority": "4861aab2938b4545a08a46513ab0cd788cdbcd6f",
         "paths": {
@@ -1782,7 +1782,7 @@
           "Free first Circle uses the current private/invite-only/max-eight creation path and then Circle detail.",
           "A rejected cap or other non-success preserves the existing draft/recovery and does not navigate."
         ],
-        "externalAcceptance": "PENDING \u2014 no runtime database/device/member acceptance claim."
+        "externalAcceptance": "PENDING — no runtime database/device/member acceptance claim."
       },
       "requiredBehavior": [
         "Remove only the Free paid early return before the existing CIRCLE_LIMITS.free.maxCircles==1 count guard.",
@@ -1799,7 +1799,7 @@
         "API/mobile no-emit, exact four-path scope, git diff --check."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "NOT PERFORMED \u2014 source-only integration; runtime persistence and member-visible journey require separately authorized execution.",
+      "externalAcceptance": "NOT PERFORMED — source-only integration; runtime persistence and member-visible journey require separately authorized execution.",
       "sourceBaseTransfer": {
         "handoffId": "hnd_vdsreULxBOt8LBC5v0-17NQI",
         "archive": "COMM001_FREE_CIRCLE_CREATE_BASE_2026-10-19.tar.gz",
@@ -1857,7 +1857,7 @@
           "Canonical 401/owner predicate/{ feedback } contract is asserted.",
           "Dashboard retains Authorization, current feedback consumption/render cap, and non-OK recovery."
         ],
-        "externalAcceptance": "PENDING \u2014 no runtime/device/member acceptance claim."
+        "externalAcceptance": "PENDING — no runtime/device/member acceptance claim."
       },
       "requiredBehavior": [
         "Change only the Dashboard request URL from the gated legacy Kinfolk endpoint to existing /api/businesses/mine/skip-feedback.",
@@ -1873,7 +1873,7 @@
         "API/mobile no-emit, exact three-path scope, git diff --check."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no runtime/device/member-visible acceptance.",
+      "externalAcceptance": "NOT AUTHORIZED — no runtime/device/member-visible acceptance.",
       "sourceBaseTransfer": {
         "handoffId": "hnd_ytD1iekrlYKPUPfMpEe_ruIe",
         "archive": "BIZ003_OWNER_SKIP_INSIGHTS_BASE_2026-10-19.tar.gz",
@@ -1927,7 +1927,7 @@
           "Existing fetch/auth/q forwarding, official tier/card, Visit Resource label and metadata remain.",
           "Only the resource website press delegates to existing safe helper."
         ],
-        "externalAcceptance": "PENDING \u2014 no runtime seed/device/open-link/member acceptance claim."
+        "externalAcceptance": "PENDING — no runtime seed/device/open-link/member acceptance claim."
       },
       "requiredBehavior": [
         "Replace only ResourceCard raw silent Linking.openURL website handoff with existing openExternalUrl web helper and visible unavailable path.",
@@ -1941,7 +1941,7 @@
         "Mobile no-emit, exact two-path scope, git diff --check, prove no raw silent resource Linking.openURL remains."
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified carrier only; central owner alone may integrate, commit, or change requirement status.",
-      "externalAcceptance": "PENDING \u2014 no runtime seed/device/open-link/member-visible evidence or release claim.",
+      "externalAcceptance": "PENDING — no runtime seed/device/open-link/member-visible evidence or release claim.",
       "sourceBaseTransfer": {
         "handoffId": "hnd_c6IpbtAYoXFOlAlMG30-ScOn",
         "archive": "KMEM005_OFFICIAL_RESOURCE_MOBILE_HANDOFF_BASE_2026-10-19.tar.gz",
@@ -2023,7 +2023,7 @@
         "integrity": "outer/patch/base/result hashes and clean apply verified",
         "boundary": "explicit-current-turn gate, exact reviewed city+state mapping, official HTTPS/freshness/cross-city controls and unavailable/link-only fallback preserved; no contact/dispatch/monitoring/persistent location/client/route/source-registry/runtime path added."
       },
-      "externalAcceptance": "PENDING \u2014 legal/compliance and separately authorized runtime/staging/member-visible release gates remain required."
+      "externalAcceptance": "PENDING — legal/compliance and separately authorized runtime/staging/member-visible release gates remain required."
     },
     {
       "id": "FLIGHT-001-PROVIDER-NEUTRAL-READINESS-PACKET",
@@ -2126,7 +2126,7 @@
         "citations": "six official Google/Microsoft links verified against the approved research trace",
         "boundary": "explicit NO-GO retained: no OAuth client/configuration, scope/consent action, token exchange/vault implementation, provider call, member data, schema/DB, remote, build/deploy, or activation."
       },
-      "externalAcceptance": "NOT APPLICABLE \u2014 decision packet only; no provider/OAuth implementation, pilot, or release is authorized."
+      "externalAcceptance": "NOT APPLICABLE — decision packet only; no provider/OAuth implementation, pilot, or release is authorized."
     },
     {
       "id": "OAUTH-002-SOURCE-ONLY-NORMALIZERS",
@@ -2187,7 +2187,7 @@
         "scope": "exact three new allowlisted paths; git diff --check passed",
         "boundary": "default feature gate is constant false; implementation files contain no network, OAuth client/configuration, route, persistence, provider endpoint, environment, client/mobile or cross-feature dependency; hostile URL fields appear only in rejection-test fixtures"
       },
-      "externalAcceptance": "NOT APPLICABLE \u2014 source-only fake-provider leaf; no OAuth client, consent, tokens, provider/network, pilot, deployment or member-visible acceptance is authorized."
+      "externalAcceptance": "NOT APPLICABLE — source-only fake-provider leaf; no OAuth client, consent, tokens, provider/network, pilot, deployment or member-visible acceptance is authorized."
     },
     {
       "id": "FLIGHT-002-DEFAULT-DISABLED-STATUS-LEAF",
@@ -2243,7 +2243,7 @@
           "flight-status-contract.test.ts": "223b697b282188954ecc8ed9e2e1abc6751ad9c43d323d3db430700280835ada"
         }
       },
-      "centralReconciliation": "Within existing claimed `gate.ts` and test paths only: made `now: Date` mandatory; removed `input.now ?? new Date()` and returns the same neutral unavailable result for an invalid injected Date before provider use. This is a behavior-strengthening fail-closed correction; API test total increased 12\u219213.",
+      "centralReconciliation": "Within existing claimed `gate.ts` and test paths only: made `now: Date` mandatory; removed `input.now ?? new Date()` and returns the same neutral unavailable result for an invalid injected Date before provider use. This is a behavior-strengthening fail-closed correction; API test total increased 12→13.",
       "centralValidation": {
         "focusedVitest": "1 file / 13 tests passed",
         "apiNoEmit": "passed",
@@ -2251,7 +2251,7 @@
         "scope": "exact four new claimed paths; git diff --check passed",
         "boundary": "no network, URLs, provider names, credential values, environment, routes, DB/persistence, configuration, activation or ambient-clock fallback"
       },
-      "externalAcceptance": "NOT APPLICABLE \u2014 default-disabled source-only leaf; no provider/account/credential/consent/member-data/staging/deployment/member-visible action authorized."
+      "externalAcceptance": "NOT APPLICABLE — default-disabled source-only leaf; no provider/account/credential/consent/member-data/staging/deployment/member-visible action authorized."
     },
     {
       "id": "OAUTH-003-DEFAULT-DISABLED-STATE-PKCE",
@@ -2319,7 +2319,7 @@
         "scope": "exact two new claimed paths; git diff --check passed",
         "boundary": "constant false gate supplied by immutable OAUTH-002 contract; no URL/network/provider/client/route/token/authorization/redirect/callback/scope/account/calendar/persistence/configuration/queue/logging/random/ambient-clock use"
       },
-      "externalAcceptance": "NOT APPLICABLE \u2014 OAUTH-001 remains a documentation-only NO-GO; no real OAuth/client/consent/scope/provider/token/member-data/staging/deployment/member-visible action authorized."
+      "externalAcceptance": "NOT APPLICABLE — OAUTH-001 remains a documentation-only NO-GO; no real OAuth/client/consent/scope/provider/token/member-data/staging/deployment/member-visible action authorized."
     },
     {
       "id": "COMM-001-DM-RECIPIENT-REQUEST-FAIL-CLOSED-RECOVERY",
@@ -2375,7 +2375,7 @@
       },
       "sourceCommit": "7cc2e1deef831283d5199b81195aa7aecfdc95af",
       "centralValidation": [
-        "Full-authority mobile: dm-recipient-request-recovery \u2014 1 file / 5 tests PASS.",
+        "Full-authority mobile: dm-recipient-request-recovery — 1 file / 5 tests PASS.",
         "API social/profile authorization companion contracts already passed with the paired server guard: 3 files / 10 tests PASS.",
         "API, mobile, and Web tsc -p tsconfig.json --noEmit PASS; exact four-path scope, diff whitespace, fixed generic recovery, and no-premature-action ordering PASS."
       ],
@@ -2430,7 +2430,7 @@
       },
       "sourceCommit": "e3665ecaf8a529e74204200ce8134f1511f6d84d",
       "centralValidation": [
-        "Full-authority API: conversation-request-pending-authorization + social-authorization + profile-relationship-boundary \u2014 3 files / 10 tests PASS.",
+        "Full-authority API: conversation-request-pending-authorization + social-authorization + profile-relationship-boundary — 3 files / 10 tests PASS.",
         "API tsc -p tsconfig.json --noEmit PASS.",
         "Exact two-path scope, git diff --check, pre-mutation and atomic pending-status boundary PASS."
       ],
@@ -2492,7 +2492,7 @@
         "scope": "exact three all-new paths; git diff --check passed",
         "boundary": "pure injected owner/recipient/purpose/field/revocation/expiry/freshness policy; no provider, network, configuration, route, client, storage or persistence"
       },
-      "externalAcceptance": "NOT PERFORMED \u2014 parent Flight Coordination remains IN PROGRESS; no provider/data/runtime/deployment/member-visible evidence."
+      "externalAcceptance": "NOT PERFORMED — parent Flight Coordination remains IN PROGRESS; no provider/data/runtime/deployment/member-visible evidence."
     },
     {
       "id": "COMM-001-DM-SERVER-AUTHORITATIVE-LIFECYCLE-CONTRACT",
@@ -2558,7 +2558,7 @@
         "scope": "one new test path only; git diff --check PASS",
         "note": "The prior compact-overlay Circle assertion was not reproduced; the exact current-authority aggregate passed."
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 deterministic mocked route-harness evidence only; no runtime persistence, delivery, staging, browser/device, or member-visible evidence."
+      "externalAcceptance": "NOT AUTHORIZED — deterministic mocked route-harness evidence only; no runtime persistence, delivery, staging, browser/device, or member-visible evidence."
     },
     {
       "id": "COMM-001-DM-PENDING-REQUEST-RECIPIENT-NOTIFICATION",
@@ -2620,7 +2620,7 @@
         "scope": "exact three paths; git diff --check passed",
         "boundary": "private-pending only; generic payload; existing self/block/recipient-opt-in helper; non-critical notification/push failure"
       },
-      "externalAcceptance": "NOT PERFORMED \u2014 no runtime data, notification delivery, staging, browser/device, or member-visible validation."
+      "externalAcceptance": "NOT PERFORMED — no runtime data, notification delivery, staging, browser/device, or member-visible validation."
     },
     {
       "id": "COMM-001-DM-NOTIFICATION-INBOX-NAVIGATION",
@@ -2675,7 +2675,7 @@
           "artifacts/web/src/__tests__/safety-checkin-recipient-alert-contract.test.ts": "026f753a1cf660da9093fe26b6ae6f217bec60c68a4d1cf34dba353a5e8ce501"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no runtime notification delivery, database, staging, browser/device, or member-visible validation.",
+      "externalAcceptance": "NOT AUTHORIZED — no runtime notification delivery, database, staging, browser/device, or member-visible validation.",
       "baseTransfer": {
         "handoff_id": "hnd_GjcL9oZ_01hpQYJcJMikf9eT",
         "file": "COMM001_DM_NOTIFICATION_INBOX_NAVIGATION_BASE_2026-10-19.tar.gz",
@@ -2723,8 +2723,8 @@
       "requiredBehavior": [
         "For a server-authoritative pending direct-message request, reject every participant message POST with the existing neutral 403 REQUEST_PENDING response before family scanning, message insert, lastMessageAt, or lastMessagePreview mutation.",
         "After a fresh server-authoritative accepted state, retain ordinary participant message-post behavior.",
-        "Web treats both incoming and outgoing pending states as read-only: retain existing waiting copy, early-return in send, and disable the composer/send control. Native\u2019s existing outgoing-pending read-only behavior remains covered, without changing native chat source.",
-        "Do not infer acceptance from notification state or local optimism; notification-inbox routing remains y\u2019s separate claim."
+        "Web treats both incoming and outgoing pending states as read-only: retain existing waiting copy, early-return in send, and disable the composer/send control. Native’s existing outgoing-pending read-only behavior remains covered, without changing native chat source.",
+        "Do not infer acceptance from notification state or local optimism; notification-inbox routing remains y’s separate claim."
       ],
       "constraints": [
         "Exactly the four paths listed; no additional client/route/notification paths.",
@@ -2748,7 +2748,7 @@
           "artifacts/mobile/__tests__/dm-recipient-request-recovery.test.ts": "b470b3e4cb4a8225e9e19c06511dad86d92620d1559638ab8acf8b6bf9095619"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only consent guard; no delivery/persistence/runtime/member acceptance.",
+      "externalAcceptance": "NOT AUTHORIZED — source-only consent guard; no delivery/persistence/runtime/member acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_KyqRqbRIU7Sk0r1l940HYwv6",
         "file": "COMM001_DM_PENDING_COMMUNICATION_CONSENT_GUARD_BASE_2026-10-19.tar.gz",
@@ -2794,7 +2794,7 @@
         "interactionChain": "Request creation -> generic recipient notification -> recipient opens pending conversation -> accept or decline -> fresh server-authoritative accepted state -> initiator message post -> displayed sent state only after success -> recipient visibility/reply/follow-up under existing controls -> refresh/recovery. This slice owns only post-accept mobile send outcome handling.",
         "notificationsAndCommunications": "No notification producer, delivery channel, routing, or follow-up change is permitted. Do not claim in-app/push/email delivery or receipt.",
         "privacyAndPermissions": "Preserve server authorization, block/relationship policy, participant isolation, generic failure behavior, and pending consent boundary; do not expose raw error payloads or content as delivered when it was rejected.",
-        "integrationOwnership": "Q combines this client outcome repair with IIU\u2019s pending-send guard, existing notification routing, server lifecycle and authorization contracts; no worker marks the parent experience accepted.",
+        "integrationOwnership": "Q combines this client outcome repair with IIU’s pending-send guard, existing notification routing, server lifecycle and authorization contracts; no worker marks the parent experience accepted.",
         "completionBoundary": "Worker milestone is source-only two-path carrier. Runtime persistence, actual delivery/receipt, account switching, Web/iOS/Android/browser/staging and founder acceptance remain open."
       },
       "requiredBehavior": [
@@ -2809,7 +2809,7 @@
       "validationPlan": [
         "cd artifacts/mobile && pnpm exec vitest run __tests__/dm-chat-send-fail-closed.test.ts --reporter=dot",
         "cd artifacts/mobile && pnpm exec tsc -p tsconfig.json --noEmit",
-        "exact two-path scope; git diff --check; source-only static contract\u2014no runtime delivery claim"
+        "exact two-path scope; git diff --check; source-only static contract—no runtime delivery claim"
       ],
       "carrierDisposition": "Return an uncommitted, unstaged, hash-verified two-path review carrier only; central owner alone integrates.",
       "sourceBase": {
@@ -2821,7 +2821,7 @@
           "artifacts/mobile/__tests__/dm-chat-send-fail-closed.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only client recovery; no runtime delivery/persistence/device/member/founder acceptance.",
+      "externalAcceptance": "NOT AUTHORIZED — source-only client recovery; no runtime delivery/persistence/device/member/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_aMZCzQMTsm-N9ssy4vbpT7gf",
         "file": "COMM001_MOBILE_DM_SEND_FAIL_CLOSED_BASE_2026-10-19.tar.gz",
@@ -2903,7 +2903,7 @@
           "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/in-memory-vault.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 inert in-memory fake source contract only; OAUTH-001 NO-GO remains controlling.",
+      "externalAcceptance": "NOT AUTHORIZED — inert in-memory fake source contract only; OAUTH-001 NO-GO remains controlling.",
       "baseTransfer": {
         "handoff_id": "hnd_Z4wkKQH3u5u86KdQTvl55rAH",
         "file": "OAUTH003_IN_MEMORY_VAULT_REDACTION_BASE_2026-10-19.tar.gz",
@@ -2984,7 +2984,7 @@
         "semantic": "inside existing exactly-one guard, canonical owner-bound endpoint only; bearer/reset/non-success recovery/message-only mapping/collapsed UI/10 cap preserved",
         "scope": "exact two paths; git diff --check PASS"
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only owner Home read; no runtime/member/release/founder acceptance."
+      "externalAcceptance": "NOT AUTHORIZED — source-only owner Home read; no runtime/member/release/founder acceptance."
     },
     {
       "id": "FLIGHT-004-ARRIVAL-COORDINATION-ELIGIBILITY-COMPOSITION",
@@ -3050,7 +3050,7 @@
         "semantic": "pure injected-clock, owner-recipient reciprocal consent/arrival freshness composition; frozen neutral eligible/unavailable only; no provider/network/persistence/client/calendar/venue detail",
         "scope": "exact three new paths; git diff --check PASS"
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only fake-policy composition; provider, runtime, member, release and founder acceptance remain pending."
+      "externalAcceptance": "NOT AUTHORIZED — source-only fake-policy composition; provider, runtime, member, release and founder acceptance remain pending."
     },
     {
       "id": "COMM-001-DM-PENDING-MESSAGE-READ-GUARD",
@@ -3105,7 +3105,7 @@
           "artifacts/api-server/src/routes/__tests__/dm-recipient-request-lifecycle.test.ts": "6ffd17373e426b9a81152ec2665b0762a4f2b14b7dfc9580473c5579c39eaaac"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only privacy repair; no runtime DB/delivery/account-switch/browser/device/member/founder acceptance.",
+      "externalAcceptance": "NOT AUTHORIZED — source-only privacy repair; no runtime DB/delivery/account-switch/browser/device/member/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_2axWoL1gaKUsePXcZthDQEeY",
         "file": "COMM001_DM_PENDING_MESSAGE_READ_GUARD_BASE_2026-10-19.tar.gz",
@@ -3188,7 +3188,7 @@
           "artifacts/api-server/src/kinfolk/flight-status/__tests__/arrival-coordination-lifecycle.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 simulated injected-fake source lifecycle only; no provider, Calendar connection, persistence, route/client, venue, delivery, runtime/member/release/founder acceptance.",
+      "externalAcceptance": "NOT AUTHORIZED — simulated injected-fake source lifecycle only; no provider, Calendar connection, persistence, route/client, venue, delivery, runtime/member/release/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_UcZC__C4-VRixukILqXrm8ju",
         "file": "FLIGHT005_SIMULATED_ARRIVAL_MEETING_TIME_LIFECYCLE_BASE_2026-10-19.tar.gz",
@@ -3263,7 +3263,7 @@
           "artifacts/api-server/src/routes/__tests__/skip-feedback-owner-contract.test.ts": "76008a0d9440f54c6dcf05231343d42751d3d95f07d369decb2769351dd8b4ba"
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no authenticated member-to-owner, DB/runtime, device/staging/member/release/founder evidence.",
+      "externalAcceptance": "NOT AUTHORIZED — no authenticated member-to-owner, DB/runtime, device/staging/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_jwDfKeqO8xvd0xpDUeA7QEc1",
         "file": "BIZ003_SKIP_FEEDBACK_OWNER_PROJECTION_BASE_2026-10-19.tar.gz",
@@ -3341,7 +3341,7 @@
           "artifacts/api-server/src/kinfolk/calendar-availability/__tests__/injected-lifecycle-admission.test.ts"
         ]
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 OAUTH-001 NO-GO remains controlling. No real OAuth/client/scope/consent/token/provider/persistence/route/client/runtime/browser/device/staging/member/release/founder acceptance.",
+      "externalAcceptance": "NOT AUTHORIZED — OAUTH-001 NO-GO remains controlling. No real OAuth/client/scope/consent/token/provider/persistence/route/client/runtime/browser/device/staging/member/release/founder acceptance.",
       "baseTransfer": {
         "handoff_id": "hnd_tnxQdrMDfmERWLZq155t64Ij",
         "file": "OAUTH004_INJECTED_LIFECYCLE_ADMISSION_BASE_2026-10-19.tar.gz",
@@ -3411,7 +3411,7 @@
           "artifacts/mobile/__tests__/dm-inbox-request-response-validation.test.ts": null
         }
       },
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no real server response, DB/runtime, notification delivery, timeout/account switch, browser/device/staging/member/release/founder evidence.",
+      "externalAcceptance": "NOT AUTHORIZED — no real server response, DB/runtime, notification delivery, timeout/account switch, browser/device/staging/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_edL88Fq82Hoz_6nNdR44W9PX",
         "file": "COMM001_MOBILE_INBOX_RESPONSE_VALIDATION_BASE_2026-10-19.tar.gz",
@@ -3455,7 +3455,7 @@
       ],
       "founderLifecycleContext": {
         "parentExperience": "EXP-KINFOLK-FLIGHT-COORDINATION / injected-fake simulated arrival meeting lifecycle.",
-        "founderOutcome": "A meeting candidate cannot arise from a reciprocal \u201cknown\u201d availability permission whose coordination window exceeds the source\u2019s established 31-day normalized-availability maximum.",
+        "founderOutcome": "A meeting candidate cannot arise from a reciprocal “known” availability permission whose coordination window exceeds the source’s established 31-day normalized-availability maximum.",
         "interactionChain": "injected pair-bound flight share -> eligibility -> reciprocal intent/availability validation -> local 31-day window boundary -> slot selection or existing generic frozen unavailable result.",
         "completionBoundary": "Pure fake-input source validation. No provider/Calendar/OAuth/consent persistence/route/client/venue/delivery/runtime/member/release/founder evidence."
       },
@@ -3474,7 +3474,7 @@
         "exact two-path scope; git diff --check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no Calendar/provider/OAuth/consent persistence/DB/route/client/venue/delivery/runtime/member/release/founder evidence.",
+      "externalAcceptance": "NOT AUTHORIZED — no Calendar/provider/OAuth/consent persistence/DB/route/client/venue/delivery/runtime/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_UFXWXCnd_FwKRH7b3H3uX7Vs",
         "file": "FLIGHT006_NORMALIZED_AVAILABILITY_WINDOW_BOUNDARY_BASE_2026-10-19.tar.gz",
@@ -3523,7 +3523,7 @@
       ],
       "founderLifecycleContext": {
         "parentExperience": "EXP-BUSINESS-OWNER-EDITOR-ANALYTICS-AND-PUBLICATION / BIZ-003 member-to-owner feedback insight journey.",
-        "founderOutcome": "The current active approved listing owner\u2014not a legacy submitter\u2014can read the exact private feedback projection, while unmanaged legacy listings retain only their existing submitted-by fallback.",
+        "founderOutcome": "The current active approved listing owner—not a legacy submitter—can read the exact private feedback projection, while unmanaged legacy listings retain only their existing submitted-by fallback.",
         "interactionChain": "owner GET -> 401 pre-query -> active approved unrevoke owner-link authority takes precedence -> safe id/message/createdAt projection -> no-link legacy submittedBy fallback -> 404 before feedback query.",
         "privacyAndPermissions": "Prior submitter loses canonical reader access if active approved owner link exists; no feedback identity/internal field leak, no claims mutation.",
         "completionBoundary": "Source-only server authorization repair; no BIZ-009/release/runtime/member/founder acceptance."
@@ -3544,7 +3544,7 @@
         "exact two-path scope; git diff --check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 no claim approval/relationship DB case, runtime/browser/device/staging/member/release/founder evidence.",
+      "externalAcceptance": "NOT AUTHORIZED — no claim approval/relationship DB case, runtime/browser/device/staging/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_NksWSaogrJnoPmnfJg6JDW1t",
         "file": "BIZ003_APPROVED_OWNER_SKIP_FEEDBACK_READ_ISOLATION_BASE_2026-10-19.tar.gz",
@@ -3603,7 +3603,7 @@
       "evidence": "Existing Flight normalizer, sharing policy, and eligibility accept valid UTC seconds plus 1-2 fractional digit status timestamps. Lifecycle shared-arrival parsing required .SSSZ exactly and returned generic unavailable only for those otherwise accepted chains; .000Z yielded the same proposal.",
       "requiredBehavior": [
         "At shared-flight-arrival consumption only, accept valid UTC `YYYY-MM-DDTHH:mm:ss(?:.S|.SS|.SSS)?Z`, calendar/date-validate, and canonicalize before proposal.",
-        "Keep coordination and Calendar availability windows/busy intervals strict canonical `.SSSZ` with existing 31\u00d724-hour bound.",
+        "Keep coordination and Calendar availability windows/busy intervals strict canonical `.SSSZ` with existing 31×24-hour bound.",
         "Keep malformed/non-UTC/invalid date/stale/mismatched consent/permission/intent/slot inputs fail-closed with the existing generic unavailable result."
       ],
       "constraints": [
@@ -3616,7 +3616,7 @@
         "exact two-path scope; git diff --check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified two-path carrier only; central owner alone integrates.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 not three-party, venue, provider/Calendar/OAuth, durable consent, UI/runtime/member/release/founder evidence.",
+      "externalAcceptance": "NOT AUTHORIZED — not three-party, venue, provider/Calendar/OAuth, durable consent, UI/runtime/member/release/founder evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_DrNE0JsqsEUPyJFBQGVFbQLj",
         "file": "FLIGHT007_STATUS_TIMESTAMP_COMPOSITION_BASE_2026-10-19.tar.gz",
@@ -3639,7 +3639,7 @@
         "focused_lifecycle_vitest": "1 file / 41 tests PASS",
         "cumulative_flight_matrix": "5 files / 113 tests PASS",
         "api_tsc": "PASS",
-        "semantic": "dedicated shared-arrival parser accepts valid UTC seconds/1\u20133 fractional digits and canonicalizes; existing strict .SSSZ parser remains governing windows and busy intervals",
+        "semantic": "dedicated shared-arrival parser accepts valid UTC seconds/1–3 fractional digits and canonicalizes; existing strict .SSSZ parser remains governing windows and busy intervals",
         "scope": "exact two modified paths; git diff --check PASS"
       }
     },
@@ -3658,7 +3658,7 @@
       ],
       "integrationDependency": {
         "claim": "FLIGHT-007-STATUS-TIMESTAMP-COMPOSITION",
-        "condition": "Central source integration of Flight #7 must precede central application of this carrier; Flight #7\u2019s public lifecycle resolver signature remains read-only.",
+        "condition": "Central source integration of Flight #7 must precede central application of this carrier; Flight #7’s public lifecycle resolver signature remains read-only.",
         "satisfiedBy": {
           "sourceCommit": "8205d971ca6f32e750917970fe2cad3826835e36",
           "receiptCommit": "PENDING_CURRENT_COMMIT",
@@ -3697,7 +3697,7 @@
         "central apply only after Flight #7; then relevant Flight source matrix plus exact three-path scope/diff."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-verified three-new-path carrier only; central owner integrates after Flight #7 receipt.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only injected fixtures, not real participant, venue, provider, or member experience evidence.",
+      "externalAcceptance": "NOT AUTHORIZED — source-only injected fixtures, not real participant, venue, provider, or member experience evidence.",
       "baseTransfer": {
         "handoff_id": "hnd_-OgWKjwF8yOVm6zbLCPazzOL",
         "file": "FLIGHT008_THREE_PARTICIPANT_INJECTED_ARRIVAL_VENUE_COMPOSITION_BASE_2026-10-19.tar.gz",
@@ -3784,7 +3784,7 @@
       ],
       "evidence": "Both inline clients submit selected-item consent with no continuity choice, but POST /kinfolk/memory-consent then unconditionally writes enabled/accepted continuity settings. Existing owner/purpose/relevance policy allows a selected explicit item with continuity off.",
       "requiredBehavior": [
-        "In only POST /kinfolk/memory-consent\u2019s userSettings block, remove automatic `kinfolkMemoryEnabled`, `kinfolkContinuityEnabled`, and accepted-disclosure writes caused only by selected item save.",
+        "In only POST /kinfolk/memory-consent’s userSettings block, remove automatic `kinfolkMemoryEnabled`, `kinfolkContinuityEnabled`, and accepted-disclosure writes caused only by selected item save.",
         "A successful selected ordinary item save must remain encrypted/owner-bound yet leave absent, declined, or disabled continuity settings unchanged.",
         "Retain relevant explicit item selection with continuity false; preserve all owner/purpose/relevance/sensitive/paused/revoked/expired fail-closed selectors."
       ],
@@ -3800,7 +3800,7 @@
         "Run API private-memory-encryption-routes, private-memory-relevance-selector, continuity-memory-boundaries, private-memory-workflow-proof; Web/mobile kinfolk-memory-lifecycle-controls; API no-emit, exact scope and diff check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-manifested three-path review carrier only. Central owner must validate full authority before source integration.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only synthetic evidence; no runtime, real account/data, browser/device, staging/deploy, member/release/founder claim.",
+      "externalAcceptance": "NOT AUTHORIZED — source-only synthetic evidence; no runtime, real account/data, browser/device, staging/deploy, member/release/founder claim.",
       "baseTransfer": {
         "handoff_id": "hnd_W2QnNWaarSdsZ63DRaqW22f5",
         "file": "KMEM004_EXPLICIT_ITEM_CONSENT_CONTINUITY_SEPARATION_BASE_2026-10-19.tar.gz",
@@ -3856,7 +3856,7 @@
         "Run mobile lifecycle contract and mobile tsc --noEmit; exact two-path scope and diff check."
       ],
       "carrierDisposition": "Uncommitted, unstaged, hash-manifested two-path review carrier only; central full-authority validation required.",
-      "externalAcceptance": "NOT AUTHORIZED \u2014 source-only local evidence; no runtime/device/member/release/founder claim.",
+      "externalAcceptance": "NOT AUTHORIZED — source-only local evidence; no runtime/device/member/release/founder claim.",
       "baseTransfer": {
         "handoff_id": "hnd_j0RLzIxux6s0h2AeQGZoWnrj",
         "file": "KMEM004_MOBILE_REVOKE_AUTH_FAIL_CLOSED_BASE_2026-10-19.tar.gz",
@@ -3909,7 +3909,7 @@
         "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
       ],
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
-      "externalAcceptance": "BLOCKED \u2014 documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
+      "externalAcceptance": "BLOCKED — documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
       "baseTransfer": {
         "handoff_id": "hnd_QTGXT7yQRXwu2mBOk7QRgdCI",
         "file": "DIR003_DOC_BASE_2026-10-20.tar.gz",
@@ -3966,7 +3966,7 @@
         "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
       ],
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
-      "externalAcceptance": "BLOCKED \u2014 documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
+      "externalAcceptance": "BLOCKED — documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
       "baseTransfer": {
         "handoff_id": "hnd_fAlbaF_6GoV8aEkIXBFhXnPk",
         "file": "BIZ002_DOC_BASE_2026-10-20.tar.gz",
@@ -4023,7 +4023,7 @@
         "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
       ],
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
-      "externalAcceptance": "BLOCKED \u2014 documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
+      "externalAcceptance": "BLOCKED — documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
       "baseTransfer": {
         "handoff_id": "hnd_rfB0stl7dUB81XSk_petfaCr",
         "file": "ADMIN001_DOC_BASE_2026-10-20.tar.gz",
@@ -4080,7 +4080,7 @@
         "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
       ],
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
-      "externalAcceptance": "BLOCKED \u2014 documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
+      "externalAcceptance": "BLOCKED — documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
       "baseTransfer": {
         "handoff_id": "hnd_MaiKlCzO062CUG28PN9f2zDu",
         "file": "MEMD5_DOC_BASE_2026-10-20.tar.gz",
@@ -4137,7 +4137,7 @@
         "`git diff --check`; return uncommitted/unstaged hash-verified one-file carrier for central review."
       ],
       "carrierDisposition": "One uncommitted, unstaged, hash-verified Markdown file via private handoff; central integration only after semantic review.",
-      "externalAcceptance": "BLOCKED \u2014 documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
+      "externalAcceptance": "BLOCKED — documentation-only preparation does not authorize or evidence runtime, account/data, staging, browser/device, release, founder, or member action.",
       "baseTransfer": {
         "handoff_id": "hnd_ck633KHSftlp-H-l2D0fERc_",
         "file": "INTAUTH001_DOC_BASE_2026-10-20.tar.gz",
@@ -4733,7 +4733,7 @@
         "artifacts/web/src/__tests__/business-experience-social-ui.test.ts"
       ],
       "purpose": "Prevent a Web Business Experience editor draft initialized for Business A from being saved through a later Business B selection.",
-      "acceptance": "Bind draft state to business.id. On identity change, reset owner-tag/price draft and success/error state from the new business only; withhold/disable Save until reset is complete. Save must never submit prior-business selected/price values to current business.id. Preserve category validation and existing owner-tags endpoint. Extend existing source contract for A\u2192B transition and no stale save.",
+      "acceptance": "Bind draft state to business.id. On identity change, reset owner-tag/price draft and success/error state from the new business only; withhold/disable Save until reset is complete. Save must never submit prior-business selected/price values to current business.id. Preserve category validation and existing owner-tags endpoint. Extend existing source contract for A→B transition and no stale save.",
       "exclusions": "No business-dashboard.tsx or managed-access test (separately active); no API/route/schema/DB, owner link, entitlement, Directory/Kinfolk, browser/device/staging/deploy/remote action.",
       "requirementId": "BIZ-009",
       "priority": "P0",
@@ -4816,6 +4816,81 @@
       },
       "workerStart": "ACKNOWLEDGED: compact base received/verification and source work started.",
       "source_boundary": "Source-only deterministic inbox-recipient isolation repair; no actual notification/member/runtime acceptance."
+    },
+    {
+      "id": "BIZ-009-MOBILE-FEATURED-VIDEO-SELECTED-ROUTE-PROPAGATION",
+      "ownerTaskId": "yINBiovLIPiFnyQCFfSycn",
+      "ownerTaskName": "Build Unmerged Community-Frequented Alternatives + Scorecard V1 Candidate",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
+      "paths": [
+        "artifacts/mobile/app/business-owner/featured-video.tsx",
+        "artifacts/mobile/__tests__/business-owner-featured-video-recovery.test.ts"
+      ],
+      "purpose": "Bind every native Featured Video fetch, hosted upload/delete, and external-link update/clear to the already-integrated selected managed-business media routes; never resume legacy ambiguous media routes.",
+      "acceptance": "Retain exact-one managed-list admission and all current failure/retry/context-clear behavior. Use the returned selected ID only after the exact-one managed-list + selected-read checks. Selected hosted upload/delete must call /api/businesses/mine/managed/:businessId/featured-video/{upload|hosted}; selected external-link mutations must retain the existing active-approved owner-authorized selected endpoint. On non-OK or malformed responses, retain no false hosted/link success. Focused recovery contract plus an added single/selected-route/zero-multiple/retry/late-response assertion, mobile no-emit with --ignoreDeprecations 6.0, exact two-path scope and diff check.",
+      "exclusions": "No server/API/route/schema/DB/storage/IAM/provider/configuration/Directory/Kinfolk/publication/runtime/browser/device/staging/deploy/remote Git/mobile-build action. Do not modify Business Owner index or selected-route server authority.",
+      "source_boundary": "Source-only mocked client repair; no storage/database/runtime/member/release/founder acceptance.",
+      "workerStart": "BASE_TRANSFER_PENDING"
+    },
+    {
+      "id": "BIZ-009-WEB-BUSINESS-VOICE-PROP-CHANGE-ISOLATION",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "ownerTaskName": "Correct Black capitalization across Mapping with Melanin and KinfolkAI",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
+      "paths": [
+        "artifacts/web/src/features/businesses/BusinessVoiceProfileEditor.tsx",
+        "artifacts/web/src/__tests__/business-voice-drafting.test.ts"
+      ],
+      "purpose": "Prevent a prior selected business Voice-profile load/save/draft response from populating or clearing the editor after the businessId prop changes.",
+      "acceptance": "On each businessId transition, reset profile, confirmations, ordinary and draft messages, editable draft, and loading state before the new request. Bind load, save, and draft completions to the captured current ID so late A work cannot alter B. Preserve current per-ID authenticated endpoints, ownerConfirmed, editable/review-only drafting, no-post/send/reply policy, and useful same-ID success/error behavior. Add deterministic A→B and late-A completion assertions to the existing contract; run the focused Web contract, Web no-emit, exact two-path scope and diff check.",
+      "exclusions": "No dashboard, API/route, ownership/schema/DB, token/provider/AI activation, Kinfolk behavior, Directory/publication, browser/device/staging/deploy/remote Git action.",
+      "source_boundary": "Source-only Web state-isolation repair; no runtime/member/release/founder acceptance.",
+      "workerStart": "BASE_TRANSFER_PENDING"
+    },
+    {
+      "id": "BIZ-009-SELECTED-PHOTO-GALLERY-ROUTE-ISOLATION",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "ownerTaskName": "Independent Gap Audit for Mapping with Melanin and KinfolkAI",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/api-server/src/routes/__tests__/business-photo-delete-owner-isolation.test.ts",
+        "artifacts/mobile/app/business-owner/edit-profile.tsx",
+        "artifacts/mobile/__tests__/business-owner-edit-profile-media-selected-context.test.ts"
+      ],
+      "purpose": "Eliminate the legacy ambiguous /businesses/mine/photos gallery mutation path when the native selected editor has a managed businessId, while retaining single-owner legacy behavior and photo delete safeguards.",
+      "acceptance": "Add narrowly selected managed photo upload, cover, and delete endpoints only if they require the same active approved unrevoked target-owner check before object key, storage, or DB activity. Keep legacy photo endpoints and exact-one behavior intact. Native selected editor must use selected routes only when managedBusinessId exists; non-selected legacy branch remains unchanged. Preserve gallery membership fence, 10-photo limit, pending/cover behavior, DB-row-before-best-effort-delete ordering, and failure-safe local state. Add deterministic selected-own/cross/revoked/multi/no-side-effect and native selected-route/no-false-success assertions. Run targeted API and mobile contracts, API/mobile no-emit (mobile --ignoreDeprecations 6.0), exact four-path scope and diff check.",
+      "exclusions": "No storage/IAM/bucket/live object/DB/schema/migration/configuration/public listing/Directory/Kinfolk/provider/browser/device/staging/deploy/remote Git/mobile-build action. Do not modify unrelated video, profile, schedule, or feature activation surfaces.",
+      "source_boundary": "Source-only mocked route/client repair; no real storage/database/runtime/member/release/founder acceptance.",
+      "workerStart": "BASE_TRANSFER_PENDING"
+    },
+    {
+      "id": "BIZ-009-MOBILE-CULTURAL-TEACHING-MANAGED-ENTRY-CONTEXT",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "3e3b53644f5ebf3b592a1235cabb106ab1d61a48",
+      "paths": [
+        "artifacts/mobile/app/business-owner/index.tsx",
+        "artifacts/mobile/app/business-owner/cultural-teaching.tsx",
+        "artifacts/mobile/__tests__/business-cultural-teaching-contract.test.ts"
+      ],
+      "purpose": "Replace the Cultural Teaching screen’s arbitrary legacy singular-owner lookup with an explicit managed-list context that cannot edit a different business on account or business switch.",
+      "acceptance": "Allow an optional entry businessId only after the Cultural Teaching screen verifies exact membership in the managed list; retain exact-one fallback only when the list has exactly one valid item. For zero, malformed, unowned, or multiple-without-explicit-selection contexts, clear title/text/confirmation/saved state and render the existing safe approved-owner-access recovery without GET/PUT/DELETE to a guessed business. Update Owner Home navigation only to forward an existing explicit selected context; never invent a first business. Preserve the per-business server endpoints, 90-word/voluntary-confirmation policy, member opt-in card, and no Kinfolk/provider/notification behavior. Extend the existing native cultural contract; run it plus mobile no-emit with --ignoreDeprecations 6.0, exact three-path scope and diff check.",
+      "exclusions": "No server/API/route, owner-link/schema/DB, cultural policy/card/detail, provider/AI/notification, Directory/Kinfolk/publication, browser/device/staging/deploy/remote Git/mobile-build action.",
+      "source_boundary": "Source-only native managed-context repair; no runtime/member/release/founder acceptance.",
+      "workerStart": "BASE_TRANSFER_PENDING"
     }
   ],
   "globalDirectiveDelivery": [
