@@ -564,3 +564,5 @@ These recommendations use only explicit owner/task evidence; no conclusion is in
 This baseline explicitly retains **D1–D11** as `MEM-D1` through `MEM-D11`; **Shared Plans** as `COMM-003` through `COMM-005`; **Universal Memory/Connected Intelligence** as `KMEM-001` through `KMEM-005`; **Business Owner** as `BIZ-001` through `BIZ-005`; **Map/Directory** as `DIR-001` through `DIR-004` and `MAP-001` through `MAP-002`; and **Kinfolk consent/safety** across `CORE-002`, `KCONV-002`, `SAFE-001`, and `SAFE-002`. Cross-references are intentional; unique IDs, not cross-references, drive counts.
 
 | 2026-10-20 | P0 `BIZ-009-MOBILE-FEATURED-VIDEO-MANAGED-LIST-ENTRY-GUARD` claimed for Hiib: native Featured Video must use managed-list entry authority and fail closed for zero/malformed/multiple contexts before exposing authoring controls. It does **not** make legacy media routes selected-business authoritative. |
+
+| 2026-10-20 | P0 `BIZ-009-WEB-SELECTED-EXPERIENCE-DRAFT-ISOLATION` claimed for S9: Web Business Experience draft must bind to selected business identity and never save a prior listing’s tags/price to a new listing. |

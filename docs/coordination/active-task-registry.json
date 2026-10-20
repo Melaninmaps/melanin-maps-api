@@ -4715,6 +4715,30 @@
       },
       "workerStart": "ACKNOWLEDGED 2026-10-20: base verification in progress; no source overlay/edit.",
       "source_boundary": "Source-only client entry guard. Parent journey, server media authority, runtime/staging/device/member/release/founder acceptance stay open."
+    },
+    {
+      "id": "BIZ-009-WEB-SELECTED-EXPERIENCE-DRAFT-ISOLATION",
+      "ownerTaskId": "S9iVHR3fQY0fcmRMQKLpOO",
+      "ownerTaskName": "Correct Black capitalization across Mapping with Melanin and KinfolkAI",
+      "paths": [
+        "artifacts/web/src/features/businesses/BusinessExperienceEditor.tsx",
+        "artifacts/web/src/__tests__/business-experience-social-ui.test.ts"
+      ],
+      "purpose": "Prevent a Web Business Experience editor draft initialized for Business A from being saved through a later Business B selection.",
+      "acceptance": "Bind draft state to business.id. On identity change, reset owner-tag/price draft and success/error state from the new business only; withhold/disable Save until reset is complete. Save must never submit prior-business selected/price values to current business.id. Preserve category validation and existing owner-tags endpoint. Extend existing source contract for A\u2192B transition and no stale save.",
+      "exclusions": "No business-dashboard.tsx or managed-access test (separately active); no API/route/schema/DB, owner link, entitlement, Directory/Kinfolk, browser/device/staging/deploy/remote action.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "b94ad4a790f461e4cfcb6ea7fa06b108f6c35405",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_WEB_SELECTED_EXPERIENCE_DRAFT_ISOLATION_BASE_2026-10-20.tar.gz",
+        "sha256": "PENDING_LOCAL_PACKAGE",
+        "handoff": "PENDING",
+        "expires_at": "PENDING"
+      },
+      "workerStart": "DISPATCH_PENDING",
+      "source_boundary": "Source-only Web selected-context draft isolation; no runtime/member/release/founder acceptance."
     }
   ],
   "globalDirectiveDelivery": [
