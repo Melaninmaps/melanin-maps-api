@@ -5264,10 +5264,17 @@
       "exclusions": "No API/server/business-identity route/schema/DB/data/storage/provider/OAuth/payment/push/AI action; no browser/device/mobile build/staging/deploy/remote Git/production action; no Dashboard feature redesign or changes outside Trust Profile identity read/save context.",
       "source_boundary": "Return an uncommitted/unstaged hash-manifested carrier only. Source tests do not establish runtime, staging, device, member-visible, release, or founder acceptance.",
       "baseTransfer": {
-        "handoff_id": "hnd_3EMJ5575pYCtiCEn4Ll4XcTI",
-        "file": "BIZ009_DASHBOARD_TRUST_PROFILE_SELECTED_IDENTITY_BASE_5FBB80F3.tar.gz",
-        "sha256": "077c25e1f2a0a2ef5a5b6c894ebb1ed46ffbb6408ad35ba401d1ee399b97af40",
-        "expires_at": "2026-10-21T12:33:18.210Z"
+        "handoff_id": "hnd_77pc7_QfbXv6VvxcpHXyPAFg",
+        "file": "BIZ009_DASHBOARD_TRUST_PROFILE_SELECTED_IDENTITY_BASE_5FBB80F3_R2.tar.gz",
+        "sha256": "8ae08ae7d16ac1a4c5b0f99a07fc160b3811d824604d3324e06c318e7b994fef",
+        "expires_at": "2026-10-21T12:36:18.063Z",
+        "replacement_for": {
+          "handoff_id": "hnd_3EMJ5575pYCtiCEn4Ll4XcTI",
+          "file": "BIZ009_DASHBOARD_TRUST_PROFILE_SELECTED_IDENTITY_BASE_5FBB80F3.tar.gz",
+          "sha256": "077c25e1f2a0a2ef5a5b6c894ebb1ed46ffbb6408ad35ba401d1ee399b97af40",
+          "expires_at": "2026-10-21T12:33:18.210Z"
+        },
+        "reason": "R2 corrects only the prior archive checksum ordering: SHA256SUMS now validates the final manifest and deliberately excludes itself. Source/dependency blobs and declared authority base are unchanged."
       }
     }
   ],
