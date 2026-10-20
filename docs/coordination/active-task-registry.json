@@ -4690,6 +4690,30 @@
         "semantic_validation": "Selected managed PATCH includes expectedUpdatedAt; successful response requires nonempty canonical updatedAt and refreshes state before profileSaved/setOriginal. Non-OK/malformed success response remains fail-closed; legacy profile path unchanged.",
         "boundary": "No server/API/schema/DB/runtime/provider/browser/device/staging/deploy/member/release/founder acceptance."
       }
+    },
+    {
+      "id": "BIZ-009-MOBILE-FEATURED-VIDEO-MANAGED-LIST-ENTRY-GUARD",
+      "ownerTaskId": "HiibxBetANU474LaxMWciQ",
+      "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
+      "paths": [
+        "artifacts/mobile/app/business-owner/featured-video.tsx",
+        "artifacts/mobile/__tests__/business-owner-featured-video-recovery.test.ts"
+      ],
+      "purpose": "Prevent the native Featured Video screen from resolving a legacy singular business and exposing authoring controls in a zero, malformed, or multi-business owner context.",
+      "acceptance": "Use the approved managed-list read as entry authority. Only exactly one valid managed business may proceed to its owner-authorized selected read and existing feature flow. Zero, non-OK/malformed, or more than one managed business must clear prior local business/video/prompt state and show a bounded recovery/back-to-owner view with no upload, link, delete, or save control. Preserve exact-one existing success behavior, owner headers, source-only recovery behavior, all server APIs and media semantics. Extend the existing focused Featured Video recovery contract with deterministic exact-one, zero/malformed, multi, stale-response, and no-control checks.",
+      "exclusions": "No server/API route or storage semantics; do not make a selected-business video endpoint, alter upload/delete/link routes, data/schema/provider, Directory/Kinfolk/public listing, runtime/browser/device/staging/deploy/remote action. This client guard does not make legacy media routes multi-business authoritative.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "7e3d9d8d9487732f21b5d04365a289377d9b4cb3",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_MOBILE_FEATURED_VIDEO_MANAGED_ENTRY_GUARD_BASE_2026-10-20.tar.gz",
+        "sha256": "PENDING_LOCAL_PACKAGE",
+        "handoff": "PENDING",
+        "expires_at": "PENDING"
+      },
+      "workerStart": "DISPATCH_PENDING",
+      "source_boundary": "Source-only client entry guard. Parent journey, server media authority, runtime/staging/device/member/release/founder acceptance stay open."
     }
   ],
   "globalDirectiveDelivery": [
