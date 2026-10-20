@@ -5215,7 +5215,7 @@
       "id": "BIZ-009-SELECTED-PINNED-HIGHLIGHTS-ROUTE-ISOLATION",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "n3V26eXux1YUjv25Jvn8Bm",
       "ownerTaskName": "Differentiate Website Preview and App Onboarding",
       "authorityBase": "e008e2b8400a0904334ca171e2166a0d9490ea68",
@@ -5229,7 +5229,7 @@
       "purpose": "Replace the demonstrated implicit single-business Pinned Highlights owner path with explicit selected managed-business read/pin/unpin routes and fail-closed mobile selected-context admission.",
       "acceptance": "Add selected GET/POST/DELETE Pinned Highlights routes behind exact current active approved unrevoked owner authorization before item data/mutation; preserve legacy routes; native accepts only managed-list-validated incoming selection or an exact-one fallback, never an arbitrary first selection; clear/fence stale state; bind reviews, GET, pin, and unpin to the selected ID; malformed/zero/unowned/multiple-without-selection contexts expose no pin/unpin success. Add one focused server and one focused native contract.",
       "exclusions": "No Owner Home, Dashboard, edit-profile, selected media/schedule, schema/migration, Directory/Kinfolk, provider/push/AI/payment, storage, database fixture, browser/device, staging/deployment, remote Git, or release work. Do not alter legacy `/business/pinned` semantics.",
-      "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only; no real accounts/businesses/reviews/pinned data or external call.",
+      "source_boundary": "SOURCE_INTEGRATED_LOCAL_ONLY. No database/schema/data, storage, provider, staging, browser/device, mobile build, deployment/release, member-visible, or founder acceptance occurred.",
       "required_validation": [
         "pnpm --dir artifacts/api-server exec vitest run src/routes/__tests__/business-pinned-selected-owner-contract.test.ts",
         "pnpm --dir artifacts/mobile exec vitest run __tests__/business-owner-pinned-highlights-selected-context.test.ts",
@@ -5243,6 +5243,21 @@
         "file": "BIZ009_SELECTED_PINNED_HIGHLIGHTS_BASE_E008E2B8.tar.gz",
         "sha256": "8a7a60fc6463b4fb627dafa2223021326624d9acb5166b761cfd6f8d696fe64a",
         "expires_at": "2026-10-21T12:16:18.324Z"
+      },
+      "sourceIntegrationCommit": "db516eb73a49b1debbecab58fcaae7ddd6cb9bce",
+      "carrier": {
+        "handoff_id": "hnd_mRRPEuhZE50yoJ8Qupl3TbEE",
+        "outer_sha256": "81993e7474bbcfa40c318b5cc0f0c8d93ae3969d960a5da3f7149e7612456fa9",
+        "manifest_sha256": "a7c9dfd0d48c64e49e695accb45bfc9c34a09a1819b81f1e13bce46d5153272e",
+        "patch_sha256": "06d059e400591509879a2d469b39e22c38646908d413351bc6a5d93937fcbbb2",
+        "note": "R2 was packaging-only after the first otherwise byte-compatible carrier omitted manifest.json. R2 source/test outputs exactly match the first carrier and pass all declared checksums."
+      },
+      "centralValidation": {
+        "carrier_protocol": "outer+manifest+patch+all inner checksums, current base/result identities, exact four-path scope, and portable apply/reconstruction PASS",
+        "api": "business-pinned selected-owner + selected-profile + selected-Identity authority: 3 files / 24 tests PASS",
+        "native": "Pinned selected-context 6/6 PASS; Dashboard selected-context 6/6 PASS; unrelated business-dashboard-managed-selection contract 1/2 (one static literal mismatch)",
+        "typecheck": "API no-emit PASS; mobile no-emit PASS with --ignoreDeprecations 6.0 and temporary build info removed",
+        "separate_baseline_issue": "The managed-selection test and Dashboard source are absent from db516eb7. The failure therefore predates the Pinned commit and remains an independent exact test-contract repair, not Pinned evidence."
       }
     },
     {
