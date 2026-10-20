@@ -5067,6 +5067,25 @@
         "sha256": "300475c5d5c9d5dd97cbbf9db2b34235c06a79b9577694975fd07ead85670349",
         "expires_at": "2026-10-21T11:36:56.829Z"
       }
+    },
+    {
+      "id": "BIZ-009-SELECTED-VIBE-TAGS-PREVIEW-CONTEXT",
+      "requirementId": "BIZ-009",
+      "priority": "P1",
+      "status": "CLAIMED",
+      "ownerTaskId": "DE1476JIcWVhWygmP75HGL",
+      "ownerTaskName": "Hispanic Source Reconciliation Handoff",
+      "authorityBase": "2a85af630052a7b77154922e81b60fc6f883b4bf",
+      "workerStart": "DISPATCH_PENDING_BASE",
+      "paths": [
+        "artifacts/mobile/app/business-owner/vibe-tags.tsx",
+        "artifacts/mobile/app/business-owner/preview.tsx",
+        "artifacts/mobile/__tests__/business-owner-vibe-preview-selected-context.test.ts"
+      ],
+      "purpose": "Replace arbitrary /businesses/mine Owner Vibe Tags and Preview reads with the existing selected managed-business contract.",
+      "acceptance": "Use a validated businessId only after exact membership in /businesses/mine/managed; use the existing selected managed-business GET for Vibe Tags and require validated membership before Preview redirects. Exact-one fallback is permitted only for one structurally valid managed item; zero/malformed/unowned/multiple paths must fail closed, clear state, and never use legacy /mine. Vibe Tags must retain the existing owner-tag write endpoint and its active approved unrevoked owner check. Fence late results on context changes. Add focused native test coverage.",
+      "exclusions": "No server route changes, schema/data/storage/provider/browser/device/staging/deploy/remote Git/mobile build/publication action. Do not modify Owner Home/index; its active Dashboard claim owns navigation param propagation.",
+      "source_boundary": "Uncommitted/unstaged source-only carrier; mocked deterministic tests only."
     }
   ],
   "globalDirectiveDelivery": [
