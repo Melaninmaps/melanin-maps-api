@@ -4740,6 +4740,30 @@
       },
       "workerStart": "BASE_TRANSFERRED_DISPATCH_PENDING",
       "source_boundary": "Source-only Web selected-context draft isolation; no runtime/member/release/founder acceptance."
+    },
+    {
+      "id": "BIZ-009-FEATURED-VIDEO-SELECTED-OWNER-ROUTE-ISOLATION",
+      "ownerTaskId": "M7uJoQ8nKsaPvoHdWtU0E9",
+      "ownerTaskName": "Independent Gap Audit for Mapping with Melanin and KinfolkAI",
+      "paths": [
+        "artifacts/api-server/src/routes/businesses.ts",
+        "artifacts/api-server/src/routes/__tests__/business-featured-video-selected-owner-isolation.test.ts"
+      ],
+      "purpose": "Eliminate arbitrary first-row selection in hosted Featured Video upload/delete for approved owners of multiple businesses.",
+      "acceptance": "Keep GET /businesses/mine legacy exact-one behavior. Legacy hosted upload/delete must resolve exactly one active approved unrevoked owner business or return BUSINESS_SELECTION_REQUIRED before storage/database side effects. Add selected hosted upload/delete routes under /businesses/mine/managed/:businessId, authorizing id plus approved owner link and returning neutral selected-resource denial before side effects. Preserve existing explicit PATCH /businesses/:id/featured-video, external link validation, response behavior, media constraints, and single-business success. Add deterministic route harness covering authentication, selected own/cross-business target, legacy multi no-side-effect, selected object key/row isolation, update/storage failure handling as appropriate.",
+      "exclusions": "No mobile files (Hiib active), Web, featured-video standalone PATCH, routes/index, storage config/IAM/bucket, schema/DB migration, business data, publication, Directory/Kinfolk/provider/runtime/browser/device/staging/deploy/remote action. No real storage or DB calls.",
+      "requirementId": "BIZ-009",
+      "priority": "P0",
+      "status": "CLAIMED",
+      "authorityBase": "cb69609d4569a5e8e8bbece776a7f5a6074130d3",
+      "baseArchive": {
+        "local_file": "/home/ubuntu/BIZ009_FEATURED_VIDEO_SELECTED_OWNER_ROUTE_BASE_2026-10-20.tar.gz",
+        "sha256": "PENDING_LOCAL_PACKAGE",
+        "handoff": "PENDING",
+        "expires_at": "PENDING"
+      },
+      "workerStart": "DISPATCH_PENDING",
+      "source_boundary": "Source-only deterministic server authorization/isolation repair; runtime/storage/member/release/founder acceptance open."
     }
   ],
   "globalDirectiveDelivery": [

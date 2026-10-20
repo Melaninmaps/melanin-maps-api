@@ -566,3 +566,5 @@ This baseline explicitly retains **D1–D11** as `MEM-D1` through `MEM-D11`; **S
 | 2026-10-20 | P0 `BIZ-009-MOBILE-FEATURED-VIDEO-MANAGED-LIST-ENTRY-GUARD` claimed for Hiib: native Featured Video must use managed-list entry authority and fail closed for zero/malformed/multiple contexts before exposing authoring controls. It does **not** make legacy media routes selected-business authoritative. |
 
 | 2026-10-20 | P0 `BIZ-009-WEB-SELECTED-EXPERIENCE-DRAFT-ISOLATION` claimed for S9: Web Business Experience draft must bind to selected business identity and never save a prior listing’s tags/price to a new listing. |
+
+| 2026-10-20 | P0 `BIZ-009-FEATURED-VIDEO-SELECTED-OWNER-ROUTE-ISOLATION` claimed for M7: hosted Featured Video upload/delete must fail closed for legacy multi-business ownership and support explicit approved selected-target operations. No storage/runtime acceptance is implied. |
