@@ -4451,7 +4451,7 @@
         "expires_at": "2026-10-21T02:21:58.102Z",
         "size_bytes": 276379
       },
-      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:22-02:24Z"
     },
     {
       "id": "BIZ-009-MOBILE-SELECTED-EDITOR-REVISION-PROPAGATION",
@@ -4474,7 +4474,7 @@
         "expires_at": "2026-10-21T02:21:58.509Z",
         "size_bytes": 343164
       },
-      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:22-02:24Z"
     },
     {
       "id": "BIZ-009-MOBILE-DASHBOARD-MANAGED-BUSINESS-SELECTION",
@@ -4497,7 +4497,7 @@
         "expires_at": "2026-10-21T02:21:58.834Z",
         "size_bytes": 253058
       },
-      "workerStart": "HANDOFF_SENT_AWAITING_ACK"
+      "workerStart": "ACKNOWLEDGED_STARTED_2026-10-20T02:22-02:24Z"
     }
   ],
   "globalDirectiveDelivery": [
