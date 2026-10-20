@@ -5174,7 +5174,7 @@
       "replaces_claim": "BIZ-009-SELECTED-EDITOR-AUXILIARY-MEDIA-SCHEDULE-ISOLATION",
       "requirementId": "BIZ-009",
       "priority": "P0",
-      "status": "CLAIMED",
+      "status": "SOURCE_INTEGRATED_LOCAL_ONLY",
       "ownerTaskId": "HiibxBetANU474LaxMWciQ",
       "ownerTaskName": "BUSINESS-PROFILE-ENRICHMENT-001",
       "authorityBase": "63d33a5f7788fb890b5623a2444b981a3e543497",
@@ -5188,12 +5188,27 @@
       "purpose": "Bind legacy selected editor auxiliary video, intro-video, and weekly-schedule actions to the explicitly selected managed business rather than an arbitrary /mine record.",
       "acceptance": "Add only selected managed-business route variants needed for editor intro-video upload/delete, external video add/delete, and weekly-schedule save. Server routes must authorize exact current approved/unrevoked owner target before storage/DB effects; native selected branch must use those routes and preserve legacy no-selected-ID behavior. Preserve Feature Video/photo/profile routes and success-only local state. Add deterministic server/native selected, cross-owner, revoked, malformed/non-OK, and stale/account-switch assertions.",
       "exclusions": "No real storage/schema/data/provider/browser/device/staging/deploy/remote Git/mobile build/publication action; do not modify Feature Video/photo/profile/identity/broadcast behavior.",
-      "source_boundary": "Uncommitted/unstaged source-only replacement carrier. It does not recover, alter, or make any claim about the blocked S9 workspace.",
+      "source_boundary": "Local source integration only. No real storage object, database/data, provider, browser/device, staging/deployment, member-visible, release, or founder acceptance is established.",
       "baseTransfer": {
         "handoff_id": "hnd_QD6JapBJsKplOLFFHJ1r_ZDb",
         "file": "BIZ009_SELECTED_EDITOR_AUXILIARY_MEDIA_SCHEDULE_R2_BASE_63D33A5F.tar.gz",
         "sha256": "e7a3203f6290f119229e8e668346f3927d337980ad56dfa2ce8c5783783c3bce",
         "expires_at": "2026-10-21T12:00:21.543Z"
+      },
+      "centralIntegrationCommit": "0162bbceadd2812defe96d8d7ef8853912f4d086",
+      "centralCarrier": {
+        "handoff_id": "hnd_19S1PKtz1G_L3012bdqFs1zN",
+        "outer_sha256": "5c2061f8b2b4f1bcdc1c797f2be73a6b3555efd824254f84a199c7c33567fdf0",
+        "patch_sha256": "88736dd59f06b241d3ba0d8457cc0ecff6decad8384490bec3e8df19e4338ed7",
+        "base": "63d33a5f7788fb890b5623a2444b981a3e543497",
+        "review_note": "Carrier integrity/base/result scope passed. Central reconciliation within the same server route/test paths added selected intro-upload orphan cleanup and restricted cleanup to the selected business intro-video key prefix."
+      },
+      "centralValidation": {
+        "api": "4 files / 41 tests PASS",
+        "mobile": "4 files / 19 tests PASS",
+        "api_noemit": "PASS",
+        "mobile_noemit": "PASS with --ignoreDeprecations 6.0 and temporary external build info",
+        "scope": "exact 4 paths; diff check PASS; committed diff check PASS"
       }
     },
     {
