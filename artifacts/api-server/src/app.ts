@@ -65,6 +65,7 @@ import { registerDirectoryImportRoutes } from "./directoryImport/registerDirecto
 import { registerReconciliationRoutes } from "./directoryReconciliation/registerReconciliationRoutes";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 import { createDirectoryReviewPool } from "./directoryImport/reviewDatabase";
+import { isCommunityVerificationIsolatedTest } from "./lib/communityVerificationIsolatedTest";
 import {
   DIRECTORY_REVIEW_INGRESS_JSON_LIMIT,
   registerAutomatedDirectoryRoutes,
@@ -112,7 +113,9 @@ for (const dir of SPA_SEARCH_DIRS) {
 assertKinfolkModelEnvironment();
 const app: Express = express();
 // Never fall back to the production pool for review data.
-export const directoryReviewPool = createDirectoryReviewPool(process.env);
+export const directoryReviewPool = isCommunityVerificationIsolatedTest()
+  ? null
+  : createDirectoryReviewPool(process.env);
 
 // Trust the proxy in front of us (Replit's reverse proxy sets X-Forwarded-For)
 app.set("trust proxy", 1);
@@ -416,10 +419,14 @@ registerAdminPublishAndClaimRoutes(app);
 registerDocumentedDiscoveryReviewRoutes(app);
 registerFounderSourcePublicationRoutes(app);
 registerReconciliationRoutes(app);
-if (assertDirectoryReviewLocalStaging(process.env)) {
+if (!isCommunityVerificationIsolatedTest() && assertDirectoryReviewLocalStaging(process.env)) {
   registerDirectoryImportRoutes(app);
 }
-if (process.env.DIRECTORY_REVIEW_ENABLED === "1" && directoryReviewPool) {
+if (
+  !isCommunityVerificationIsolatedTest()
+  && process.env.DIRECTORY_REVIEW_ENABLED === "1"
+  && directoryReviewPool
+) {
   registerAutomatedDirectoryRoutes(app, directoryReviewPool, pool);
 }
 
@@ -471,8 +478,9 @@ registerLocationResolutionRoutes(app, pool);
 // This is deliberately separate from the directory: it serves a short-lived,
 // explicit member request for ordinary public facilities and never creates or
 // modifies an MWM business, ownership designation, community review, or rating.
-registerEssentialServicesRoute(app, createGoogleEssentialServicesSearch(process.env));
-
+if (!isCommunityVerificationIsolatedTest()) {
+  registerEssentialServicesRoute(app, createGoogleEssentialServicesSearch(process.env));
+}
 app.use("/api", router);
 app.use(webSsrRouter);
 app.use(privacyRouter);

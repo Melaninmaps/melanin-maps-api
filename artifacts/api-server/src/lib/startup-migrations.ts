@@ -73,7 +73,7 @@ import {
 } from "./library-evidence-seed.js";
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
-
+import { isCommunityVerificationIsolatedTest } from "./communityVerificationIsolatedTest";
 const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
   SELECT COALESCE(p_status, 'active') NOT IN ('suspended', 'removed', 'deleted', 'permanently_hidden')
      AND COALESCE(p_listing_status, '') IN ('live_unclaimed', 'live_claimed')
@@ -6401,6 +6401,21 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);
   const warn = (msg: string) =>
     logger ? logger.warn(msg) : console.warn(`[startup-migrations] ${msg}`);
+
+  // The controlled community-verification environment starts from an empty,
+  // schema-bootstrapped database. It must not run the historical compatibility
+  // migrations or recovery routines: those paths can mutate data or reconcile
+  // fixed production tester/admin rosters that do not belong in the test.
+  if (isCommunityVerificationIsolatedTest()) {
+    founderTesterAccessRecoveryStatus = "pending";
+    founderTesterAccessRecoveryStage = "isolated_test_disabled";
+    appReviewAccountRecoveryStatus = "pending";
+    protectedAdminAccessRecoveryStatus = "pending";
+    log(
+      "Isolated community verification test: legacy startup migrations, account recoveries, and seed guards are disabled.",
+    );
+    return;
+  }
 
   log("Running startup schema migrations...");
 

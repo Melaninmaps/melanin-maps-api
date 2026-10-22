@@ -27,6 +27,7 @@ import { startCityRequestFlush, stopCityRequestFlush } from "./lib/cityRequestTr
 import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogger } from "./lib/library-growth-worker";
 import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
 import { seedLibraryStarterEntries } from "./library/seedLibraryStarterEntries";
+import { isCommunityVerificationIsolatedTest } from "./lib/communityVerificationIsolatedTest";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -110,7 +111,8 @@ async function initStripe() {
 })();
 
 try {
-  if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
+  if (!isCommunityVerificationIsolatedTest()
+      && process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
       (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
     throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
   }
@@ -127,7 +129,8 @@ try {
 }
 
 try {
-  const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
+  const directoryReviewEnabled = !isCommunityVerificationIsolatedTest()
+    && assertDirectoryReviewLocalStaging(process.env);
   if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
     throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
   }
@@ -158,11 +161,23 @@ const onListening = (err?: Error) => {
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready — initial pool state");
 
+  // This short-lived, private environment is only for the community business
+  // verification acceptance workflow. Required request-path schema checks run
+  // before the listener; every legacy seed, recovery, worker, payment, and
+  // publication routine must remain off so no unrelated activity can occur.
+  if (isCommunityVerificationIsolatedTest()) {
+    logger.info(
+      "Isolated community verification test mode: background startup routines are disabled.",
+    );
+    return;
+  }
+
   // Attach connection lifecycle instrumentation to the pg Pool.
   // Records every connect/remove/query event to a 500-entry ring buffer.
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
+
   if (directoryReviewPool) startDirectoryPublicationWorker(directoryReviewPool, pool);
 
   // Route monitor log events through pino so they appear in Railway's log stream.
