@@ -261,7 +261,7 @@ export default function NominateBusinessScreen() {
               <Feather name="info" size={18} color={colors.primary} />
               <Text style={[styles.confirmBannerText, { color: colors.primary }]}>
                 {contributionIntent === "business_nomination"
-                  ? `Add optional context before adding ${selectedPlace?.name}. Complete ordinary businesses can publish immediately as unclaimed and not verified.`
+                  ? `Add optional context before recommending ${selectedPlace?.name}. It remains private until independent verification, duplicate, safety, and location checks pass.`
                   : "This community contribution stays in review until it can be presented accurately. It is not a public map pin, verified ownership claim, or safety finding yet."}
               </Text>
             </View>

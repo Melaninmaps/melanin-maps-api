@@ -558,7 +558,7 @@ export default function ListBusinessScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          {isSuccess ? (submissionOutcome?.isDuplicate ? "Existing Listing Found" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Business Page Live" : "Live on the Map") : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
+          {isSuccess ? (submissionOutcome?.isDuplicate ? "Existing Listing Found" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Business Listing Live" : "Live on the Map") : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -583,7 +583,7 @@ export default function ListBusinessScreen() {
               </View>
             </View>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>
-              {submissionOutcome?.isDuplicate ? "We found the existing listing" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Your business page is live" : "This business is live") : "This submission is saved"}
+              {submissionOutcome?.isDuplicate ? "We found the existing listing" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Your business listing is live" : "This business is live") : "This submission is saved"}
             </Text>
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.name || "Your business"}</Text>
@@ -596,10 +596,10 @@ export default function ListBusinessScreen() {
 
             <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {[
-                { icon: "check-circle", label: "Status", value: submissionOutcome?.isDuplicate ? "Possible duplicate queued for review" : submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
+                { icon: "check-circle", label: "Status", value: submissionOutcome?.isDuplicate ? "Possible duplicate queued for review" : submissionOutcome?.status === "published" ? "Published after verification" : "Private verification hold", color: "#22C55E" },
                 { icon: submissionOutcome?.mapPin ? "map-pin" : "eye", label: "Directory", value: submissionOutcome?.isDuplicate ? "Existing listing available now" : submissionOutcome?.status === "published" ? (submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Searchable without a map pin") : "Not public yet", color: colors.primary },
                 { icon: "shield", label: "Verification", value: "Not verified", color: colors.accent },
-                { icon: isOwnerIntent ? "briefcase" : "user-x", label: "Owner", value: isOwnerIntent ? "Profile-linked manager" : "Unclaimed", color: colors.primary },
+                { icon: isOwnerIntent ? "briefcase" : "user-x", label: "Owner", value: isOwnerIntent ? "Management request pending" : "Unclaimed", color: colors.primary },
               ].map((item) => (
                 <View key={item.label} style={styles.successRow}>
                   <Feather name={item.icon as any} size={16} color={item.color} />
@@ -627,16 +627,6 @@ export default function ListBusinessScreen() {
                 <Feather name="map-pin" size={16} color={colors.primary} />
               </TouchableOpacity>
             ) : null}
-            {isOwnerIntent && submissionOutcome?.status === "published" && submissionOutcome.businessId ? (
-              <TouchableOpacity
-                style={[styles.successBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.primary }]}
-                onPress={() => router.push({ pathname: "/business-dashboard", params: { businessId: submissionOutcome.businessId } } as never)}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.successBtnText, { color: colors.primary }]}>Manage My Business</Text>
-                <Feather name="briefcase" size={16} color={colors.primary} />
-              </TouchableOpacity>
-            ) : null}
             <TouchableOpacity onPress={() => router.replace("/(tabs)" as any)} activeOpacity={0.7}>
               <Text style={[styles.successLink, { color: colors.primary }]}>Back to Discover</Text>
             </TouchableOpacity>
@@ -657,7 +647,7 @@ export default function ListBusinessScreen() {
                     <Feather name={isOwnerIntent ? "briefcase" : "heart"} size={16} color={colors.primary} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.intentNoticeTitle, { color: colors.foreground }]}>{isOwnerIntent ? "This is my business" : "I am sharing someone else’s business"}</Text>
-                      <Text style={[styles.intentNoticeCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "This creates a business page tied to your profile. Add a public website or social profile; an exact street address is optional and only controls the map pin. Verification is separate." : "This is a community recommendation. It will not be connected to your profile as an owner."}</Text>
+                      <Text style={[styles.intentNoticeCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "This creates a listing request and a separate pending management request. Independent verification is required before publication, and management access is never automatic." : "This is a community recommendation. It will not be connected to your profile as an owner."}</Text>
                     </View>
                   </View>
 
@@ -1066,7 +1056,7 @@ export default function ListBusinessScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Community publication</Text>
                       <Text style={[styles.reviewNoticeText, { color: colors.mutedForeground }]}>
-                        Complete ordinary businesses publish immediately after software checks for location, evidence, duplicates, regulated services, and resource routing. Published profiles are community-listed, unclaimed, and not verified.
+                        A business can publish only after independent checks for location, evidence, duplicates, regulated services, and resource routing pass. A published listing is community-listed, unclaimed, and not verified.
                       </Text>
                     </View>
                   </View>

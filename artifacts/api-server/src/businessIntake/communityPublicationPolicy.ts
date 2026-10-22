@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
 import { isProvenDemoBusiness } from "../businesses/businessDemoContainment";
 import type { Submission } from "./submissionRepository";
+import type { RetainedVerificationSourceReference } from "./communityVerificationDecision";
 import type {
   CommunityBusinessSubmissionInput,
   SubmissionLocationSource,
@@ -11,6 +13,9 @@ export type AutomaticPublicationOutcome =
   | "community_context_review"
   | "needs_location"
   | "needs_evidence"
+  | "verification_incomplete"
+  | "verification_failed"
+  | "verification_escalated"
   | "regulated_review"
   | "resource_review"
   | "prohibited";
@@ -148,6 +153,36 @@ export function isValidPinCoordinates(
     && lng >= -180
     && lng <= 180
     && !(lat === 0 && lng === 0);
+}
+
+/**
+ * Retain only the provider endpoint, timestamp, and a hash of the resolved
+ * result. The raw geocoder response and exact coordinates remain out of the
+ * review-evidence packet; canonical location storage owns the public pin.
+ */
+export function preciseLocationSourceReference(
+  location: ResolvedBusinessLocation,
+  observedAt = new Date().toISOString(),
+): RetainedVerificationSourceReference {
+  const revalidateAfter = new Date(observedAt);
+  revalidateAfter.setUTCDate(revalidateAfter.getUTCDate() + 30);
+  return {
+    check: "precise_location",
+    sourceUrl: location.source === "google_geocoder"
+      ? "https://maps.googleapis.com/maps/api/geocode/json"
+      : "https://nominatim.openstreetmap.org/search",
+    sourceLabel: location.source === "google_geocoder"
+      ? "Google exact-address geocode"
+      : "Nominatim exact-address geocode",
+    observedAt,
+    sourceSnapshotSha256: createHash("sha256").update(JSON.stringify({
+      source: location.source,
+      lat: location.lat,
+      lng: location.lng,
+      formattedAddress: location.formattedAddress,
+    })).digest("hex"),
+    revalidateAfter: revalidateAfter.toISOString(),
+  };
 }
 
 export function assessCommunityPublication(

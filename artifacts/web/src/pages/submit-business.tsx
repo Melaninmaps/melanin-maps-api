@@ -88,6 +88,7 @@ export default function SubmitBusiness() {
     communityReportedOwnership: "not_sure" as CommunityReportedOwnership,
     ownershipDesignations: [] as string[],
     submitterNote: "",
+    supportingSourceUrls: "",
     ownerName: "",
     ownerBusinessEmail: "",
     ownerRole: "owner" as "owner" | "co-owner" | "manager" | "authorized_rep",
@@ -134,6 +135,7 @@ export default function SubmitBusiness() {
             ? item.ownership_designations.map(String).map((value) => LEGACY_OWNERSHIP_TO_CANONICAL[value] ?? value)
             : [],
           submitterNote: String(item.submitter_note ?? ""),
+          supportingSourceUrls: "",
           ownerName: String(item.owner_name ?? ""),
           ownerBusinessEmail: String(item.owner_business_email ?? ""),
           ownerRole: (item.owner_role === "co-owner" || item.owner_role === "manager" || item.owner_role === "authorized_rep") ? item.owner_role : "owner",
@@ -155,11 +157,11 @@ export default function SubmitBusiness() {
       return;
     }
     if (isOwnerIntent && (!form.ownerName.trim() || !form.ownerBusinessEmail.includes("@") || !form.ownerAttestation)) {
-      setError("Add your name, business email, and ownership attestation to request profile-linked management access.");
+      setError("Add your name, business email, and attestation to submit a separate management authorization request.");
       return;
     }
     if (isOwnerIntent && ![form.website, form.instagram, form.facebook, form.tiktok, form.youtube, form.twitch, form.snapchat].some((value) => value.trim())) {
-      setError("Add your public website or at least one public social profile before publishing your business page.");
+      setError("Add your public website or at least one public social profile for independent verification review.");
       return;
     }
     setSubmitting(true);
@@ -203,6 +205,10 @@ export default function SubmitBusiness() {
           communityReportedOwnership: form.communityReportedOwnership,
           ownershipDesignations: form.ownershipDesignations,
           submitterNote: form.submitterNote,
+          supportingSourceUrls: form.supportingSourceUrls
+            .split(/[\n,]/)
+            .map((url: string) => url.trim())
+            .filter(Boolean),
           submissionIntent: isOwnerIntent ? "owner" : "community",
           ...(isOwnerIntent ? {
             ownerName: form.ownerName,
@@ -267,7 +273,7 @@ export default function SubmitBusiness() {
                   ? "We found the existing listing"
                   : outcome?.status === "published"
                   ? isOwnerIntent
-                    ? "Your business page is live"
+                    ? "Your business listing is live"
                     : "This business is live on the map"
                   : "Your business submission is saved"}
               </h1>
@@ -294,10 +300,10 @@ export default function SubmitBusiness() {
                 <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
                   {isOwnerIntent ? (
                     <>
-                      <li>• Your page is searchable now and connected to your profile</li>
-                      <li>• You can manage the listing from your owner dashboard</li>
-                      <li>• {outcome?.mapPin ? "A precise address created a map pin" : "No map pin was created; add a precise street address when you are ready"}</li>
-                      <li>• Owner management does not mean the business is verified</li>
+                      <li>• The listing is searchable as community-listed and unclaimed</li>
+                      <li>• Your management request remains pending separate authorization verification</li>
+                      <li>• {outcome?.mapPin ? "A precise, verified address created a map pin" : "No map pin was created because a precise verified address is required"}</li>
+                      <li>• Listing publication, ownership verification, and management access are separate</li>
                     </>
                   ) : (
                     <>
@@ -324,16 +330,9 @@ export default function SubmitBusiness() {
                   </button>
                 </Link>
               )}
-              {isOwnerIntent && outcome?.status === "published" && outcome.businessId && (
-                <Link href={`/business-dashboard?businessId=${encodeURIComponent(outcome.businessId)}`}>
-                  <button className="px-6 py-3 border border-[#CA922B] text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm">
-                    Manage my business
-                  </button>
-                </Link>
-              )}
               {!amendId && (
                 <button
-                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedAssetIds([]); setSubmissionId(""); setOutcome(null); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", twitch: "", snapchat: "", communityReportedOwnership: "not_sure", ownershipDesignations: [], submitterNote: "", ownerName: "", ownerBusinessEmail: "", ownerRole: "owner", ownerVerificationMethod: "manual_review", ownerAttestation: false }); }}
+                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedAssetIds([]); setSubmissionId(""); setOutcome(null); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", twitch: "", snapchat: "", communityReportedOwnership: "not_sure", ownershipDesignations: [], submitterNote: "", supportingSourceUrls: "", ownerName: "", ownerBusinessEmail: "", ownerRole: "owner", ownerVerificationMethod: "manual_review", ownerAttestation: false }); }}
                   className="px-6 py-3 border border-[#CA922B]/30 text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm"
                 >
                   {isOwnerIntent ? "Add another business" : "Share another"}
@@ -375,12 +374,31 @@ export default function SubmitBusiness() {
           </h1>
           <p className="text-[#F5EBD8]/90 leading-relaxed text-lg">
             {amendId
-              ? "Add the missing information. If it now passes the location, evidence, duplicate, and safety checks, it will publish immediately."
+              ? "Add the missing information. It can publish only after independent location, evidence, duplicate, and safety checks pass."
               : isOwnerIntent
-              ? "Create a business page connected to your community profile. Add a public website or social profile; a precise street address is optional and only controls whether the page receives a map pin. Management access does not mean the business is verified."
+              ? "Submit your business and a separate management request. Publication, ownership verification, and management access require distinct checks; an attestation never grants access by itself."
               : "Recommend a business for someone else. This community submission is never linked to you as an owner."}
           </p>
         </div>
+
+        {!amendId && (
+          <div className="mb-8 rounded-2xl border border-[#F2C465]/35 bg-[#241810]/70 p-4">
+            <p className="text-sm font-semibold text-[#FFF8EB]">How are you contributing?</p>
+            <p className="mt-1 text-sm text-[#F5EBD8]/85">Choose the correct route. Recommending a business never creates ownership or editing rights.</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href="/submit-business">
+                <button type="button" className={`rounded-xl px-4 py-2 text-sm font-semibold ${!isOwnerIntent ? "bg-[#CA922B] text-white" : "border border-[#F2C465]/45 text-[#F2C465]"}`}>
+                  Recommend someone else&apos;s business
+                </button>
+              </Link>
+              <Link href="/submit-business?intent=owner">
+                <button type="button" className={`rounded-xl px-4 py-2 text-sm font-semibold ${isOwnerIntent ? "bg-[#CA922B] text-white" : "border border-[#F2C465]/45 text-[#F2C465]"}`}>
+                  I&apos;m an owner or authorized manager
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={submit} className="space-y-6">
           {/* Business name */}
@@ -476,7 +494,7 @@ export default function SubmitBusiness() {
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#CA922B]" />
-              Street address <span className="font-medium text-[#F5EBD8]/85">{isOwnerIntent ? "(optional — adds a truthful map pin)" : "(required for an immediate map pin)"}</span>
+              Street address <span className="font-medium text-[#F5EBD8]/85">(required for a truthful public map pin after verification)</span>
             </label>
             <input
               value={form.address}
@@ -491,7 +509,7 @@ export default function SubmitBusiness() {
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-[#CA922B]" />
-                Website{isOwnerIntent ? " or public social *" : ""}
+                Website{isOwnerIntent ? " or public social (needed for verification review)" : ""}
               </label>
               <input
                 value={form.website}
@@ -540,6 +558,18 @@ export default function SubmitBusiness() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-[#F2C465]">Supporting source URLs <span className="font-medium text-[#F5EBD8]/85">(optional)</span></label>
+            <p className="text-xs font-medium text-[#F5EBD8]/85">Add up to eight public HTTPS links, one per line or separated by commas. They are retained privately for review and never prove ownership, minority ownership, operating status, or a map pin by themselves.</p>
+            <textarea
+              value={form.supportingSourceUrls}
+              onChange={(e) => set("supportingSourceUrls", e.target.value)}
+              placeholder={"https://official-directory.example/listing\nhttps://business.example/about"}
+              rows={3}
+              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm resize-none"
+            />
           </div>
 
           {/* Description */}
@@ -606,7 +636,7 @@ export default function SubmitBusiness() {
             <div className="rounded-2xl border border-[#F2C465]/45 bg-[#241810]/70 p-5 space-y-4">
               <div>
                 <h2 className="font-serif text-xl font-bold text-[#FFF8EB]">Your ownership request</h2>
-                <p className="mt-1 text-sm leading-6 text-[#F5EBD8]/90">This keeps your personal profile and business request connected. Approval grants page-management access; it never creates a verification badge or changes community-reported ownership.</p>
+                <p className="mt-1 text-sm leading-6 text-[#F5EBD8]/90">This creates a pending management request only. Separate authorization review is required before any page-management access; it never creates a verification badge or changes community-reported ownership.</p>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
@@ -682,8 +712,8 @@ export default function SubmitBusiness() {
 
           <p className="text-center text-xs font-medium text-[#F5EBD8]/85">
             {isOwnerIntent
-              ? "Your business page can publish with a business name, category, city, public website or social profile, and attestation. A precise address only controls the map pin. Regulated, resource, duplicate, and unsafe records stay private. Publication never means verified ownership."
-              : "Complete ordinary businesses with a precise address and public website or social profile can publish immediately. Regulated, resource, duplicate, unsafe, or unlocatable records stay private. Publication never means verified ownership."}
+              ? "Your request stays private until independent verification succeeds. A public listing requires a verified public presence and precise address; management access needs separate authorization."
+              : "A recommendation stays private until independent verification succeeds. A public listing requires a verified public presence and precise address; publication never means verified ownership."}
           </p>
         </form>
       </div>

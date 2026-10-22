@@ -51,6 +51,23 @@ const STATUS_LABELS: Record<string, string> = {
   needs_info: "Needs info",
 };
 
+interface VerificationEvidenceRecord {
+  review_type: string;
+  status: string;
+  evidence: Record<string, unknown>;
+  reason: string | null;
+}
+
+function evidenceLinks(evidence: Record<string, unknown>, key: "sources" | "memberSuppliedSources") {
+  const raw = evidence[key];
+  if (!Array.isArray(raw)) return [] as Array<{ sourceUrl: string; sourceLabel?: string; classification?: string }>;
+  return raw.filter((value): value is { sourceUrl: string; sourceLabel?: string; classification?: string } =>
+    Boolean(value)
+    && typeof value === "object"
+    && typeof (value as { sourceUrl?: unknown }).sourceUrl === "string",
+  );
+}
+
 export default function FounderBusinessSubmissions() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -60,6 +77,9 @@ export default function FounderBusinessSubmissions() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState("");
+  const [evidenceBySubmission, setEvidenceBySubmission] = useState<Record<string, VerificationEvidenceRecord[]>>({});
+  const [evidenceLoading, setEvidenceLoading] = useState<string | null>(null);
+  const [evidenceError, setEvidenceError] = useState<Record<string, string>>({});
 
   const user = auth?.user as any;
   if (!authLoading && (!user?.id || user.role !== "admin")) {
@@ -84,6 +104,35 @@ export default function FounderBusinessSubmissions() {
   };
 
   useEffect(() => { if (user?.role === "admin") load(); }, [filter, user?.role]);
+
+  const toggleExpanded = async (submissionId: string) => {
+    if (expanded === submissionId) {
+      setExpanded(null);
+      return;
+    }
+    setExpanded(submissionId);
+    if (evidenceBySubmission[submissionId] || evidenceLoading === submissionId) return;
+    setEvidenceLoading(submissionId);
+    setEvidenceError((current) => ({ ...current, [submissionId]: "" }));
+    try {
+      const response = await authenticatedFetch(
+        `${BASE}api/founder/business-submissions/${encodeURIComponent(submissionId)}/verification-evidence`,
+      );
+      const data = await response.json() as { records?: VerificationEvidenceRecord[]; error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Unable to load verification evidence.");
+      setEvidenceBySubmission((current) => ({
+        ...current,
+        [submissionId]: Array.isArray(data.records) ? data.records : [],
+      }));
+    } catch (cause: unknown) {
+      setEvidenceError((current) => ({
+        ...current,
+        [submissionId]: cause instanceof Error ? cause.message : "Unable to load verification evidence.",
+      }));
+    } finally {
+      setEvidenceLoading(null);
+    }
+  };
 
   const decide = async (
     id: string,
@@ -132,8 +181,8 @@ export default function FounderBusinessSubmissions() {
                 Business Submission Queue
               </h1>
               <p className="text-[#3A1F0E]/60 mt-1">
-                Community-submitted businesses pending your review.
-                Nothing goes live until you approve it.
+                Community-submitted businesses and their private evidence records.
+                Founder actions cannot bypass independent verification before publication.
               </p>
             </div>
             <button
@@ -187,9 +236,7 @@ export default function FounderBusinessSubmissions() {
                 {/* Summary row */}
                 <button
                   className="w-full text-left p-5 flex items-start gap-4 hover:bg-[#FAF6EF] transition-colors"
-                  onClick={() =>
-                    setExpanded(expanded === s.id ? null : s.id)
-                  }
+                  onClick={() => { void toggleExpanded(s.id); }}
                 >
                   <div className="w-10 h-10 bg-[#CA922B]/10 rounded-xl flex items-center justify-center shrink-0">
                     <Store className="w-5 h-5 text-[#CA922B]" />
@@ -292,6 +339,37 @@ export default function FounderBusinessSubmissions() {
                       </div>
                     )}
 
+                    <section className="rounded-xl border border-[#CA922B]/25 bg-[#FAF6EF] p-4" aria-label="Private verification evidence">
+                      <h3 className="text-sm font-bold text-[#3A1F0E]">Private verification evidence</h3>
+                      <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">Admin-only audit data. Member-supplied links are leads, not proof; do not copy protected evidence into public profile fields.</p>
+                      {evidenceLoading === s.id ? (
+                        <p className="mt-3 text-sm text-[#3A1F0E]/60">Loading evidence…</p>
+                      ) : evidenceError[s.id] ? (
+                        <p className="mt-3 text-sm text-red-700">{evidenceError[s.id]}</p>
+                      ) : (evidenceBySubmission[s.id] ?? []).length === 0 ? (
+                        <p className="mt-3 text-sm text-[#3A1F0E]/60">No retained verification decision is available for this submission.</p>
+                      ) : (
+                        <div className="mt-3 space-y-3">
+                          {(evidenceBySubmission[s.id] ?? []).map((record, recordIndex) => (
+                            <div key={`${record.review_type}-${recordIndex}`} className="rounded-lg border border-[#3A1F0E]/10 bg-white p-3 text-sm text-[#3A1F0E]/75">
+                              <p><span className="font-semibold">Decision:</span> {String(record.evidence.outcome ?? record.status)}</p>
+                              {record.reason ? <p className="mt-1 text-xs text-[#3A1F0E]/55">{record.reason}</p> : null}
+                              {evidenceLinks(record.evidence, "sources").map((source, index) => (
+                                <a key={`verified-${index}-${source.sourceUrl}`} href={source.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block truncate text-xs font-semibold text-[#8D5C17] hover:underline">
+                                  Verified evidence: {source.sourceLabel ?? source.sourceUrl}
+                                </a>
+                              ))}
+                              {evidenceLinks(record.evidence, "memberSuppliedSources").map((source, index) => (
+                                <a key={`member-${index}-${source.sourceUrl}`} href={source.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block truncate text-xs text-[#3A1F0E]/65 hover:underline">
+                                  Member-supplied lead (not proof): {source.sourceUrl}
+                                </a>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+
                     {/* Already decided */}
                     {s.status !== "pending_review" ? (
                       <div className={`rounded-xl p-3 text-sm ${STATUS_COLORS[s.status] ?? "bg-gray-100 text-gray-700"}`}>
@@ -324,7 +402,7 @@ export default function FounderBusinessSubmissions() {
                             className="flex items-center gap-1.5 px-5 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50"
                           >
                             <CheckCircle2 className="w-4 h-4" />
-                            {processing === s.id ? "Processing…" : "Approve & publish"}
+                            {processing === s.id ? "Processing…" : "Publish if verification passes"}
                           </button>
                           <button
                             onClick={() => decide(s.id, "needs_info")}

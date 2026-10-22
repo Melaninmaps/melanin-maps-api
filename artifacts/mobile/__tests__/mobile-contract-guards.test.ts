@@ -56,7 +56,7 @@ describe("external URL normalization", () => {
 });
 
 describe("community-fed business publication governance", () => {
-  it("routes List My Business to automatic publication with bearer auth, precise location fields, and explicit ownership provenance", () => {
+  it("routes List My Business through bearer auth, precise location fields, explicit ownership provenance, and verification-first language", () => {
     const listBusiness = source("../app/list-business.tsx");
     expect(listBusiness).toContain("/api/community/business-submissions");
     expect(listBusiness).toContain("Authorization: `Bearer ${token}`");
@@ -65,7 +65,9 @@ describe("community-fed business publication governance", () => {
     expect(listBusiness).toContain("socialProfiles:");
     expect(listBusiness).toContain("communityReportedOwnership: form.communityReportedOwnership");
     expect(listBusiness).toContain("ownershipDesignations: form.ownershipDesignations");
-    expect(listBusiness).toContain("Published immediately");
+    expect(listBusiness).toContain("Published after verification");
+    expect(listBusiness).toContain("Private verification hold");
+    expect(listBusiness).not.toContain("Published immediately");
     expect(listBusiness).toContain("Searchable with a precise pin");
     expect(listBusiness).toContain("Non-minority-owned");
     expect(listBusiness).toContain("community-listed, unclaimed, and not verified");
@@ -127,7 +129,9 @@ describe("community-fed business publication governance", () => {
     expect(listBusiness).toContain('submissionIntent: isOwnerIntent ? "owner" : "community"');
     expect(listBusiness).toContain('ownerAttestation: form.ownerAttestation');
     expect(listBusiness).toContain('This is a community recommendation. It will not be connected to your profile as an owner.');
-    expect(listBusiness).toContain('This creates a business page tied to your profile.');
+    expect(listBusiness).toContain('This creates a listing request and a separate pending management request.');
+    expect(listBusiness).not.toContain('This creates a business page tied to your profile.');
+    expect(listBusiness).not.toContain("Manage My Business");
     expect(listBusiness).toContain('Your claim is reviewed separately from the public listing and does not create a verification badge.');
     expect(profile).toContain('params: { intent: "owner" }');
     expect(settings).toContain('label: "Add My Business"');

@@ -132,6 +132,8 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
           phone: form.phone,
           description: form.description,
           communityReportedOwnership: form.communityReportedOwnership,
+          submissionIntent: "community",
+          sourceChannel: "discover_community_recommendation",
           socialProfiles: {
             ...(form.instagram ? { instagram: form.instagram } : {}),
             ...(form.facebook ? { facebook: form.facebook } : {}),
@@ -158,10 +160,11 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF6EF] border border-[#CA922B]/30 mb-3">
                 <Building2 className="w-3 h-3 text-[#CA922B]" />
-                <span className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase">Submit a Business</span>
+                <span className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase">Recommend a Business</span>
               </div>
               <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">Know a great spot?</h2>
-              <p className="text-sm text-[#3A1F0E]/60 mt-1">Complete ordinary businesses publish immediately as community-listed, unclaimed, and not verified.</p>
+              <p className="text-sm text-[#3A1F0E]/60 mt-1">Recommend someone else&apos;s business. It remains private until independent evidence, safety, duplicate, and location checks pass.</p>
+              <p className="text-sm text-[#3A1F0E]/60 mt-2">Is this your business? <Link href="/submit-business?intent=owner"><a className="font-semibold text-[#CA922B] hover:underline">Start an owner or authorized-manager request</a></Link>.</p>
             </div>
             <button onClick={onClose} aria-label="Close add business form" className="w-9 h-9 rounded-full bg-[#FAF6EF] flex items-center justify-center hover:bg-[#3A1F0E]/10 transition-colors shrink-0">
               <X className="w-4 h-4 text-[#3A1F0E]/60" />
@@ -365,7 +368,7 @@ export default function Discover() {
 
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">
             <Search className="w-5 h-5 text-muted-foreground ml-4" />
-            <Input 
+            <Input
               data-testid="discover-search-input"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -680,7 +683,7 @@ export default function Discover() {
             </div>
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-3">Know a business we're missing?</h2>
             <p className="text-[#F5EBD8]/70 text-base md:text-lg max-w-xl">
-              Complete ordinary businesses publish immediately after automated address, evidence, and duplicate checks. Objective holds stay private for follow-up.
+              A business can publish only after independent address, evidence, safety, and duplicate checks pass. Holds stay private for follow-up.
             </p>
           </div>
           <div className="relative z-10 shrink-0">

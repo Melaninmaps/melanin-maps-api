@@ -30,6 +30,8 @@ export interface PlaceSearchResult {
   lat: number;
   lng: number;
   businessStatus: string; // OPERATIONAL, CLOSED_TEMPORARILY, CLOSED_PERMANENTLY
+  /** The operational verifier requires exactly one provider candidate. */
+  candidateCount: number;
   rating?: number;
 }
 
@@ -72,7 +74,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
  * Search Google Places (New API) by text query.
  * POST https://places.googleapis.com/v1/places:searchText
- * Returns the top result or null if nothing found.
+ * Returns the top result plus candidate count, or null if nothing was found.
  */
 export async function searchPlaces(query: string): Promise<PlaceSearchResult | null> {
   const key = apiKey();
@@ -115,6 +117,7 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult | n
       lat: r.location?.latitude ?? 0,
       lng: r.location?.longitude ?? 0,
       businessStatus: r.businessStatus ?? "UNKNOWN",
+      candidateCount: data.places.length,
       rating: r.rating,
     };
   } catch {
@@ -239,6 +242,23 @@ export async function enrichBusiness(business: {
         needs_verification: true,
         enriched_at: new Date(),
         enrichment_note: `Could not find on Google Places as of ${today}`,
+        enrichment_source: "google_places",
+      },
+    };
+  }
+
+  // A text-search ordering is not an identity proof. Never enrich from the
+  // first result when Places returned alternatives; that could attach another
+  // business's phone, website, or pin. A reviewer can resolve the ambiguity.
+  if (searchResult.candidateCount !== 1) {
+    return {
+      businessId: business.id,
+      confidence: "LOW",
+      note: `Found ${searchResult.candidateCount} possible Google Places matches; no fields were auto-populated`,
+      enrichedFields: {
+        needs_verification: true,
+        enriched_at: new Date(),
+        enrichment_note: `Ambiguous Google Places text search (${searchResult.candidateCount} candidates); no automatic enrichment.`,
         enrichment_source: "google_places",
       },
     };

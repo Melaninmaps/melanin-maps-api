@@ -53,6 +53,8 @@ export interface CommunityBusinessSubmissionInput {
   sourceCampaign?: string;
   sourceChannel?: string;
   submitterNote?: string;
+  /** Member-provided public links retained for review; never verification by themselves. */
+  supportingSourceUrls?: string[];
   clientRequestId?: string;
   ownerName?: string;
   ownerBusinessEmail?: string;
@@ -303,6 +305,12 @@ function normalizeMediaUrls(value: unknown): string[] {
   return urls.map((url) => normalizeHttpsUrl(url, "mediaUrls"));
 }
 
+function normalizeSupportingSourceUrls(value: unknown): string[] {
+  const urls = normalizeStringList(value, "supportingSourceUrls", 8, 512)
+    .map((url) => normalizeHttpsUrl(url, "supportingSourceUrls"));
+  return Array.from(new Set(urls));
+}
+
 function normalizeMediaAssetIds(value: unknown): string[] {
   const ids = normalizeStringList(value, "mediaAssetIds", 3, 64);
   for (const id of ids) {
@@ -354,6 +362,7 @@ export function validateSubmission(input: unknown): CommunityBusinessSubmissionI
   const website = optionalText(body, "website", 512);
   const mediaUrls = normalizeMediaUrls(body.mediaUrls);
   const mediaAssetIds = normalizeMediaAssetIds(body.mediaAssetIds);
+  const supportingSourceUrls = normalizeSupportingSourceUrls(body.supportingSourceUrls);
   const tags = normalizeStringList(body.tags, "tags", 20, 50);
   const ownershipDesignations = normalizeOwnership(body.ownershipDesignations);
   const latitude = optionalCoordinate(body, "latitude", -90, 90);
@@ -405,6 +414,7 @@ export function validateSubmission(input: unknown): CommunityBusinessSubmissionI
     sourceCampaign: optionalText(body, "sourceCampaign", 255),
     sourceChannel: optionalText(body, "sourceChannel", 100),
     submitterNote: optionalText(body, "submitterNote", 2_000),
+    supportingSourceUrls: supportingSourceUrls.length > 0 ? supportingSourceUrls : undefined,
     clientRequestId,
     ...(submissionIntent === "owner" ? {
       ownerName,

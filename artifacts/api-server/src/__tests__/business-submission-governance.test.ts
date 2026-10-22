@@ -71,7 +71,10 @@ function submission(overrides: Partial<Submission> = {}): Submission {
   };
 }
 
-function transactionHarness(options: { failBusinessInsert?: boolean } = {}) {
+function transactionHarness(options: {
+  failBusinessInsert?: boolean;
+  verificationEvidenceRows?: unknown[];
+} = {}) {
   const query = vi.fn(async (sql: string, _values?: readonly unknown[]) => {
     if (sql.includes("INSERT INTO business_publication_identities")) {
       return { rows: [{ business_id: "published-business" }] };
@@ -79,6 +82,9 @@ function transactionHarness(options: { failBusinessInsert?: boolean } = {}) {
     if (sql.includes("INSERT INTO businesses")) {
       if (options.failBusinessInsert) throw new Error("insert failed");
       return { rows: [{ id: "published-business" }] };
+    }
+    if (sql.includes("evidence ->> 'submissionId'")) {
+      return { rows: options.verificationEvidenceRows ?? [] };
     }
     return { rows: [] };
   });
@@ -88,6 +94,52 @@ function transactionHarness(options: { failBusinessInsert?: boolean } = {}) {
     release,
     pool: { connect: vi.fn().mockResolvedValue({ query, release }) },
   };
+}
+
+function verifiedVerificationEvidence() {
+  return vi.fn().mockReturnValue({
+    accountEligibility: "verified",
+    businessExistence: "verified",
+    officialIdentity: "verified",
+    crossFieldConsistency: "verified",
+    minorityOwnership: "verified",
+    operatingStatus: "verified",
+    duplicateRisk: "verified",
+    coordinatedActivity: "verified",
+    contentSafety: "verified",
+    preciseLocation: "missing",
+    sourceReferences: [
+      {
+        check: "business_existence",
+        sourceUrl: "https://www.google.com/maps/place/?q=place_id:community-books",
+        observedAt: "2026-10-22T16:00:00.000Z",
+        revalidateAfter: "2026-11-21T16:00:00.000Z",
+        sourceSnapshotSha256: "1".repeat(64),
+      },
+      {
+        check: "official_identity",
+        sourceUrl: "https://communitybooks.example/about",
+        sourceLabel: "Official business page",
+        observedAt: "2026-10-22T16:00:00.000Z",
+        revalidateAfter: "2026-11-21T16:00:00.000Z",
+        sourceSnapshotSha256: "2".repeat(64),
+      },
+      {
+        check: "minority_ownership",
+        sourceUrl: "https://communitybooks.example/about",
+        observedAt: "2026-10-22T16:00:00.000Z",
+        revalidateAfter: "2026-11-21T16:00:00.000Z",
+        sourceSnapshotSha256: "3".repeat(64),
+      },
+      {
+        check: "operating_status",
+        sourceUrl: "https://www.google.com/maps/place/?q=place_id:community-books",
+        observedAt: "2026-10-22T16:00:00.000Z",
+        revalidateAfter: "2026-11-21T16:00:00.000Z",
+        sourceSnapshotSha256: "4".repeat(64),
+      },
+    ],
+  });
 }
 
 function repositoryMock(overrides: Record<string, unknown> = {}) {
@@ -119,11 +171,13 @@ function appWith(
     source: "nominatim_exact_address",
     formattedAddress: "123 Main Street, Philadelphia, PA",
   }),
+  resolveVerificationEvidence: unknown = undefined,
 ): Express {
   const app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
     req.log = { error: vi.fn(), warn: vi.fn(), info: vi.fn() } as any;
+    if (mode === "approved") req.user = { id: "approved-member", role: "tester" } as any;
     next();
   });
   const approvedMemberMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -143,6 +197,7 @@ function appWith(
     approvedMemberMiddleware,
     transactionPool: transactionPool as any,
     resolveLocation: resolveLocation as any,
+    ...(resolveVerificationEvidence ? { resolveVerificationEvidence: resolveVerificationEvidence as any } : {}),
   });
   return app;
 }
@@ -175,6 +230,7 @@ describe("community business submission input", () => {
       tiktok: "@communitybooks",
       communityReportedOwnership: "minority_owned",
       ownershipDesignations: ["black-owned", "woman-owned"],
+      supportingSourceUrls: ["registry.example/community-books", "https://registry.example/community-books"],
       verified: true,
       status: "active",
       listingStatus: "live_claimed",
@@ -190,6 +246,7 @@ describe("community business submission input", () => {
       "Woman-Owned",
     ]);
     expect(input.communityReportedOwnership).toBe("minority_owned");
+    expect(input.supportingSourceUrls).toEqual(["https://registry.example/community-books"]);
     expect(input).not.toHaveProperty("verified");
     expect(input).not.toHaveProperty("status");
     expect(input).not.toHaveProperty("listingStatus");
@@ -245,6 +302,12 @@ describe("community business submission input", () => {
     ]) {
       expect(() => validateSubmission({ name: "A", category: "B", city: "C", website })).toThrow("public web address");
     }
+    expect(() => validateSubmission({
+      name: "A",
+      category: "B",
+      city: "C",
+      supportingSourceUrls: ["https://127.0.0.1/private-proof"],
+    })).toThrow("supportingSourceUrls must be a public web address");
   });
 });
 
@@ -634,13 +697,13 @@ describe("POST /api/community/business-submissions", () => {
     expect(tx.pool.connect).not.toHaveBeenCalled();
   });
 
-  it("atomically publishes an eligible ordinary business with a precise pin as unclaimed and not verified", async () => {
+  it("publishes only after injected verification evidence passes every check and a precise pin resolves", async () => {
     const repository = repositoryMock();
     const tx = transactionHarness();
-    const response = await request(appWith(repository, "approved", tx.pool))
+    const response = await request(appWith(repository, "approved", tx.pool, undefined, verifiedVerificationEvidence()))
       .post("/api/community/business-submissions")
       .set("Idempotency-Key", "request-00000001")
-      .send(completeBody());
+      .send(completeBody({ supportingSourceUrls: ["https://registry.example/community-books"] }));
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
@@ -679,11 +742,77 @@ describe("POST /api/community/business-submissions", () => {
     ]));
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(true);
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_claims"))).toBe(false);
+    const publishedReview = tx.query.mock.calls.find(([sql]) => String(sql).includes("matched_business_id, evidence, reason"));
+    const publishedEvidence = (publishedReview?.[1] as unknown[]).find(
+      (value) => typeof value === "string" && value.includes('"policyVersion"'),
+    );
+    const parsedPublishedEvidence = JSON.parse(String(publishedEvidence));
+    expect(parsedPublishedEvidence).toMatchObject({
+      policyVersion: "community-business-verification-v1",
+      outcome: "PASS",
+      memberSuppliedSources: [{
+        sourceUrl: "https://registry.example/community-books",
+        classification: "unverified_member_submission",
+      }],
+    });
+    expect(parsedPublishedEvidence.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourceUrl: "https://communitybooks.example/about" }),
+      expect.objectContaining({
+        check: "precise_location",
+        sourceUrl: "https://nominatim.openstreetmap.org/search",
+        revalidateAfter: expect.any(String),
+      }),
+    ]));
     expect(tx.query.mock.calls.map(([sql]) => sql)).toEqual(expect.arrayContaining(["BEGIN", "COMMIT"]));
     expect(tx.release).toHaveBeenCalledOnce();
   });
 
-  it("publishes an owner-created page with management access but without verification", async () => {
+  it("defaults community publication to the operational evidence adapter and marks member links non-verifying", () => {
+    const routeSource = source("../businessIntake/registerSubmissionRoutes.ts");
+
+    expect(routeSource).toContain("createOperationalCommunityVerificationEvidenceResolver()");
+    expect(routeSource).toContain('field: "member_supplied_unverified_link"');
+    expect(routeSource).toContain("supports: false");
+    expect(routeSource).not.toContain("?? (() => sourceOnlyCommunityVerificationEvidence())");
+  });
+
+  it("holds a community recommendation privately without geocoding when source-only evidence is incomplete", async () => {
+    const repository = repositoryMock({
+      create: vi.fn().mockResolvedValue({ submission: submission({ status: "needs_info" }), created: true }),
+    });
+    const tx = transactionHarness();
+    const resolveLocation = vi.fn();
+    const response = await request(appWith(repository, "approved", tx.pool, resolveLocation))
+      .post("/api/community/business-submissions")
+      .send(completeBody({ supportingSourceUrls: ["https://registry.example/community-books"] }));
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      status: "needs_info",
+      publicationOutcome: "verification_incomplete",
+      mapPin: false,
+    });
+    expect(resolveLocation).not.toHaveBeenCalled();
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO businesses"))).toBe(false);
+    expect(repository.finalizeAutomaticPublication).not.toHaveBeenCalled();
+    const heldReview = tx.query.mock.calls.find(([, values]) =>
+      Array.isArray(values) && values.includes("community_verification"),
+    );
+    const heldEvidence = (heldReview?.[1] as unknown[]).find(
+      (value) => typeof value === "string" && value.includes('"policyVersion"'),
+    );
+    expect(JSON.parse(String(heldEvidence))).toMatchObject({
+      policyVersion: "community-business-verification-v1",
+      outcome: "INCOMPLETE",
+      missingChecks: expect.arrayContaining(["business_existence", "minority_ownership"]),
+      memberSuppliedSources: [{
+        sourceUrl: "https://registry.example/community-books",
+        classification: "unverified_member_submission",
+      }],
+    });
+  });
+
+  it("holds an owner-intent submission privately until independent verification succeeds", async () => {
     const ownerSubmission = submission({
       submission_intent: "owner",
       owner_name: "Jo Smith",
@@ -691,6 +820,7 @@ describe("POST /api/community/business-submissions", () => {
       owner_role: "owner",
       owner_verification_method: "domain_email",
       owner_attested_at: "2026-09-27T12:00:00.000Z",
+      status: "needs_info",
     });
     const repository = repositoryMock({
       create: vi.fn().mockResolvedValue({ submission: ownerSubmission, created: true }),
@@ -712,31 +842,68 @@ describe("POST /api/community/business-submissions", () => {
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
-      status: "published",
-      publicationOutcome: "published",
+      status: "needs_info",
+      publicationOutcome: "verification_incomplete",
       mapPin: false,
     });
-    expect(response.body.message).toContain("connected to your profile");
     const claimInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO business_claims"));
     expect(claimInsert).toBeUndefined();
-    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(true);
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(false);
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
-    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
-      "owner_self_created",
-      "live_claimed",
-      "claimed",
-      "approved-member",
-    ]));
-    expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([true]));
+    expect(businessInsert).toBeUndefined();
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(false);
   });
 
-  it("publishes an explicit non-minority report without making a public ownership assertion", async () => {
+  it("publishes a verified owner-intent listing as unclaimed and creates a pending claim instead of management access", async () => {
+    const ownerSubmission = submission({
+      submission_intent: "owner",
+      owner_name: "Jo Smith",
+      owner_business_email: "owner@communitybooks.example",
+      owner_role: "owner",
+      owner_verification_method: "domain_email",
+      owner_attested_at: "2026-09-27T12:00:00.000Z",
+    });
+    const repository = repositoryMock({
+      create: vi.fn().mockResolvedValue({ submission: ownerSubmission, created: true }),
+      getByIdForUpdate: vi.fn().mockResolvedValue(ownerSubmission),
+    });
+    const tx = transactionHarness();
+    const response = await request(appWith(repository, "approved", tx.pool, undefined, verifiedVerificationEvidence()))
+      .post("/api/community/business-submissions")
+      .send(completeBody({
+        submissionIntent: "owner",
+        ownerName: "Jo Smith",
+        ownerBusinessEmail: "owner@communitybooks.example",
+        ownerRole: "owner",
+        ownerVerificationMethod: "domain_email",
+        ownerAttestation: true,
+      }));
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ status: "published", publicationOutcome: "published", mapPin: true });
+    expect(response.body.message).toContain("pending separate authorization review");
+    const claimInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO business_claims"));
+    expect(claimInsert).toBeDefined();
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(false);
+    const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
+    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
+      "owner_intent_submission",
+      "live_unclaimed",
+      "community_listed",
+      "unclaimed",
+      "approved-member",
+    ]));
+    expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([true]));
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(true);
+  });
+
+  it("holds an unverified community report without making a public ownership assertion", async () => {
     const repository = repositoryMock({
       create: vi.fn().mockResolvedValue({
         submission: submission({
           ownership_designations: [],
           community_reported_ownership: "non_minority_owned",
+          status: "needs_info",
         }),
         created: true,
       }),
@@ -754,6 +921,7 @@ describe("POST /api/community/business-submissions", () => {
       }));
 
     expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ status: "needs_info", publicationOutcome: "verification_incomplete", mapPin: false });
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
     expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([
       "community_reported_non_minority_owned",
@@ -799,7 +967,7 @@ describe("POST /api/community/business-submissions", () => {
       create: vi.fn().mockResolvedValue({ submission: submission({ status: "needs_info" }), created: true }),
     });
     const tx = transactionHarness();
-    const response = await request(appWith(repository, "approved", tx.pool, vi.fn().mockResolvedValue(null)))
+    const response = await request(appWith(repository, "approved", tx.pool, vi.fn().mockResolvedValue(null), verifiedVerificationEvidence()))
       .post("/api/community/business-submissions")
       .send(completeBody());
 
@@ -914,10 +1082,10 @@ describe("member-owned submission status and amendment", () => {
     expect(repository.getOwnedById).toHaveBeenCalledWith(submission().id, "approved-member");
   });
 
-  it("publishes a corrected needs-info submission immediately when it becomes eligible", async () => {
+  it("publishes a corrected needs-info submission only after verification evidence passes", async () => {
     const repository = repositoryMock();
     const tx = transactionHarness();
-    const response = await request(appWith(repository, "approved", tx.pool))
+    const response = await request(appWith(repository, "approved", tx.pool, undefined, verifiedVerificationEvidence()))
       .patch(`/api/community/business-submissions/${submission().id}`)
       .send(completeBody({ clientRequestId: undefined }));
 
@@ -936,7 +1104,12 @@ describe("member-owned submission status and amendment", () => {
 });
 
 describe("founder atomic publication", () => {
-  function adminApp(repository: ReturnType<typeof repositoryMock>, tx: ReturnType<typeof transactionHarness>, resolveLocation: unknown) {
+  function adminApp(
+    repository: ReturnType<typeof repositoryMock>,
+    tx: ReturnType<typeof transactionHarness>,
+    resolveLocation: unknown,
+    resolveVerificationEvidence: unknown = undefined,
+  ) {
     const app = express();
     app.use(express.json());
     app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -949,14 +1122,69 @@ describe("founder atomic publication", () => {
       transactionPool: tx.pool as any,
       approvedMemberMiddleware: (_req, _res, next) => next(),
       resolveLocation: resolveLocation as any,
+      ...(resolveVerificationEvidence ? { resolveVerificationEvidence: resolveVerificationEvidence as any } : {}),
     });
     return app;
   }
 
+  it("returns retained verification evidence only through the admin submission route", async () => {
+    const tx = transactionHarness({
+      verificationEvidenceRows: [{
+        review_type: "community_verification_incomplete",
+        status: "pending",
+        evidence: {
+          submissionId: submission().id,
+          outcome: "INCOMPLETE",
+          memberSuppliedSources: [{
+            sourceUrl: "https://registry.example/community-books",
+            classification: "unverified_member_submission",
+          }],
+        },
+        reason: "community-business-verification-v1:INCOMPLETE",
+      }],
+    });
+    const response = await request(adminApp(repositoryMock(), tx, vi.fn()))
+      .get(`/api/founder/business-submissions/${submission().id}/verification-evidence`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.records).toMatchObject([{
+      review_type: "community_verification_incomplete",
+      evidence: {
+        submissionId: submission().id,
+        outcome: "INCOMPLETE",
+      },
+    }]);
+    expect(tx.query).toHaveBeenCalledWith(
+      expect.stringContaining("evidence ->> 'submissionId'"),
+      [submission().id],
+    );
+
+    const nonAdminTx = transactionHarness();
+    const forbidden = await request(appWith(repositoryMock(), "approved", nonAdminTx.pool))
+      .get(`/api/founder/business-submissions/${submission().id}/verification-evidence`);
+    expect(forbidden.status).toBe(403);
+    expect(nonAdminTx.pool.connect).not.toHaveBeenCalled();
+  });
+
+  it("does not let a founder decision bypass missing verification evidence", async () => {
+    const repository = repositoryMock();
+    const tx = transactionHarness();
+    const resolveLocation = vi.fn();
+    const response = await request(adminApp(repository, tx, resolveLocation))
+      .post(`/api/founder/business-submissions/${submission().id}/decision`)
+      .send({ status: "published" });
+
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe("VERIFICATION_HELD");
+    expect(resolveLocation).not.toHaveBeenCalled();
+    expect(tx.pool.connect).not.toHaveBeenCalled();
+    expect(repository.decide).not.toHaveBeenCalled();
+  });
+
   it("publishes one active community-listed unclaimed record and commits status with its precise pin", async () => {
     const repository = repositoryMock();
     const tx = transactionHarness();
-    const app = adminApp(repository, tx, vi.fn().mockResolvedValue({ lat: "39.95", lng: "-75.16", source: "nominatim_exact_address", formattedAddress: null }));
+    const app = adminApp(repository, tx, vi.fn().mockResolvedValue({ lat: "39.95", lng: "-75.16", source: "nominatim_exact_address", formattedAddress: null }), verifiedVerificationEvidence());
     const response = await request(app)
       .post(`/api/founder/business-submissions/${submission().id}/decision`)
       .send({ status: "published", reviewNote: "Reviewed" });
@@ -985,7 +1213,7 @@ describe("founder atomic publication", () => {
   it("refuses publication before a transaction when precise location evidence cannot be resolved", async () => {
     const repository = repositoryMock();
     const tx = transactionHarness();
-    const app = adminApp(repository, tx, vi.fn().mockResolvedValue(null));
+    const app = adminApp(repository, tx, vi.fn().mockResolvedValue(null), verifiedVerificationEvidence());
     const response = await request(app)
       .post(`/api/founder/business-submissions/${submission().id}/decision`)
       .send({ status: "published" });
@@ -1020,7 +1248,7 @@ describe("founder atomic publication", () => {
   it("rolls back and does not advance submission status when canonical insert fails", async () => {
     const repository = repositoryMock();
     const tx = transactionHarness({ failBusinessInsert: true });
-    const app = adminApp(repository, tx, vi.fn().mockResolvedValue({ lat: "39.95", lng: "-75.16", source: "nominatim_exact_address", formattedAddress: null }));
+    const app = adminApp(repository, tx, vi.fn().mockResolvedValue({ lat: "39.95", lng: "-75.16", source: "nominatim_exact_address", formattedAddress: null }), verifiedVerificationEvidence());
     const response = await request(app)
       .post(`/api/founder/business-submissions/${submission().id}/decision`)
       .send({ status: "published" });
@@ -1141,9 +1369,12 @@ describe("source contracts", () => {
     expect(route).toContain("pg_advisory_xact_lock");
     expect(route).toContain("business_publication_identities");
     expect(route).toContain("canonical_record_locations");
-    expect(route).toContain('ownerSelfCreated ? "live_claimed" : "live_unclaimed"');
-    expect(route).toContain('ownerSelfCreated ? "claimed" : "community_listed"');
-    expect(route).toContain('ownerSelfCreated ? "owner_self_created" : "unclaimed_community_submission"');
+    expect(route).toContain('ownerSelfCreated ? "owner_intent_submission" : "unclaimed_community_submission"');
+    expect(route).toContain('"live_unclaimed"');
+    expect(route).toContain('"community_listed"');
+    expect(route).toContain('createPendingOwnerClaimFromSubmission');
+    expect(route).not.toContain('grantOwnerSelfCreatedManagement');
+    expect(route).not.toContain('ownerSelfCreated ? "live_claimed" : "live_unclaimed"');
     expect(route).toContain('if (hasPreciseLocation && coordinates)');
     expect(route).not.toContain("ownershipClaimValue(submission)");
     expect(route).not.toContain('return { lat: "0", lng: "0" }');

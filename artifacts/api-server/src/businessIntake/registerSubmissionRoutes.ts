@@ -17,6 +17,16 @@ import {
   type Submission,
 } from "./submissionRepository";
 import {
+  assessCommunityVerification,
+  communityVerificationSubjectFromInput,
+  communityVerificationSubjectFromSubmission,
+  needsOnlyPreciseLocation,
+  withPreciseLocationEvidence,
+  type CommunityVerificationDecision,
+  type CommunityVerificationEvidenceResolver,
+} from "./communityVerificationDecision";
+import { createOperationalCommunityVerificationEvidenceResolver } from "./operationalCommunityVerificationAdapter";
+import {
   notifyAdministratorsOfPossibleDuplicate,
   POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
   queuePublishedDuplicateForReview,
@@ -26,9 +36,11 @@ import {
   automaticPublicationReviewNote,
   isValidPinCoordinates,
   locationNeedsInformationAssessment,
+  preciseLocationSourceReference,
   publicationCandidateFromInput,
   publicationCandidateFromSubmission,
   resolvePreciseBusinessLocation,
+  type PublicationAssessment,
   type ResolvedBusinessLocation,
 } from "./communityPublicationPolicy";
 
@@ -41,6 +53,7 @@ interface RouteDependencies {
   transactionPool?: TransactionPool;
   approvedMemberMiddleware?: RequestHandler;
   resolveLocation?: typeof resolvePreciseBusinessLocation;
+  resolveVerificationEvidence?: CommunityVerificationEvidenceResolver;
 }
 
 class RouteError extends Error {
@@ -52,6 +65,79 @@ class RouteError extends Error {
   ) {
     super(message);
   }
+}
+
+function verificationHoldAssessment(decision: CommunityVerificationDecision): PublicationAssessment {
+  const outcome = decision.outcome === "INCOMPLETE"
+    ? "verification_incomplete"
+    : decision.outcome === "FAIL"
+      ? "verification_failed"
+      : "verification_escalated";
+  return {
+    outcome,
+    submissionStatus: decision.outcome === "INCOMPLETE" ? "needs_info" : "pending_review",
+    publicMessage: decision.publicMessage,
+    auditNote: decision.auditNote,
+  };
+}
+
+function verificationHoldError(decision: CommunityVerificationDecision): RouteError {
+  return new RouteError(
+    409,
+    "VERIFICATION_HELD",
+    decision.publicMessage,
+    { publicationOutcome: verificationHoldAssessment(decision).outcome },
+  );
+}
+
+function verificationEvidencePayload(
+  decision: CommunityVerificationDecision,
+  supportingSourceUrls: readonly string[] = [],
+  submissionId?: string,
+): Record<string, unknown> {
+  return {
+    ...(submissionId ? { submissionId } : {}),
+    policyVersion: decision.policyVersion,
+    outcome: decision.outcome,
+    checkedAt: new Date().toISOString(),
+    checks: decision.evidenceSnapshot.checks,
+    sources: decision.evidenceSnapshot.sources,
+    memberSuppliedSources: supportingSourceUrls.map((sourceUrl) => ({
+      sourceUrl,
+      classification: "unverified_member_submission",
+    })),
+    missingChecks: decision.missingChecks,
+    failedChecks: decision.failedChecks,
+    escalatedChecks: decision.escalatedChecks,
+  };
+}
+
+async function persistVerificationReviewItem(
+  submission: Submission,
+  decision: CommunityVerificationDecision,
+  client: PoolClient,
+  supportingSourceUrls: readonly string[] = [],
+): Promise<void> {
+  await client.query(
+    `INSERT INTO business_review_items
+       (review_type, status, candidate_name, candidate_address, candidate_city,
+        candidate_state, candidate_website, candidate_category, candidate_source_provider,
+        evidence, reason)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11)`,
+    [
+      `community_verification_${decision.outcome.toLowerCase()}`,
+      "pending",
+      submission.name,
+      submission.address ?? "",
+      submission.city,
+      submission.state ?? "",
+      submission.website,
+      submission.category,
+      "community_verification",
+      JSON.stringify(verificationEvidencePayload(decision, supportingSourceUrls, submission.id)),
+      decision.auditNote,
+    ],
+  );
 }
 
 function requestUser(req: Request): { id: string; role?: string } | null {
@@ -138,20 +224,22 @@ function websiteHost(website: string | null): string | null {
 }
 
 // Called only inside the same transaction that finalizes a submission. Community
-// shares remain community-listed and unclaimed. A member's own business is
-// linked to that member for page-management access, but is never verified by
-// this path. Submission media remains private until separate moderation.
+// shares and owner-intent records remain community-listed and unclaimed. Owner
+// intent creates a separately reviewable pending claim, never page-management
+// access. Submission media remains private until separate moderation.
 async function publishFromSubmission(
   submission: Submission,
   actorId: string,
   client: PoolClient,
   coordinates: ResolvedBusinessLocation | null,
+  verificationDecision: CommunityVerificationDecision,
+  supportingSourceUrls: readonly string[] = [],
 ): Promise<string> {
   const ownerSelfCreated = submission.submission_intent === "owner";
   const hasPreciseLocation = Boolean(
     coordinates && isValidPinCoordinates(coordinates.lat, coordinates.lng),
   );
-  if (!ownerSelfCreated && !hasPreciseLocation) {
+  if (!hasPreciseLocation) {
     throw new RouteError(409, "PRECISE_LOCATION_REQUIRED", "A precise non-zero location is required before publication.");
   }
   const resolvedCountry = submission.country
@@ -174,9 +262,9 @@ async function publishFromSubmission(
   ].filter((url): url is string => Boolean(url)).map((url) => ({
     url,
     sourceType: "community_supplied_public_link",
-    field: "business_identity",
-    supports: true,
-    excerpt: "Community supplied for directory publication; not ownership verification.",
+    field: "member_supplied_unverified_link",
+    supports: false,
+    excerpt: "Member-supplied lead retained for private review; never verification evidence.",
   }));
   if (hasPreciseLocation && coordinates) {
     sourceEvidence.push({
@@ -307,15 +395,15 @@ async function publishFromSubmission(
       submission.social_profiles?.youtube ?? null,
       JSON.stringify(socialProfiles),
       JSON.stringify(sourceEvidence),
-      JSON.stringify(ownerSelfCreated ? submission.ownership_designations ?? [] : []),
-      ownerSelfCreated ? "owner_self_created" : "unclaimed_community_submission",
-      ownerSelfCreated ? "live_claimed" : "live_unclaimed",
-      ownerSelfCreated ? "claimed" : "community_listed",
-      ownerSelfCreated ? "claimed" : "unclaimed",
+      JSON.stringify([]),
+      ownerSelfCreated ? "owner_intent_submission" : "unclaimed_community_submission",
+      "live_unclaimed",
+      "community_listed",
+      "unclaimed",
       ownerSelfCreated ? actorId : null,
       actorId,
-      ownerSelfCreated ? "owner_self_created" : "community_submission",
-      ownerSelfCreated ? "owner_self_created" : "community_submission",
+      ownerSelfCreated ? "owner_intent_submission" : "community_submission",
+      ownerSelfCreated ? "owner_intent_submission" : "community_submission",
       submission.provider_place_id,
       normalizeText(submission.name),
       canonicalDedupeKey,
@@ -351,8 +439,8 @@ async function publishFromSubmission(
       `INSERT INTO business_review_items
        (review_type, status, candidate_name, candidate_address, candidate_city,
         candidate_state, candidate_website, candidate_latitude, candidate_longitude,
-        candidate_category, candidate_source_provider, matched_business_id, reason)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        candidate_category, candidate_source_provider, matched_business_id, evidence, reason)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14)`,
       [
         ownerSelfCreated ? "owner_self_created" : "community_submission",
         "approved",
@@ -366,6 +454,11 @@ async function publishFromSubmission(
         submission.category,
         coordinates.source,
         result.rows[0].id,
+        JSON.stringify(verificationEvidencePayload(
+          verificationDecision,
+          supportingSourceUrls,
+          submission.id,
+        )),
         `Published from ${ownerSelfCreated ? "owner-created" : "community"} submission ${submission.id} by objective automatic checks; actor ${actorId}; location source ${coordinates.source}`,
       ],
     );
@@ -377,9 +470,9 @@ async function publishFromSubmission(
 function assessOwnerSelfPublication(input: Parameters<typeof publicationCandidateFromInput>[0]) {
   const base = assessCommunityPublication(publicationCandidateFromInput(input));
   // Owner-created records retain the same resource, regulated-service, and
-  // protected-demo safeguards. They do not inherit the community pathway's
-  // precise-address gate: a valid public presence may be listed without a
-  // fabricated pin, and the owner can add a verified address later.
+  // protected-demo safeguards. They now use the same independent verification
+  // and precise-location gate as community recommendations; an attestation is
+  // never proof of ownership, operating status, or public location.
   if (["prohibited", "community_context_review", "regulated_review", "resource_review"].includes(base.outcome)) {
     return base;
   }
@@ -397,47 +490,9 @@ function assessOwnerSelfPublication(input: Parameters<typeof publicationCandidat
   return {
     outcome: "eligible" as const,
     submissionStatus: "pending_review" as const,
-    publicMessage: "Eligible for immediate owner-created publication. A precise address is optional and controls map-pin visibility.",
-    auditNote: "Owner self-create passed public-presence and classification checks.",
+    publicMessage: "Classification checks passed. Independent verification and a precise location are still required before publication.",
+    auditNote: "Owner self-create passed classification checks and awaits independent verification.",
   };
-}
-
-// A member who creates their own listing receives a scoped management link to
-// that listing. This is an ownership-control record, not identity or ownership
-// verification: verified and verified_designations remain untouched.
-async function grantOwnerSelfCreatedManagement(
-  submission: Submission,
-  businessId: string,
-  actorId: string,
-  client: PoolClient,
-): Promise<void> {
-  if (submission.submission_intent !== "owner") return;
-  const existing = await client.query<{ id: string }>(
-    `SELECT id FROM business_owner_links
-     WHERE business_id = $1 AND user_id = $2 AND revoked_at IS NULL
-     LIMIT 1`,
-    [businessId, actorId],
-  );
-  if (!existing.rows[0]) {
-    await client.query(
-      `INSERT INTO business_owner_links
-         (id, user_id, business_id, role, status, approved_by, approved_at, created_at)
-       VALUES ($1,$2,$3,'owner','approved',$2,NOW(),NOW())`,
-      [`bol_${Date.now()}_${randomUUID().slice(0, 8)}`, actorId, businessId],
-    );
-  }
-  await client.query(
-    `UPDATE businesses
-     SET ownership_control_status = 'claimed',
-         profile_status = 'claimed',
-         listing_status = 'live_claimed',
-         owner_claim_status = 'claimed',
-         claimed_owner_member_id = $2,
-         owner_name = COALESCE(owner_name, $3),
-         updated_at = NOW()
-     WHERE id = $1`,
-    [businessId, actorId, submission.owner_name ?? null],
-  );
 }
 
 // Existing public listings use a distinct, auditable claim process. That path
@@ -507,6 +562,8 @@ export function registerSubmissionRoutes(
   const transactionPool = dependencies.transactionPool ?? pool;
   const approvedMember = dependencies.approvedMemberMiddleware ?? requireApprovedMember;
   const resolveLocation = dependencies.resolveLocation ?? resolvePreciseBusinessLocation;
+  const resolveVerificationEvidence = dependencies.resolveVerificationEvidence
+    ?? createOperationalCommunityVerificationEvidenceResolver();
 
   // Approved members and testers only. Ordinary submissions with complete
   // evidence publish atomically as unclaimed/not verified. Objective holds
@@ -581,11 +638,33 @@ export function registerSubmissionRoutes(
           ? assessOwnerSelfPublication(input)
           : assessCommunityPublication(publicationCandidateFromInput(input));
         let preparedLocation: ResolvedBusinessLocation | null = null;
-        if (assessment.outcome === "eligible" && input.address?.trim()) {
-          preparedLocation = await resolveLocation(publicationCandidateFromInput(input));
-          if (!preparedLocation && !ownerSelfCreated) assessment = locationNeedsInformationAssessment();
-        } else if (assessment.outcome === "eligible" && !ownerSelfCreated) {
-          assessment = locationNeedsInformationAssessment();
+        let verificationDecision: CommunityVerificationDecision | null = null;
+        if (assessment.outcome === "eligible") {
+          const subject = communityVerificationSubjectFromInput(input);
+          const evidence = await resolveVerificationEvidence(subject);
+          let decision = assessCommunityVerification(
+            subject,
+            withPreciseLocationEvidence(evidence, "missing"),
+          );
+          if (needsOnlyPreciseLocation(decision) && input.address?.trim()) {
+            preparedLocation = await resolveLocation(publicationCandidateFromInput(input));
+            if (!preparedLocation) {
+              assessment = locationNeedsInformationAssessment();
+            } else {
+              decision = assessCommunityVerification(
+                subject,
+                withPreciseLocationEvidence(
+                  evidence,
+                  "verified",
+                  preciseLocationSourceReference(preparedLocation),
+                ),
+              );
+              if (!decision.canPublish) assessment = verificationHoldAssessment(decision);
+            }
+          } else if (!decision.canPublish) {
+            assessment = verificationHoldAssessment(decision);
+          }
+          verificationDecision = decision;
         }
 
         client = await transactionPool.connect();
@@ -612,15 +691,22 @@ export function registerSubmissionRoutes(
         let mapPin = false;
         let publicationOutcome: string = assessment.outcome;
 
-        if (assessment.outcome === "eligible" && (ownerSelfCreated || preparedLocation)) {
+        if (assessment.outcome === "eligible" && preparedLocation) {
           const stored = await repository.getByIdForUpdate(result.submission.id, client)
             ?? result.submission;
-          businessId = await publishFromSubmission(stored, user.id, client, preparedLocation);
-          if (ownerSelfCreated) {
-            await grantOwnerSelfCreatedManagement(stored, businessId, user.id, client);
-          } else {
-            await createPendingOwnerClaimFromSubmission(stored, businessId, user.id, client);
+          const publishDecision = verificationDecision;
+          if (!publishDecision?.canPublish) {
+            throw new RouteError(409, "VERIFICATION_HELD", "Verification evidence must pass before publication.");
           }
+          businessId = await publishFromSubmission(
+            stored,
+            user.id,
+            client,
+            preparedLocation,
+            publishDecision,
+            input.supportingSourceUrls,
+          );
+          const ownerClaimId = await createPendingOwnerClaimFromSubmission(stored, businessId, user.id, client);
           const reviewNote = preparedLocation
             ? automaticPublicationReviewNote(preparedLocation)
             : "Owner-created listing published without a precise address; no map pin was created.";
@@ -636,7 +722,7 @@ export function registerSubmissionRoutes(
           await repository.logAuditEvent(
             stored.id,
             user.id,
-            ownerSelfCreated ? "owner_self_created_published" : "automatic_published",
+            ownerSelfCreated ? "owner_intent_published_claim_pending" : "automatic_published",
             reviewNote,
             client,
           );
@@ -644,9 +730,17 @@ export function registerSubmissionRoutes(
           publicationOutcome = "published";
           mapPin = Boolean(preparedLocation);
           message = ownerSelfCreated
-            ? `Your business page is live and connected to your profile. You can manage it now. It is not verified, and ${preparedLocation ? "has a precise map pin." : "has no map pin until you add a precise address."}`
+            ? `Your business is published as community-listed and unclaimed. Your management request is pending separate authorization review; verification remains separate.${ownerClaimMessage(ownerClaimId) ?? ""}`
             : "Published on the map as community-listed, unclaimed, and not verified.";
         } else {
+          if (verificationDecision) {
+            await persistVerificationReviewItem(
+              result.submission,
+              verificationDecision,
+              client,
+              input.supportingSourceUrls,
+            );
+          }
           await repository.logAuditEvent(
             result.submission.id,
             user.id,
@@ -751,9 +845,33 @@ export function registerSubmissionRoutes(
 
         let assessment = assessCommunityPublication(publicationCandidateFromInput(input));
         let preparedLocation: ResolvedBusinessLocation | null = null;
+        let verificationDecision: CommunityVerificationDecision | null = null;
         if (assessment.outcome === "eligible") {
-          preparedLocation = await resolveLocation(publicationCandidateFromInput(input));
-          if (!preparedLocation) assessment = locationNeedsInformationAssessment();
+          const subject = communityVerificationSubjectFromInput(input);
+          const evidence = await resolveVerificationEvidence(subject);
+          let decision = assessCommunityVerification(
+            subject,
+            withPreciseLocationEvidence(evidence, "missing"),
+          );
+          if (needsOnlyPreciseLocation(decision) && input.address?.trim()) {
+            preparedLocation = await resolveLocation(publicationCandidateFromInput(input));
+            if (!preparedLocation) {
+              assessment = locationNeedsInformationAssessment();
+            } else {
+              decision = assessCommunityVerification(
+                subject,
+                withPreciseLocationEvidence(
+                  evidence,
+                  "verified",
+                  preciseLocationSourceReference(preparedLocation),
+                ),
+              );
+              if (!decision.canPublish) assessment = verificationHoldAssessment(decision);
+            }
+          } else if (!decision.canPublish) {
+            assessment = verificationHoldAssessment(decision);
+          }
+          verificationDecision = decision;
         }
 
         client = await transactionPool.connect();
@@ -781,7 +899,18 @@ export function registerSubmissionRoutes(
         let mapPin = false;
         let message = assessment.publicMessage;
         if (assessment.outcome === "eligible" && preparedLocation) {
-          businessId = await publishFromSubmission(amended, user.id, client, preparedLocation);
+          const publishDecision = verificationDecision;
+          if (!publishDecision?.canPublish) {
+            throw new RouteError(409, "VERIFICATION_HELD", "Verification evidence must pass before publication.");
+          }
+          businessId = await publishFromSubmission(
+            amended,
+            user.id,
+            client,
+            preparedLocation,
+            publishDecision,
+            input.supportingSourceUrls,
+          );
           const ownerClaimId = await createPendingOwnerClaimFromSubmission(amended, businessId, user.id, client);
           const reviewNote = automaticPublicationReviewNote(preparedLocation);
           const published = await repository.finalizeAutomaticPublication(
@@ -799,6 +928,14 @@ export function registerSubmissionRoutes(
           mapPin = true;
           message = `Published on the map as community-listed, unclaimed, and not verified.${ownerClaimMessage(ownerClaimId) ?? ""}`;
         } else {
+          if (verificationDecision) {
+            await persistVerificationReviewItem(
+              amended,
+              verificationDecision,
+              client,
+              input.supportingSourceUrls,
+            );
+          }
           await repository.logAuditEvent(
             amended.id,
             user.id,
@@ -863,6 +1000,36 @@ export function registerSubmissionRoutes(
   );
 
   app.get(
+    "/api/founder/business-submissions/:id/verification-evidence",
+    async (req: Request, res: Response) => {
+      if (!adminOnly(req, res)) return;
+      let client: PoolClient | null = null;
+      try {
+        client = await transactionPool.connect();
+        const result = await client.query<{
+          review_type: string;
+          status: string;
+          evidence: Record<string, unknown>;
+          reason: string | null;
+        }>(
+          `SELECT review_type, status, evidence, reason
+           FROM business_review_items
+           WHERE review_type LIKE 'community_verification_%'
+             AND evidence ->> 'submissionId' = $1
+           ORDER BY created_at DESC`,
+          [String(req.params.id)],
+        );
+        res.json({ records: result.rows });
+      } catch (error: unknown) {
+        req.log?.error({ err: error }, "Failed to load private submission verification evidence");
+        res.status(500).json({ error: "Failed to load private verification evidence." });
+      } finally {
+        client?.release();
+      }
+    },
+  );
+
+  app.get(
     "/api/founder/business-submissions",
     async (req: Request, res: Response) => {
       if (!adminOnly(req, res)) return;
@@ -917,9 +1084,30 @@ export function registerSubmissionRoutes(
             { publicationOutcome: preflightAssessment.outcome },
           );
         }
-        const preparedLocation = status === "published"
-          ? await resolveLocation(publicationCandidateFromSubmission(preflightSubmission))
-          : null;
+        let preparedLocation: ResolvedBusinessLocation | null = null;
+        if (status === "published") {
+          const subject = communityVerificationSubjectFromSubmission(preflightSubmission);
+          const evidence = await resolveVerificationEvidence(subject);
+          let decision = assessCommunityVerification(
+            subject,
+            withPreciseLocationEvidence(evidence, "missing"),
+          );
+          const onlyPreciseLocationMissing = needsOnlyPreciseLocation(decision);
+          if (onlyPreciseLocationMissing && preflightSubmission.address?.trim()) {
+            preparedLocation = await resolveLocation(publicationCandidateFromSubmission(preflightSubmission));
+            if (preparedLocation) {
+              decision = assessCommunityVerification(
+                subject,
+                withPreciseLocationEvidence(
+                  evidence,
+                  "verified",
+                  preciseLocationSourceReference(preparedLocation),
+                ),
+              );
+            }
+          }
+          if (!decision.canPublish && !onlyPreciseLocationMissing) throw verificationHoldError(decision);
+        }
         if (status === "published" && !preparedLocation) {
           throw new RouteError(
             409,
@@ -952,11 +1140,29 @@ export function registerSubmissionRoutes(
             { publicationOutcome: lockedAssessment.outcome },
           );
         }
+        let lockedVerificationDecision: CommunityVerificationDecision | null = null;
+        if (status === "published") {
+          const subject = communityVerificationSubjectFromSubmission(submission);
+          const decision = assessCommunityVerification(
+            subject,
+            withPreciseLocationEvidence(
+              await resolveVerificationEvidence(subject),
+              preparedLocation ? "verified" : "missing",
+              preparedLocation ? preciseLocationSourceReference(preparedLocation) : undefined,
+            ),
+          );
+          if (!decision.canPublish) throw verificationHoldError(decision);
+          lockedVerificationDecision = decision;
+        }
 
         let businessId: string | undefined;
         let ownerClaimId: string | null = null;
         if (status === "published") {
-          businessId = await publishFromSubmission(submission, admin.id, client, preparedLocation!);
+          const publishDecision = lockedVerificationDecision;
+          if (!publishDecision?.canPublish) {
+            throw new RouteError(409, "VERIFICATION_HELD", "Verification evidence must pass before publication.");
+          }
+          businessId = await publishFromSubmission(submission, admin.id, client, preparedLocation!, publishDecision);
           ownerClaimId = await createPendingOwnerClaimFromSubmission(
             submission,
             businessId,

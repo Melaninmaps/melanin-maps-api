@@ -99,7 +99,7 @@ describe("bounded cross-platform website repairs", () => {
     expect(map).toContain("userCoords ?? { lat: 39.9526, lng: -75.1652 }");
   });
 
-  it("keeps community business publication authenticated, field-complete, immediate when eligible, and honestly labeled", () => {
+  it("keeps community business publication authenticated, evidence-backed, verification-first, and honestly labeled", () => {
     const app = source("../App.tsx");
     const submit = source("../pages/submit-business.tsx");
     const founder = source("../pages/founder-business-submissions.tsx");
@@ -116,13 +116,17 @@ describe("bounded cross-platform website repairs", () => {
     expect(submit).toContain("mediaAssetIds: uploadedAssetIds");
     expect(submit).toContain("postalCode: form.postalCode");
     expect(submit).toContain("communityReportedOwnership: form.communityReportedOwnership");
+    expect(submit).toContain("supportingSourceUrls: form.supportingSourceUrls");
+    expect(submit).toContain("retained privately for review");
+    expect(submit).toContain("I&apos;m an owner or authorized manager");
     expect(submit).toContain("Non-minority-owned");
     expect(submit).toContain("Submission ID:");
     expect(submit).toContain("searchable now and has a precise map pin");
     expect(submit).toContain("community-listed, unclaimed, and not verified");
     expect(submit).toContain("Software integrity checks—not another person’s approval—control these holds");
-    expect(submit).toContain("Publication never means verified ownership");
-    expect(submit).not.toContain("Nothing goes live until verified");
+    expect(submit).toContain("pending separate authorization verification");
+    expect(submit).toContain("A recommendation stays private until independent verification succeeds");
+    expect(submit).not.toContain("Manage my business");
     expect(mediaUploader).toContain("authenticatedFetch(`${BASE}api/media/upload");
     expect(mediaUploader).toContain("getMediaAssetIds");
     expect(mine).toContain("api/community/business-submissions/mine");
@@ -134,11 +138,18 @@ describe("bounded cross-platform website repairs", () => {
     expect(discover).toContain("socialProfiles:");
     expect(discover).toContain("A website or at least one public social profile is required");
     expect(discover).toContain("Community-reported minority-owned · Not verified");
-    expect(discover).toContain("Complete ordinary businesses publish immediately");
+    expect(discover).toContain("Recommend someone else&apos;s business");
+    expect(discover).toContain("Start an owner or authorized-manager request");
+    expect(discover).toContain("can publish only after independent address, evidence, safety, and duplicate checks pass");
+    expect(discover).not.toContain("Complete ordinary businesses publish immediately");
     expect(discover).toContain("we never use 0,0 or a city-center fallback");
     expect(discover).not.toContain("submitterEmail");
     expect(discover).not.toContain("within 48 hours");
     expect(founder).toContain('type Filter = "pending_review" | "published"');
     expect(founder).toContain('decide(s.id, "published")');
+    expect(founder).toContain("verification-evidence");
+    expect(founder).toContain("Private verification evidence");
+    expect(founder).toContain("Publish if verification passes");
+    expect(founder).not.toContain("Approve & publish");
   });
 });
